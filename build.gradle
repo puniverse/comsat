@@ -1,0 +1,121 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.7'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+group               = "co.paralleluniverse"
+version             = "0.1.0-SNAPSHOT"
+status              = "integration"
+description         = "Fibers services for web"
+ext.url             = "http://puniverse.github.com/comsat"
+ext.vendor          = "Parallel Universe Software Co."
+ext.licenseName1    = "The GNU Lesser General Public License, version 3"
+ext.licenseUrl1     = "http://www.gnu.org/licenses/lgpl-3.0.txt"
+ext.licenseName2    = "Eclipse Public License - v 1.0"
+ext.licenseUrl2     = "http://www.eclipse.org/legal/epl-v10.html"
+ext.scmUrl          = "https://github.com/puniverse/comsat"
+ext.scmConnection   = "https://github.com/puniverse/comsat.git"
+ext.distDir         = "$buildDir/dist"
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
+    println "sonatype username or password not set"
+    sonatypeUsername = ""
+    sonatypePassword = ""
+}
+if (!hasProperty('mainClass')) {
+    ext.mainClass = ''
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations.all {
+    resolutionStrategy {
+        failOnVersionConflict()
+        force "com.google.guava:guava:14.0.1"
+        force "org.slf4j:slf4j-api:1.7.5"
+        force "log4j:log4j:1.2.16"
+        force "junit:junit:4.10"
+    }
+}
+
+dependencies {
+    compile 'co.paralleluniverse:quasar-core:0.2.0'
+    compile 'com.google.guava:guava:14.0.1'
+    compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
+
+}
+
+defaultTasks 'build'
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+} 
+
+///////// Publish Artifacts 
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
+}
+
+signing {
+    required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(
+                url: (isReleaseVersion ? 
+	                        "https://oss.sonatype.org/service/local/staging/deploy/maven2" : 
+	                        "https://oss.sonatype.org/content/repositories/snapshots")) {
+                // User and Password are taken from ~/.gradle/gradle.properties
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            } 
+            pom.project {
+                name project.name
+                packaging 'jar'
+                description project.description
+                url project.url
+                scm {
+                    url project.scmUrl
+                    connection project.scmConnection
+                    developerConnection project.scmConnection
+                } 
+                licenses {
+                    license {
+                        name project.licenseName1
+                        url project.licenseUrl1
+                        distribution 'repo'
+                    }
+                    license {
+                        name project.licenseName2
+                        url project.licenseUrl2
+                        distribution 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'eitan'
+                        name 'Eitan Yarden'
+                    }
+                }
+            }
+        }
+    }
+}	
+

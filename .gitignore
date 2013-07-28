@@ -1,6 +1,15 @@
-*.class
-
-# Package Files #
-*.jar
-*.war
-*.ear
+/dist/
+/out/
+_site/
+/docs/quasar-core/
+/docs/quasar-galaxy/
+.idea/
+*.iml
+/artifacts
+/nbproject/private/
+/.nb-gradle
+build/
+.DS_Store
+.gradle/
+.nb-gradle-properties
+.bdb/
