@@ -1,6 +1,15 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * COMSAT
+ * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
+ * 
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *  
+ *   or (per the licensee's choosing)
+ *  
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
  */
 package co.paralleluniverse.fibers.jdbc;
 
@@ -31,11 +40,11 @@ public class DataSource {
     }
 
     public DataSource(javax.sql.DataSource ds, ExecutorService exec) {
-        this(ds,MoreExecutors.listeningDecorator(exec));
+        this(ds, MoreExecutors.listeningDecorator(exec));
     }
 
-    public DataSource(javax.sql.DataSource ds) {
-        this(ds,Executors.newFixedThreadPool(10));
+    public DataSource(javax.sql.DataSource ds, final int numThreads) {
+        this(ds, Executors.newFixedThreadPool(numThreads));
     }
 
     public Connection getConnection() throws SQLException, SuspendExecution {

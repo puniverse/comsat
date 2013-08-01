@@ -27,7 +27,6 @@ import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.ResourceBundle;
-import javax.servlet.GenericServlet;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
@@ -37,6 +36,15 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
 
+
+
+/*
+ * A response wrapper for use in (dumb) "HEAD" support.
+ * This just swallows that body, counting the bytes in order to set
+ * the content length appropriately.  All other methods delegate to the
+ * wrapped HTTP Servlet Response object.
+ */
+// file private
 /**
  * Provides an abstract class to be subclassed to create
  * an HTTP servlet suitable for a Web site. A subclass of
@@ -78,7 +86,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
  * @author  Various
  * @version $Version$
  */
-public abstract class FiberHttpServlet extends FiberGenericServlet {
+public abstract class HttpServlet extends GenericServlet {
 
     private static final long serialVersionUID = 1L;
 
@@ -102,7 +110,7 @@ public abstract class FiberHttpServlet extends FiberGenericServlet {
     /**
      * Does nothing, because this is an abstract class.
      */
-    public FiberHttpServlet() {
+    public HttpServlet() {
         // NOOP
     }
 
@@ -718,7 +726,7 @@ public abstract class FiberHttpServlet extends FiberGenericServlet {
      * @see javax.servlet.Servlet#service
      */
     @Override
-    public void suspendableService(ServletRequest req, ServletResponse res)
+    public void suspendableService(javax.servlet.ServletRequest req, ServletResponse res)
         throws ServletException, IOException, SuspendExecution {
 
         HttpServletRequest  request;
@@ -733,15 +741,6 @@ public abstract class FiberHttpServlet extends FiberGenericServlet {
         service(request, response);
     }
 }
-
-
-/*
- * A response wrapper for use in (dumb) "HEAD" support.
- * This just swallows that body, counting the bytes in order to set
- * the content length appropriately.  All other methods delegate to the
- * wrapped HTTP Servlet Response object.
- */
-// file private
 class NoBodyResponse extends HttpServletResponseWrapper {
     private final NoBodyOutputStream noBody;
     private PrintWriter writer;

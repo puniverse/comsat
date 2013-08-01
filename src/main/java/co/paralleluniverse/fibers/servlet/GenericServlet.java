@@ -22,34 +22,44 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletResponse;
+import javax.servlet.ServletResponseWrapper;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * Defines a generic, protocol-independent servlet. To write an HTTP servlet for
  * use on the Web, extend {@link javax.servlet.http.HttpServlet} instead.
  * <p>
- * <code>FiberGenericServlet</code> implements the
+ * <code>GenericServlet</code> implements the
  * <code>Servlet</code> and
  * <code>ServletConfig</code> interfaces.
- * <code>FiberGenericServlet</code> may be
+ * <code>GenericServlet</code> may be
  * directly extended by a servlet, although it's more common to extend a
  * protocol-specific subclass such as
  * <code>HttpServlet</code>.
  * <p>
- * <code>FiberGenericServlet</code> makes writing servlets easier. It provides simple
+ * <code>GenericServlet</code> makes writing servlets easier. It provides simple
  * versions of the lifecycle methods
  * <code>init</code> and
  * <code>destroy</code>
  * and of the methods in the
  * <code>ServletConfig</code> interface.
- * <code>FiberGenericServlet</code> also implements the
+ * <code>GenericServlet</code> also implements the
  * <code>log</code> method,
  * declared in the
  * <code>ServletContext</code> interface.
@@ -59,16 +69,19 @@ import javax.servlet.ServletResponse;
  *
  * @version $Version$
  */
-public abstract class FiberGenericServlet implements Servlet, ServletConfig,
+public abstract class GenericServlet implements Servlet, ServletConfig,
         java.io.Serializable {
     private static final long serialVersionUID = 1L;
     private transient ServletConfig config;
+    private AsyncContext ac;
+    private ServletContext contextAD;
+    private ServletConfigAsyncDispatch configAD;
 
     /**
      * Does nothing. All of the servlet initialization is done by one of the
      * <code>init</code> methods.
      */
-    public FiberGenericServlet() {
+    public GenericServlet() {
         // NOOP
     }
 
@@ -100,7 +113,7 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      */
     @Override
     public String getInitParameter(String name) {
-        return getServletConfig().getInitParameter(name);
+        return config.getInitParameter(name);
     }
 
     /**
@@ -119,7 +132,7 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      */
     @Override
     public Enumeration<String> getInitParameterNames() {
-        return getServletConfig().getInitParameterNames();
+        return config.getInitParameterNames();
     }
 
     /**
@@ -130,7 +143,7 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      */
     @Override
     public ServletConfig getServletConfig() {
-        return config;
+        return configAD;
     }
 
     /**
@@ -146,7 +159,7 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      */
     @Override
     public ServletContext getServletContext() {
-        return getServletConfig().getServletContext();
+        return contextAD;
     }
 
     /**
@@ -177,7 +190,6 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      * @exception ServletException
      * if an exception occurs that interrupts the servlet's
      * normal operation
-     * @see UnavailableException
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -192,7 +204,7 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      * <p>
      * Instead of overriding {@link #init(ServletConfig)}, simply override this
      * method and it will be called by
-     * <code>FiberGenericServlet.init(ServletConfig config)</code>. The
+     * <code>GenericServlet.init(ServletConfig config)</code>. The
      * <code>ServletConfig</code> object can still be retrieved via
      * {@link #getServletConfig}.
      *
@@ -238,7 +250,7 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      * <code>HttpServlet</code>, must override it.
      *
      * @param req
-     * the <code>ServletRequest</code> object that contains the
+     * the <code>ServletRequestAsyncDispatch</code> object that contains the
      * client's request
      * @param res
      * the <code>ServletResponse</code> object that will contain the
@@ -250,24 +262,50 @@ public abstract class FiberGenericServlet implements Servlet, ServletConfig,
      * if an input or output exception occurs
      */
     @Override
-    public final void service(final ServletRequest req, final ServletResponse res) {
-        final AsyncContext ac = req.startAsync(req, res);
-        ac.start(null);
+    public final void service(final javax.servlet.ServletRequest req, final ServletResponse res) {
+        ac = req.startAsync();
+        contextAD = new ServletContextAsyncDispatch(config.getServletContext(),ac);
+        configAD = new ServletConfigAsyncDispatch(config,contextAD);
+//        final AtomicBoolean needComplete = new AtomicBoolean(true);
+//        ac.addListener(new AsyncListener() {
+//            @Override
+//            public void onComplete(AsyncEvent event) throws IOException {
+//                needComplete.set(false);
+//            }
+//
+//            @Override
+//            public void onTimeout(AsyncEvent event) throws IOException {
+//            }
+//
+//            @Override
+//            public void onError(AsyncEvent event) throws IOException {
+//            }
+//
+//            @Override
+//            public void onStartAsync(AsyncEvent event) throws IOException {
+//                needComplete.set(false);
+//            }
+//        });
+//        ac.start(null); // sets the currentContext needed for forward and include requests
         new Fiber(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    suspendableService(req, res);
-                } catch (ServletException | IOException ex) {
-                    log("error in fiberServlet " + ex);
+                    final ServletRequestAsyncDispatch acsr = req instanceof javax.servlet.http.HttpServletRequest
+                            ? new HttpServletRequestAsyncDispatch((javax.servlet.http.HttpServletRequest) req)
+                            : new ServletRequestAsyncDispatch(req);
+                    suspendableService(acsr, res);
+                } catch (Exception ex) {
+                    log("Exception in fiber servlet", ex);
                 } finally {
-                    ac.complete();
+                    if (req.isAsyncStarted())
+                        ac.complete();
                 }
             }
         }).start();
     }
 
-    protected abstract void suspendableService(ServletRequest req, ServletResponse res)
+    protected abstract void suspendableService(javax.servlet.ServletRequest req, ServletResponse res)
             throws ServletException, IOException, SuspendExecution;
 
     /**
