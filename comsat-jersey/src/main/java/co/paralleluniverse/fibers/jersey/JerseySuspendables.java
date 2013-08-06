@@ -28,6 +28,7 @@ public class JerseySuspendables implements SuspendableClassifier {
         "org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory$1.invoke",
         "org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke",
         "org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.dispatch",
+        "org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$ResponseOutInvoker.doDispatch",
         "org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$TypeOutInvoker.doDispatch",
         "org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke",
         "org.glassfish.jersey.server.model.ResourceMethodInvoker.apply",
