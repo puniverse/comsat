@@ -1,163 +1,173 @@
-apply plugin: 'java'
+subprojects {
 
-sourceCompatibility = '1.7'
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+    apply plugin: 'java'
 
-group               = "co.paralleluniverse"
-version             = "0.1.0-SNAPSHOT"
-status              = "integration"
-description         = "Fibers services for web"
-ext.url             = "http://puniverse.github.com/comsat"
-ext.vendor          = "Parallel Universe Software Co."
-ext.licenseName1    = "The GNU Lesser General Public License, version 3"
-ext.licenseUrl1     = "http://www.gnu.org/licenses/lgpl-3.0.txt"
-ext.licenseName2    = "Eclipse Public License - v 1.0"
-ext.licenseUrl2     = "http://www.eclipse.org/legal/epl-v10.html"
-ext.scmUrl          = "https://github.com/puniverse/comsat"
-ext.scmConnection   = "https://github.com/puniverse/comsat.git"
-ext.distDir         = "$buildDir/dist"
-ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+    sourceCompatibility = '1.7'
+    [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
-if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
-    println "sonatype username or password not set"
-    sonatypeUsername = ""
-    sonatypePassword = ""
-}
-if (!hasProperty('mainClass')) {
-    ext.mainClass = ''
-}
+    group               = "co.paralleluniverse"
+    version             = "0.1.0-SNAPSHOT"
+    status              = "integration"
+    description         = "Fibers services for web"
+    ext.url             = "http://puniverse.github.com/comsat"
+    ext.vendor          = "Parallel Universe Software Co."
+    ext.licenseName1    = "The GNU Lesser General Public License, version 3"
+    ext.licenseUrl1     = "http://www.gnu.org/licenses/lgpl-3.0.txt"
+    ext.licenseName2    = "Eclipse Public License - v 1.0"
+    ext.licenseUrl2     = "http://www.eclipse.org/legal/epl-v10.html"
+    ext.scmUrl          = "https://github.com/puniverse/comsat"
+    ext.scmConnection   = "https://github.com/puniverse/comsat.git"
+    ext.distDir         = "$buildDir/dist"
+    ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-repositories {
-    mavenCentral()
-    mavenLocal()
-}
-
-configurations.all {
-    resolutionStrategy {
-        failOnVersionConflict()
-        force "com.google.guava:guava:14.0.1"
-        force "org.slf4j:slf4j-api:1.7.5"
-        force "log4j:log4j:1.2.16"
-        force "junit:junit:4.10"
+    if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
+        println "sonatype username or password not set"
+        sonatypeUsername = ""
+        sonatypePassword = ""
     }
-}
+    if (!hasProperty('mainClass')) {
+        ext.mainClass = ''
+    }
 
-buildscript {
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
-    dependencies {
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
+    configurations.all {
+        resolutionStrategy {
+            failOnVersionConflict()
+            force "com.google.guava:guava:14.0.1"
+            force "org.slf4j:slf4j-api:1.7.5"
+            force "log4j:log4j:1.2.16"
+            force "junit:junit:4.10"
+        }
     }
-}
+
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+
+        dependencies {
+            classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
+        }
+    }
     
-dependencies {
-    compile 'co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT'
-    compile 'com.google.guava:guava:14.0.1'
-    //    compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
-    compile 'javax.servlet:javax.servlet-api:3.0.1'            
-    compile 'org.sonatype.sisu.inject:cglib:3.0'
-    compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
-        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
-        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-//org.glassfish.hk2.external:cglib:2.2.0-b10
+    dependencies {
+        compile 'co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT'
+        compile 'com.google.guava:guava:14.0.1'
+        //    compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
+        compile 'javax.servlet:javax.servlet-api:3.0.1'            
+        compile 'org.sonatype.sisu.inject:cglib:3.0'
+        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
+            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+            //org.glassfish.hk2.external:cglib:2.2.0-b10
+        }
+        compile ('org.glassfish.jersey.core:jersey-client:2.1') {
+            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+        }
     }
-    compile ('org.glassfish.jersey.core:jersey-client:2.1') {
-        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
-        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+
+    defaultTasks 'build'
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
     }
-}
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    } 
 
-defaultTasks 'build'
+    ///////// Publish Artifacts 
+    apply plugin: 'maven'
+    apply plugin: 'signing'
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-} 
+    artifacts {
+        archives jar
+        archives sourcesJar
+        archives javadocJar
+    }
 
-///////// Publish Artifacts 
-apply plugin: 'maven'
-apply plugin: 'signing'
+    signing {
+        required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
+        sign configurations.archives
+    }
 
-artifacts {
-    archives jar
-    archives sourcesJar
-    archives javadocJar
-}
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-signing {
-    required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(
-                url: (isReleaseVersion ? 
+                repository(
+                    url: (isReleaseVersion ? 
 	                        "https://oss.sonatype.org/service/local/staging/deploy/maven2" : 
 	                        "https://oss.sonatype.org/content/repositories/snapshots")) {
-                // User and Password are taken from ~/.gradle/gradle.properties
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            } 
-            pom.project {
-                name project.name
-                packaging 'jar'
-                description project.description
-                url project.url
-                scm {
-                    url project.scmUrl
-                    connection project.scmConnection
-                    developerConnection project.scmConnection
+                    // User and Password are taken from ~/.gradle/gradle.properties
+                    authentication(userName: sonatypeUsername, password: sonatypePassword)
                 } 
-                licenses {
-                    license {
-                        name project.licenseName1
-                        url project.licenseUrl1
-                        distribution 'repo'
+                pom.project {
+                    name project.name
+                    packaging 'jar'
+                    description project.description
+                    url project.url
+                    scm {
+                        url project.scmUrl
+                        connection project.scmConnection
+                        developerConnection project.scmConnection
+                    } 
+                    licenses {
+                        license {
+                            name project.licenseName1
+                            url project.licenseUrl1
+                            distribution 'repo'
+                        }
+                        license {
+                            name project.licenseName2
+                            url project.licenseUrl2
+                            distribution 'repo'
+                        }
                     }
-                    license {
-                        name project.licenseName2
-                        url project.licenseUrl2
-                        distribution 'repo'
-                    }
-                }
-                developers {
-                    developer {
-                        id 'eitan'
-                        name 'Eitan Yarden'
+                    developers {
+                        developer {
+                            id 'eitan'
+                            name 'Eitan Yarden'
+                        }
                     }
                 }
             }
         }
-    }
-}	
+    }	
 
-apply plugin: 'license'
-//
-//sourceSets {
-//    dl {
-//        java {
-//            srcDir 'src/main/java/co/paralleluniverse/fibers'
-//            srcDir 'src/main/java/co/paralleluniverse/fibers/servlet'
-//        }
+//    apply plugin: 'license'
+//    //
+//    //sourceSets {
+//    //    dl {
+//    //        java {
+//    //            srcDir 'src/main/java/co/paralleluniverse/fibers'
+//    //            srcDir 'src/main/java/co/paralleluniverse/fibers/servlet'
+//    //        }
+//    //    }
+//    //}
+//    //
+//    license {
+//        //    header rootProject.file('codequality/HEADER')
+//        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+//        strictCheck true
 //    }
-//}
-//
-license {
-//    header rootProject.file('codequality/HEADER')
-    ext.year = Calendar.getInstance().get(Calendar.YEAR)
-    strictCheck true
+//    //license.sourceSets = sourceSets['dl']
+//    //
+//    //
+//    //licenseFormatDl.header rootProject.file('LICENSE_1')
+//    //licenseDl.header rootProject.file('LICENSE_1')
+
 }
-//license.sourceSets = sourceSets['dl']
-//
-//
-//licenseFormatDl.header rootProject.file('LICENSE_1')
-//licenseDl.header rootProject.file('LICENSE_1')
+
+project (':comsat-jersey') {
+    dependencies {
+        compile project(':comsat-servlet')
+    }
+}
