@@ -1,4 +1,4 @@
-/**
+/*
  * COMSAT
  * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
  *

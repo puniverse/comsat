@@ -44,16 +44,6 @@ subprojects {
         }
     }
 
-    buildscript {
-        repositories {
-            mavenCentral()
-        }
-
-        dependencies {
-            classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
-        }
-    }
-    
     dependencies {
         compile 'co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT'
         compile 'com.google.guava:guava:14.0.1'
@@ -142,29 +132,27 @@ subprojects {
         }
     }	
 
-//    apply plugin: 'license'
-//    //
-//    //sourceSets {
-//    //    dl {
-//    //        java {
-//    //            srcDir 'src/main/java/co/paralleluniverse/fibers'
-//    //            srcDir 'src/main/java/co/paralleluniverse/fibers/servlet'
-//    //        }
-//    //    }
-//    //}
-//    //
-//    license {
-//        //    header rootProject.file('codequality/HEADER')
-//        ext.year = Calendar.getInstance().get(Calendar.YEAR)
-//        strictCheck true
-//    }
-//    //license.sourceSets = sourceSets['dl']
-//    //
-//    //
-//    //licenseFormatDl.header rootProject.file('LICENSE_1')
-//    //licenseDl.header rootProject.file('LICENSE_1')
-
+    // Adds license header on each java file. gradle licenseMain for check or licenseFormatMain to apply
+    apply plugin: 'license'
+    license {
+        header rootProject.file('LICENSE')
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        strictCheck true
+        mapping('java','SLASHSTAR_STYLE')
+    }
+   
 }
+
+// needed to the license plugin
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
+    }
+}    
 
 project (':comsat-jersey') {
     dependencies {
