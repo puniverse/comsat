@@ -1,23 +1,29 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * COMSAT
+ * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
  */
 package co.paralleluniverse.fibers.servlet;
 
-import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import javax.servlet.AsyncContext;
-import javax.servlet.AsyncListener;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import org.eclipse.jetty.util.log.Log;
 
 /**
  *
@@ -33,6 +39,7 @@ public class RequestDispatcerAsyncDispatch implements RequestDispatcher {
         this.ac = ac;
     }
 
+    @Override
     public void forward(ServletRequest request, final ServletResponse response) throws ServletException, IOException {
         ServletRequest baseReq = request instanceof HttpServletRequestAsyncDispatch ? ((HttpServletRequestAsyncDispatch) request).getReq() : request;
         if (baseReq != ac.getRequest() || response != ac.getResponse())
@@ -60,13 +67,12 @@ public class RequestDispatcerAsyncDispatch implements RequestDispatcher {
 //                    }
                 }
             }, ServletException.class);
-        } catch (ExecutionException e) {
-            throw new AssertionError(e); // REMOVE AFTER SYNC TO NEW QUASAR VERSION
         } catch (InterruptedException e) {
-            throw new AssertionError(e);
+            throw new AssertionError(e); // REMOVE AFTER SYNC TO NEW QUASAR VERSION
         }
     }
 
+    @Override
     public void include(ServletRequest request, final ServletResponse response) throws ServletException {
         throw new UnsupportedOperationException("Include calls are not yet supported by fiber servlet");
 //        try {

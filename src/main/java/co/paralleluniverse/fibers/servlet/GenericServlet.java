@@ -1,13 +1,13 @@
-/*
+/**
  * COMSAT
  * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
- * 
+ *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
  * the Eclipse Foundation
- *  
+ *
  *   or (per the licensee's choosing)
- *  
+ *
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
@@ -22,24 +22,14 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Enumeration;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
+import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.ServletResponseWrapper;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * Defines a generic, protocol-independent servlet. To write an HTTP servlet for
@@ -69,13 +59,12 @@ import javax.servlet.http.HttpServletResponseWrapper;
  *
  * @version $Version$
  */
-public abstract class GenericServlet implements Servlet, ServletConfig,
-        java.io.Serializable {
+public abstract class GenericServlet implements Servlet, ServletConfig, java.io.Serializable {
     private static final long serialVersionUID = 1L;
     private transient ServletConfig config;
-    private AsyncContext ac;
-    private ServletContext contextAD;
-    private ServletConfigAsyncDispatch configAD;
+    private transient ServletConfigAsyncDispatch configAD;
+    private transient ServletContext contextAD;
+    private final ThreadLocal<AsyncContext> currentAsyncContext = new ThreadLocal<AsyncContext>();
 
     /**
      * Does nothing. All of the servlet initialization is done by one of the
@@ -142,7 +131,7 @@ public abstract class GenericServlet implements Servlet, ServletConfig,
      * initialized this servlet
      */
     @Override
-    public ServletConfig getServletConfig() {
+    public final ServletConfig getServletConfig() {
         return configAD;
     }
 
@@ -158,7 +147,7 @@ public abstract class GenericServlet implements Servlet, ServletConfig,
      * this servlet by the <code>init</code> method
      */
     @Override
-    public ServletContext getServletContext() {
+    public final ServletContext getServletContext() {
         return contextAD;
     }
 
@@ -192,8 +181,10 @@ public abstract class GenericServlet implements Servlet, ServletConfig,
      * normal operation
      */
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public final void init(ServletConfig config) throws ServletException {
         this.config = config;
+        this.contextAD = new ServletContextAsyncDispatch(config.getServletContext(), currentAsyncContext);
+        this.configAD = new ServletConfigAsyncDispatch(config, contextAD);
         this.init();
     }
 
@@ -262,50 +253,29 @@ public abstract class GenericServlet implements Servlet, ServletConfig,
      * if an input or output exception occurs
      */
     @Override
-    public final void service(final javax.servlet.ServletRequest req, final ServletResponse res) {
-        ac = req.startAsync();
-        contextAD = new ServletContextAsyncDispatch(config.getServletContext(),ac);
-        configAD = new ServletConfigAsyncDispatch(config,contextAD);
-//        final AtomicBoolean needComplete = new AtomicBoolean(true);
-//        ac.addListener(new AsyncListener() {
-//            @Override
-//            public void onComplete(AsyncEvent event) throws IOException {
-//                needComplete.set(false);
-//            }
-//
-//            @Override
-//            public void onTimeout(AsyncEvent event) throws IOException {
-//            }
-//
-//            @Override
-//            public void onError(AsyncEvent event) throws IOException {
-//            }
-//
-//            @Override
-//            public void onStartAsync(AsyncEvent event) throws IOException {
-//                needComplete.set(false);
-//            }
-//        });
-//        ac.start(null); // sets the currentContext needed for forward and include requests
+    public final void service(final ServletRequest req, final ServletResponse res) {
+        final AsyncContext ac = req.startAsync();
+        final ServletRequestAsyncDispatch acsr = req instanceof javax.servlet.http.HttpServletRequest
+                ? new HttpServletRequestAsyncDispatch((javax.servlet.http.HttpServletRequest) req)
+                : new ServletRequestAsyncDispatch(req);
         new Fiber(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    final ServletRequestAsyncDispatch acsr = req instanceof javax.servlet.http.HttpServletRequest
-                            ? new HttpServletRequestAsyncDispatch((javax.servlet.http.HttpServletRequest) req)
-                            : new ServletRequestAsyncDispatch(req);
+                    currentAsyncContext.set(ac);
                     suspendableService(acsr, res);
                 } catch (Exception ex) {
                     log("Exception in fiber servlet", ex);
                 } finally {
                     if (req.isAsyncStarted())
                         ac.complete();
+                    currentAsyncContext.set(null);
                 }
             }
-        }).start();
+        }).inheritThreadLocals().start();
     }
 
-    protected abstract void suspendableService(javax.servlet.ServletRequest req, ServletResponse res)
+    protected abstract void suspendableService(ServletRequest req, ServletResponse res)
             throws ServletException, IOException, SuspendExecution;
 
     /**

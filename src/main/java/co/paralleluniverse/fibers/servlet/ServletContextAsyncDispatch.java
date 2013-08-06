@@ -1,6 +1,15 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * COMSAT
+ * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
  */
 package co.paralleluniverse.fibers.servlet;
 
@@ -27,18 +36,22 @@ import javax.servlet.descriptor.JspConfigDescriptor;
  *
  * @author eitan
  */
-public class ServletContextAsyncDispatch implements javax.servlet.ServletContext{
+public class ServletContextAsyncDispatch implements javax.servlet.ServletContext {
     private final javax.servlet.ServletContext sc;
-    private final AsyncContext ac;
+    private final ThreadLocal<AsyncContext> ac;
 
-    public ServletContextAsyncDispatch(javax.servlet.ServletContext sc, AsyncContext ac) {
+    public ServletContextAsyncDispatch(javax.servlet.ServletContext sc, ThreadLocal<AsyncContext> ac) {
         this.sc = sc;
         this.ac = ac;
     }
 
     public RequestDispatcerAsyncDispatch getRequestDispatcher(String path) {
-        return new RequestDispatcerAsyncDispatch(path, ac);
+        return new RequestDispatcerAsyncDispatch(path, ac.get());
 //        return super.getRequestDispatcher(path);
+    }
+
+    public ServletContextAsyncDispatch getContext(String uripath) {
+        return new ServletContextAsyncDispatch(sc.getContext(uripath), ac);
     }
 
     public RequestDispatcher getNamedDispatcher(String name) {
@@ -48,10 +61,6 @@ public class ServletContextAsyncDispatch implements javax.servlet.ServletContext
 
     public String getContextPath() {
         return sc.getContextPath();
-    }
-
-    public ServletContextAsyncDispatch getContext(String uripath) {
-        return new ServletContextAsyncDispatch(sc.getContext(uripath), ac);
     }
 
     public int getMajorVersion() {

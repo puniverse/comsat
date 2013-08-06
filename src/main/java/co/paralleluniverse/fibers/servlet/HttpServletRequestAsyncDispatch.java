@@ -1,6 +1,15 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * COMSAT
+ * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
  */
 package co.paralleluniverse.fibers.servlet;
 
@@ -21,8 +30,18 @@ import javax.servlet.http.Part;
  * @author eitan
  */
 public class HttpServletRequestAsyncDispatch extends ServletRequestAsyncDispatch implements HttpServletRequest{
+    private final String contextPath;
+    private final String servletPath;
+    private final String pathInfo;
+
     public HttpServletRequestAsyncDispatch(javax.servlet.http.HttpServletRequest req) {
         super(req);
+        // Jetty (what about other containers?) nullifies the following values in the request
+        // when the service method returns. If we want to access them in an async context (in
+        // the fiber), we need to capture them.
+        pathInfo = req.getPathInfo();
+        servletPath = req.getServletPath();
+        contextPath = req.getContextPath();
     }
 
     @Override
@@ -31,6 +50,7 @@ public class HttpServletRequestAsyncDispatch extends ServletRequestAsyncDispatch
     }
 
     // Delegations 
+    @Override
     public String getAuthType() {
         return getReq().getAuthType();
     }
@@ -64,7 +84,7 @@ public class HttpServletRequestAsyncDispatch extends ServletRequestAsyncDispatch
     }
 
     public String getPathInfo() {
-        return getReq().getPathInfo();
+        return pathInfo;
     }
 
     public String getPathTranslated() {
@@ -72,7 +92,7 @@ public class HttpServletRequestAsyncDispatch extends ServletRequestAsyncDispatch
     }
 
     public String getContextPath() {
-        return getReq().getContextPath();
+        return contextPath;
     }
 
     public String getQueryString() {
@@ -104,7 +124,7 @@ public class HttpServletRequestAsyncDispatch extends ServletRequestAsyncDispatch
     }
 
     public String getServletPath() {
-        return getReq().getServletPath();
+        return servletPath;
     }
 
     public HttpSession getSession(boolean create) {

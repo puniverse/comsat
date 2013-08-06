@@ -1,20 +1,20 @@
-/*
+/**
  * COMSAT
  * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
- * 
+ *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
  * the Eclipse Foundation
- *  
+ *
  *   or (per the licensee's choosing)
- *  
+ *
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
 package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.futures.FiberAsyncListenableFuture;
+import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.InputStream;
 import java.io.Reader;
@@ -54,7 +54,7 @@ public class PreparedStatement extends Statement {
 
     public ResultSet executeQuery() throws SQLException, SuspendExecution {
         try {
-            return FiberAsyncListenableFuture.get(exec.submit(new Callable<ResultSet>() {
+            return AsyncListenableFuture.get(exec.submit(new Callable<ResultSet>() {
                 @Override
                 public ResultSet call() throws Exception {
                     return stmt().executeQuery();
@@ -67,7 +67,7 @@ public class PreparedStatement extends Statement {
 
     public int executeUpdate() throws SQLException, SuspendExecution {
         try {
-            return FiberAsyncListenableFuture.get(exec.submit(new Callable<Integer>() {
+            return AsyncListenableFuture.get(exec.submit(new Callable<Integer>() {
                 @Override
                 public Integer call() throws Exception {
                     return stmt().executeUpdate();
@@ -160,7 +160,7 @@ public class PreparedStatement extends Statement {
 
     public boolean execute() throws SQLException, SuspendExecution {
         try {
-            return FiberAsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
+            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws Exception {
                     return stmt().execute();

@@ -29,6 +29,7 @@ if (!hasProperty('mainClass')) {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 configurations.all {
@@ -41,11 +42,31 @@ configurations.all {
     }
 }
 
-dependencies {
-    compile 'co.paralleluniverse:quasar-core:0.2.0'
-    compile 'com.google.guava:guava:14.0.1'
-    compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
+buildscript {
+    repositories {
+        mavenCentral()
+    }
 
+    dependencies {
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
+    }
+}
+    
+dependencies {
+    compile 'co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT'
+    compile 'com.google.guava:guava:14.0.1'
+    //    compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
+    compile 'javax.servlet:javax.servlet-api:3.0.1'            
+    compile 'org.sonatype.sisu.inject:cglib:3.0'
+    compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
+        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+//org.glassfish.hk2.external:cglib:2.2.0-b10
+    }
+    compile ('org.glassfish.jersey.core:jersey-client:2.1') {
+        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+    }
 }
 
 defaultTasks 'build'
@@ -119,3 +140,24 @@ uploadArchives {
     }
 }	
 
+apply plugin: 'license'
+//
+//sourceSets {
+//    dl {
+//        java {
+//            srcDir 'src/main/java/co/paralleluniverse/fibers'
+//            srcDir 'src/main/java/co/paralleluniverse/fibers/servlet'
+//        }
+//    }
+//}
+//
+license {
+//    header rootProject.file('codequality/HEADER')
+    ext.year = Calendar.getInstance().get(Calendar.YEAR)
+    strictCheck true
+}
+//license.sourceSets = sourceSets['dl']
+//
+//
+//licenseFormatDl.header rootProject.file('LICENSE_1')
+//licenseDl.header rootProject.file('LICENSE_1')

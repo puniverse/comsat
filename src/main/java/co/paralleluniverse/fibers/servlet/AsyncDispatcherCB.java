@@ -1,6 +1,15 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * COMSAT
+ * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
  */
 package co.paralleluniverse.fibers.servlet;
 
@@ -16,8 +25,6 @@ import javax.servlet.AsyncListener;
 import javax.servlet.ServletException;
 import javax.servlet.ServletResponse;
 import javax.servlet.ServletResponseWrapper;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.util.log.Log;
 
 /**
  *
@@ -33,20 +40,15 @@ abstract  class AsyncDispatcherCB extends FiberAsync<Void, AsyncListener, Void, 
     @Override
     public Void run() throws ServletException, SuspendExecution {
         try {
-            Log.getLogger(AsyncDispatcherCB.class).info("run");
             final Void run = super.run();
-            Log.getLogger(AsyncDispatcherCB.class).info("afterrun");
             return run;
         } catch (InterruptedException e) {
-            Log.getLogger(AsyncDispatcherCB.class).info(e);
-            e.printStackTrace();
             throw new AssertionError(e);
         }
     }
 
     @Override
     public void onComplete(AsyncEvent event) {
-        Log.getLogger(AsyncDispatcherCB.class).info("completed");
         ServletResponse response = event.getAsyncContext().getResponse();
         ServletResponse original = ((ServletResponseWrapper)response).getResponse();
         try {
@@ -59,20 +61,16 @@ abstract  class AsyncDispatcherCB extends FiberAsync<Void, AsyncListener, Void, 
 
     @Override
     public void onTimeout(AsyncEvent event) {
-        Log.getLogger(AsyncDispatcherCB.class).info("timeout");
         super.failed(new TimeoutException(), fiber);
     }
 
     @Override
     public void onError(AsyncEvent event) {
-        Log.getLogger(AsyncDispatcherCB.class).info("error");
         super.failed(event.getThrowable(), fiber);
     }
 
     @Override
     public void onStartAsync(AsyncEvent event) {
         event.getAsyncContext().addListener(this);
-        Log.getLogger(AsyncDispatcherCB.class).info("startAsync");
-        // do nothing;
     }
 }
