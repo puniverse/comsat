@@ -17,6 +17,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -34,7 +35,7 @@ public class DataSource {
     private final javax.sql.DataSource ds;
     private final ListeningExecutorService exec;
 
-    public DataSource(javax.sql.DataSource ds, ListeningExecutorService exec) {
+    private DataSource(javax.sql.DataSource ds, ListeningExecutorService exec) {
         this.ds = ds;
         this.exec = exec;
     }
@@ -44,7 +45,7 @@ public class DataSource {
     }
 
     public DataSource(javax.sql.DataSource ds, final int numThreads) {
-        this(ds, Executors.newFixedThreadPool(numThreads));
+        this(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
     }
 
     public Connection getConnection() throws SQLException, SuspendExecution {
