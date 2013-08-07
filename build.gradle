@@ -46,19 +46,6 @@ subprojects {
 
     dependencies {
         compile 'co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT'
-        compile 'com.google.guava:guava:14.0.1'
-        //    compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
-        compile 'javax.servlet:javax.servlet-api:3.0.1'            
-        compile 'org.sonatype.sisu.inject:cglib:3.0'
-        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
-            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
-            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-            //org.glassfish.hk2.external:cglib:2.2.0-b10
-        }
-        compile ('org.glassfish.jersey.core:jersey-client:2.1') {
-            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
-            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-        }
     }
 
     defaultTasks 'build'
@@ -138,6 +125,7 @@ subprojects {
         header rootProject.file('LICENSE')
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
         strictCheck true
+        skipExistingHeaders true
         mapping('java','SLASHSTAR_STYLE')
     }
    
@@ -154,8 +142,34 @@ buildscript {
     }
 }    
 
+project (':comsat-core') {
+    dependencies {
+        compile 'com.google.guava:guava:14.0.1'
+    }
+}
+
+project (':comsat-jax-rs-client') {
+    dependencies {
+        compile 'javax.ws.rs:javax.ws.rs-api:2.0'
+    }
+}
+
+project (':comsat-servlet') {
+    dependencies {
+        compile 'javax.servlet:javax.servlet-api:3.0.1'            
+    }
+}
 project (':comsat-jersey') {
     dependencies {
         compile project(':comsat-servlet')
+        compile 'org.sonatype.sisu.inject:cglib:3.0' // instead of old cglib in jersey
+        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
+            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+        }
+        compile ('org.glassfish.jersey.core:jersey-client:2.1') {
+            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+        }
     }
 }
