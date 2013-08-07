@@ -5,7 +5,7 @@ import co.paralleluniverse.fibers.FiberAsync;
 import co.paralleluniverse.fibers.SuspendExecution;
 import javax.ws.rs.client.InvocationCallback;
 
-public abstract class AsyncRs<ResponseType> extends FiberAsync<ResponseType, InvocationCallback<ResponseType>, Void, RuntimeException> implements InvocationCallback<ResponseType> {
+abstract class AsyncRs<ResponseType> extends FiberAsync<ResponseType, InvocationCallback<ResponseType>, Void, RuntimeException> implements InvocationCallback<ResponseType> {
     private final Fiber fiber;
     
     public AsyncRs() {

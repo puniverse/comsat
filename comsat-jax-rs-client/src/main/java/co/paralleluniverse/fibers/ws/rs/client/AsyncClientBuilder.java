@@ -4,6 +4,7 @@ import java.security.KeyStore;
 import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
 
@@ -19,18 +20,18 @@ public class AsyncClientBuilder extends ClientBuilder {
         return new AsyncClientBuilder(ClientBuilder.newBuilder());
     }
 
-    // Wrap Client
+    // Wrap FiberClient
     public static Client newClient() {
-        return new Client(ClientBuilder.newClient());
+        return new FiberClient(ClientBuilder.newClient());
     }
 
     public static Client newClient(Configuration configuration) {
-        return new Client(ClientBuilder.newClient(configuration));
+        return new FiberClient(ClientBuilder.newClient(configuration));
     }
 
     @Override
     public Client build() {
-        return new Client(clientBuilder.build());
+        return new FiberClient(clientBuilder.build());
     }
 
     // Return this

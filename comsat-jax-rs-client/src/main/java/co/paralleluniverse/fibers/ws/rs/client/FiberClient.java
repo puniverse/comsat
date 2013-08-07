@@ -4,42 +4,45 @@ import java.net.URI;
 import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriBuilder;
 
-public class Client implements javax.ws.rs.client.Client {
-    private final javax.ws.rs.client.Client client;
+class FiberClient implements Client {
+    private final Client client;
 
-    public Client(javax.ws.rs.client.Client client) {
+    public FiberClient(Client client) {
         this.client = client;
     }
 
     // Wrap webTarget
     @Override
     public WebTarget target(String uri) {
-        return new WebTarget(client.target(uri));
+        return new FiberWebTarget(client.target(uri));
     }
 
     @Override
     public WebTarget target(URI uri) {
-        return new WebTarget(client.target(uri));
+        return new FiberWebTarget(client.target(uri));
     }
 
     @Override
     public WebTarget target(UriBuilder uriBuilder) {
-        return new WebTarget(client.target(uriBuilder));
+        return new FiberWebTarget(client.target(uriBuilder));
     }
 
     @Override
     public WebTarget target(Link link) {
-        return new WebTarget(client.target(link));
+        return new FiberWebTarget(client.target(link));
     }
 
     // Wrap builder
     @Override
     public Builder invocation(Link link) {
-        return new Builder(client.invocation(link));
+        return new FiberBuilder(client.invocation(link));
     }
 
     // return this

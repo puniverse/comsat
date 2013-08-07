@@ -2,9 +2,12 @@ package co.paralleluniverse.fibers.ws.rs.client;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import java.util.Locale;
 import javax.ws.rs.client.AsyncInvoker;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Cookie;
@@ -13,7 +16,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class Builder implements javax.ws.rs.client.Invocation.Builder {
+class FiberBuilder implements Invocation.Builder {
     private static final String GET = "GET";
     private static final String PUT = "PUT";
     private static final String POST = "POST";
@@ -23,45 +26,39 @@ public class Builder implements javax.ws.rs.client.Invocation.Builder {
     private static final String TRACE = "TRACE";
     final javax.ws.rs.client.Invocation.Builder builder;
 
-    public Builder(javax.ws.rs.client.Invocation.Builder builder) {
+    public FiberBuilder(Builder builder) {
         this.builder = builder;
     }
 
-    // Wrap Invocation
+    // Wrap FiberInvocation
     @Override
     public Invocation build(String method) {
-        return new Invocation(builder.build(method));
+        return new FiberInvocation(builder.build(method));
     }
 
     @Override
     public Invocation build(String method, Entity<?> entity) {
-        return new Invocation(builder.build(method, entity));
+        return new FiberInvocation(builder.build(method, entity));
     }
 
     @Override
     public Invocation buildGet() {
-        return new Invocation(builder.buildGet());
+        return new FiberInvocation(builder.buildGet());
     }
 
     @Override
     public Invocation buildDelete() {
-        return new Invocation(builder.buildDelete());
+        return new FiberInvocation(builder.buildDelete());
     }
 
     @Override
     public Invocation buildPost(Entity<?> entity) {
-        return new Invocation(builder.buildPost(entity));
+        return new FiberInvocation(builder.buildPost(entity));
     }
 
     @Override
     public Invocation buildPut(Entity<?> entity) {
-        return new Invocation(builder.buildPut(entity));
-    }
-
-    // No support in async opertions
-    @Override
-    public AsyncInvoker async() {
-        throw new UnsupportedOperationException("no async support in fibers.rs");
+        return new FiberInvocation(builder.buildPut(entity));
     }
 
     // Return this instead of builder
@@ -133,101 +130,121 @@ public class Builder implements javax.ws.rs.client.Invocation.Builder {
 
     // Suspendable Functions
     @Override
+    @Suspendable
     public Response get() {
         return method(GET);
     }
 
     @Override
+    @Suspendable
     public <T> T get(Class<T> responseType) {
         return method(GET,responseType);
     }
 
     @Override
+    @Suspendable
     public <T> T get(GenericType<T> responseType) {
         return method(GET,responseType);
     }
 
     @Override
+    @Suspendable
     public Response put(final Entity<?> entity) {
         return method(PUT,entity);
     }
 
     @Override
+    @Suspendable
     public <T> T put(final Entity<?> entity, Class<T> responseType) {
         return method(PUT,entity,responseType);
     }
 
     @Override
+    @Suspendable
     public <T> T put(final Entity<?> entity, GenericType<T> responseType) {
         return method(PUT,entity,responseType);
     }
 
     @Override
+    @Suspendable
     public Response post(final Entity<?> entity) {
         return method(POST,entity);
     }
 
     @Override
+    @Suspendable
     public <T> T post(final Entity<?> entity, Class<T> responseType) {
         return method(POST,entity,responseType);
     }
 
     @Override
+    @Suspendable
     public <T> T post(final Entity<?> entity, GenericType<T> responseType) {
         return method(POST,entity,responseType);
     }
 
     @Override
+    @Suspendable
     public Response delete() {
         return method(DELETE);
     }
 
     @Override
+    @Suspendable
     public <T> T delete(Class<T> responseType) {
         return method(DELETE,responseType);
     }
 
     @Override
+    @Suspendable
     public <T> T delete(GenericType<T> responseType) {
         return method(DELETE,responseType);
     }
 
     @Override
+    @Suspendable
     public Response head() {
         return method(HEAD);
     }
 
     @Override
+    @Suspendable
     public Response options() {
         return method(OPTIONS);
     }
 
     @Override
+    @Suspendable
     public <T> T options(Class<T> responseType) {
         return method(OPTIONS,responseType);
     }
 
     @Override
+    @Suspendable
     public <T> T options(GenericType<T> responseType) {
         return method(OPTIONS,responseType);
     }
 
     @Override
+    @Suspendable
     public Response trace() {
         return method(TRACE);
     }
 
     @Override
+    @Suspendable
     public <T> T trace(Class<T> responseType) {
         return method(TRACE,responseType);
     }
 
     @Override
+    @Suspendable
     public <T> T trace(GenericType<T> responseType) {
         return method(TRACE,responseType);
     }
 
     @Override
+    @Suspendable
     public Response method(final String name) {
         try {
             return new AsyncRs<Response>() {
@@ -243,6 +260,7 @@ public class Builder implements javax.ws.rs.client.Invocation.Builder {
     }
 
     @Override
+    @Suspendable
     public <T> T method(final String name, Class<T> responseType) {
         try {
             return new AsyncRs<T>() {
@@ -258,11 +276,13 @@ public class Builder implements javax.ws.rs.client.Invocation.Builder {
     }
 
     @Override
+    @Suspendable
     public <T> T method(String name, GenericType<T> responseType) {
         return this.method(name, (Class<T>)responseType.getRawType());
     }
 
     @Override
+    @Suspendable
     public Response method(final String name, final Entity<?> entity) {
         try {
             return new AsyncRs<Response>() {
@@ -278,6 +298,7 @@ public class Builder implements javax.ws.rs.client.Invocation.Builder {
     }
 
     @Override
+    @Suspendable
     public <T> T method(final String name, final Entity<?> entity, Class<T> responseType) {
         try {
             return new AsyncRs<T>() {
@@ -293,6 +314,7 @@ public class Builder implements javax.ws.rs.client.Invocation.Builder {
     }
 
     @Override
+    @Suspendable
     public <T> T method(final String name, final Entity<?> entity, GenericType<T> responseType) {
         try {
             return new AsyncRs<T>() {
@@ -305,6 +327,12 @@ public class Builder implements javax.ws.rs.client.Invocation.Builder {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         }
+    }
+
+    // Delegations
+    @Override
+    public AsyncInvoker async() {
+        return builder.async();
     }
 
     @Override

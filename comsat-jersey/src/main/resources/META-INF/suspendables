@@ -1,0 +1,16 @@
+org.glassfish.jersey.process.Inflector.apply
+org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory$1.invoke
+org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke
+org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.dispatch
+org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$ResponseOutInvoker.doDispatch
+org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$TypeOutInvoker.doDispatch
+org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke
+org.glassfish.jersey.server.model.ResourceMethodInvoker.apply
+org.glassfish.jersey.server.ServerRuntime$1.run
+org.glassfish.jersey.internal.Errors$1.call
+org.glassfish.jersey.internal.Errors.process
+org.glassfish.jersey.process.internal.RequestScope.runInScope
+org.glassfish.jersey.server.ServerRuntime.process
+org.glassfish.jersey.server.ApplicationHandler.handle
+org.glassfish.jersey.servlet.WebComponent.service
+org.glassfish.jersey.servlet.ServletContainer.service
