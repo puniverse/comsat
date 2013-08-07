@@ -25,7 +25,7 @@ subprojects {
         sonatypeUsername = ""
         sonatypePassword = ""
     }
-    if (!hasProperty('mainClass')) {
+    if (!project.hasProperty('mainClass')) { // must use project.hasProperty() rather than hasProperty in subprojects (gradle bug)
         ext.mainClass = ''
     }
 
@@ -49,6 +49,12 @@ subprojects {
     }
 
     defaultTasks 'build'
+
+    task scanSuspendables(type: JavaExec, dependsOn: classes) { // used to run SuspendableScanner
+        main = "co.paralleluniverse.fibers.instrument.SuspendablesScanner"
+        classpath = sourceSets.main.runtimeClasspath
+        args = ["co.paralleluniverse.fibers"]
+    }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
