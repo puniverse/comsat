@@ -14,11 +14,13 @@
 package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.PrintWriter;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.concurrent.Callable;
@@ -26,90 +28,109 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 /**
  *
  * @author eitan
  */
-public class DataSource {
-    private final javax.sql.DataSource ds;
+public class AsyncDataSource implements DataSource {
+    private final DataSource ds;
     private final ListeningExecutorService exec;
 
-    private DataSource(javax.sql.DataSource ds, ListeningExecutorService exec) {
+    private AsyncDataSource(DataSource ds, ListeningExecutorService exec) {
         this.ds = ds;
         this.exec = exec;
     }
 
-    public DataSource(javax.sql.DataSource ds, ExecutorService exec) {
+    public AsyncDataSource(DataSource ds, ExecutorService exec) {
         this(ds, MoreExecutors.listeningDecorator(exec));
     }
 
-    public DataSource(javax.sql.DataSource ds, final int numThreads) {
+    public AsyncDataSource(DataSource ds, final int numThreads) {
         this(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
     }
 
-    public Connection getConnection() throws SQLException, SuspendExecution {
+    @Override
+    @Suspendable
+    public Connection getConnection() throws SQLException {
         try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Connection>() {
+            return AsyncListenableFuture.get(exec.submit(new Callable<FiberConnection>() {
                 @Override
-                public Connection call() throws Exception {
-                    return new Connection(ds.getConnection(), exec);
+                public FiberConnection call() throws Exception {
+                    return new FiberConnection(ds.getConnection(), exec);
                 }
             }));
+        } catch (SuspendExecution ex) {
+            throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    public Connection getConnection(final String username, final String password) throws SQLException, SuspendExecution {
+    @Override
+    @Suspendable
+    public Connection getConnection(final String username, final String password) throws SQLException {
         try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Connection>() {
+            return AsyncListenableFuture.get(exec.submit(new Callable<FiberConnection>() {
                 @Override
-                public Connection call() throws Exception {
-                    return new Connection(ds.getConnection(username, password), exec);
+                public FiberConnection call() throws Exception {
+                    return new FiberConnection(ds.getConnection(username, password), exec);
                 }
             }));
+        } catch (SuspendExecution ex) {
+            throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
             throw new RuntimeException(ex);
         }
     }
 
+    @Override
     public PrintWriter getLogWriter() throws SQLException {
         return ds.getLogWriter();
     }
 
+    @Override
     public void setLogWriter(PrintWriter out) throws SQLException {
         ds.setLogWriter(out);
     }
 
+    @Override
     public void setLoginTimeout(int seconds) throws SQLException {
         ds.setLoginTimeout(seconds);
     }
 
+    @Override
     public int getLoginTimeout() throws SQLException {
         return ds.getLoginTimeout();
     }
 
+    @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         return ds.getParentLogger();
     }
 
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return ds.unwrap(iface);
     }
 
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return ds.isWrapperFor(iface);
     }
 
+    @Override
     public int hashCode() {
         return ds.hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
         return ds.equals(obj);
     }
 
+    @Override
     public String toString() {
         return ds.toString();
     }

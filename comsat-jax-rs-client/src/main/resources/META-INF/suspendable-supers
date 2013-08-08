@@ -1,4 +1,5 @@
 javax.ws.rs.client.SyncInvoker.get
+javax.ws.rs.client.SyncInvoker.put
 javax.ws.rs.client.SyncInvoker.post
 javax.ws.rs.client.SyncInvoker.delete
 javax.ws.rs.client.SyncInvoker.head
