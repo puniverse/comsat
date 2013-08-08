@@ -55,7 +55,7 @@ subprojects {
         classpath = sourceSets.main.runtimeClasspath
         args = ["co.paralleluniverse.fibers"]
     }
-    tasks.assemble.dependsOn scanSuspendables
+    tasks.jar.dependsOn scanSuspendables
 
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'

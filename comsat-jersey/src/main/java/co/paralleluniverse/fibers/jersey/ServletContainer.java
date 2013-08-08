@@ -14,6 +14,7 @@
 package co.paralleluniverse.fibers.jersey;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Enumeration;
@@ -33,7 +34,7 @@ import org.glassfish.jersey.server.ResourceConfig;
  *
  * @author eitan
  */
-public class ServletContainer extends co.paralleluniverse.fibers.servlet.HttpServlet {
+public class ServletContainer extends FiberHttpServlet {
     private final org.glassfish.jersey.servlet.ServletContainer jerseySC;
 
     public ServletContainer() {

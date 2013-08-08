@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
-import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -29,12 +28,12 @@ import javax.servlet.http.Part;
  *
  * @author eitan
  */
-public class HttpServletRequestAsyncDispatch extends ServletRequestAsyncDispatch implements HttpServletRequest{
+class FiberHttpServletRequest extends FiberServletRequest implements HttpServletRequest {
     private final String contextPath;
     private final String servletPath;
     private final String pathInfo;
 
-    public HttpServletRequestAsyncDispatch(javax.servlet.http.HttpServletRequest req) {
+    public FiberHttpServletRequest(javax.servlet.http.HttpServletRequest req) {
         super(req);
         // Jetty (what about other containers?) nullifies the following values in the request
         // when the service method returns. If we want to access them in an async context (in
@@ -55,118 +54,147 @@ public class HttpServletRequestAsyncDispatch extends ServletRequestAsyncDispatch
         return getReq().getAuthType();
     }
 
+    @Override
     public Cookie[] getCookies() {
         return getReq().getCookies();
     }
 
+    @Override
     public long getDateHeader(String name) {
         return getReq().getDateHeader(name);
     }
 
+    @Override
     public String getHeader(String name) {
         return getReq().getHeader(name);
     }
 
+    @Override
     public Enumeration<String> getHeaders(String name) {
         return getReq().getHeaders(name);
     }
 
+    @Override
     public Enumeration<String> getHeaderNames() {
         return getReq().getHeaderNames();
     }
 
+    @Override
     public int getIntHeader(String name) {
         return getReq().getIntHeader(name);
     }
 
+    @Override
     public String getMethod() {
         return getReq().getMethod();
     }
 
+    @Override
     public String getPathInfo() {
         return pathInfo;
     }
 
+    @Override
     public String getPathTranslated() {
         return getReq().getPathTranslated();
     }
 
+    @Override
     public String getContextPath() {
         return contextPath;
     }
 
+    @Override
     public String getQueryString() {
         return getReq().getQueryString();
     }
 
+    @Override
     public String getRemoteUser() {
         return getReq().getRemoteUser();
     }
 
+    @Override
     public boolean isUserInRole(String role) {
         return getReq().isUserInRole(role);
     }
 
+    @Override
     public Principal getUserPrincipal() {
         return getReq().getUserPrincipal();
     }
 
+    @Override
     public String getRequestedSessionId() {
         return getReq().getRequestedSessionId();
     }
 
+    @Override
     public String getRequestURI() {
         return getReq().getRequestURI();
     }
 
+    @Override
     public StringBuffer getRequestURL() {
         return getReq().getRequestURL();
     }
 
+    @Override
     public String getServletPath() {
         return servletPath;
     }
 
+    @Override
     public HttpSession getSession(boolean create) {
         return getReq().getSession(create);
     }
 
+    @Override
     public HttpSession getSession() {
         return getReq().getSession();
     }
 
+    @Override
     public boolean isRequestedSessionIdValid() {
         return getReq().isRequestedSessionIdValid();
     }
 
+    @Override
     public boolean isRequestedSessionIdFromCookie() {
         return getReq().isRequestedSessionIdFromCookie();
     }
 
+    @Override
     public boolean isRequestedSessionIdFromURL() {
         return getReq().isRequestedSessionIdFromURL();
     }
 
+    @Override
     public boolean isRequestedSessionIdFromUrl() {
         return getReq().isRequestedSessionIdFromUrl();
     }
 
+    @Override
     public boolean authenticate(HttpServletResponse response) throws IOException, ServletException {
         return getReq().authenticate(response);
     }
 
+    @Override
     public void login(String username, String password) throws ServletException {
         getReq().login(username, password);
     }
 
+    @Override
     public void logout() throws ServletException {
         getReq().logout();
     }
 
+    @Override
     public Collection<Part> getParts() throws IOException, ServletException {
         return getReq().getParts();
     }
 
+    @Override
     public Part getPart(String name) throws IOException, ServletException {
         return getReq().getPart(name);
     }

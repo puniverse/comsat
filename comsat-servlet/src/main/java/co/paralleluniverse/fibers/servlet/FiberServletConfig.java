@@ -21,11 +21,11 @@ import javax.servlet.ServletContext;
  *
  * @author eitan
  */
-public class ServletConfigAsyncDispatch implements ServletConfig {
+class FiberServletConfig implements ServletConfig {
     private final ServletConfig scon;
-    private final ServletContext sc;
+    private final FiberServletContext sc;
 
-    public ServletConfigAsyncDispatch(ServletConfig scon, ServletContext sc) {
+    public FiberServletConfig(ServletConfig scon, FiberServletContext sc) {
         this.scon = scon;
         this.sc = sc;
     }

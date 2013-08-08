@@ -12,7 +12,7 @@
  * as published by the Free Software Foundation.
  */
 /*
- * Based on javax.servlet.http.HttpServlet in Tomcat
+ * Based on javax.servlet.http.FiberHttpServlet in Tomcat
  * Copyright the Apache Software Foundation
  * Released under the ASF 2.0 license.
  */
@@ -48,7 +48,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 /**
  * Provides an abstract class to be subclassed to create
  * an HTTP servlet suitable for a Web site. A subclass of
- * <code>HttpServlet</code> must override at least
+ * <code>FiberHttpServlet</code> must override at least
  * one method, usually one of these:
  *
  * <ul>
@@ -86,7 +86,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
  * @author  Various
  * @version $Version$
  */
-public abstract class HttpServlet extends GenericServlet {
+public abstract class FiberHttpServlet extends FiberGenericServlet {
 
     private static final long serialVersionUID = 1L;
 
@@ -110,7 +110,7 @@ public abstract class HttpServlet extends GenericServlet {
     /**
      * Does nothing, because this is an abstract class.
      */
-    public HttpServlet() {
+    public FiberHttpServlet() {
         // NOOP
     }
 
@@ -739,6 +739,11 @@ public abstract class HttpServlet extends GenericServlet {
             throw new ServletException("non-HTTP request or response");
         }
         service(request, response);
+    }
+
+    @Override
+    FiberServletRequest wrapRequest(ServletRequest req) {
+        return new FiberHttpServletRequest((HttpServletRequest)req);
     }
 }
 class NoBodyResponse extends HttpServletResponseWrapper {

@@ -30,11 +30,11 @@ import javax.servlet.ServletResponse;
  *
  * @author eitan
  */
-public class ServletRequestAsyncDispatch implements ServletRequest {
+class FiberServletRequest implements ServletRequest {
     private final ServletRequest req;
     private final ServletContext servletContext;
 
-    public ServletRequestAsyncDispatch(ServletRequest req) {
+    public FiberServletRequest(ServletRequest req) {
         this.req = req;
         // Jetty (what about other containers?) nullifies the following values in the request
         // when the service method returns. If we want to access them in an async context (in
@@ -42,9 +42,9 @@ public class ServletRequestAsyncDispatch implements ServletRequest {
         servletContext = req.getServletContext();
     }
 
-    public RequestDispatcerAsyncDispatch getRequestDispatcher(String path) {
-        return new RequestDispatcerAsyncDispatch(path, req.getAsyncContext());
-//        return super.getRequestDispatcher(path);
+    @Override
+    public FiberRequestDispatcer getRequestDispatcher(String path) {
+        return new FiberRequestDispatcer(path, req.getAsyncContext());
     }
 
     javax.servlet.ServletRequest getReq() {
@@ -52,154 +52,192 @@ public class ServletRequestAsyncDispatch implements ServletRequest {
     }
 
     // Delegations
+    @Override
     public Object getAttribute(String name) {
         return req.getAttribute(name);
     }
 
+    @Override
     public Enumeration<String> getAttributeNames() {
         return req.getAttributeNames();
     }
 
+    @Override
     public String getCharacterEncoding() {
         return req.getCharacterEncoding();
     }
 
+    @Override
     public void setCharacterEncoding(String env) throws UnsupportedEncodingException {
         req.setCharacterEncoding(env);
     }
 
+    @Override
     public int getContentLength() {
         return req.getContentLength();
     }
 
+    @Override
     public String getContentType() {
         return req.getContentType();
     }
 
+    @Override
     public ServletInputStream getInputStream() throws IOException {
         return req.getInputStream();
     }
 
+    @Override
     public String getParameter(String name) {
         return req.getParameter(name);
     }
 
+    @Override
     public Enumeration<String> getParameterNames() {
         return req.getParameterNames();
     }
 
+    @Override
     public String[] getParameterValues(String name) {
         return req.getParameterValues(name);
     }
 
+    @Override
     public Map<String, String[]> getParameterMap() {
         return req.getParameterMap();
     }
 
+    @Override
     public String getProtocol() {
         return req.getProtocol();
     }
 
+    @Override
     public String getScheme() {
         return req.getScheme();
     }
 
+    @Override
     public String getServerName() {
         return req.getServerName();
     }
 
+    @Override
     public int getServerPort() {
         return req.getServerPort();
     }
 
+    @Override
     public BufferedReader getReader() throws IOException {
         return req.getReader();
     }
 
+    @Override
     public String getRemoteAddr() {
         return req.getRemoteAddr();
     }
 
+    @Override
     public String getRemoteHost() {
         return req.getRemoteHost();
     }
 
+    @Override
     public void setAttribute(String name, Object o) {
         req.setAttribute(name, o);
     }
 
+    @Override
     public void removeAttribute(String name) {
         req.removeAttribute(name);
     }
 
+    @Override
     public Locale getLocale() {
         return req.getLocale();
     }
 
+    @Override
     public Enumeration<Locale> getLocales() {
         return req.getLocales();
     }
 
+    @Override
     public boolean isSecure() {
         return req.isSecure();
     }
 
+    @Override
     public String getRealPath(String path) {
         return req.getRealPath(path);
     }
 
+    @Override
     public int getRemotePort() {
         return req.getRemotePort();
     }
 
+    @Override
     public String getLocalName() {
         return req.getLocalName();
     }
 
+    @Override
     public String getLocalAddr() {
         return req.getLocalAddr();
     }
 
+    @Override
     public int getLocalPort() {
         return req.getLocalPort();
     }
 
+    @Override
     public ServletContext getServletContext() {
         return servletContext;
     }
 
+    @Override
     public AsyncContext startAsync() throws IllegalStateException {
         throw new UnsupportedOperationException("you can't use startAsync mechanism from fiber.servlet");
     }
 
+    @Override
     public AsyncContext startAsync(javax.servlet.ServletRequest servletRequest, ServletResponse servletResponse) throws IllegalStateException {
         throw new UnsupportedOperationException("you can't use startAsync mechanism from fiber.servlet");
     }
 
+    @Override
     public boolean isAsyncStarted() {
         return req.isAsyncStarted();
     }
 
+    @Override
     public boolean isAsyncSupported() {
         return false;
     }
 
+    @Override
     public AsyncContext getAsyncContext() {
         return null;
     }
 
+    @Override
     public DispatcherType getDispatcherType() {
         return req.getDispatcherType();
     }
 
+    @Override
     public int hashCode() {
         return req.hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
         return req.equals(obj);
     }
 
+    @Override
     public String toString() {
         return req.toString();
     }

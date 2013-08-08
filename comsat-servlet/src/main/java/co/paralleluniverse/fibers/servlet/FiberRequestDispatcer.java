@@ -17,7 +17,6 @@ import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import javax.servlet.AsyncContext;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -29,77 +28,31 @@ import javax.servlet.http.HttpServletRequest;
  *
  * @author eitan
  */
-public class RequestDispatcerAsyncDispatch implements RequestDispatcher {
+class FiberRequestDispatcer implements RequestDispatcher {
     public static final String SLASH = "/";
     private final String path;
     private final AsyncContext ac;
 
-    public RequestDispatcerAsyncDispatch(String path, AsyncContext ac) {
+    public FiberRequestDispatcer(String path, AsyncContext ac) {
         this.path = path;
         this.ac = ac;
     }
 
     @Override
     public void forward(ServletRequest request, final ServletResponse response) throws ServletException, IOException {
-        ServletRequest baseReq = request instanceof HttpServletRequestAsyncDispatch ? ((HttpServletRequestAsyncDispatch) request).getReq() : request;
+        ServletRequest baseReq = ((FiberServletRequest) request).getReq();
         if (baseReq != ac.getRequest() || response != ac.getResponse())
-//            currAc = ac.getRequest().startAsync(request, response);
             throw new UnsupportedOperationException("Changing the request or the response in forward is not yet supported from fiber servlet");
-        try {
-            FiberUtil.runInFiberChecked(new SuspendableRunnable() {
-                @Override
-                public void run() throws SuspendExecution, InterruptedException {
-                    response.reset();
-                    ac.dispatch(relToAbs((HttpServletRequest) ac.getRequest(), path));
-
-//                    try {
-//                        new AsyncDispatcherCB() {
-//                            @Override
-//                            protected Void requestAsync(Fiber current, AsyncListener callback) {
-//                                currAc.addListener(callback);
-//                                response.reset();
-//                                currAc.dispatch(path);
-//                                return null;
-//                            }
-//                        }.run();
-//                    } catch (ServletException e) {
-//                        throw new RuntimeException(e);
-//                    }
-                }
-            }, ServletException.class);
-        } catch (InterruptedException e) {
-            throw new AssertionError(e); // REMOVE AFTER SYNC TO NEW QUASAR VERSION
-        }
+        response.reset();
+        if (ac.getRequest() instanceof HttpServletRequest)
+            ac.dispatch(relToAbs((HttpServletRequest) ac.getRequest(), path));
+        else
+            ac.dispatch(path); // TODO: think about relative forward in GenericServlet
     }
 
     @Override
     public void include(ServletRequest request, final ServletResponse response) throws ServletException {
         throw new UnsupportedOperationException("Include calls are not yet supported by fiber servlet");
-//        try {
-//            FiberUtil.runInFiberChecked(new SuspendableRunnable() {
-//                @Override
-//                public void run() throws SuspendExecution, InterruptedException {
-//                    try {
-//                        new AsyncDispatcherCB() {
-//                            @Override
-//                            protected Void requestAsync(Fiber current, AsyncListener callback) {
-//                                ac.addListener(callback);
-//                                Log.getLogger(RequestDispatcerAsyncDispatch.class).info("beforeDispatch");
-//                                ac.dispatch(path);
-//                                Log.getLogger(RequestDispatcerAsyncDispatch.class).info("afterDispatch");
-//                                return null;
-//                            }
-//                        }.run();
-//                    } catch (ServletException e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                }
-//            }, ServletException.class);
-//        } catch (ExecutionException e) {
-//            throw new AssertionError(e); // REMOVE AFTER SYNC TO NEW QUASAR VERSION
-//        } catch (InterruptedException e) {
-//            throw new AssertionError(e);
-//        }
     }
 
     public static String relToAbs(HttpServletRequest req, String rel) {
