@@ -13,6 +13,8 @@
  */
 package co.paralleluniverse.fibers.jersey;
 
+import co.paralleluniverse.common.util.Debug;
+import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
 import java.io.IOException;
@@ -51,7 +53,6 @@ public class ServletContainer extends FiberHttpServlet {
 
     //TODO - can't override final method
     public void _init(ServletConfig config) throws ServletException {
-        System.out.println("1");
         super.init(config);
     }
 
@@ -62,7 +63,14 @@ public class ServletContainer extends FiberHttpServlet {
 
     @Override
     public void suspendableService(ServletRequest req, ServletResponse res) throws ServletException, IOException, SuspendExecution {
-        jerseySC.service(req, res);
+        try {
+            jerseySC.service(req, res);
+        } catch (Exception ex ) {
+            ex.printStackTrace();
+            System.err.println(Thread.currentThread());                    
+            System.err.println(Fiber.currentFiber());                    
+            Debug.exit(0);
+        }
     }
 
     // Delegations
