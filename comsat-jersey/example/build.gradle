@@ -1,0 +1,72 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.7'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+// NetBeans will automatically add "run" and "debug" tasks relying on the
+// "mainClass" property. You may however define the property prior executing
+// tasks by passing a "-PmainClass=<QUALIFIED_CLASS_NAME>" argument.
+//
+// Note however, that you may define your own "run" and "debug" task if you
+// prefer. In this case NetBeans will not add these tasks but you may rely on
+// your own implementation.
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'com.example.JettyMain'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    // You may define additional repositories, or even remove "mavenCentral()".
+    // Read more about repositories here:
+    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:repositories
+}
+
+configurations {
+    quasar
+}
+    
+dependencies {
+    // TODO: Add dependencies here ...
+    // You can read more about how to add dependency here:
+    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:how_to_declare_your_dependencies
+    testCompile group: 'junit', name: 'junit', version: '4.10'
+    compile 'org.eclipse.jetty:jetty-server:9.0.4.v20130625'
+    compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
+//    compile 'org.sonatype.sisu.inject:cglib:3.0'
+//    compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
+//        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+//        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+////org.glassfish.hk2.external:cglib:2.2.0-b10
+//    }
+//    compile ('org.glassfish.jersey.core:jersey-client:2.1') {
+//        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+//        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+//    }
+    compile 'co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT'
+    compile 'co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT'
+//        exclude group: 'co.paralleluniverse', module: 'quasar-core'
+//        exclude group: 'org.ow2.asm', module: '*'
+//org.ow2.asm
+    quasar  "co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT"
+}
+configurations.all {
+    resolutionStrategy {
+        failOnVersionConflict()
+
+        //            force "org.ow2.asm:asm:4.1"
+        //            force "org.ow2.asm:asm-analysis:4.1"
+        //            force "org.ow2.asm:asm-tree:4.1"
+        //            force "org.ow2.asm:asm-util:4.1"
+        //            force "com.google.guava:guava:14.0.1"
+                    force "org.slf4j:slf4j-api:1.7.5"
+        //            force "log4j:log4j:1.2.16"
+        //            force "junit:junit:4.10"
+    }
+}
+tasks.withType(JavaExec) {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+    jvmArgs "-ea"
+    systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+    systemProperty "log4j.configurationFile", "${projectDir}/log4j.xml"
+}
