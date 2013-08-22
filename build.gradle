@@ -160,7 +160,14 @@ project (':comsat-core') {
 project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
+        
+        compile ('org.glassfish.jersey.core:jersey-client:2.2') {
+            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+        }
+        compile 'com.ning:async-http-client:1.7.19'
     }
+    
 }
 
 project (':comsat-httpclient') {
