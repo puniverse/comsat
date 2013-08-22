@@ -1,20 +1,18 @@
 package com.example;
 
 import co.paralleluniverse.common.benchmark.StripedHistogram;
+import co.paralleluniverse.common.benchmark.StripedLongTimeSeries;
 import co.paralleluniverse.common.benchmark.StripedTimeSeries;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.io.FiberFileChannel;
-import co.paralleluniverse.strands.Strand;
-import co.paralleluniverse.strands.SuspendableRunnable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-
+import org.HdrHistogram.HistogramData;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
@@ -23,21 +21,22 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 
 public class ASFClient {
-    private final static int size = 30;
+    private final static int size = 100;
+    private final static AtomicInteger ai = new AtomicInteger();
 //    private static final String URI = "http://localhost:8080/myresource";
-//    private static final String URI = "http://localhost:8080/fiber/hello";
-    private static final String URI = "http://localhost:8080/helloworld";
+    private static final String URI = "http://localhost:8080/fiber/hello";
+//    private static final String URI = "http://localhost:8080/helloworld";
 //    private static final String URI = "http://localhost:8080/sync/hello";
 //    private static final String URI = "http://localhost:8080/async/hello";
-    private static final int fibers = 20;
+    private static final int fibers = 5;
 
     public static void main(final String[] args) throws Exception {
-        final StripedTimeSeries<Long> sts = new StripedTimeSeries<Long>(100000, false);
+        final StripedLongTimeSeries sts = new StripedLongTimeSeries(100000, false);
         final StripedHistogram sh = new StripedHistogram(1500000L, 5);
 
         final RequestConfig requestConfig = RequestConfig.custom()
-                .setSocketTimeout(3000)
-                .setConnectTimeout(3000).build();
+                .setSocketTimeout(10000)
+                .setConnectTimeout(10000).build();
         try (CloseableHttpAsyncClient httpclient = HttpAsyncClients.custom()
                         .setDefaultRequestConfig(requestConfig)
                         .build()) {
@@ -49,28 +48,67 @@ public class ASFClient {
 
 
             for (int i = 0; i < fibers; i++) {
-                new Fiber<Void>(new SuspendableRunnable() {
+                Thread thread = new Thread(new Runnable() {
                     @Override
-                    public void run() throws SuspendExecution, InterruptedException {
+                    public void run() {
                         for (int j = 0; j < size; j++) {
-                            long start = System.nanoTime();
-                            FiberExececute(httpclient, URI);
-                            final long latency = (System.nanoTime() - start) / 1000;
-                            sts.record(start, latency);
-                            sh.recordValue(latency);
-                            Strand.sleep(10);
-                            latch.countDown();
+                            try {
+                                long start = System.nanoTime();
+                                
+                                httpclient.execute(new HttpGet(URI), new FutureCallback<HttpResponse>() {
+                                    @Override
+                                    public void completed(HttpResponse result) {
+                                        latch.countDown();
+                                    }
+
+                                    @Override
+                                    public void failed(Exception ex) {
+                                        System.out.println(ex);
+                                        latch.countDown();
+                                    }
+
+                                    @Override
+                                    public void cancelled() {
+                                        System.out.println("cancelled");
+                                        latch.countDown();
+                                    }
+                                }).get(1000, TimeUnit.MILLISECONDS);
+                                final long latency = (System.nanoTime() - start) / 1000;
+                                sts.record(start, latency);
+                                sh.recordValue(latency);
+                                ai.incrementAndGet();
+                                Thread.sleep(10);
+                            } catch (InterruptedException | ExecutionException | TimeoutException ex) {
+                                Logger.getLogger(ASFClient.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
                     }
-                }).start();
+                });
+                thread.setDaemon(true);
+                thread.start();
+                //                new Fiber<Void>(new SuspendableRunnable() {
+                //                    @Override
+                //                    public void run() throws SuspendExecution, InterruptedException {
+                //                        for (int j = 0; j < size; j++) {
+                //                            long start = System.nanoTime();
+                //                            FiberExececute(httpclient, URI);
+                //                            final long latency = (System.nanoTime() - start) / 1000;
+                //                            sts.record(start, latency);
+                //                            sh.recordValue(latency);
+                //                            Strand.sleep(10);
+                //                            latch.countDown();
+                //                        }
+                //                    }
+                //                }).start();
             }
             latch.await(20000, TimeUnit.MILLISECONDS);
-            System.out.println("Done " + latch.getCount());
+            System.out.println("Done " + latch.getCount() + " , " + (fibers * size - ai.get()));
         }
 
-        for (StripedTimeSeries.Record rec : sts.getRecords())
+        for (StripedLongTimeSeries.Record rec : sts.getRecords())
             System.out.println("STS: " + rec.timestamp + " " + rec.value);
-        sh.getHistogramData().outputPercentileDistribution(System.out, 5, 1.0);
+        final HistogramData hd = sh.getHistogramData(); // sh.getHistogramDataCorrectedForCoordinatedOmission(10 * 1000);
+        hd.outputPercentileDistribution(System.out, 5, 1.0);
     }
 
     public static HttpResponse FiberExececute(final CloseableHttpAsyncClient httpclient, final String URI) throws SuspendExecution {
