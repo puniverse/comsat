@@ -174,10 +174,8 @@ public class FiberHttpClient extends CloseableHttpClient {
         final URI requestURI = request.getURI();
         if (requestURI.isAbsolute()) {
             target = URIUtils.extractHost(requestURI);
-            if (target == null) {
-                throw new ClientProtocolException("URI does not specify a valid host name: "
-                        + requestURI);
-            }
+            if (target == null)
+                throw new ClientProtocolException("URI does not specify a valid host name: " + requestURI);
         }
         return target;
     }
