@@ -1,2 +1,2 @@
 rootProject.name = 'comsat'
-include 'comsat-core','comsat-jersey','comsat-servlet','comsat-jax-rs-client'
+include 'comsat-core','comsat-jersey','comsat-servlet','comsat-jax-rs-client','comsat-httpclient'

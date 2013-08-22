@@ -41,6 +41,8 @@ subprojects {
             force "org.slf4j:slf4j-api:1.7.5"
             force "log4j:log4j:1.2.16"
             force "junit:junit:4.10"
+            force "org.apache.httpcomponents:httpcore:4.3"
+            force "org.apache.httpcomponents:httpclient:4.3-beta2"
         }
     }
 
@@ -158,6 +160,14 @@ project (':comsat-core') {
 project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
+    }
+}
+
+project (':comsat-httpclient') {
+    dependencies {
+        compile 'org.apache.httpcomponents:httpcore:4.3'
+        compile 'org.apache.httpcomponents:httpclient:4.3-beta2'
+        compile 'org.apache.httpcomponents:httpasyncclient:4.0-beta4'
     }
 }
 
