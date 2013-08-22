@@ -33,21 +33,15 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.10'
     compile 'org.eclipse.jetty:jetty-server:9.0.4.v20130625'
     compile 'org.eclipse.jetty:jetty-servlet:9.0.4.v20130625'
-//    compile 'org.sonatype.sisu.inject:cglib:3.0'
-//    compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
-//        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
-//        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-////org.glassfish.hk2.external:cglib:2.2.0-b10
-//    }
-//    compile ('org.glassfish.jersey.core:jersey-client:2.1') {
-//        exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
-//        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-//    }
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.0-RC1'
+    compile 'org.apache.tomcat.embed:tomcat-embed-logging-juli:8.0.0-RC1'
+    compile 'org.apache.tomcat.embed:tomcat-embed-logging-log4j:8.0.0-RC1'
+    compile 'org.apache.tomcat.embed:tomcat-embed-jasper:8.0.0-RC1'
+    compile 'org.apache.httpcomponents:httpasyncclient:4.0-beta4'
+//    compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.2'
+    //
     compile 'co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT'
     compile 'co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT'
-//        exclude group: 'co.paralleluniverse', module: 'quasar-core'
-//        exclude group: 'org.ow2.asm', module: '*'
-//org.ow2.asm
     quasar  "co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT"
 }
 configurations.all {
@@ -59,7 +53,10 @@ configurations.all {
         //            force "org.ow2.asm:asm-tree:4.1"
         //            force "org.ow2.asm:asm-util:4.1"
         //            force "com.google.guava:guava:14.0.1"
-                    force "org.slf4j:slf4j-api:1.7.5"
+//        force "org.glassfish.jersey.core:jersey-common:2.2"
+//        force "org.glassfish.jersey.core:jersey-client:2.2"
+        force "org.slf4j:slf4j-api:1.7.5"
+        force "org.apache.httpcomponents:httpcore:4.3-beta2"
         //            force "log4j:log4j:1.2.16"
         //            force "junit:junit:4.10"
     }
@@ -67,6 +64,6 @@ configurations.all {
 tasks.withType(JavaExec) {
     jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
     jvmArgs "-ea"
-    systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+    //    systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
     systemProperty "log4j.configurationFile", "${projectDir}/log4j.xml"
 }

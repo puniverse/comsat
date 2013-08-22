@@ -170,11 +170,11 @@ project (':comsat-jersey') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.0' // instead of old cglib in jersey
-        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.1' ) {
+        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.2' ) {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
-        compile ('org.glassfish.jersey.core:jersey-client:2.1') {
+        compile ('org.glassfish.jersey.core:jersey-client:2.2') {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }

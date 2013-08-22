@@ -51,11 +51,14 @@ public abstract class FiberGenericServlet extends GenericServlet {
 
     @Override
     public final void service(final ServletRequest req, final ServletResponse res) {
+        final long st = System.nanoTime();
+        req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         final AsyncContext ac = req.startAsync();
         final FiberServletRequest srad = wrapRequest(req);
         new Fiber(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
+                long rt = System.nanoTime();
                 try {
                     currentAsyncContext.set(ac);
                     suspendableService(srad, res);
@@ -65,14 +68,16 @@ public abstract class FiberGenericServlet extends GenericServlet {
                     if (req.isAsyncStarted())
                         ac.complete();
                     currentAsyncContext.set(null);
+                    final long ct = System.nanoTime();
+                    System.out.println("FGS complete " + ((double)(ct-rt))/1e6 +" "+((double)(rt-st))/1e6);
                 }
             }
-        }).inheritThreadLocals().start();
+        }).start();
     }
 
     /**
      * Called by the servlet container to allow the servlet to respond to
-     * a request. See {@link Servlet#service}. This methods may call 
+     * a request. See {@link Servlet#service}. This methods may call
      * suspendable functions since it runs in Fiber context
      *
      * <p>This method is declared abstract so subclasses, such as

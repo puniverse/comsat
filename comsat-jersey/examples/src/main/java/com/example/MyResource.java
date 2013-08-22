@@ -30,11 +30,11 @@ public class MyResource {
     @GET
     @Produces(MediaType.TEXT_HTML)
     public String getIt() throws SuspendExecution, InterruptedException {
-        System.out.println("=== bef: "+Thread.currentThread() +" "+
-                Fiber.currentFiber() +" "+ ThreadUtil.getThreadLocalsString());
+//        System.out.println("=== bef: "+Thread.currentThread() +" "+
+//                Fiber.currentFiber() +" "+ ThreadUtil.getThreadLocalsString());
         Strand.sleep(100);
-        System.out.println("=== aft: "+Thread.currentThread() +" "+
-                Fiber.currentFiber() +" "+ ThreadUtil.getThreadLocalsString());
+//        System.out.println("=== aft: "+Thread.currentThread() +" "+
+//                Fiber.currentFiber() +" "+ ThreadUtil.getThreadLocalsString());
         URL url = Resources.getResource("index.html");
         try {
             String text = Resources.toString(url, Charsets.UTF_8);

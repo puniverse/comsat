@@ -3,11 +3,11 @@
   <appenders>
     <Console name="Console" target="SYSTEM_ERR">
       <!-- ThreadContext: %x = stack, %X = map-->
-      <PatternLayout pattern="%d{HH:mm:ss.SSS} %highlight{[%t] %30logger{2} [%-5level]} %X %msg %throwable{5}%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} %highlight{[%t] %30logger{2} [%-5level]} %X %msg %throwable{50}%n"/>
     </Console>
   </appenders>
   <loggers>
-    <root level="WARN">
+    <root level="INFO">
       <appender-ref ref="Console"/>
     </root>
     <!--<logger name="co.paralleluniverse.galaxy.core.StringRootManager" level="DEBUG"/>-->
