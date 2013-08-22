@@ -2,7 +2,6 @@ package com.example;
 
 import co.paralleluniverse.common.benchmark.StripedHistogram;
 import co.paralleluniverse.common.benchmark.StripedLongTimeSeries;
-import co.paralleluniverse.common.benchmark.StripedTimeSeries;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.util.concurrent.CountDownLatch;
@@ -21,14 +20,14 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 
 public class ASFClient {
-    private final static int size = 100;
+    private final static int size = 10;
     private final static AtomicInteger ai = new AtomicInteger();
 //    private static final String URI = "http://localhost:8080/myresource";
     private static final String URI = "http://localhost:8080/fiber/hello";
 //    private static final String URI = "http://localhost:8080/helloworld";
 //    private static final String URI = "http://localhost:8080/sync/hello";
 //    private static final String URI = "http://localhost:8080/async/hello";
-    private static final int fibers = 5;
+    private static final int fibers = 20;
 
     public static void main(final String[] args) throws Exception {
         final StripedLongTimeSeries sts = new StripedLongTimeSeries(100000, false);
@@ -42,9 +41,8 @@ public class ASFClient {
                         .build()) {
             httpclient.start();
 
-
             final CountDownLatch latch = new CountDownLatch(fibers * size);
-//            final CountDownLatch latch = new CountDownLatch(size);
+            //            final CountDownLatch latch = new CountDownLatch(size);
 
 
             for (int i = 0; i < fibers; i++) {
@@ -54,34 +52,41 @@ public class ASFClient {
                         for (int j = 0; j < size; j++) {
                             try {
                                 long start = System.nanoTime();
-                                
-                                httpclient.execute(new HttpGet(URI), new FutureCallback<HttpResponse>() {
-                                    @Override
-                                    public void completed(HttpResponse result) {
-                                        latch.countDown();
-                                    }
-
-                                    @Override
-                                    public void failed(Exception ex) {
-                                        System.out.println(ex);
-                                        latch.countDown();
-                                    }
-
-                                    @Override
-                                    public void cancelled() {
-                                        System.out.println("cancelled");
-                                        latch.countDown();
-                                    }
-                                }).get(1000, TimeUnit.MILLISECONDS);
+                                asyncToSync();
                                 final long latency = (System.nanoTime() - start) / 1000;
                                 sts.record(start, latency);
                                 sh.recordValue(latency);
                                 ai.incrementAndGet();
                                 Thread.sleep(10);
-                            } catch (InterruptedException | ExecutionException | TimeoutException ex) {
+                            } catch (ExecutionException ex) {
+                                Logger.getLogger(ASFClient.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (TimeoutException ex) {
+                                Logger.getLogger(ASFClient.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (InterruptedException ex) {
                                 Logger.getLogger(ASFClient.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         }
+                    }
+
+                    private void asyncToSync() throws ExecutionException, TimeoutException, InterruptedException {
+                        httpclient.execute(new HttpGet(URI), new FutureCallback<HttpResponse>() {
+                            @Override
+                            public void completed(HttpResponse result) {
+                                latch.countDown();
+                            }
+
+                            @Override
+                            public void failed(Exception ex) {
+                                System.out.println(ex);
+                                latch.countDown();
+                            }
+
+                            @Override
+                            public void cancelled() {
+                                System.out.println("cancelled");
+                                latch.countDown();
+                            }
+                        }).get();
                     }
                 });
                 thread.setDaemon(true);

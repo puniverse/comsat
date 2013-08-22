@@ -37,8 +37,11 @@ dependencies {
     compile 'org.apache.tomcat.embed:tomcat-embed-logging-juli:8.0.0-RC1'
     compile 'org.apache.tomcat.embed:tomcat-embed-logging-log4j:8.0.0-RC1'
     compile 'org.apache.tomcat.embed:tomcat-embed-jasper:8.0.0-RC1'
+    //    compile 'org.apache.httpcomponents:httpcore:4.3'
+    //    compile 'org.apache.httpcomponents:httpclient:4.3-beta2'
     compile 'org.apache.httpcomponents:httpasyncclient:4.0-beta4'
-//    compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.2'
+    compile 'com.ning:async-http-client:1.7.19'
+    //    compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.2'
     //
     compile 'co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT'
     compile 'co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT'
@@ -53,10 +56,12 @@ configurations.all {
         //            force "org.ow2.asm:asm-tree:4.1"
         //            force "org.ow2.asm:asm-util:4.1"
         //            force "com.google.guava:guava:14.0.1"
-//        force "org.glassfish.jersey.core:jersey-common:2.2"
-//        force "org.glassfish.jersey.core:jersey-client:2.2"
+        //        force "org.glassfish.jersey.core:jersey-common:2.2"
+        //        force "org.glassfish.jersey.core:jersey-client:2.2"
         force "org.slf4j:slf4j-api:1.7.5"
         force "org.apache.httpcomponents:httpcore:4.3-beta2"
+        ////        force "org.apache.httpcomponents:httpcore:4.3"
+        //        force "org.apache.httpcomponents:httpclient:4.3-beta2"
         //            force "log4j:log4j:1.2.16"
         //            force "junit:junit:4.10"
     }

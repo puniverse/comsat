@@ -8,6 +8,9 @@ archives - Configuration for archive artifacts.
 No dependencies
 
 compile - Classpath for compiling the main sources.
+Download http://repo1.maven.org/maven2/com/ning/async-http-client/1.7.19/async-http-client-1.7.19.pom
+Download http://repo1.maven.org/maven2/org/sonatype/oss/oss-parent/5/oss-parent-5.pom
+Download http://repo1.maven.org/maven2/io/netty/netty/3.6.6.Final/netty-3.6.6.Final.pom
 +--- org.eclipse.jetty:jetty-server:9.0.4.v20130625
 |    +--- org.eclipse.jetty.orbit:javax.servlet:3.0.0.v201112011016
 |    +--- org.eclipse.jetty:jetty-http:9.0.4.v20130625
@@ -32,6 +35,9 @@ compile - Classpath for compiling the main sources.
 |    |    +--- commons-logging:commons-logging:1.1.1
 |    |    \--- commons-codec:commons-codec:1.6
 |    \--- commons-logging:commons-logging:1.1.1
++--- com.ning:async-http-client:1.7.19
+|    +--- io.netty:netty:3.6.6.Final
+|    \--- org.slf4j:slf4j-api:1.7.5
 +--- co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT
 |    +--- co.paralleluniverse:comsat-servlet:0.1.0-SNAPSHOT
 |    |    +--- javax.servlet:javax.servlet-api:3.0.1
@@ -61,46 +67,45 @@ compile - Classpath for compiling the main sources.
 |    |         |    \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    |         \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
+|    +--- org.glassfish.jersey.containers:jersey-container-servlet:2.2
+|    |    +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.2
+|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    +--- org.glassfish.jersey.core:jersey-server:2.2
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- javax.annotation:javax.annotation-api:1.2
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14
+|    |    |    |    |    |    +--- javax.inject:javax.inject:1
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14
+|    |    |    |    |    |         \--- javax.inject:javax.inject:1
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14 (*)
+|    |    |    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-client:2.2
+|    |    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    \--- javax.validation:validation-api:1.1.0.Final
+|    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    +--- org.glassfish.jersey.core:jersey-server:2.2 (*)
+|    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
 |    +--- org.sonatype.sisu.inject:cglib:3.0
 |    |    \--- org.ow2.asm:asm:4.1
-|    +--- org.glassfish.jersey.core:jersey-client:2.1
-|    |    +--- org.glassfish.jersey.core:jersey-common:2.1
-|    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    |    +--- javax.annotation:javax.annotation-api:1.2
-|    |    |    +--- com.google.guava:guava:14.0.1
-|    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    |    |    +--- javax.inject:javax.inject:1
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10
-|    |    |    |         \--- javax.inject:javax.inject:1
-|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10 (*)
-|    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    +--- com.google.guava:guava:14.0.1
-|    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|    \--- org.glassfish.jersey.containers:jersey-container-servlet:2.1
-|         +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.1
-|         |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    +--- org.glassfish.jersey.core:jersey-server:2.1
-|         |    |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    |    +--- org.glassfish.jersey.core:jersey-client:2.1 (*)
-|         |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|         |    |    +--- com.google.guava:guava:14.0.1
-|         |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|         |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|         |    |    \--- javax.validation:validation-api:1.1.0.Final
-|         |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    \--- javax.ws.rs:javax.ws.rs-api:2.0
-|         +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         +--- org.glassfish.jersey.core:jersey-server:2.1 (*)
-|         \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    \--- org.glassfish.jersey.core:jersey-client:2.2 (*)
 \--- co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT
      +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
      \--- javax.ws.rs:javax.ws.rs-api:2.0
@@ -130,6 +135,9 @@ default - Configuration for default artifacts.
 |    |    +--- commons-logging:commons-logging:1.1.1
 |    |    \--- commons-codec:commons-codec:1.6
 |    \--- commons-logging:commons-logging:1.1.1
++--- com.ning:async-http-client:1.7.19
+|    +--- io.netty:netty:3.6.6.Final
+|    \--- org.slf4j:slf4j-api:1.7.5
 +--- co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT
 |    +--- co.paralleluniverse:comsat-servlet:0.1.0-SNAPSHOT
 |    |    +--- javax.servlet:javax.servlet-api:3.0.1
@@ -159,46 +167,45 @@ default - Configuration for default artifacts.
 |    |         |    \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    |         \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
+|    +--- org.glassfish.jersey.containers:jersey-container-servlet:2.2
+|    |    +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.2
+|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    +--- org.glassfish.jersey.core:jersey-server:2.2
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- javax.annotation:javax.annotation-api:1.2
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14
+|    |    |    |    |    |    +--- javax.inject:javax.inject:1
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14
+|    |    |    |    |    |         \--- javax.inject:javax.inject:1
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14 (*)
+|    |    |    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-client:2.2
+|    |    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    \--- javax.validation:validation-api:1.1.0.Final
+|    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    +--- org.glassfish.jersey.core:jersey-server:2.2 (*)
+|    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
 |    +--- org.sonatype.sisu.inject:cglib:3.0
 |    |    \--- org.ow2.asm:asm:4.1
-|    +--- org.glassfish.jersey.core:jersey-client:2.1
-|    |    +--- org.glassfish.jersey.core:jersey-common:2.1
-|    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    |    +--- javax.annotation:javax.annotation-api:1.2
-|    |    |    +--- com.google.guava:guava:14.0.1
-|    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    |    |    +--- javax.inject:javax.inject:1
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10
-|    |    |    |         \--- javax.inject:javax.inject:1
-|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10 (*)
-|    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    +--- com.google.guava:guava:14.0.1
-|    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|    \--- org.glassfish.jersey.containers:jersey-container-servlet:2.1
-|         +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.1
-|         |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    +--- org.glassfish.jersey.core:jersey-server:2.1
-|         |    |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    |    +--- org.glassfish.jersey.core:jersey-client:2.1 (*)
-|         |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|         |    |    +--- com.google.guava:guava:14.0.1
-|         |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|         |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|         |    |    \--- javax.validation:validation-api:1.1.0.Final
-|         |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    \--- javax.ws.rs:javax.ws.rs-api:2.0
-|         +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         +--- org.glassfish.jersey.core:jersey-server:2.1 (*)
-|         \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    \--- org.glassfish.jersey.core:jersey-client:2.2 (*)
 \--- co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT
      +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
      \--- javax.ws.rs:javax.ws.rs-api:2.0
@@ -255,6 +262,9 @@ runtime - Classpath for running the compiled main classes.
 |    |    +--- commons-logging:commons-logging:1.1.1
 |    |    \--- commons-codec:commons-codec:1.6
 |    \--- commons-logging:commons-logging:1.1.1
++--- com.ning:async-http-client:1.7.19
+|    +--- io.netty:netty:3.6.6.Final
+|    \--- org.slf4j:slf4j-api:1.7.5
 +--- co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT
 |    +--- co.paralleluniverse:comsat-servlet:0.1.0-SNAPSHOT
 |    |    +--- javax.servlet:javax.servlet-api:3.0.1
@@ -284,46 +294,45 @@ runtime - Classpath for running the compiled main classes.
 |    |         |    \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    |         \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
+|    +--- org.glassfish.jersey.containers:jersey-container-servlet:2.2
+|    |    +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.2
+|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    +--- org.glassfish.jersey.core:jersey-server:2.2
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- javax.annotation:javax.annotation-api:1.2
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14
+|    |    |    |    |    |    +--- javax.inject:javax.inject:1
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14
+|    |    |    |    |    |         \--- javax.inject:javax.inject:1
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14 (*)
+|    |    |    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-client:2.2
+|    |    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    \--- javax.validation:validation-api:1.1.0.Final
+|    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    +--- org.glassfish.jersey.core:jersey-server:2.2 (*)
+|    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
 |    +--- org.sonatype.sisu.inject:cglib:3.0
 |    |    \--- org.ow2.asm:asm:4.1
-|    +--- org.glassfish.jersey.core:jersey-client:2.1
-|    |    +--- org.glassfish.jersey.core:jersey-common:2.1
-|    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    |    +--- javax.annotation:javax.annotation-api:1.2
-|    |    |    +--- com.google.guava:guava:14.0.1
-|    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    |    |    +--- javax.inject:javax.inject:1
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10
-|    |    |    |         \--- javax.inject:javax.inject:1
-|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10 (*)
-|    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    +--- com.google.guava:guava:14.0.1
-|    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|    \--- org.glassfish.jersey.containers:jersey-container-servlet:2.1
-|         +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.1
-|         |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    +--- org.glassfish.jersey.core:jersey-server:2.1
-|         |    |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    |    +--- org.glassfish.jersey.core:jersey-client:2.1 (*)
-|         |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|         |    |    +--- com.google.guava:guava:14.0.1
-|         |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|         |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|         |    |    \--- javax.validation:validation-api:1.1.0.Final
-|         |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    \--- javax.ws.rs:javax.ws.rs-api:2.0
-|         +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         +--- org.glassfish.jersey.core:jersey-server:2.1 (*)
-|         \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    \--- org.glassfish.jersey.core:jersey-client:2.2 (*)
 \--- co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT
      +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
      \--- javax.ws.rs:javax.ws.rs-api:2.0
@@ -353,6 +362,9 @@ testCompile - Classpath for compiling the test sources.
 |    |    +--- commons-logging:commons-logging:1.1.1
 |    |    \--- commons-codec:commons-codec:1.6
 |    \--- commons-logging:commons-logging:1.1.1
++--- com.ning:async-http-client:1.7.19
+|    +--- io.netty:netty:3.6.6.Final
+|    \--- org.slf4j:slf4j-api:1.7.5
 +--- co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT
 |    +--- co.paralleluniverse:comsat-servlet:0.1.0-SNAPSHOT
 |    |    +--- javax.servlet:javax.servlet-api:3.0.1
@@ -382,46 +394,45 @@ testCompile - Classpath for compiling the test sources.
 |    |         |    \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    |         \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
+|    +--- org.glassfish.jersey.containers:jersey-container-servlet:2.2
+|    |    +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.2
+|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    +--- org.glassfish.jersey.core:jersey-server:2.2
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- javax.annotation:javax.annotation-api:1.2
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14
+|    |    |    |    |    |    +--- javax.inject:javax.inject:1
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14
+|    |    |    |    |    |         \--- javax.inject:javax.inject:1
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14 (*)
+|    |    |    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-client:2.2
+|    |    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    \--- javax.validation:validation-api:1.1.0.Final
+|    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    +--- org.glassfish.jersey.core:jersey-server:2.2 (*)
+|    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
 |    +--- org.sonatype.sisu.inject:cglib:3.0
 |    |    \--- org.ow2.asm:asm:4.1
-|    +--- org.glassfish.jersey.core:jersey-client:2.1
-|    |    +--- org.glassfish.jersey.core:jersey-common:2.1
-|    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    |    +--- javax.annotation:javax.annotation-api:1.2
-|    |    |    +--- com.google.guava:guava:14.0.1
-|    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    |    |    +--- javax.inject:javax.inject:1
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10
-|    |    |    |         \--- javax.inject:javax.inject:1
-|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10 (*)
-|    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    +--- com.google.guava:guava:14.0.1
-|    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|    \--- org.glassfish.jersey.containers:jersey-container-servlet:2.1
-|         +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.1
-|         |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    +--- org.glassfish.jersey.core:jersey-server:2.1
-|         |    |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    |    +--- org.glassfish.jersey.core:jersey-client:2.1 (*)
-|         |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|         |    |    +--- com.google.guava:guava:14.0.1
-|         |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|         |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|         |    |    \--- javax.validation:validation-api:1.1.0.Final
-|         |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    \--- javax.ws.rs:javax.ws.rs-api:2.0
-|         +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         +--- org.glassfish.jersey.core:jersey-server:2.1 (*)
-|         \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    \--- org.glassfish.jersey.core:jersey-client:2.2 (*)
 +--- co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT
 |    +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
 |    \--- javax.ws.rs:javax.ws.rs-api:2.0
@@ -453,6 +464,9 @@ testRuntime - Classpath for running the compiled test classes.
 |    |    +--- commons-logging:commons-logging:1.1.1
 |    |    \--- commons-codec:commons-codec:1.6
 |    \--- commons-logging:commons-logging:1.1.1
++--- com.ning:async-http-client:1.7.19
+|    +--- io.netty:netty:3.6.6.Final
+|    \--- org.slf4j:slf4j-api:1.7.5
 +--- co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT
 |    +--- co.paralleluniverse:comsat-servlet:0.1.0-SNAPSHOT
 |    |    +--- javax.servlet:javax.servlet-api:3.0.1
@@ -482,46 +496,45 @@ testRuntime - Classpath for running the compiled test classes.
 |    |         |    \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    |         \--- org.apache.logging.log4j:log4j-api:2.0-beta6
 |    +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
+|    +--- org.glassfish.jersey.containers:jersey-container-servlet:2.2
+|    |    +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.2
+|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    +--- org.glassfish.jersey.core:jersey-server:2.2
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- javax.annotation:javax.annotation-api:1.2
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14
+|    |    |    |    |    |    +--- javax.inject:javax.inject:1
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14
+|    |    |    |    |    |         \--- javax.inject:javax.inject:1
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b14 (*)
+|    |    |    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
+|    |    |    |    +--- org.glassfish.jersey.core:jersey-client:2.2
+|    |    |    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    |    |    +--- com.google.guava:guava:14.0.1
+|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b14 (*)
+|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b14
+|    |    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b14 (*)
+|    |    |    |    \--- javax.validation:validation-api:1.1.0.Final
+|    |    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    |    +--- org.glassfish.jersey.core:jersey-common:2.2 (*)
+|    |    +--- org.glassfish.jersey.core:jersey-server:2.2 (*)
+|    |    \--- javax.ws.rs:javax.ws.rs-api:2.0
 |    +--- org.sonatype.sisu.inject:cglib:3.0
 |    |    \--- org.ow2.asm:asm:4.1
-|    +--- org.glassfish.jersey.core:jersey-client:2.1
-|    |    +--- org.glassfish.jersey.core:jersey-common:2.1
-|    |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    |    +--- javax.annotation:javax.annotation-api:1.2
-|    |    |    +--- com.google.guava:guava:14.0.1
-|    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    |    |    +--- javax.inject:javax.inject:1
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10
-|    |    |    |         \--- javax.inject:javax.inject:1
-|    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    |    |    \--- org.glassfish.hk2:hk2-utils:2.2.0-b10 (*)
-|    |    |    \--- org.glassfish.hk2:osgi-resource-locator:1.0.1
-|    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|    |    +--- com.google.guava:guava:14.0.1
-|    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|    |    \--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|    \--- org.glassfish.jersey.containers:jersey-container-servlet:2.1
-|         +--- org.glassfish.jersey.containers:jersey-container-servlet-core:2.1
-|         |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    +--- org.glassfish.jersey.core:jersey-server:2.1
-|         |    |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    |    +--- org.glassfish.jersey.core:jersey-client:2.1 (*)
-|         |    |    +--- javax.ws.rs:javax.ws.rs-api:2.0
-|         |    |    +--- com.google.guava:guava:14.0.1
-|         |    |    +--- org.glassfish.hk2:hk2-api:2.2.0-b10 (*)
-|         |    |    +--- org.glassfish.hk2.external:javax.inject:2.2.0-b10
-|         |    |    +--- org.glassfish.hk2:hk2-locator:2.2.0-b10 (*)
-|         |    |    \--- javax.validation:validation-api:1.1.0.Final
-|         |    +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         |    \--- javax.ws.rs:javax.ws.rs-api:2.0
-|         +--- org.glassfish.jersey.core:jersey-common:2.1 (*)
-|         +--- org.glassfish.jersey.core:jersey-server:2.1 (*)
-|         \--- javax.ws.rs:javax.ws.rs-api:2.0
+|    \--- org.glassfish.jersey.core:jersey-client:2.2 (*)
 +--- co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT
 |    +--- co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT (*)
 |    \--- javax.ws.rs:javax.ws.rs-api:2.0
@@ -532,4 +545,4 @@ testRuntime - Classpath for running the compiled test classes.
 
 BUILD SUCCESSFUL
 
-Total time: 7.769 secs
+Total time: 11.4 secs
