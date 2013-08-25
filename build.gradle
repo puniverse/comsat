@@ -63,6 +63,9 @@ subprojects {
         classifier = 'sources'
         from sourceSets.main.allSource
     }
+    javadoc {
+        options.links 'http://docs.oracle.com/javaee/7/api/'
+    }
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
         from javadoc.destinationDir

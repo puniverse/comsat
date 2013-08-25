@@ -12,7 +12,7 @@
  * as published by the Free Software Foundation.
  */
 /*
- * Based on javax.servlet.http.FiberHttpServlet in Tomcat
+ * Based on javax.servlet.http.HttpServlet in Tomcat
  * Copyright the Apache Software Foundation
  * Released under the ASF 2.0 license.
  */
@@ -61,7 +61,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
  * <li> <code>getServletInfo</code>, which the servlet uses to
  * provide information about itself
  * </ul>
- *
+ * These methods may use suspendable calls since it runs in fiber context. 
  * <p>There's almost no reason to override the <code>service</code>
  * method. <code>service</code> handles standard HTTP
  * requests by dispatching them to the handler methods
@@ -879,15 +879,4 @@ class NoBodyOutputStream extends ServletOutputStream {
 
         contentLength += len;
     }
-
-//    @Override
-//    public boolean isReady() {
-//        // TODO SERVLET 3.1
-//        return false;
-//    }
-//
-//    @Override
-//    public void setWriteListener(javax.servlet.WriteListener listener) {
-//        // TODO SERVLET 3.1
-//    }
 }

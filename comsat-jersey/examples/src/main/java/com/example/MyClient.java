@@ -5,11 +5,14 @@
 package com.example;
 
 import co.paralleluniverse.common.benchmark.StripedHistogram;
+import co.paralleluniverse.common.benchmark.StripedLongTimeSeries;
 import co.paralleluniverse.common.benchmark.StripedTimeSeries;
+import co.paralleluniverse.common.util.SameThreadExecutorService;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.io.FiberServerSocketChannel;
 import co.paralleluniverse.fibers.ws.rs.client.AsyncClientBuilder;
+import co.paralleluniverse.jersey.connector.AsyncHttpConnector;
 import co.paralleluniverse.strands.Strand;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -31,13 +34,13 @@ import org.glassfish.jersey.spi.RequestExecutorsProvider;
  */
 public class MyClient {
     private final static AtomicInteger ai = new AtomicInteger();
-    private final static int size = 50;
+    private final static int size = 100;
 //    private static final String URI = "http://localhost:8080/myresource";
-//    private static final String URI = "http://localhost:8080/fiber/hello";
-    private static final String URI = "http://localhost:8080/helloworld";
+    private static final String URI = "http://localhost:8080/fiber/hello";
+//    private static final String URI = "http://localhost:8080/helloworld";
 //    private static final String URI = "http://localhost:8080/sync/hello";
 //    private static final String URI = "http://localhost:8080/async/hello";
-    private static final int fibers = 50;
+    private static final int fibers = 400;
     private final static CountDownLatch cdl = new CountDownLatch(size * fibers);
 
     private static void userMethod(final Client cli) throws SuspendExecution {
@@ -52,13 +55,18 @@ public class MyClient {
     }
 
     public static void main(String[] args) throws Exception {
-        final StripedTimeSeries<Long> sts = new StripedTimeSeries<Long>(100000, false);
+        final StripedLongTimeSeries sts = new StripedLongTimeSeries(100000, false);
         final StripedHistogram sh = new StripedHistogram(1500000L, 5);
         List<Fiber<Void>> list = new ArrayList<>(size);
+        ClientConfig cc = new ClientConfig();
+        cc.connector(new AsyncHttpConnector());
 
-        final Client newClient = AsyncClientBuilder.newClient().register(new RequestExecutorsProvider() {
-            private ExecutorService tp = Executors.newFixedThreadPool(45,
-                    new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-ron-async-executor-%d").build());
+        final Client newClient = AsyncClientBuilder.newClient(cc).register(new RequestExecutorsProvider() {
+//            private ExecutorService tp = Executors.newFixedThreadPool(20,
+//                    new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-ron-async-executor-%d").build());
+            private ExecutorService tp = SameThreadExecutorService.getExecutorService();
+//                    Executors.newFixedThreadPool(20,
+//                    new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-ron-async-executor-%d").build());
 
             @Override
             public ExecutorService getRequestingExecutor() {
@@ -76,14 +84,9 @@ public class MyClient {
                         long start = System.nanoTime();
                         userMethod(newClient);
                         final long latency = (System.nanoTime() - start) / 1000;
-                        try {
-                            sts.record(start, latency);
-                            sh.recordValue(latency); // sh.recordValue(latency, 10000);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            System.exit(0);
-                        }
-                        System.out.println("latency " + latency);
+                        sts.record(start, latency);
+                        sh.recordValue(latency); // sh.recordValue(latency, 10000);
+//                        System.out.println("latency " + latency);
                         Strand.sleep(10);
                     }
 
@@ -95,7 +98,7 @@ public class MyClient {
 
         System.out.println("waiting");
         cdl.await(30, TimeUnit.SECONDS);
-        for (StripedTimeSeries.Record rec : sts.getRecords())
+        for (StripedLongTimeSeries.Record rec : sts.getRecords())
             System.out.println("STS: " + rec.timestamp + " " + rec.value);
         sh.getHistogramData().outputPercentileDistribution(System.out, 5, 1.0);
 //        Thread.sleep(10000);
@@ -105,6 +108,7 @@ public class MyClient {
         //jersey-client-async-executor will finish in 1 minute 
         //in order to do it quicker we have to provide another RequestExecutorsProvider.class
         System.out.println("finished");
+        System.exit(0);
     }
 //
 //    public static abstract class AsyncRs extends FiberAsync<Response, InvocationCallback<Response>, Void, RuntimeException> implements InvocationCallback<Response> {

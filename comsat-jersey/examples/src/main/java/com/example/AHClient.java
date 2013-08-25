@@ -23,10 +23,10 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 public class AHClient {
     private final static int size = 100;
     private final static AtomicInteger ai = new AtomicInteger();
-//    private static final String URI = "http://localhost:8080/fiber/hello";
-    private static final String URI = "http://localhost:8080/sync/hello";
+    private static final String URI = "http://localhost:8080/fiber/hello";
+//    private static final String URI = "http://localhost:8080/sync/hello";
 //    private static final String URI = "http://localhost:8080/async/hello";
-    private static final int fibers = 400;
+    private static final int fibers = 1000;
 
     public static void main(final String[] args) throws Exception {
         final StripedLongTimeSeries sts = new StripedLongTimeSeries(100000, false);
@@ -37,6 +37,7 @@ public class AHClient {
 
 
         for (int i = 0; i < fibers; i++) {
+            final int fiberCount = i;
             new Fiber<Void>(new SuspendableRunnable() {
                 @Override
                 public void run() throws SuspendExecution {
@@ -50,6 +51,7 @@ public class AHClient {
                                     try {
                                         asyncHttpClient.prepareGet(URI).execute(callback);
                                     } catch (IOException ex) {
+                                        System.out.println("err "+ex);
                                         callback.onThrowable(ex);
                                     }
                                     return null;
@@ -63,20 +65,22 @@ public class AHClient {
                             ai.incrementAndGet();
                             Strand.sleep(10);
                         } catch (IOException ex) {
+                            System.out.println("io "+ex);
                             Logger.getLogger(AHClient.class.getName()).log(Level.SEVERE, null, ex);
                         } catch (InterruptedException ex) {
                             Logger.getLogger(AHClient.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
+                    System.out.println("fiber finished "+fiberCount);
                     latch.countDown();
                 }
             }).start();
         }
         System.out.println("waiting");
-        latch.await(20000, TimeUnit.MILLISECONDS);
+        latch.await(60000, TimeUnit.MILLISECONDS);
 
-        for (StripedLongTimeSeries.Record rec : sts.getRecords())
-            System.out.println("STS: " + rec.timestamp + " " + rec.value);
+//        for (StripedLongTimeSeries.Record rec : sts.getRecords())
+//            System.out.println("STS: " + rec.timestamp + " " + rec.value);
         final HistogramData hd = sh.getHistogramData(); // sh.getHistogramDataCorrectedForCoordinatedOmission(10 * 1000);
         hd.outputPercentileDistribution(System.out, 5, 1.0);
         System.out.println("finished " + latch.getCount());
