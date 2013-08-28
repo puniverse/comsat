@@ -22,6 +22,11 @@ abstract class AsyncAHC extends FiberAsync<Response, AsyncCompletionHandler<Resp
                 AsyncAHC.super.completed(response, fiber);
                 return response;
             }
+
+            @Override
+            public void onThrowable(Throwable t) {
+                AsyncAHC.super.failed(t, fiber);
+            }
         };
     }
 

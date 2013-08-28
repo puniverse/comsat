@@ -17,6 +17,7 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.AsyncContext;
 import javax.servlet.GenericServlet;
 import javax.servlet.ServletConfig;
@@ -34,7 +35,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
     private transient FiberServletConfig configAD;
     private transient FiberServletContext contextAD;
     private final ThreadLocal<AsyncContext> currentAsyncContext = new ThreadLocal<AsyncContext>();
-
+ 
     /**
      * 
      * @return Wrapped version of the ServletConfig initiated by {@link #init(javax.servlet.ServletConfig) }

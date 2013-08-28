@@ -7,7 +7,7 @@
     </Console>
   </appenders>
   <loggers>
-    <root level="INFO">
+    <root level="WARN">
       <appender-ref ref="Console"/>
     </root>
     <!--<logger name="co.paralleluniverse.galaxy.core.StringRootManager" level="DEBUG"/>-->

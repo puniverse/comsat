@@ -68,7 +68,7 @@ configurations.all {
 }
 tasks.withType(JavaExec) {
     jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
-    jvmArgs "-ea"
-        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+//    jvmArgs "-ea"
+//        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
     systemProperty "log4j.configurationFile", "${projectDir}/log4j.xml"
 }
