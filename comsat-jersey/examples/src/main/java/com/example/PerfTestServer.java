@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Path;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
+import org.apache.catalina.startup.Bootstrap;
 import org.apache.catalina.startup.Tomcat;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.io.EndPoint;
@@ -50,6 +51,11 @@ public class PerfTestServer {
     public static void main(String[] args) throws Exception {
         new PerfTestServer(new JettyServer()).start();
 //        new PerfTestServer(new TomcatServer()).start();
+
+
+
+        
+
     }
 
     public PerfTestServer(ServletServer server) {
@@ -145,7 +151,6 @@ public class PerfTestServer {
 
         void stop() throws Exception;
     }
-    
 
     static class JettyServer implements ServletServer {
         Server jetty;
@@ -155,14 +160,14 @@ public class PerfTestServer {
             jetty = new Server();
             ServerConnector asyncConn = new ServerConnector(jetty, new QueuedThreadPool(30), null, null, 2, 0, new HttpConnectionFactory());
             asyncConn.setPort(8080);
-            asyncConn.setAcceptQueueSize(100000);            
+            asyncConn.setAcceptQueueSize(100000);
             jetty.addConnector(asyncConn);
 
-            ServerConnector syncConn = new ServerConnector(jetty, new QueuedThreadPool(200), null, null, 2, 0, new HttpConnectionFactory());
+            ServerConnector syncConn = new ServerConnector(jetty, new QueuedThreadPool(500), null, null, 2, 0, new HttpConnectionFactory());
             syncConn.setPort(8081);
-            syncConn.setAcceptQueueSize(100000);            
+            syncConn.setAcceptQueueSize(100000);
             jetty.addConnector(syncConn);
-            
+
             context = new ServletContextHandler(jetty, "/", ServletContextHandler.SESSIONS);
         }
 
@@ -184,12 +189,12 @@ public class PerfTestServer {
             jetty.stop();
         }
     }
-
     static class TomcatServer implements ServletServer {
         private final Tomcat tomcat;
         private final Context appContext;
 
         public TomcatServer() {
+
             tomcat = new Tomcat();
             File baseDir = new File("tomcat");
             tomcat.setBaseDir(baseDir.getAbsolutePath());
@@ -206,6 +211,8 @@ public class PerfTestServer {
             tomcat.getConnector().setAttribute("maxThreads", 50);
             tomcat.getConnector().setAttribute("acceptCount", 10000);
             tomcat.getConnector().setAttribute("acceptorThreadCount", 2);
+
+//            tomcat.;
             //acceptorThreadCount
         }
 

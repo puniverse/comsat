@@ -1,0 +1,6 @@
+#!/bin/sh
+# this script gets the output of AHCclient program and generates ps file
+awk '/basetime/{a=$2;}/STS/{ print ($2-a)/1000000000.0,$3/1000.0 }' $1 | sort -n > /tmp/df.1
+awk '/basetime/{a=$2;}/RATE/{ print ($2-a)/1000000000.0,$3 }' $1 | sort -n > /tmp/df.2
+graph --top-label `basename $1` --x-label "Elapsed Time [seconds]" --y-label "[millis / Hz]" -T ps -w 1.2 -m 1 -C -y 0 11000 /tmp/df.1 -m 3 /tmp/df.2 > $1.ps
+open $1.ps
