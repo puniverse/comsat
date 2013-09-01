@@ -163,7 +163,7 @@ public class PerfTestServer {
             asyncConn.setAcceptQueueSize(100000);
             jetty.addConnector(asyncConn);
 
-            ServerConnector syncConn = new ServerConnector(jetty, new QueuedThreadPool(500), null, null, 2, 0, new HttpConnectionFactory());
+            ServerConnector syncConn = new ServerConnector(jetty, new QueuedThreadPool(2200), null, null, 2, 0, new HttpConnectionFactory());
             syncConn.setPort(8081);
             syncConn.setAcceptQueueSize(100000);
             jetty.addConnector(syncConn);

@@ -27,16 +27,16 @@ public class AHClient {
 //    private static final int concurrentUsers = 4000;
     private static final int workDuration = 20;
     private static final int specialDuration = 1000;
-//    private static final String URI = "http://localhost:8081/sync/hello?sleep=";
-    private static final String URI = "http://localhost:8080/fiber/hello?sleep=";
+    private static final String URI = "http://localhost:8081/sync/hello?sleep=";
+//    private static final String URI = "http://localhost:8080/fiber/hello?sleep=";
 //    private static final String URI = "http://localhost:8080/async/hello?sleep=";
     //private static final int gapBetweenRequests = 10;
     private static final double specialProb = 0.2;
     public static final int REQUESTS_RATE = 1000;
-    public static final int SERVER_THREADS = 500;
+    public static final int SERVER_THREADS = 2100;
     public static final long TEST_DURATION_SECONDS = 60;
     public static final int WARM_UP_SECONDS = 10;
-    public static final double MAX_SYNC_RATE = 15000;//SERVER_THREADS * 1000 / (specialDuration*specialProb+workDuration*(1-specialProb));
+    public static final double MAX_SYNC_RATE = SERVER_THREADS * 1000 / (specialDuration*specialProb+workDuration*(1-specialProb));
     public static final int RATE_STEP = 200;
 
     public static void main(final String[] args) throws Exception {
@@ -102,9 +102,9 @@ public class AHClient {
                 public void onThrowable(Throwable t) {
 //                    cdl.countDown();
 //                    sem.release();
-                    t.printStackTrace();
+//                    t.printStackTrace();
                     ai.decrementAndGet();
-//                    System.out.println("id=" + id + " excep" + t);
+                    System.out.println("id=" + id + " excep" + t);
                 }
             });
             last = start;
