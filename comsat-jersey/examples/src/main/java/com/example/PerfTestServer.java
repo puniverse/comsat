@@ -66,8 +66,9 @@ public class PerfTestServer {
         registerServletsOn(server);
         server.start();
         System.out.println("Jersey app started. Hit enter to stop it...");
-        System.in.read();
-        server.stop();
+//        System.in.read();
+//        server.stop();
+//        server.wait();
     }
 
     private void registerServletsOn(ServletServer root) {

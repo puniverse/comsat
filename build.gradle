@@ -64,6 +64,7 @@ subprojects {
         from sourceSets.main.allSource
     }
     javadoc {
+        //        classpath = configurations.compile
         options.links 'http://docs.oracle.com/javaee/7/api/'
     }
     task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -71,6 +72,9 @@ subprojects {
         from javadoc.destinationDir
     } 
 
+    task wrapper(type: Wrapper) {
+        gradleVersion = '1.5-20130302103424+0000'
+    }
     ///////// Publish Artifacts 
     apply plugin: 'maven'
     apply plugin: 'signing'
