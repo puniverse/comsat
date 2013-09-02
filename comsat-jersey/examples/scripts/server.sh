@@ -19,7 +19,8 @@ cat > .targetServer.sh <<-EOF
 EOF
 chmod +x .targetServer.sh
 image=`cat .imageID`
-instance=`ec2run $image -k ec2key2 -g quicklaunch-1 -t m1.medium --user-data-file .targetServer.sh | awk '/INS/{print $2}'`
+#instance=`ec2run $image -k ec2key2 -g quicklaunch-1 -t m1.medium --user-data-file .targetServer.sh | awk '/INS/{print $2}'`
+instance=`ec2run $image -k ec2key2 -g quicklaunch-1 -t c1.xlarge --user-data-file .targetServer.sh | awk '/INS/{print $2}'`
 echo instance is $instance
 if [ -z "$instance" ]
 then

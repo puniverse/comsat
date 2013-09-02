@@ -27,8 +27,9 @@ public class AHClient {
 //    private static final int concurrentUsers = 4000;
     private static final int workDuration = 20;
     private static final int specialDuration = 1000;
-    private static final String URI = "http://localhost:8081/sync/hello?sleep=";
-//    private static final String URI = "http://localhost:8080/fiber/hello?sleep=";
+    private final static String HOST = "http://192.168.15.104";
+//    private static final String URI = HOST+":8081/sync/hello?sleep=";
+    private static final String URI = HOST+":8080/fiber/hello?sleep=";
 //    private static final String URI = "http://localhost:8080/async/hello?sleep=";
     //private static final int gapBetweenRequests = 10;
     private static final double specialProb = 0.2;
@@ -36,7 +37,7 @@ public class AHClient {
     public static final int SERVER_THREADS = 2100;
     public static final long TEST_DURATION_SECONDS = 60;
     public static final int WARM_UP_SECONDS = 10;
-    public static final double MAX_SYNC_RATE = SERVER_THREADS * 1000 / (specialDuration*specialProb+workDuration*(1-specialProb));
+    public static final double MAX_SYNC_RATE = 2000; //SERVER_THREADS * 1000 / (specialDuration*specialProb+workDuration*(1-specialProb));
     public static final int RATE_STEP = 200;
 
     public static void main(final String[] args) throws Exception {
@@ -55,7 +56,7 @@ public class AHClient {
         final AtomicInteger ai = new AtomicInteger();
         final AsyncHttpClient ahc = new AsyncHttpClient(new AsyncHttpClientConfig.Builder().setMaximumConnectionsPerHost(10000).build());
 //        final CountDownLatch cdl = new CountDownLatch(REQUESTS_RATE * TEST_DURATION_SECONDS);
-//        final Semaphore sem = new Semaphore(concurrentUsers);
+        final Semaphore sem = new Semaphore(5000);
         Random random = new Random();
         RateLimiter rl = RateLimiter.create((double) REQUESTS_RATE);
 
@@ -71,7 +72,8 @@ public class AHClient {
             BoundRequestBuilder req = ahc.prepareGet(URI + duration);// + "&id="+id);
 //            long k = System.nanoTime();
             rl.acquire();
-            ai.incrementAndGet();
+            sem.acquire();
+//            ai.incrementAndGet();
 //            long lat = System.nanoTime() - k;
 
 //            if (!sem.tryAcquire(2000, TimeUnit.MILLISECONDS))
@@ -92,8 +94,8 @@ public class AHClient {
                     } catch (ArrayIndexOutOfBoundsException ex) {
                         System.out.println(ex);
                     }
-                    ai.decrementAndGet();
-//                    sem.release();
+//                    ai.decrementAndGet();
+                    sem.release();
 
                     return null;
                 }
@@ -101,9 +103,9 @@ public class AHClient {
                 @Override
                 public void onThrowable(Throwable t) {
 //                    cdl.countDown();
-//                    sem.release();
+                    sem.release();
 //                    t.printStackTrace();
-                    ai.decrementAndGet();
+//                    ai.decrementAndGet();
                     System.out.println("id=" + id + " excep" + t);
                 }
             });
@@ -111,10 +113,10 @@ public class AHClient {
             if (++countToRate > currRate) {
                 if (currRate < MAX_SYNC_RATE) 
                     currRate+=RATE_STEP;
-                rl.setRate(currRate);
+                rl.setRate(Math.min(currRate,MAX_SYNC_RATE));
                 long curr = System.nanoTime();
                 double d = 1e9 * currRate / (curr - lastForRate);
-                System.out.println("RATE_NOW " + curr + " " + d);
+                System.out.println("RATE_NOW " + curr + " " + d+" "+sem.getQueueLength());
                 lastForRate = curr;
                 countToRate = 0;
                 if (curr-baseTime>TEST_DURATION_SECONDS*1000000000L) {
