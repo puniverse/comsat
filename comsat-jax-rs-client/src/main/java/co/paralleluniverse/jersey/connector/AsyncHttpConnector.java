@@ -15,29 +15,35 @@ package co.paralleluniverse.jersey.connector;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
-import com.ning.http.client.AsyncHandler;
-import com.ning.http.client.AsyncHandler.STATE;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.HttpResponseBodyPart;
-import com.ning.http.client.HttpResponseHeaders;
-import com.ning.http.client.HttpResponseStatus;
-import com.ning.http.client.Request;
+import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.RequestBuilder;
-import com.ning.http.client.Response;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import javax.ws.rs.ProcessingException;
+import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.ClientRequest;
 import org.glassfish.jersey.client.ClientResponse;
 import org.glassfish.jersey.client.spi.AsyncConnectorCallback;
 import org.glassfish.jersey.client.spi.Connector;
-import org.glassfish.jersey.message.internal.Statuses;
+import org.glassfish.jersey.internal.util.PropertiesHelper;
+import org.glassfish.jersey.message.internal.OutboundMessageContext;
 
 /**
  *
@@ -46,8 +52,27 @@ import org.glassfish.jersey.message.internal.Statuses;
 public class AsyncHttpConnector implements Connector {
     private final AsyncHttpClient client;
 
-    public AsyncHttpConnector() {
-        this.client = new AsyncHttpClient();
+    public AsyncHttpConnector(Configuration config) {
+        AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
+
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("AsyncHttpClient-Callback-%d").setDaemon(true).build();
+
+        if (config != null) {
+            final ExecutorService executorService;
+            final Object threadPoolSize = config.getProperties().get(ClientProperties.ASYNC_THREADPOOL_SIZE);
+            if (threadPoolSize != null && threadPoolSize instanceof Integer && (Integer) threadPoolSize > 0)
+                executorService = Executors.newFixedThreadPool((Integer) threadPoolSize, threadFactory);
+            else
+                executorService = Executors.newCachedThreadPool(threadFactory);
+            builder = builder.setExecutorService(executorService);
+
+            builder.setConnectionTimeoutInMs(PropertiesHelper.getValue(config.getProperties(), ClientProperties.CONNECT_TIMEOUT, 0));
+            builder.setRequestTimeoutInMs(PropertiesHelper.getValue(config.getProperties(), ClientProperties.READ_TIMEOUT, 0));
+        } else
+            builder.setExecutorService(Executors.newCachedThreadPool(threadFactory));
+
+        AsyncHttpClientConfig asyncClientConfig = builder.setAllowPoolingConnection(true).build();
+        this.client = new AsyncHttpClient(asyncClientConfig);
     }
 
     /**
@@ -65,6 +90,14 @@ public class AsyncHttpConnector implements Connector {
     }
 
     /**
+     * Close connector and release all it's internally associated resources.
+     */
+    @Override
+    public void close() {
+        client.close();
+    }
+
+    /**
      * Synchronously process client request into a response.
      *
      * The method is used by Jersey client runtime to synchronously send a request
@@ -76,7 +109,21 @@ public class AsyncHttpConnector implements Connector {
      */
     @Override
     public ClientResponse apply(ClientRequest request) throws ProcessingException {
-        throw new UnsupportedOperationException("Only async requests supported");
+        final com.ning.http.client.Response connectorResponse;
+
+        try {
+            com.ning.http.client.Request connectorRequest = translateRequest(request);
+            Future<com.ning.http.client.Response> respFuture = client.executeRequest(connectorRequest);
+            connectorResponse = respFuture.get();
+            return translateResponse(request, connectorResponse);
+        } catch (ExecutionException ex) {
+            Throwable e = ex.getCause() == null ? ex : ex.getCause();
+            throw new ProcessingException(e.getMessage(), e);
+        } catch (InterruptedException ex) {
+            throw new ProcessingException(ex.getMessage(), ex);
+        } catch (IOException ex) {
+            throw new ProcessingException(ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -91,19 +138,49 @@ public class AsyncHttpConnector implements Connector {
      * @return asynchronously executed task handle.
      */
     @Override
-    public Future<?> apply(ClientRequest request, AsyncConnectorCallback callback) {
+    public Future<?> apply(final ClientRequest request, final AsyncConnectorCallback callback) {
+        Throwable failure;
         try {
-            return client.executeRequest(translateRequest(request), translateCallback(callback, request));
-        } catch (IOException e) {
-            throw new ProcessingException(e);
+            return client.executeRequest(translateRequest(request), new AsyncCompletionHandler<ClientResponse>() {
+                @Override
+                public ClientResponse onCompleted(com.ning.http.client.Response connectorResponse) throws Exception {
+                    final ClientResponse response = translateResponse(request, connectorResponse);
+                    try {
+                        return response;
+                    } finally {
+                        callback.response(response);
+                    }
+                }
+
+                @Override
+                public void onThrowable(Throwable t) {
+                    t = t instanceof IOException ? new ProcessingException(t.getMessage(), t) : t;
+                    callback.failure(t);
+                }
+            });
+        } catch (IOException ex) {
+            failure = ex;
+            callback.failure(new ProcessingException(ex.getMessage(), ex.getCause()));
+        } catch (Throwable t) {
+            failure = t;
+            callback.failure(t);
         }
+
+        return Futures.immediateFailedFuture(failure);
     }
 
-    private Request translateRequest(ClientRequest request) throws IOException {
-        final RequestBuilder builder = new RequestBuilder(request.getMethod()); // method
-        builder.setUrl(request.getUri().toURL().toString());              // url
+    private com.ning.http.client.Request translateRequest(ClientRequest requestContext) {
+        final RequestBuilder builder = new RequestBuilder(requestContext.getMethod()); // method
 
-        MultivaluedMap<String, Object> headers = request.getHeaders();
+        builder.setUrl(requestContext.getUri().toString());              // url
+
+        builder.setFollowRedirects(PropertiesHelper.getValue(requestContext.getConfiguration().getProperties(), ClientProperties.FOLLOW_REDIRECTS, true));
+
+        final com.ning.http.client.Request.EntityWriter entity = this.getHttpEntity(requestContext);
+        if (entity != null)
+            builder.setBody(entity);
+
+        MultivaluedMap<String, Object> headers = requestContext.getHeaders();
         Map<String, Collection<String>> headers1 = new HashMap<String, Collection<String>>();
         for (Map.Entry<String, List<Object>> entry : headers.entrySet()) {
             List<String> vals = new ArrayList<String>(entry.getValue().size());
@@ -113,61 +190,71 @@ public class AsyncHttpConnector implements Connector {
         }
         builder.setHeaders(headers1);                                     // headers
 
-        return builder.build();
+        com.ning.http.client.Request result = builder.build();
+        //writeOutBoundHeaders(request.getHeaders(), result);
+
+        return result;
     }
 
-    private ClientResponse translateResponse(ClientRequest request, com.ning.http.client.Response response) throws IOException {
-        final int code = response.getStatusCode();
-        final String reasonPhrase = response.getStatusText();
-        final javax.ws.rs.core.Response.StatusType status = reasonPhrase == null ? Statuses.from(code) : Statuses.from(code, reasonPhrase);
-        ClientResponse responseContext = new ClientResponse(status, request);
-        responseContext.headers(Maps.<String, List<String>>filterKeys(response.getHeaders(), Predicates.notNull()));
-        responseContext.setEntityStream(response.getResponseBodyAsStream());
-        return responseContext;
-    }
+    private com.ning.http.client.Request.EntityWriter getHttpEntity(final ClientRequest requestContext) {
+        final Object entity = requestContext.getEntity();
 
-    private AsyncHandler<Void> translateCallback(final AsyncConnectorCallback callback, final ClientRequest request) {
-        return new AsyncHandler<Void>() {
-            private final Response.ResponseBuilder builder = new Response.ResponseBuilder();
+        if (entity == null)
+            return null;
 
+        return new com.ning.http.client.Request.EntityWriter() {
             @Override
-            public STATE onStatusReceived(HttpResponseStatus responseStatus) throws Exception {
-                builder.accumulate(responseStatus);
-                return STATE.CONTINUE;
-            }
-
-            @Override
-            public STATE onHeadersReceived(HttpResponseHeaders headers) throws Exception {
-                builder.accumulate(headers);
-                return STATE.CONTINUE;
-            }
-
-            @Override
-            public STATE onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
-                builder.accumulate(bodyPart);
-                return STATE.CONTINUE;
-            }
-
-            @Override
-            public Void onCompleted() throws Exception {
-                Response response = builder.build();
-                ClientResponse cr = translateResponse(request, response);
-                callback.response(cr);
-                return null;
-            }
-
-            @Override
-            public void onThrowable(Throwable t) {
-                callback.failure(t);
+            public void writeEntity(final OutputStream out) throws IOException {
+                requestContext.setStreamProvider(new OutboundMessageContext.StreamProvider() {
+                    @Override
+                    public OutputStream getOutputStream(int contentLength) throws IOException {
+                        return out;
+                    }
+                });
+                requestContext.writeEntity();
             }
         };
     }
 
-    /**
-     * Close connector and release all it's internally associated resources.
-     */
-    @Override
-    public void close() {
-        client.close();
+    private static void writeOutBoundHeaders(final MultivaluedMap<String, Object> headers, final com.ning.http.client.Request request) {
+        for (Map.Entry<String, List<Object>> e : headers.entrySet()) {
+            List<Object> vs = e.getValue();
+            if (vs.size() == 1)
+                request.getHeaders().add(e.getKey(), vs.get(0).toString());
+            else {
+                StringBuilder b = new StringBuilder();
+                for (Object v : e.getValue()) {
+                    if (b.length() > 0)
+                        b.append(',');
+
+                    b.append(v);
+                }
+                request.getHeaders().add(e.getKey(), b.toString());
+            }
+        }
+    }
+
+    private ClientResponse translateResponse(ClientRequest request, final com.ning.http.client.Response response) throws IOException {
+        final ClientResponse responseContext = new ClientResponse(new Response.StatusType() {
+            @Override
+            public int getStatusCode() {
+                return response.getStatusCode();
+            }
+
+            @Override
+            public Response.Status.Family getFamily() {
+                return Response.Status.Family.familyOf(response.getStatusCode());
+            }
+
+            @Override
+            public String getReasonPhrase() {
+                return response.getStatusText();
+            }
+        }, request);
+
+        responseContext.headers(Maps.<String, List<String>>filterKeys(response.getHeaders(), Predicates.notNull()));
+        responseContext.setEntityStream(response.getResponseBodyAsStream());
+
+        return responseContext;
     }
 }
