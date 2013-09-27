@@ -16,10 +16,14 @@ package co.paralleluniverse.jersey.connector;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.ning.http.client.AsyncCompletionHandler;
+import com.ning.http.client.AsyncHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
+import com.ning.http.client.HttpResponseBodyPart;
+import com.ning.http.client.HttpResponseHeaders;
+import com.ning.http.client.HttpResponseStatus;
 import com.ning.http.client.RequestBuilder;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +37,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MultivaluedMap;
@@ -43,6 +48,8 @@ import org.glassfish.jersey.client.ClientResponse;
 import org.glassfish.jersey.client.spi.AsyncConnectorCallback;
 import org.glassfish.jersey.client.spi.Connector;
 import org.glassfish.jersey.internal.util.PropertiesHelper;
+import org.glassfish.jersey.internal.util.collection.ByteBufferInputStream;
+import org.glassfish.jersey.internal.util.collection.NonBlockingInputStream;
 import org.glassfish.jersey.message.internal.OutboundMessageContext;
 
 /**
@@ -108,20 +115,61 @@ public class AsyncHttpConnector implements Connector {
      * @throws javax.ws.rs.ProcessingException in case of any invocation failure.
      */
     @Override
-    public ClientResponse apply(ClientRequest request) throws ProcessingException {
-        final com.ning.http.client.Response connectorResponse;
+    public ClientResponse apply(final ClientRequest request) throws ProcessingException {
+        final SettableFuture<ClientResponse> responseFuture = SettableFuture.create();
+        final ByteBufferInputStream entityStream = new ByteBufferInputStream();
+        final AtomicBoolean futureSet = new AtomicBoolean(false);
 
         try {
-            com.ning.http.client.Request connectorRequest = translateRequest(request);
-            Future<com.ning.http.client.Response> respFuture = client.executeRequest(connectorRequest);
-            connectorResponse = respFuture.get();
-            return translateResponse(request, connectorResponse);
+            client.executeRequest(translateRequest(request), new AsyncHandler<Void>() {
+                private volatile HttpResponseStatus status = null;
+
+                @Override
+                public STATE onStatusReceived(final HttpResponseStatus responseStatus) throws Exception {
+                    status = responseStatus;
+                    return STATE.CONTINUE;
+                }
+
+                @Override
+                public STATE onHeadersReceived(HttpResponseHeaders headers) throws Exception {
+                    if (!futureSet.compareAndSet(false, true)) {
+                        return STATE.ABORT;
+                    }
+
+                    responseFuture.set(translateResponse(request, this.status, headers, entityStream));
+                    return STATE.CONTINUE;
+                }
+
+                @Override
+                public STATE onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
+                    entityStream.put(bodyPart.getBodyByteBuffer());
+                    return STATE.CONTINUE;
+                }
+
+                @Override
+                public Void onCompleted() throws Exception {
+                    entityStream.closeQueue();
+                    return null;
+                }
+
+                @Override
+                public void onThrowable(Throwable t) {
+                    entityStream.closeQueue(t);
+
+                    if (futureSet.compareAndSet(false, true)) {
+                        t = t instanceof IOException ? new ProcessingException(t.getMessage(), t) : t;
+                        responseFuture.setException(t);
+                    }
+                }
+            });
+
+            return responseFuture.get();
+        } catch (IOException ex) {
+            throw new ProcessingException(ex.getMessage(), ex.getCause());
         } catch (ExecutionException ex) {
             Throwable e = ex.getCause() == null ? ex : ex.getCause();
             throw new ProcessingException(e.getMessage(), e);
         } catch (InterruptedException ex) {
-            throw new ProcessingException(ex.getMessage(), ex);
-        } catch (IOException ex) {
             throw new ProcessingException(ex.getMessage(), ex);
         }
     }
@@ -139,32 +187,59 @@ public class AsyncHttpConnector implements Connector {
      */
     @Override
     public Future<?> apply(final ClientRequest request, final AsyncConnectorCallback callback) {
+        final ByteBufferInputStream entityStream = new ByteBufferInputStream();
+        final AtomicBoolean callbackInvoked = new AtomicBoolean(false);
+
         Throwable failure;
         try {
-            return client.executeRequest(translateRequest(request), new AsyncCompletionHandler<ClientResponse>() {
+            return client.executeRequest(translateRequest(request), new AsyncHandler<Void>() {
+                private volatile HttpResponseStatus status = null;
+
                 @Override
-                public ClientResponse onCompleted(com.ning.http.client.Response connectorResponse) throws Exception {
-                    final ClientResponse response = translateResponse(request, connectorResponse);
-                    try {
-                        return response;
-                    } finally {
-                        callback.response(response);
-                    }
+                public STATE onStatusReceived(final HttpResponseStatus responseStatus) throws Exception {
+                    status = responseStatus;
+                    return STATE.CONTINUE;
+                }
+
+                @Override
+                public STATE onHeadersReceived(HttpResponseHeaders headers) throws Exception {
+                    if (!callbackInvoked.compareAndSet(false, true))
+                        return STATE.ABORT;
+
+                    callback.response(translateResponse(request, this.status, headers, entityStream));
+                    return STATE.CONTINUE;
+                }
+
+                @Override
+                public STATE onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
+                    entityStream.put(bodyPart.getBodyByteBuffer());
+                    return STATE.CONTINUE;
+                }
+
+                @Override
+                public Void onCompleted() throws Exception {
+                    entityStream.closeQueue();
+                    return null;
                 }
 
                 @Override
                 public void onThrowable(Throwable t) {
-                    t = t instanceof IOException ? new ProcessingException(t.getMessage(), t) : t;
-                    callback.failure(t);
+                    entityStream.closeQueue(t);
+
+                    if (callbackInvoked.compareAndSet(false, true)) {
+                        t = t instanceof IOException ? new ProcessingException(t.getMessage(), t) : t;
+                        callback.failure(t);
+                    }
                 }
             });
         } catch (IOException ex) {
-            failure = ex;
-            callback.failure(new ProcessingException(ex.getMessage(), ex.getCause()));
+            failure = new ProcessingException(ex.getMessage(), ex.getCause());
         } catch (Throwable t) {
             failure = t;
-            callback.failure(t);
         }
+
+        if (callbackInvoked.compareAndSet(false, true))
+            callback.failure(failure);
 
         return Futures.immediateFailedFuture(failure);
     }
@@ -232,6 +307,41 @@ public class AsyncHttpConnector implements Connector {
                 request.getHeaders().add(e.getKey(), b.toString());
             }
         }
+    }
+
+    private ClientResponse translateResponse(final ClientRequest requestContext,
+            final HttpResponseStatus status,
+            final HttpResponseHeaders headers,
+            final NonBlockingInputStream entityStream) {
+
+        final ClientResponse responseContext = new ClientResponse(new Response.StatusType() {
+            @Override
+            public int getStatusCode() {
+                return status.getStatusCode();
+            }
+
+            @Override
+            public Response.Status.Family getFamily() {
+                return Response.Status.Family.familyOf(status.getStatusCode());
+            }
+
+            @Override
+            public String getReasonPhrase() {
+                return status.getStatusText();
+            }
+        }, requestContext);
+
+//        for (Map.Entry<String, List<String>> entry : headers.getHeaders().entrySet()) {
+//            for (String value : entry.getValue()) {
+//                // TODO value.toString?
+//                responseContext.getHeaders().add(entry.getKey(), value);
+//            }
+//        }
+
+        responseContext.headers(Maps.<String, List<String>>filterKeys(headers.getHeaders(), Predicates.notNull()));
+        responseContext.setEntityStream(entityStream);
+
+        return responseContext;
     }
 
     private ClientResponse translateResponse(ClientRequest request, final com.ning.http.client.Response response) throws IOException {
