@@ -24,11 +24,14 @@ abstract class AsyncRs<ResponseType> extends FiberAsync<ResponseType, Invocation
 
     @Override
     public void completed(ResponseType response) {
+        System.out.println("completed: "+response);
         super.completed(response, fiber);
     }
 
     @Override
     public void failed(Throwable throwable) {
+        System.out.println("throwable: "+throwable);
+        throwable.printStackTrace(System.out);
         super.failed(throwable, fiber);
     }
 }

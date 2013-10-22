@@ -24,6 +24,7 @@ import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.HttpResponseBodyPart;
 import com.ning.http.client.HttpResponseHeaders;
 import com.ning.http.client.HttpResponseStatus;
+import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -73,9 +74,9 @@ public class AsyncHttpConnector implements Connector {
                 executorService = Executors.newCachedThreadPool(threadFactory);
             builder = builder.setExecutorService(executorService);
 
-            builder.setConnectionTimeoutInMs(PropertiesHelper.getValue(config.getProperties(), ClientProperties.CONNECT_TIMEOUT, 0));
-            builder.setRequestTimeoutInMs(PropertiesHelper.getValue(config.getProperties(), ClientProperties.READ_TIMEOUT, 0));
-        } else
+            builder.setConnectionTimeoutInMs(PropertiesHelper.getValue(config.getProperties(), ClientProperties.CONNECT_TIMEOUT, 5000));
+            builder.setRequestTimeoutInMs(PropertiesHelper.getValue(config.getProperties(), ClientProperties.READ_TIMEOUT, 5000));
+        } else 
             builder.setExecutorService(Executors.newCachedThreadPool(threadFactory));
 
         AsyncHttpClientConfig asyncClientConfig = builder.setAllowPoolingConnection(true).build();

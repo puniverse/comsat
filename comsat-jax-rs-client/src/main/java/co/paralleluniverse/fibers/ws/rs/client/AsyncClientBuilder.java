@@ -1,16 +1,23 @@
 package co.paralleluniverse.fibers.ws.rs.client;
 
+import co.paralleluniverse.jersey.connector.AsyncHttpConnector;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.security.KeyStore;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.spi.RequestExecutorsProvider;
 
 public class AsyncClientBuilder extends ClientBuilder {
     private final ClientBuilder clientBuilder;
-    
+
     protected AsyncClientBuilder(ClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
@@ -22,11 +29,25 @@ public class AsyncClientBuilder extends ClientBuilder {
 
     // Wrap FiberClient
     public static Client newClient() {
-        return new FiberClient(ClientBuilder.newClient());
+        return newClient(null);
     }
 
-    public static Client newClient(Configuration configuration) {
-        return new FiberClient(ClientBuilder.newClient(configuration));
+    public static Client newClient(Configuration userConfig) {
+        final AsyncHttpConnector asyncHttpConnector = new AsyncHttpConnector(new ClientConfig().
+                property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20));
+        final RequestExecutorsProvider singleThreadPool = new RequestExecutorsProvider() {
+            private ExecutorService tp = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-puniverse-single-worker-%d").build());
+
+            @Override
+            public ExecutorService getRequestingExecutor() {
+                return tp;
+            }
+        };
+        final ClientConfig config = new ClientConfig().
+                connector(asyncHttpConnector).
+                register(singleThreadPool, RequestExecutorsProvider.class);
+        if (userConfig!=null) config.loadFrom(userConfig);
+        return new FiberClient(ClientBuilder.newClient(config));
     }
 
     @Override

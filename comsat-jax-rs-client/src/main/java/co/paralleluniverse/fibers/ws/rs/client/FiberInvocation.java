@@ -3,7 +3,9 @@ package co.paralleluniverse.fibers.ws.rs.client;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
+import co.paralleluniverse.strands.SettableFuture;
 import java.util.concurrent.Future;
+import javax.security.auth.callback.Callback;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.core.GenericType;
@@ -72,22 +74,76 @@ class FiberInvocation implements Invocation {
 
     @Override
     public Future<Response> submit() {
-        return invocation.submit();
+        final SettableFuture<Response> responseFuture = new SettableFuture<>();
+        invocation.submit(new InvocationCallback<Response>() {
+
+            @Override
+            public void completed(Response response) {
+                responseFuture.set(response);
+            }
+
+            @Override
+            public void failed(Throwable throwable) {
+                responseFuture.setException(throwable);
+            }
+        });                
+        return responseFuture;
     }
 
     @Override
     public <T> Future<T> submit(Class<T> responseType) {
-        return invocation.submit(responseType);
+        final SettableFuture<T> responseFuture = new SettableFuture<>();
+        invocation.submit(new InvocationCallback<T>() {
+
+            @Override
+            public void completed(T response) {
+                responseFuture.set(response);
+            }
+
+            @Override
+            public void failed(Throwable throwable) {
+                responseFuture.setException(throwable);
+            }
+        });                
+        return responseFuture;
     }
 
     @Override
     public <T> Future<T> submit(GenericType<T> responseType) {
-        return invocation.submit(responseType);
+        final SettableFuture<T> responseFuture = new SettableFuture<>();
+        invocation.submit(new InvocationCallback<T>() {
+
+            @Override
+            public void completed(T response) {
+                responseFuture.set(response);
+            }
+
+            @Override
+            public void failed(Throwable throwable) {
+                responseFuture.setException(throwable);
+            }
+        });                
+        return responseFuture;
     }
 
     @Override
-    public <T> Future<T> submit(InvocationCallback<T> callback) {
-        return invocation.submit(callback);
+    public <T> Future<T> submit(final InvocationCallback<T> callback) {
+        final SettableFuture<T> responseFuture = new SettableFuture<>();
+        invocation.submit(new InvocationCallback<T>() {
+
+            @Override
+            public void completed(T response) {
+                responseFuture.set(response);
+                callback.completed(response);
+            }
+
+            @Override
+            public void failed(Throwable throwable) {
+                responseFuture.setException(throwable);
+                callback.failed(throwable);
+            }
+        });                
+        return responseFuture;
     }
 
     @Override
