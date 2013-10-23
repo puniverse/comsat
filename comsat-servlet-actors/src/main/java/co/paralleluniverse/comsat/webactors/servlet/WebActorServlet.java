@@ -1,7 +1,7 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
-import co.paralleluniverse.comsat.webactors.servlet.WebHttpMessage;
 import co.paralleluniverse.actors.ActorRef;
+import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -11,10 +11,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class WebActorBySessionHttpServlet extends HttpServlet {
+public class WebActorServlet extends HttpServlet {
     public String redirectPath = null;
 
-    public WebActorBySessionHttpServlet setRedirectNoSessionPath(String path) {
+    public WebActorServlet setRedirectNoSessionPath(String path) {
         this.redirectPath = path;
         return this;
     }
@@ -25,7 +25,7 @@ public class WebActorBySessionHttpServlet extends HttpServlet {
     }
 
     private void sentToActor(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
-        ActorRef<Object> actor = (ActorRef<Object>) req.getSession().getAttribute("actor");
+        ActorRef<Object> actor = (ActorRef<Object>) req.getSession().getAttribute(WebActor.ACTOR_KEY);
         if (actor == null) {
             resp.sendRedirect(redirectPath);
             return;
@@ -33,7 +33,7 @@ public class WebActorBySessionHttpServlet extends HttpServlet {
         req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         req.startAsync();
         try {
-            actor.send(new WebHttpMessage(req, resp));
+            actor.send(new WebServletHttpMessage(req, resp));
         } catch (SuspendExecution ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
         }

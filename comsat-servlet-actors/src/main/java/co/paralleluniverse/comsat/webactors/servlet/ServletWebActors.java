@@ -15,7 +15,7 @@ import javax.websocket.Session;
 
 public class ServletWebActors {
     public static void attachHttpSession(HttpSession session, ActorRef<Object> actor) {
-        session.setAttribute("actor", actor);
+        session.setAttribute(WebActor.ACTOR_KEY, actor);
     }
 
     public static void attachWebSocket(final Session session, final ActorRef<Object> actor) {

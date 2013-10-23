@@ -46,7 +46,8 @@ public class AsyncClientBuilder extends ClientBuilder {
         final ClientConfig config = new ClientConfig().
                 connector(asyncHttpConnector).
                 register(singleThreadPool, RequestExecutorsProvider.class);
-        if (userConfig!=null) config.loadFrom(userConfig);
+        if (userConfig != null)
+            config.loadFrom(userConfig);
         return new FiberClient(ClientBuilder.newClient(config));
     }
 

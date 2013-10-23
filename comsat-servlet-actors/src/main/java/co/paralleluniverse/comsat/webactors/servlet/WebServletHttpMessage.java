@@ -4,13 +4,12 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
-import co.paralleluniverse.comsat.webactors.WebActorCookie;
-import co.paralleluniverse.comsat.webactors.WebActorHttpMessage;
+import co.paralleluniverse.comsat.webactors.WebCookie;
+import co.paralleluniverse.comsat.webactors.WebHttpMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,7 +17,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -28,142 +26,137 @@ import java.util.logging.Logger;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.ws.Response;
-import org.omg.PortableServer.REQUEST_PROCESSING_POLICY_ID;
 
-public class WebHttpMessage implements WebActorHttpMessage {
+public class WebServletHttpMessage implements WebHttpMessage {
     private final HttpServletRequest request;
     private final HttpServletResponse response;
 
     @Override
-    public Enumeration<WebActorCookie> getCookies() {
+    public Collection<WebCookie> getCookies() {
         final Cookie[] cookies = request.getCookies();
-        return new Enumeration<WebActorCookie>() {
-            int i = 0;
+        List<WebCookie> list = new ArrayList<>();
+        for (int i = 0; i < cookies.length; i++) {
+            final Cookie c = cookies[i];
+            list.add(new WebCookie() {
+                @Override
+                public String getName() {
+                    return c.getName();
+                }
 
-            @Override
-            public boolean hasMoreElements() {
-                return cookies.length > i;
-            }
+                @Override
+                public String getValue() {
+                    return c.getValue();
+                }
 
-            @Override
-            public WebActorCookie nextElement() {
-                final Cookie c = cookies[i++];
-                return new WebActorCookie() {
-                    @Override
-                    public String getName() {
-                        return c.getName();
-                    }
+                @Override
+                public WebCookie setValue(String value) {
+                    c.setValue(value);
+                    return this;
+                }
 
-                    @Override
-                    public String getValue() {
-                        return c.getValue();
-                    }
+                @Override
+                public String getPath() {
+                    return c.getPath();
+                }
 
-                    @Override
-                    public WebActorCookie setValue(String value) {
-                        c.setValue(value);
-                        return this;
-                    }
+                @Override
+                public WebCookie setPath(String path) {
+                    c.setPath(path);
+                    return this;
+                }
 
-                    @Override
-                    public String getPath() {
-                        return c.getPath();
-                    }
+                @Override
+                public String getDomain() {
+                    return c.getDomain();
+                }
 
-                    @Override
-                    public WebActorCookie setPath(String path) {
-                        c.setPath(path);
-                        return this;
-                    }
+                @Override
+                public WebCookie setDomain(String domain) {
+                    c.setDomain(domain);
+                    return this;
+                }
 
-                    @Override
-                    public String getDomain() {
-                        return c.getDomain();
-                    }
+                @Override
+                public Integer getMaxAge() {
+                    return c.getMaxAge();
+                }
 
-                    @Override
-                    public WebActorCookie setDomain(String domain) {
-                        c.setDomain(domain);
-                        return this;
-                    }
+                @Override
+                public WebCookie setMaxAge(Integer maxAge) {
+                    c.setMaxAge(maxAge);
+                    return this;
+                }
 
-                    @Override
-                    public Integer getMaxAge() {
-                        return c.getMaxAge();
-                    }
+                @Override
+                public boolean isDiscard() {
+                    throw new UnsupportedOperationException("not supported yet");
+                }
 
-                    @Override
-                    public WebActorCookie setMaxAge(Integer maxAge) {
-                        c.setMaxAge(maxAge);
-                        return this;
-                    }
+                @Override
+                public WebCookie setDiscard(boolean discard) {
+                    throw new UnsupportedOperationException("not supported yet");
+                }
 
-                    @Override
-                    public boolean isDiscard() {
-                        throw new UnsupportedOperationException("not supported yet");
-                    }
+                @Override
+                public boolean isSecure() {
+                    throw new UnsupportedOperationException("not supported yet");
+                }
 
-                    @Override
-                    public WebActorCookie setDiscard(boolean discard) {
-                        throw new UnsupportedOperationException("not supported yet");
-                    }
+                @Override
+                public WebCookie setSecure(boolean secure) {
+                    throw new UnsupportedOperationException("not supported yet");
+                }
 
-                    @Override
-                    public boolean isSecure() {
-                        throw new UnsupportedOperationException("not supported yet");
-                    }
+                @Override
+                public int getVersion() {
+                    return c.getVersion();
+                }
 
-                    @Override
-                    public WebActorCookie setSecure(boolean secure) {
-                        throw new UnsupportedOperationException("not supported yet");
-                    }
+                @Override
+                public WebCookie setVersion(int version) {
+                    c.setVersion(version);
+                    return this;
+                }
 
-                    @Override
-                    public int getVersion() {
-                        return c.getVersion();
-                    }
+                @Override
+                public boolean isHttpOnly() {
+                    return c.isHttpOnly();
+                }
 
-                    @Override
-                    public WebActorCookie setVersion(int version) {
-                        c.setVersion(version);
-                        return this;
-                    }
+                @Override
+                public WebCookie setHttpOnly(boolean httpOnly) {
+                    c.setHttpOnly(httpOnly);
+                    return this;
+                }
 
-                    @Override
-                    public boolean isHttpOnly() {
-                        return c.isHttpOnly();
-                    }
+                @Override
+                public Date getExpires() {
+                    throw new UnsupportedOperationException("not supported yet");
+                }
 
-                    @Override
-                    public WebActorCookie setHttpOnly(boolean httpOnly) {
-                        c.setHttpOnly(httpOnly);
-                        return this;
-                    }
+                @Override
+                public WebCookie setExpires(Date expires) {
+                    throw new UnsupportedOperationException("not supported yet");
+                }
 
-                    @Override
-                    public Date getExpires() {
-                        throw new UnsupportedOperationException("not supported yet");
-                    }
+                @Override
+                public String getComment() {
+                    return c.getComment();
+                }
 
-                    @Override
-                    public WebActorCookie setExpires(Date expires) {
-                        throw new UnsupportedOperationException("not supported yet");
-                    }
+                @Override
+                public WebCookie setComment(String comment) {
+                    c.setComment(comment);
+                    return this;
+                }
+            });
+        }
+        return list;
+    }
 
-                    @Override
-                    public String getComment() {
-                        return c.getComment();
-                    }
-
-                    @Override
-                    public WebActorCookie setComment(String comment) {
-                        c.setComment(comment);
-                        return this;
-                    }
-                };
-            }
-        };
+    @Override
+    public String getRequestURL() {
+        return request.getRequestURL().toString();
     }
 
     public interface EnumGettersForRoMap<K, V> {
@@ -275,7 +268,7 @@ public class WebHttpMessage implements WebActorHttpMessage {
         };
     }
 
-    public WebHttpMessage(HttpServletRequest request, HttpServletResponse response) {
+    public WebServletHttpMessage(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
         this.response = response;
     }
@@ -302,21 +295,6 @@ public class WebHttpMessage implements WebActorHttpMessage {
     }
 
     @Override
-    public String getHeader(String name) {
-        return request.getHeader(name);
-    }
-
-    @Override
-    public Enumeration<String> getHeaders(String name) {
-        return request.getHeaders(name);
-    }
-
-    @Override
-    public Enumeration<String> getHeaderNames() {
-        return request.getHeaderNames();
-    }
-
-    @Override
     public String getMethod() {
         return request.getMethod();
     }
@@ -329,21 +307,6 @@ public class WebHttpMessage implements WebActorHttpMessage {
     @Override
     public String getServletPath() {
         return request.getServletPath();
-    }
-
-    @Override
-    public String getParameter(String name) {
-        return request.getParameter(name);
-    }
-
-    @Override
-    public Enumeration<String> getParameterNames() {
-        return request.getParameterNames();
-    }
-
-    @Override
-    public String[] getParameterValues(String name) {
-        return request.getParameterValues(name);
     }
 
     @Override
@@ -362,16 +325,6 @@ public class WebHttpMessage implements WebActorHttpMessage {
     }
 
     @Override
-    public void setAttribute(String name, Object o) {
-        request.setAttribute(name, o);
-    }
-
-    @Override
-    public void removeAttribute(String name) {
-        request.removeAttribute(name);
-    }
-
-    @Override
     public String getContextPath() {
         return request.getContextPath();
     }
@@ -379,11 +332,6 @@ public class WebHttpMessage implements WebActorHttpMessage {
     @Override
     public String getRequestURI() {
         return request.getRequestURI();
-    }
-
-    @Override
-    public StringBuffer getRequestURL() {
-        return request.getRequestURL();
     }
 
     @Override
@@ -399,16 +347,6 @@ public class WebHttpMessage implements WebActorHttpMessage {
     @Override
     public String getPathInfo() {
         return request.getPathInfo();
-    }
-
-    @Override
-    public Object getAttribute(String name) {
-        return request.getAttribute(name);
-    }
-
-    @Override
-    public Enumeration<String> getAttributeNames() {
-        return request.getAttributeNames();
     }
 
     @Override
@@ -447,7 +385,7 @@ public class WebHttpMessage implements WebActorHttpMessage {
                     try {
                         send(message);
                     } catch (SuspendExecution | InterruptedException ex) {
-                        Logger.getLogger(WebHttpMessage.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(WebServletHttpMessage.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     return true;
                 }

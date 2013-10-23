@@ -213,7 +213,7 @@ project (':comsat-actors-api') {
     }
 }
 
-project (':comsat-j2ee-actors') {
+project (':comsat-servlet-actors') {
     dependencies {
         compile project (':comsat-actors-api')
         compile 'javax.websocket:javax.websocket-api:1.0'
