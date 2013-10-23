@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'war'
 
 sourceCompatibility = '1.7'
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -37,6 +38,8 @@ dependencies {
     compile 'org.apache.tomcat.embed:tomcat-embed-logging-juli:8.0.0-RC1'
     compile 'org.apache.tomcat.embed:tomcat-embed-logging-log4j:8.0.0-RC1'
     compile 'org.apache.tomcat.embed:tomcat-embed-jasper:8.0.0-RC1'
+    compile 'org.apache.tomcat:tomcat-coyote:8.0.0-RC1'
+    compile 'net.bull.javamelody:javamelody-core:1.45.0'
     //    compile 'org.apache.httpcomponents:httpcore:4.3'
     //    compile 'org.apache.httpcomponents:httpclient:4.3-beta2'
     compile 'org.apache.httpcomponents:httpasyncclient:4.0-beta4'
@@ -45,7 +48,7 @@ dependencies {
     //
     compile 'co.paralleluniverse:comsat-jersey:0.1.0-SNAPSHOT'
     compile 'co.paralleluniverse:comsat-jax-rs-client:0.1.0-SNAPSHOT'
-    quasar  "co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT"
+    quasar  "co.paralleluniverse:quasar-core:0.4.0-SNAPSHOT"
 }
 configurations.all {
     resolutionStrategy {
@@ -56,6 +59,9 @@ configurations.all {
         //            force "org.ow2.asm:asm-tree:4.1"
         //            force "org.ow2.asm:asm-util:4.1"
         //            force "com.google.guava:guava:14.0.1"
+        force "com.google.guava:guava:15.0"
+        force "org.glassfish.jersey.core:jersey-client:2.3"
+        force "org.glassfish.jersey.core:jersey-common:2.3"
         //        force "org.glassfish.jersey.core:jersey-common:2.2"
         //        force "org.glassfish.jersey.core:jersey-client:2.2"
         force "org.slf4j:slf4j-api:1.7.5"
@@ -73,10 +79,12 @@ tasks.withType(JavaExec) {
     systemProperty "log4j.configurationFile", "${projectDir}/log4j.xml"
 }
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.5-20130302103424+0000'
+    gradleVersion = '1.6'
 }
 task(runSimple, dependsOn: 'classes', type: JavaExec) {
-    main = 'com.example.PerfTestServer'
+//    main = 'com.example.AHClient'
+    main = 'com.example.MyClient'
     classpath = sourceSets.main.runtimeClasspath
-//    classpath = configurations.runtime
+    //    classpath = configurations.runtime
 } 
+

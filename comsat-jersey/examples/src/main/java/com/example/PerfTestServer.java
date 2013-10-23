@@ -24,12 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Path;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
-import org.apache.catalina.startup.Bootstrap;
 import org.apache.catalina.startup.Tomcat;
-import org.eclipse.jetty.io.Connection;
-import org.eclipse.jetty.io.EndPoint;
-import org.eclipse.jetty.server.ConnectionFactory;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -49,12 +44,12 @@ public class PerfTestServer {
     private final NewResource newResource = new NewResource();
 
     public static void main(String[] args) throws Exception {
-        new PerfTestServer(new JettyServer()).start();
-//        new PerfTestServer(new TomcatServer()).start();
+//        new PerfTestServer(new JettyServer()).start();
+        new PerfTestServer(new TomcatServer()).start();
 
 
 
-        
+
 
     }
 
@@ -66,8 +61,8 @@ public class PerfTestServer {
         registerServletsOn(server);
         server.start();
         System.out.println("Jersey app started. Hit enter to stop it...");
-//        System.in.read();
-//        server.stop();
+        System.in.read();
+        server.stop();
 //        server.wait();
     }
 
@@ -190,11 +185,13 @@ public class PerfTestServer {
             jetty.stop();
         }
     }
+
     static class TomcatServer implements ServletServer {
         private final Tomcat tomcat;
         private final Context appContext;
 
         public TomcatServer() {
+
 
             tomcat = new Tomcat();
             File baseDir = new File("tomcat");
@@ -209,11 +206,19 @@ public class PerfTestServer {
             } catch (ServletException ex) {
                 throw new RuntimeException(ex);
             }
-            tomcat.getConnector().setAttribute("maxThreads", 50);
+            final org.apache.catalina.connector.Connector connector = new org.apache.catalina.connector.Connector("org.apache.coyote.http11.Http11NioProtocol");
+//            connector.setPort(8080);
+//            connector.setAttribute("maxThreads", 50);
+//            connector.setAttribute("acceptCount", 10000);
+//            connector.setAttribute("acceptorThreadCount", 2);
+//            connector.setAttribute("maxConnetions", 20000);
+//            tomcat.setConnector(connector);
+            tomcat.getConnector().setProtocol("org.apache.coyote.http11.Http11NioProtocol");
+            tomcat.getConnector().setAttribute("maxThreads", 2000);
             tomcat.getConnector().setAttribute("acceptCount", 10000);
             tomcat.getConnector().setAttribute("acceptorThreadCount", 2);
+            tomcat.getConnector().setAttribute("maxConnetions", 20000);
 
-//            tomcat.;
             //acceptorThreadCount
         }
 
@@ -233,6 +238,7 @@ public class PerfTestServer {
         @Override
         public void stop() throws Exception {
             tomcat.stop();
+//            tomcat.wait();
         }
     }
 }

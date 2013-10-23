@@ -32,6 +32,7 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
 
     configurations.all {
@@ -47,7 +48,7 @@ subprojects {
     }
 
     dependencies {
-        compile 'co.paralleluniverse:quasar-core:0.3.0-SNAPSHOT'
+        compile 'co.paralleluniverse:quasar-core:0.4.0-SNAPSHOT'
     }
 
     defaultTasks 'build'
@@ -73,7 +74,7 @@ subprojects {
     } 
 
     task wrapper(type: Wrapper) {
-        gradleVersion = '1.5-20130302103424+0000'
+        gradleVersion = '1.6'
     }
     ///////// Publish Artifacts 
     apply plugin: 'maven'
@@ -160,7 +161,7 @@ buildscript {
 
 project (':comsat-core') {
     dependencies {
-        compile 'com.google.guava:guava:14.0.1'
+        compile 'com.google.guava:guava:15.0'
     }
 }
 
@@ -172,6 +173,7 @@ project (':comsat-jax-rs-client') {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
+        compile 'org.sonatype.sisu.inject:cglib:3.0'
         compile 'com.ning:async-http-client:1.7.19'
     }
     
@@ -204,3 +206,19 @@ project (':comsat-jersey') {
         }
     }
 }
+
+project (':comsat-actors-api') {    
+    dependencies {
+        compile  'co.paralleluniverse:quasar-actors:0.4.0-SNAPSHOT'
+    }
+}
+
+project (':comsat-j2ee-actors') {
+    dependencies {
+        compile project (':comsat-actors-api')
+        compile 'javax.websocket:javax.websocket-api:1.0'
+        compile 'javax.servlet:javax.servlet-api:3.0.1'            
+    }
+}
+
+

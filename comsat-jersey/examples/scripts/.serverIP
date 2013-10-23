@@ -1,2 +1,2 @@
-ec2.instance=i-ea62aeb0
-galaxy.zkServers=ec2-54-241-115-177.us-west-1.compute.amazonaws.com:2181
+ec2.instance=i-16e0174c
+galaxy.zkServers=ec2-54-215-78-76.us-west-1.compute.amazonaws.com:2181
