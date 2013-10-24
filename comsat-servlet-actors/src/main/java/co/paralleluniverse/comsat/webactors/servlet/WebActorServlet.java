@@ -1,6 +1,7 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
+import co.paralleluniverse.actors.LocalActorUtil;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
@@ -30,10 +31,15 @@ public class WebActorServlet extends HttpServlet {
             resp.sendRedirect(redirectPath);
             return;
         }
+        if (LocalActorUtil.isDone(actor)) {
+            req.getSession().removeAttribute(WebActor.ACTOR_KEY);
+            resp.sendError(500, "Actor is dead, please login again");
+            return;
+        }
         req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         req.startAsync();
         try {
-            actor.send(new WebServletHttpMessage(req, resp));
+            actor.send(new ServletHttpMessage(req, resp));
         } catch (SuspendExecution ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
         }

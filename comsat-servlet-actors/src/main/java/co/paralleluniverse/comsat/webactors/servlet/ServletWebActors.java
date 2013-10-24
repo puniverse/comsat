@@ -2,8 +2,8 @@ package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.WebActor;
-import co.paralleluniverse.comsat.webactors.WebSocketBinaryMessage;
-import co.paralleluniverse.comsat.webactors.WebSocketStringMessage;
+import co.paralleluniverse.comsat.webactors.WebSocketMessage;
+import co.paralleluniverse.comsat.webactors.WebSocketMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
@@ -23,26 +23,15 @@ public class ServletWebActors {
             throw new RuntimeException("Session is already attached to an actor.");
         session.getUserProperties().put(WebActor.ACTOR_KEY, actor);
         // TODO: register the handler in order to enable detach
-        final ServletWebSocketBinaryPort binaryPort = new ServletWebSocketBinaryPort(session);
-        final ServletWebSocketStringPort stringPort = new ServletWebSocketStringPort(session);
+        final SendPort<WebSocketMessage> sp = new WebSocketSendPort(session);
         session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
             @Override
             public void onMessage(final ByteBuffer message) {
                 try {
-                    actor.send(new WebSocketBinaryMessage() {
+                    actor.send(new WebSocketMessage(message) {
                         @Override
-                        public ByteBuffer getMessage() {
-                            return message;
-                        }
-
-                        @Override
-                        public SendPort<String> getSenderStringPort() {
-                            return stringPort;
-                        }
-
-                        @Override
-                        public SendPort<ByteBuffer> getSenderBinaryPort() {
-                            return binaryPort;
+                        public SendPort<WebSocketMessage> sender() {
+                            return sp;
                         }
                     });
                 } catch (SuspendExecution ex) {
@@ -54,20 +43,10 @@ public class ServletWebActors {
             @Override
             public void onMessage(final String message) {
                 try {
-                    actor.send(new WebSocketStringMessage() {
+                    actor.send(new WebSocketMessage(message) {
                         @Override
-                        public String getMessage() {
-                            return message;
-                        }
-
-                        @Override
-                        public SendPort<String> getSenderStringPort() {
-                            return stringPort;
-                        }
-
-                        @Override
-                        public SendPort<ByteBuffer> getSenderBinaryPort() {
-                            return binaryPort;
+                        public SendPort<WebSocketMessage> sender() {
+                            return sp;
                         }
                     });
                 } catch (SuspendExecution ex) {
@@ -87,6 +66,6 @@ public class ServletWebActors {
     }
 
     public static boolean isHttpAttached(HttpSession session) {
-        return (session.getAttribute("actor") != null);
+        return (session.getAttribute(WebActor.ACTOR_KEY) != null);
     }
 }

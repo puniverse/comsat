@@ -1,10 +1,11 @@
 package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.strands.channels.SendPort;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
-public interface WebHttpMessage extends WebMessage {
+public interface HttpMessage extends WebMessage {
     ////
     public Map<String, String[]> getParameterMap();
 
@@ -12,7 +13,7 @@ public interface WebHttpMessage extends WebMessage {
 
     public Map<String, String> getAtrributesMap();
 
-    public Collection<WebCookie> getCookies();
+    public Collection<Cookie> getCookies();
 
     public String getMethod();
 
@@ -31,6 +32,10 @@ public interface WebHttpMessage extends WebMessage {
     public String getServletPath();
 
     public int getContentLength();
+    
+    public String getBody();
+    
+    public ByteBuffer getBinaryBody();
 
     public String getContentType();
 
@@ -40,5 +45,6 @@ public interface WebHttpMessage extends WebMessage {
 
     //////////////////
     /// response methods
-    public SendPort<String> getResponseStringPort();
+    @Override
+    public SendPort<HttpResponse> sender();
 }

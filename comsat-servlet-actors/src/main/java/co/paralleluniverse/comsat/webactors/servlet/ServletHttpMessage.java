@@ -4,13 +4,17 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
-import co.paralleluniverse.comsat.webactors.WebCookie;
-import co.paralleluniverse.comsat.webactors.WebHttpMessage;
+import co.paralleluniverse.comsat.webactors.Cookie;
+import co.paralleluniverse.comsat.webactors.HttpMessage;
+import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -23,133 +27,23 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.http.Cookie;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class WebServletHttpMessage implements WebHttpMessage {
+public class ServletHttpMessage implements HttpMessage {
     private final HttpServletRequest request;
     private final HttpServletResponse response;
 
     @Override
-    public Collection<WebCookie> getCookies() {
-        final Cookie[] cookies = request.getCookies();
-        List<WebCookie> list = new ArrayList<>();
+    public Collection<Cookie> getCookies() {
+        final javax.servlet.http.Cookie[] cookies = request.getCookies();
+        List<Cookie> list = new ArrayList<>();
         for (int i = 0; i < cookies.length; i++) {
-            final Cookie c = cookies[i];
-            list.add(new WebCookie() {
-                @Override
-                public String getName() {
-                    return c.getName();
-                }
-
-                @Override
-                public String getValue() {
-                    return c.getValue();
-                }
-
-                @Override
-                public WebCookie setValue(String value) {
-                    c.setValue(value);
-                    return this;
-                }
-
-                @Override
-                public String getPath() {
-                    return c.getPath();
-                }
-
-                @Override
-                public WebCookie setPath(String path) {
-                    c.setPath(path);
-                    return this;
-                }
-
-                @Override
-                public String getDomain() {
-                    return c.getDomain();
-                }
-
-                @Override
-                public WebCookie setDomain(String domain) {
-                    c.setDomain(domain);
-                    return this;
-                }
-
-                @Override
-                public Integer getMaxAge() {
-                    return c.getMaxAge();
-                }
-
-                @Override
-                public WebCookie setMaxAge(Integer maxAge) {
-                    c.setMaxAge(maxAge);
-                    return this;
-                }
-
-                @Override
-                public boolean isDiscard() {
-                    throw new UnsupportedOperationException("not supported yet");
-                }
-
-                @Override
-                public WebCookie setDiscard(boolean discard) {
-                    throw new UnsupportedOperationException("not supported yet");
-                }
-
-                @Override
-                public boolean isSecure() {
-                    throw new UnsupportedOperationException("not supported yet");
-                }
-
-                @Override
-                public WebCookie setSecure(boolean secure) {
-                    throw new UnsupportedOperationException("not supported yet");
-                }
-
-                @Override
-                public int getVersion() {
-                    return c.getVersion();
-                }
-
-                @Override
-                public WebCookie setVersion(int version) {
-                    c.setVersion(version);
-                    return this;
-                }
-
-                @Override
-                public boolean isHttpOnly() {
-                    return c.isHttpOnly();
-                }
-
-                @Override
-                public WebCookie setHttpOnly(boolean httpOnly) {
-                    c.setHttpOnly(httpOnly);
-                    return this;
-                }
-
-                @Override
-                public Date getExpires() {
-                    throw new UnsupportedOperationException("not supported yet");
-                }
-
-                @Override
-                public WebCookie setExpires(Date expires) {
-                    throw new UnsupportedOperationException("not supported yet");
-                }
-
-                @Override
-                public String getComment() {
-                    return c.getComment();
-                }
-
-                @Override
-                public WebCookie setComment(String comment) {
-                    c.setComment(comment);
-                    return this;
-                }
-            });
+            final javax.servlet.http.Cookie c = cookies[i];
+            list.add(new Cookie(c.getName(), c.getValue()).setComment(c.getComment()).setDomain(c.getDomain()).
+                    setMaxAge(c.getMaxAge()).setHttpOnly(c.isHttpOnly()).setPath(c.getPath()).setSecure(c.getSecure()).
+                    setVersion(c.getVersion()));
         }
         return list;
     }
@@ -157,6 +51,37 @@ public class WebServletHttpMessage implements WebHttpMessage {
     @Override
     public String getRequestURL() {
         return request.getRequestURL().toString();
+    }
+
+    @Override
+    public String getBody() {
+        try {
+            StringBuilder sb = new StringBuilder();
+            ServletInputStream inputStream = request.getInputStream();
+            byte[] b = new byte[1024];
+            int len = -1;
+            while ((len = inputStream.read(b)) != -1)
+                sb.append(Arrays.toString(b));
+            return sb.toString();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public ByteBuffer getBinaryBody() {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ServletInputStream inputStream = request.getInputStream();
+            byte[] b = new byte[1024];
+            int len = -1;
+            while ((len = inputStream.read(b)) != -1)
+                bos.write(b);
+
+            return ByteBuffer.wrap(bos.toByteArray());
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public interface EnumGettersForRoMap<K, V> {
@@ -268,7 +193,7 @@ public class WebServletHttpMessage implements WebHttpMessage {
         };
     }
 
-    public WebServletHttpMessage(HttpServletRequest request, HttpServletResponse response) {
+    public ServletHttpMessage(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
         this.response = response;
     }
@@ -365,35 +290,55 @@ public class WebServletHttpMessage implements WebHttpMessage {
     }
 
     @Override
-    public SendPort<String> getResponseStringPort() {
+    public SendPort<HttpResponse> sender() {
         try {
             final PrintWriter writer = response.getWriter();
-            return new SendPort<String>() {
+            return new SendPort<HttpResponse>() {
                 @Override
-                public void send(String message) throws SuspendExecution, InterruptedException {
-                    writer.print(message);
+                public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
+                    trySend(message);
                 }
 
                 @Override
-                public boolean send(String message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
-                    send(message);
-                    return true;
+                public boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+                    return trySend(message);
                 }
 
                 @Override
-                public boolean trySend(String message) {
-                    try {
-                        send(message);
-                    } catch (SuspendExecution | InterruptedException ex) {
-                        Logger.getLogger(WebServletHttpMessage.class.getName()).log(Level.SEVERE, null, ex);
+                public boolean trySend(HttpResponse message) {
+                    if (!request.isAsyncStarted()) 
+                        throw new RuntimeException("Request is already commited, cannot send again");
+                    writer.print(message.getString());
+                    response.setStatus(message.getStatus());
+                    if (message.getCookies() != null) {
+                        for (Cookie wc : message.getCookies())
+                            response.addCookie(getServletCookie(wc));
                     }
+                    if (message.getHeaders() != null) {
+                        for (Map.Entry<String, String> h : message.getHeaders())
+                            response.addHeader(h.getKey(), h.getValue());
+                    }
+                    if (message.getError() != null) {
+                        try {
+                            response.sendError(message.getStatus(), message.getError().toString());
+                        } catch (IOException ex) {
+                            Logger.getLogger(ServletHttpMessage.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                    if (message.getRedirectPath() != null) {
+                        try {
+                            response.sendRedirect(message.getRedirectPath());
+                        } catch (IOException ex) {
+                            Logger.getLogger(ServletHttpMessage.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                    writer.close();
+                    request.getAsyncContext().complete();
                     return true;
                 }
 
                 @Override
                 public void close() {
-                    writer.close();
-                    request.getAsyncContext().complete();
                 }
             };
         } catch (IOException ex) {
@@ -401,5 +346,18 @@ public class WebServletHttpMessage implements WebHttpMessage {
         }
 
 
+    }
+
+    public static javax.servlet.http.Cookie getServletCookie(Cookie wc) {
+        javax.servlet.http.Cookie c = new javax.servlet.http.Cookie(wc.getName(), wc.getValue());
+        c.setComment(wc.getComment());
+        if (wc.getDomain() != null)
+            c.setDomain(wc.getDomain());
+        c.setMaxAge(wc.getMaxAge());
+        c.setPath(wc.getPath());
+        c.setSecure(wc.isSecure());
+        c.setHttpOnly(wc.isHttpOnly());
+        c.setVersion(wc.getVersion());
+        return c;
     }
 }
