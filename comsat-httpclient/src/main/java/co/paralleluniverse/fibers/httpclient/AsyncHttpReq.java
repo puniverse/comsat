@@ -13,20 +13,13 @@
  */
 package co.paralleluniverse.fibers.httpclient;
 
-import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.FiberAsync;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 
-abstract class AsyncHttpReq extends FiberAsync<HttpResponse, FutureCallback<HttpResponse>, Void, IOException> implements FutureCallback<HttpResponse> {
-    private final Fiber fiber;
-
-    public AsyncHttpReq() {
-        this.fiber = Fiber.currentFiber();
-    }
-
+abstract class AsyncHttpReq extends FiberAsync<HttpResponse, Void, IOException> implements FutureCallback<HttpResponse> {
     @Override
     public HttpResponse run() throws IOException, SuspendExecution {
         try {
@@ -38,16 +31,16 @@ abstract class AsyncHttpReq extends FiberAsync<HttpResponse, FutureCallback<Http
 
     @Override
     public void completed(HttpResponse response) {
-        super.completed(response, fiber);
+        asyncCompleted(response);
     }
 
     @Override
     public void failed(Exception ex) {
-        super.failed(ex, fiber);
+        asyncFailed(ex);
     }
 
     @Override
     public void cancelled() {
-        super.failed(new InterruptedException(), fiber);
+        asyncFailed(new InterruptedException());
     }
 }

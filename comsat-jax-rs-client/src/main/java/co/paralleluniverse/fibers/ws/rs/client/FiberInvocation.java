@@ -30,8 +30,8 @@ class FiberInvocation implements Invocation {
         try {
             return new AsyncRs<Response>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<Response> callback) {
-                    invocation.submit(callback);
+                protected Void requestAsync() {
+                    invocation.submit(this);
                     return null;
                 }
             }.run();
@@ -46,8 +46,8 @@ class FiberInvocation implements Invocation {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<T> callback) {
-                    invocation.submit(callback);
+                protected Void requestAsync() {
+                    invocation.submit(this);
                     return null;
                 }
             }.run();
@@ -62,8 +62,8 @@ class FiberInvocation implements Invocation {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<T> callback) {
-                    invocation.submit(callback);
+                protected Void requestAsync() {
+                    invocation.submit(this);
                     return null;
                 }
             }.run();

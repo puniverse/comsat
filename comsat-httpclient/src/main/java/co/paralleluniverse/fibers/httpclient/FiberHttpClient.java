@@ -13,7 +13,6 @@
  */
 package co.paralleluniverse.fibers.httpclient;
 
-import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import java.io.IOException;
@@ -27,7 +26,6 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIUtils;
-import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
@@ -63,8 +61,8 @@ public class FiberHttpClient extends CloseableHttpClient {
         try {
             final HttpResponse response = new AsyncHttpReq() {
                 @Override
-                protected Void requestAsync(Fiber current, FutureCallback<HttpResponse> callback) {
-                    client.execute(target, request, context, callback);
+                protected Void requestAsync() {
+                    client.execute(target, request, context, this);
                     return null;
                 }
             }.run();

@@ -1,6 +1,5 @@
 package co.paralleluniverse.fibers.ws.rs.client;
 
-import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import java.util.Locale;
@@ -8,7 +7,6 @@ import javax.ws.rs.client.AsyncInvoker;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.GenericType;
@@ -249,8 +247,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<Response>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<Response> callback) {
-                    builder.async().method(name, callback);
+                protected Void requestAsync() {
+                    builder.async().method(name, this);
                     return null;
                 }
             }.run();
@@ -265,8 +263,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<T> callback) {
-                    builder.async().method(name, callback);
+                protected Void requestAsync() {
+                    builder.async().method(name, this);
                     return null;
                 }
             }.run();
@@ -287,8 +285,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<Response>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<Response> callback) {
-                    builder.async().method(name, entity, callback);
+                protected Void requestAsync() {
+                    builder.async().method(name, entity, this);
                     return null;
                 }
             }.run();
@@ -303,8 +301,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<T> callback) {
-                    builder.async().method(name, entity, callback);
+                protected Void requestAsync() {
+                    builder.async().method(name, entity, this);
                     return null;
                 }
             }.run();
@@ -319,8 +317,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync(Fiber current, InvocationCallback<T> callback) {
-                    builder.async().method(name, entity, callback);
+                protected Void requestAsync() {
+                    builder.async().method(name, entity, this);
                     return null;
                 }
             }.run();
