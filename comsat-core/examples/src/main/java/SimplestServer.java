@@ -36,7 +36,7 @@ public class SimplestServer {
 //        context.setContextPath("/");
         server.setHandler(context);
 //        context.addServlet(new ServletHolder(new JdbcServlet()), "/root");
-        context.addServlet(new ServletHolder(new JdbcServlet()), "/jdbc");
+//        context.addServlet(new ServletHolder(new JdbcServlet()), "/jdbc");
         context.addServlet(new ServletHolder(new HttpServlet() {
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

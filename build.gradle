@@ -169,12 +169,14 @@ project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
         
-        compile ('org.glassfish.jersey.core:jersey-client:2.3') {
+        compile ('org.glassfish.jersey.core:jersey-client:2.4') {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
         compile 'org.sonatype.sisu.inject:cglib:3.0'
         compile 'com.ning:async-http-client:1.7.19'
+        compile 'org.eclipse.jetty:jetty-client:9.1.0.RC0'
+        
     }
     
 }

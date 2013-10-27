@@ -26,6 +26,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import co.paralleluniverse.jersey.connector.JettyConnector;
 import org.glassfish.jersey.spi.RequestExecutorsProvider;
 
 public class AsyncClientBuilder extends ClientBuilder {
@@ -46,8 +47,6 @@ public class AsyncClientBuilder extends ClientBuilder {
     }
 
     public static Client newClient(Configuration userConfig) {
-        final AsyncHttpConnector asyncHttpConnector = new AsyncHttpConnector(new ClientConfig().
-                property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20));
         final RequestExecutorsProvider singleThreadPool = new RequestExecutorsProvider() {
             private ExecutorService tp = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-puniverse-single-worker-%d").build());
 
@@ -57,10 +56,15 @@ public class AsyncClientBuilder extends ClientBuilder {
             }
         };
         final ClientConfig config = new ClientConfig().
-                connector(asyncHttpConnector).
                 register(singleThreadPool, RequestExecutorsProvider.class);
         if (userConfig != null)
             config.loadFrom(userConfig);
+        if (config.getConnector() == null)
+            config.connector(new JettyConnector(new ClientConfig().
+                    property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20)));
+//            config.connector(new AsyncHttpConnector(new ClientConfig().
+//                    property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20)));
+
         return new FiberClient(ClientBuilder.newClient(config));
     }
 
