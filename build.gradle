@@ -159,7 +159,7 @@ buildscript {
     }
 }    
 
-project (':comsat-core') {
+project (':comsat-jdbc') {
     dependencies {
         compile 'com.google.guava:guava:15.0'
     }
