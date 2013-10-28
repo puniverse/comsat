@@ -13,7 +13,6 @@
  */
 package co.paralleluniverse.fibers.ws.rs.client;
 
-import co.paralleluniverse.jersey.connector.AsyncHttpConnector;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.security.KeyStore;
 import java.util.Map;
