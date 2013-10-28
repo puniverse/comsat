@@ -181,20 +181,20 @@ project (':comsat-jax-rs-client') {
     
 }
 
-project (':comsat-httpclient') {
-    dependencies {
-        compile 'org.apache.httpcomponents:httpcore:4.3'
-        compile 'org.apache.httpcomponents:httpclient:4.3-beta2'
-        compile 'org.apache.httpcomponents:httpasyncclient:4.0-beta4'
-    }
-}
+//project (':comsat-httpclient') {
+//    dependencies {
+//        compile 'org.apache.httpcomponents:httpcore:4.3'
+//        compile 'org.apache.httpcomponents:httpclient:4.3-beta2'
+//        compile 'org.apache.httpcomponents:httpasyncclient:4.0-beta4'
+//    }
+//}
 
 project (':comsat-servlet') {
     dependencies {
         compile 'javax.servlet:javax.servlet-api:3.0.1'            
     }
 }
-project (':comsat-jersey') {
+project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.0' // instead of old cglib in jersey
@@ -215,12 +215,22 @@ project (':comsat-actors-api') {
     }
 }
 
-project (':comsat-servlet-actors') {
+project (':comsat-actors-servlet') {
     dependencies {
         compile project (':comsat-actors-api')
         compile 'javax.websocket:javax.websocket-api:1.0'
         compile 'javax.servlet:javax.servlet-api:3.1.0'            
     }
 }
-
-
+project(':comsat-actors-netty') {
+    dependencies {
+        compile 'org.webbitserver:webbit:0.4.15'
+        compile project (':comsat-actors-api')
+    }
+}
+project(':comsat-actors-undertow') {
+    dependencies {
+        compile 'io.undertow:undertow-core:1.0.0.Beta18'
+        compile project (':comsat-actors-api')
+    }
+}
