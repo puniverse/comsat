@@ -48,8 +48,13 @@ subprojects {
         }
     }
 
+    configurations {
+        markdownDoclet
+    }
+    
     dependencies {
         compile 'co.paralleluniverse:quasar-core:0.4.0-SNAPSHOT'
+        markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
 
     defaultTasks 'install'
@@ -74,9 +79,6 @@ subprojects {
         from javadoc.destinationDir
     } 
 
-    task wrapper(type: Wrapper) {
-        gradleVersion = '1.6'
-    }
     ///////// Publish Artifacts 
     apply plugin: 'maven'
     apply plugin: 'signing'
@@ -235,4 +237,33 @@ project(':comsat-tomcat-loader') {
     jar {
         from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
     } 
+}
+
+task javadoc(type: Javadoc, dependsOn: subprojects.javadoc) {
+    title = "Comsat ${project(':comsat-actors-api').version}"
+    destinationDir = file("docs/javadoc")
+    source = project(':comsat-actors-api').sourceSets.main.allJava + project(':comsat-actors-servlet').sourceSets.main.allJava
+    options {
+        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
+        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+        addStringOption("parse-timeout", "10")
+        // stylesheetFile = rootProject.file('./baselib/javadoc.css')
+        links = [    
+        "http://docs.oracle.com/javase/7/docs/api/",
+        "http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/"
+        ]
+    }
+    excludes = [
+        "co/paralleluniverse/common/logging/**",
+        "co/paralleluniverse/common/monitoring/**",
+        "co/paralleluniverse/common/util/**",  
+    ]
+}
+
+task clean(dependsOn: subprojects.clean) << {
+    delete 'docs/javadoc'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.8'
 }
