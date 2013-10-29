@@ -20,6 +20,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -28,11 +29,17 @@ import javax.servlet.http.HttpServletResponse;
 public class WebActorServlet extends HttpServlet {
     public String redirectPath = null;
 
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        setRedirectNoSessionPath(config.getInitParameter("redirectNoSessionPath"));
+    }
+
     public WebActorServlet setRedirectNoSessionPath(String path) {
         this.redirectPath = path;
         return this;
     }
-    
+
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         sentToActor(req, resp);
