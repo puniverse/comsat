@@ -38,12 +38,13 @@ subprojects {
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
-            force "com.google.guava:guava:14.0.1"
+            force "com.google.guava:guava:15.0"
+            force "org.ow2.asm:asm:4.2"
             force "org.slf4j:slf4j-api:1.7.5"
             force "log4j:log4j:1.2.16"
             force "junit:junit:4.10"
-            force "org.apache.httpcomponents:httpcore:4.3"
-            force "org.apache.httpcomponents:httpclient:4.3-beta2"
+            //            force "org.apache.httpcomponents:httpcore:4.3"
+            //            force "org.apache.httpcomponents:httpclient:4.3-beta2"
         }
     }
 
@@ -51,7 +52,7 @@ subprojects {
         compile 'co.paralleluniverse:quasar-core:0.4.0-SNAPSHOT'
     }
 
-    defaultTasks 'build'
+    defaultTasks 'install'
 
     task scanSuspendables(type: JavaExec, dependsOn: classes) { // used to run SuspendableScanner
         main = "co.paralleluniverse.fibers.instrument.SuspendablesScanner"
@@ -147,6 +148,7 @@ subprojects {
     }
    
 }
+defaultTasks 'install'
 
 // needed to the license plugin
 buildscript {
@@ -225,4 +227,12 @@ project(':comsat-actors-undertow') {
         compile 'io.undertow:undertow-core:1.0.0.Beta18'
         compile project (':comsat-actors-api')
     }
+}
+project(':comsat-tomcat-loader') {
+    dependencies {
+        compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.0-RC3'
+    }
+    jar {
+        from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+    } 
 }

@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.jdbc;
 
+import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
@@ -55,7 +56,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -76,7 +77,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -146,7 +147,7 @@ class FiberStatement implements Statement {
     }
 
     @Override
-    @Suspendable    
+    @Suspendable
     public ResultSet getResultSet() throws SQLException {
         try {
             return AsyncListenableFuture.get(exec.submit(new Callable<ResultSet>() {
@@ -158,7 +159,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -225,7 +226,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -257,7 +258,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -274,7 +275,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -291,7 +292,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -308,7 +309,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -325,7 +326,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -342,7 +343,7 @@ class FiberStatement implements Statement {
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 

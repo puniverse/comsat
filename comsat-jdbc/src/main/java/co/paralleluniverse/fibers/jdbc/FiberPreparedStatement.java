@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.jdbc;
 
+import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
@@ -67,7 +68,7 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -84,7 +85,7 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
@@ -201,7 +202,7 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         }
     }
 
