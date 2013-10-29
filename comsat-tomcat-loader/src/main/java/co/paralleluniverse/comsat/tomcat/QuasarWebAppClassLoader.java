@@ -38,6 +38,8 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
                 exc.printStackTrace(System.out);
             }
         });
+//        inst.setVerbose(true);
+//        inst.setDebug(true);
         return inst;
     }
 
