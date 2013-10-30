@@ -13,12 +13,10 @@
  */
 package co.paralleluniverse.fibers.ws.rs.client;
 
-import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.SettableFuture;
 import java.util.concurrent.Future;
-import javax.security.auth.callback.Callback;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.core.GenericType;
