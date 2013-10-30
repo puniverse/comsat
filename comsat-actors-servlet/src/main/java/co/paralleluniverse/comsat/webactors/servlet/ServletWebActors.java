@@ -14,27 +14,25 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.comsat.webactors.WebActor;
-import co.paralleluniverse.comsat.webactors.WebSocketMessage;
 import co.paralleluniverse.comsat.webactors.WebSocketMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.http.HttpSession;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 
 public class ServletWebActors {
+    static final String ACTOR_KEY = "co.paralleluniverse.actor";
+
     public static void attachHttpSession(HttpSession session, ActorRef<Object> actor) {
-        session.setAttribute(WebActor.ACTOR_KEY, actor);
+        session.setAttribute(ACTOR_KEY, actor);
     }
 
     public static void attachWebSocket(final Session session, final ActorRef<Object> actor) {
-        if (session.getUserProperties().containsKey(WebActor.ACTOR_KEY))
+        if (session.getUserProperties().containsKey(ACTOR_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
-        session.getUserProperties().put(WebActor.ACTOR_KEY, actor);
+        session.getUserProperties().put(ACTOR_KEY, actor);
         // TODO: register the handler in order to enable detach
         final SendPort<WebSocketMessage> sp = new WebSocketSendPort(session);
         session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
@@ -48,7 +46,7 @@ public class ServletWebActors {
                         }
                     });
                 } catch (SuspendExecution ex) {
-                    Logger.getLogger(WebActor.class.getName()).log(Level.SEVERE, null, ex);
+                    throw new AssertionError(ex);
                 }
             }
         });
@@ -63,7 +61,7 @@ public class ServletWebActors {
                         }
                     });
                 } catch (SuspendExecution ex) {
-                    Logger.getLogger(WebActor.class.getName()).log(Level.SEVERE, null, ex);
+                    throw new AssertionError(ex);
                 }
             }
         });
@@ -71,14 +69,14 @@ public class ServletWebActors {
     }
 
     public static void detachWebSocket(final Session session) {
-        WebActor get = (WebActor) session.getUserProperties().get(WebActor.ACTOR_KEY);
+        ActorRef<?> get = (ActorRef<?>) session.getUserProperties().get(ACTOR_KEY);
         if (get != null) {
-            session.getUserProperties().remove(WebActor.ACTOR_KEY);
+            session.getUserProperties().remove(ACTOR_KEY);
 //            session.removeMessageHandler(null);
         }
     }
 
     public static boolean isHttpAttached(HttpSession session) {
-        return (session.getAttribute(WebActor.ACTOR_KEY) != null);
+        return (session.getAttribute(ACTOR_KEY) != null);
     }
 }

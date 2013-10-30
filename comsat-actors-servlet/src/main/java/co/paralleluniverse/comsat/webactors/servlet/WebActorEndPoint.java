@@ -14,7 +14,7 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.comsat.webactors.WebActor;
+import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,7 +43,7 @@ public class WebActorEndPoint extends Endpoint {
         HttpSession httpSession = getHttpSession(config);
         if (httpSession == null)
             throw new RuntimeException("HttpSession hasn't been embedded by the EndPoint Configurator.");
-        return (ActorRef<Object>) httpSession.getAttribute(WebActor.ACTOR_KEY);
+        return (ActorRef<Object>) httpSession.getAttribute(ACTOR_KEY);
     }
 
     private HttpSession getHttpSession(EndpointConfig config) {

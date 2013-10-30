@@ -15,7 +15,7 @@ package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.actors.LocalActorUtil;
-import co.paralleluniverse.comsat.webactors.WebActor;
+import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -46,13 +46,13 @@ public class WebActorServlet extends HttpServlet {
     }
 
     private void sentToActor(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
-        ActorRef<Object> actor = (ActorRef<Object>) req.getSession().getAttribute(WebActor.ACTOR_KEY);
+        ActorRef<Object> actor = (ActorRef<Object>) req.getSession().getAttribute(ACTOR_KEY);
         if (actor == null) {
             resp.sendRedirect(redirectPath);
             return;
         }
         if (LocalActorUtil.isDone(actor)) {
-            req.getSession().removeAttribute(WebActor.ACTOR_KEY);
+            req.getSession().removeAttribute(ACTOR_KEY);
             resp.sendError(500, "Actor is dead, please login again");
             return;
         }

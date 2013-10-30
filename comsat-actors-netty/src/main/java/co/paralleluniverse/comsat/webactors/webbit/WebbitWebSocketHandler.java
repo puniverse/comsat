@@ -1,7 +1,6 @@
 package co.paralleluniverse.comsat.webactors.webbit;
 
 import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.comsat.webactors.WebSocketMessage;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
@@ -9,6 +8,7 @@ import org.webbitserver.WebSocketConnection;
 import org.webbitserver.WebSocketHandler;
 
 public abstract class WebbitWebSocketHandler implements WebSocketHandler {
+    static final String ACTOR_KEY = "co.paralleluniverse.actor";
     public static final String MH_KEY = "co.paralleluniverse.mh";
 
     @Override
@@ -26,7 +26,7 @@ public abstract class WebbitWebSocketHandler implements WebSocketHandler {
     }
 
     public void attachWebSocket(final WebSocketConnection connection, final ActorRef<Object> actor) {
-        connection.data(WebActor.ACTOR_KEY, actor);
+        connection.data(ACTOR_KEY, actor);
         connection.data(MH_KEY, new WebbitMessageHandler() {
             final SendPort<String> stringPort = new WebbitWebSocketStringPort(connection);
             final SendPort<ByteBuffer> binaryPort = new WebbitWebSocketBinaryPort(connection);
@@ -39,7 +39,6 @@ public abstract class WebbitWebSocketHandler implements WebSocketHandler {
                     public SendPort<WebSocketMessage> sender() {
                         return sp;
                     }
-                    
                 });
             }
 
@@ -49,7 +48,7 @@ public abstract class WebbitWebSocketHandler implements WebSocketHandler {
                     @Override
                     public SendPort<WebSocketMessage> sender() {
                         return sp;
-                    }                    
+                    }
                 });
             }
         });

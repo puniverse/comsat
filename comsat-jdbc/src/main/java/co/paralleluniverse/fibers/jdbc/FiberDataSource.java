@@ -32,24 +32,36 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
+ * A JDBC {@link DataSource} that creates connections that can be used in Quasar fibers.
+ * This class simply wraps any JDBC data source.
  *
  * @author eitan
  */
-public class AsyncDataSource implements DataSource {
+public class FiberDataSource implements DataSource {
     private final DataSource ds;
     private final ListeningExecutorService exec;
 
-    private AsyncDataSource(DataSource ds, ListeningExecutorService exec) {
-        this.ds = ds;
-        this.exec = exec;
-    }
-
-    public AsyncDataSource(DataSource ds, ExecutorService exec) {
+    /**
+     *
+     * @param ds
+     * @param exec
+     */
+    public FiberDataSource(DataSource ds, ExecutorService exec) {
         this(ds, MoreExecutors.listeningDecorator(exec));
     }
 
-    public AsyncDataSource(DataSource ds, final int numThreads) {
+    /**
+     *
+     * @param ds
+     * @param numThreads
+     */
+    public FiberDataSource(DataSource ds, final int numThreads) {
         this(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
+    }
+
+    private FiberDataSource(DataSource ds, ListeningExecutorService exec) {
+        this.ds = ds;
+        this.exec = exec;
     }
 
     @Override
