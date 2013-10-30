@@ -41,6 +41,8 @@ public class WebSocketSendPort implements SendPort<WebSocketMessage> {
 
     @Override
     public boolean trySend(WebSocketMessage message) {
+        if (!session.isOpen())
+            return false;
         if (message.isString())
             session.getAsyncRemote().sendText(message.getString()); // TODO: use fiber async instead of servlet Async ?
         else
