@@ -33,7 +33,7 @@ import javax.sql.DataSource;
 
 /**
  * A JDBC {@link DataSource} that creates connections that can be used in Quasar fibers.
- * This class simply wraps any JDBC data source.
+ * This class simply wraps any JDBC data source, and executes any JDBC operations in a separate {@code ExecutorService}.
  *
  * @author eitan
  */
@@ -42,18 +42,18 @@ public class FiberDataSource implements DataSource {
     private final ListeningExecutorService exec;
 
     /**
-     *
-     * @param ds
-     * @param exec
+     * Wraps a JDBC {@link DataSource}.
+     * @param ds The {@link DataSource} to wrap.
+     * @param executor The {@link ExecutorService} to use to actually execute JDBC operations.
      */
-    public FiberDataSource(DataSource ds, ExecutorService exec) {
-        this(ds, MoreExecutors.listeningDecorator(exec));
+    public FiberDataSource(DataSource ds, ExecutorService executor) {
+        this(ds, MoreExecutors.listeningDecorator(executor));
     }
 
     /**
-     *
-     * @param ds
-     * @param numThreads
+     * Wraps a JDBC {@link DataSource}.
+     * @param ds The {@link DataSource} to wrap.
+     * @param numThreads The number of threads to create in the thread pool that will be used to execute JDBC operations.
      */
     public FiberDataSource(DataSource ds, final int numThreads) {
         this(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
