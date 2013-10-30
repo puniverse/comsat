@@ -60,7 +60,7 @@ public class HttpResponse implements WebResponse {
             });
         }
 
-        public Builder setRedirectPath(String redirectPath) {
+        public Builder redirect(String redirectPath) {
             this.redirectPath = redirectPath;
             return this;
         }
@@ -72,12 +72,12 @@ public class HttpResponse implements WebResponse {
             return this;
         }
 
-        public Builder setStatus(int status) {
+        public Builder status(int status) {
             this.status = status;
             return this;
         }
 
-        public Builder setError(Throwable error) {
+        public Builder error(Throwable error) {
             this.error = error;
             return this;
         }
