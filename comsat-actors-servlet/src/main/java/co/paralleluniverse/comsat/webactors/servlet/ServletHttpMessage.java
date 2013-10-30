@@ -22,6 +22,9 @@ import co.paralleluniverse.comsat.webactors.HttpMessage;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,14 +32,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,9 +42,12 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class ServletHttpMessage implements HttpMessage {
+public class ServletHttpMessage extends HttpMessage {
     private final HttpServletRequest request;
     private final HttpServletResponse response;
+    private Multimap<String, String> headers;
+    private Multimap<String, String> params;
+    private Map<String, Object> attrs;
 
     @Override
     public Collection<Cookie> getCookies() {
@@ -97,134 +98,54 @@ public class ServletHttpMessage implements HttpMessage {
         }
     }
 
-    public interface EnumGettersForRoMap<K, V> {
-        public V get(K key);
-
-        public Enumeration<K> getKeys();
-    }
-
-    public <K, V> Map<K, V> getMapFromEnums(final EnumGettersForRoMap<K, V> etrm) {
-        return new Map<K, V>() {
-            @Override
-            public int size() {
-                int i = 0;
-                Enumeration keys = etrm.getKeys();
-                while (keys.hasMoreElements()) {
-                    i++;
-                    keys.nextElement();
-                }
-                return i;
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return !etrm.getKeys().hasMoreElements();
-            }
-
-            @Override
-            public boolean containsKey(Object key) {
-                Enumeration keys = etrm.getKeys();
-                while (keys.hasMoreElements())
-                    if (keys.nextElement().equals(key))
-                        return true;
-                return false;
-            }
-
-            @Override
-            public boolean containsValue(Object value) {
-                Enumeration<K> keys = etrm.getKeys();
-                while (keys.hasMoreElements())
-                    if (etrm.get(keys.nextElement()).equals(value))
-                        return true;
-                return false;
-            }
-
-            @Override
-            public V get(Object key) {
-                return etrm.get((K) key);
-            }
-
-            @Override
-            public V put(K key, V value) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            @Override
-            public V remove(Object key) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            @Override
-            public void putAll(Map<? extends K, ? extends V> m) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            @Override
-            public void clear() {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            @Override
-            public Set<K> keySet() {
-                return new HashSet<>(Collections.list(etrm.getKeys()));
-            }
-
-            @Override
-            public Collection<V> values() {
-                ArrayList<V> values = new ArrayList<>();
-                Enumeration<K> keys = etrm.getKeys();
-                while (keys.hasMoreElements())
-                    values.add(etrm.get(keys.nextElement()));
-                return values;
-            }
-
-            @Override
-            public Set<Entry<K, V>> entrySet() {
-                final Set<Entry<K, V>> hashSet = new HashSet<>();
-                Enumeration<K> keys = etrm.getKeys();
-                while (keys.hasMoreElements()) {
-                    final K key = keys.nextElement();
-                    hashSet.add(new Entry<K, V>() {
-                        @Override
-                        public K getKey() {
-                            return key;
-                        }
-
-                        @Override
-                        public V getValue() {
-                            return etrm.get(key);
-                        }
-
-                        @Override
-                        public V setValue(V value) {
-                            throw new UnsupportedOperationException("Not supported yet.");
-                        }
-                    });
-                }
-                return hashSet;
-            }
-        };
-    }
-
     public ServletHttpMessage(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
         this.response = response;
     }
 
     @Override
-    public Map<String, String> getHeaderMap() {
-
-        return getMapFromEnums(new EnumGettersForRoMap<String, String>() {
-            @Override
-            public String get(String key) {
-                return request.getHeader(key);
+    public Multimap<String, String> getHeaders() {
+        if (headers == null) {
+            ImmutableListMultimap.Builder<String, String> mm = ImmutableListMultimap.builder();// LinkedHashMultimap.create();
+            for (Enumeration<String> hs = request.getHeaderNames(); hs.hasMoreElements();) {
+                String h = hs.nextElement();
+                for (Enumeration<String> hv = request.getHeaders(h); hv.hasMoreElements();)
+                    mm.put(h, hv.nextElement());
             }
+            this.headers = mm.build();
+        }
+        return headers;
+    }
 
-            @Override
-            public Enumeration<String> getKeys() {
-                return request.getHeaderNames();
+    @Override
+    public Multimap<String, String> getParameters() {
+        if (params == null) {
+            ImmutableListMultimap.Builder<String, String> mm = ImmutableListMultimap.builder();
+            for (Enumeration<String> ps = request.getParameterNames(); ps.hasMoreElements();) {
+                String p = ps.nextElement();
+                String[] pvs = request.getParameterValues(p);
+                if(pvs != null) {
+                    for(String pv : pvs)
+                        mm.put(p, pv);
+                }
             }
-        });
+            this.params = mm.build();
+        }
+        return params;
+    }
+
+    @Override
+    public Map<String, Object> getAtrributes() {
+        if (attrs == null) {
+            ImmutableMap.Builder<String, Object> m = ImmutableMap.builder();
+            for (Enumeration<String> as = request.getAttributeNames(); as.hasMoreElements();) {
+                String a = as.nextElement();
+                Object v = request.getAttribute(a);
+                m.put(a, v);
+            }
+            this.attrs = m.build();
+        }
+        return attrs;
     }
 
     @Override
@@ -245,11 +166,6 @@ public class ServletHttpMessage implements HttpMessage {
     @Override
     public String getServletPath() {
         return request.getServletPath();
-    }
-
-    @Override
-    public Map<String, String[]> getParameterMap() {
-        return request.getParameterMap();
     }
 
     @Override
@@ -288,21 +204,6 @@ public class ServletHttpMessage implements HttpMessage {
     }
 
     @Override
-    public Map<String, String> getAtrributesMap() {
-        return getMapFromEnums(new EnumGettersForRoMap<String, String>() {
-            @Override
-            public String get(String key) {
-                return request.getParameter(key);
-            }
-
-            @Override
-            public Enumeration<String> getKeys() {
-                return request.getParameterNames();
-            }
-        });
-    }
-
-    @Override
     public SendPort<HttpResponse> sender() {
         try {
             final PrintWriter writer = response.getWriter();
@@ -319,7 +220,7 @@ public class ServletHttpMessage implements HttpMessage {
 
                 @Override
                 public boolean trySend(HttpResponse message) {
-                    if (!request.isAsyncStarted()) 
+                    if (!request.isAsyncStarted())
                         throw new RuntimeException("Request is already commited, cannot send again");
                     writer.print(message.getString());
                     response.setStatus(message.getStatus());
@@ -328,7 +229,7 @@ public class ServletHttpMessage implements HttpMessage {
                             response.addCookie(getServletCookie(wc));
                     }
                     if (message.getHeaders() != null) {
-                        for (Map.Entry<String, String> h : message.getHeaders())
+                        for (Map.Entry<String, String> h : message.getHeaders().entries())
                             response.addHeader(h.getKey(), h.getValue());
                     }
                     if (message.getError() != null) {

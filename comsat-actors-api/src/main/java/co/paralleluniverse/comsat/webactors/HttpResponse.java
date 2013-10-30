@@ -13,23 +13,25 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class HttpResponse implements WebResponse {
     private final String string;
     private final List<Cookie> cookies;
-    private final List<Map.Entry<String, String>> headers;
+    private final Multimap<String, String> headers;
     private final int status;
     private final Throwable error;
-    private String redirectPath;
+    private final String redirectPath;
 
     public static class Builder {
         private final String string;
         private List<Cookie> cookies;
-        private List<Map.Entry<String, String>> headers;
+        private Multimap<String, String> headers;
         private int status;
         private Throwable error;
         private String redirectPath;
@@ -41,23 +43,8 @@ public class HttpResponse implements WebResponse {
 
         public void addHeader(final String key, final String val) {
             if (headers == null)
-                headers = new ArrayList<>();
-            headers.add(new Map.Entry<String, String>() {
-                @Override
-                public String getKey() {
-                    return key;
-                }
-
-                @Override
-                public String getValue() {
-                    return val;
-                }
-
-                @Override
-                public String setValue(String value) {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            });
+                headers = LinkedHashMultimap.create();
+            headers.put(key, val);
         }
 
         public Builder redirect(String redirectPath) {
@@ -89,9 +76,9 @@ public class HttpResponse implements WebResponse {
 
     private HttpResponse(Builder builder) {
         this.string = builder.string;
-        this.cookies = builder.cookies;
+        this.cookies = ImmutableList.copyOf(builder.cookies);
         this.error = builder.error;
-        this.headers = builder.headers;
+        this.headers = ImmutableMultimap.copyOf(builder.headers);
         this.status = builder.status;
         this.redirectPath = builder.redirectPath;
     }
@@ -108,7 +95,7 @@ public class HttpResponse implements WebResponse {
         return cookies;
     }
 
-    public List<Entry<String, String>> getHeaders() {
+    public Multimap<String, String> getHeaders() {
         return headers;
     }
 

@@ -13,9 +13,6 @@
  */
 package co.paralleluniverse.fibers.servlet;
 
-import co.paralleluniverse.fibers.FiberUtil;
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
 import javax.servlet.AsyncContext;
 import javax.servlet.RequestDispatcher;

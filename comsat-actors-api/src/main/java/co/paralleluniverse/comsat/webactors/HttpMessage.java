@@ -14,50 +14,77 @@
 package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.strands.channels.SendPort;
+import com.google.common.collect.Multimap;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
-public interface HttpMessage extends WebMessage {
+public abstract class HttpMessage implements WebMessage {
     ////
-    public Map<String, String[]> getParameterMap();
+    public abstract Multimap<String, String> getParameters();
 
-    public Map<String, String> getHeaderMap();
+    public abstract Multimap<String, String> getHeaders();
 
-    public Map<String, String> getAtrributesMap();
+    public abstract Map<String, Object> getAtrributes();
 
-    public Collection<Cookie> getCookies();
+    public Collection<String> getHeaders(String name) {
+        return getHeaders().get(name);
+    }
 
-    public String getMethod();
+    public String getHeader(String name) {
+        return first(getHeaders().get(name));
+    }
 
-    public long getDateHeader(String name);
+    public Collection<String> getParametersValues(String name) {
+        return getParameters().get(name);
+    }
 
-    public String getPathInfo();
+    public String getParameter(String name) {
+        return first(getParameters().get(name));
+    }
 
-    public String getContextPath();
-
-    public String getQueryString();
-
-    public String getRequestURI();
-
-    public String getRequestURL();
-
-    public String getServletPath();
-
-    public int getContentLength();
+    public Object getAttribute(String name) {
+        return getAtrributes().get(name);
+    }
     
-    public String getBody();
+    private <V> V first(Collection<V> c) {
+        if (c == null || c.isEmpty())
+            return null;
+        return c.iterator().next();
+    }
     
-    public ByteBuffer getBinaryBody();
+    public abstract Collection<Cookie> getCookies();
 
-    public String getContentType();
+    public abstract String getMethod();
 
-    public String getServerName();
+    public abstract long getDateHeader(String name);
 
-    public int getServerPort();
+    public abstract String getPathInfo();
+
+    public abstract String getContextPath();
+
+    public abstract String getQueryString();
+
+    public abstract String getRequestURI();
+
+    public abstract String getRequestURL();
+
+    public abstract String getServletPath();
+
+    public abstract int getContentLength();
+
+    public abstract String getBody();
+
+    public abstract ByteBuffer getBinaryBody();
+
+    public abstract String getContentType();
+
+    public abstract String getServerName();
+
+    public abstract int getServerPort();
 
     //////////////////
     /// response methods
     @Override
-    public SendPort<HttpResponse> sender();
+    public abstract SendPort<HttpResponse> sender();
 }

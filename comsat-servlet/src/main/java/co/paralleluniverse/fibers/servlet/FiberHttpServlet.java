@@ -592,7 +592,6 @@ public abstract class FiberHttpServlet extends FiberGenericServlet {
         ServletOutputStream out = resp.getOutputStream();
         out.print(buffer.toString());
         out.close();
-        return;
     }
 
 
