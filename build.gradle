@@ -72,7 +72,12 @@ subprojects {
     }
     javadoc {
         //        classpath = configurations.compile
-        options.links 'http://docs.oracle.com/javaee/7/api/'
+        options.links = ['http://docs.oracle.com/javaee/7/api/',
+                'http://docs.oracle.com/javase/7/docs/api/',
+                'http://puniverse.github.io/quasar/javadoc/',
+                'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
+                'http://docs.oracle.com/javaee/7/api/',
+                'http://jersey.java.net/apidocs/latest/jersey/']
     }
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
@@ -247,24 +252,32 @@ project(':comsat-jetty-loader') {
     } 
 }
 
-task javadoc(type: Javadoc, dependsOn: subprojects.javadoc) {
+task javadoc(type: Javadoc) {
     title = "Comsat ${project(':comsat-actors-api').version}"
     destinationDir = file("docs/javadoc")
-    source = project(':comsat-actors-api').sourceSets.main.allJava + project(':comsat-actors-servlet').sourceSets.main.allJava
+    source = project(':comsat-actors-api').sourceSets.main.allJava +
+    project(':comsat-servlet').sourceSets.main.allJava +
+    project(':comsat-jdbc').sourceSets.main.allJava + 
+    project(':comsat-jersey-server').sourceSets.main.allJava +
+    project(':comsat-jax-rs-client').sourceSets.main.allJava
+    
+    classpath = files(subprojects.collect { project ->
+            project.sourceSets.main.compileClasspath
+        })
     options {
-        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
-        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
-        addStringOption("parse-timeout", "10")
+        //        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
+        //        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+        //        addStringOption("parse-timeout", "10")
         // stylesheetFile = rootProject.file('./baselib/javadoc.css')
-        links = [    
-        "http://docs.oracle.com/javase/7/docs/api/",
-        "http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/"
-        ]
+        links = ['http://docs.oracle.com/javaee/7/api/',
+                'http://docs.oracle.com/javase/7/docs/api/',
+                'http://puniverse.github.io/quasar/javadoc/',
+                'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
+                'http://docs.oracle.com/javaee/7/api/',
+                'http://jersey.java.net/apidocs/latest/jersey/']
     }
     excludes = [
-        "co/paralleluniverse/common/logging/**",
-        "co/paralleluniverse/common/monitoring/**",
-        "co/paralleluniverse/common/util/**",  
+        "org/glassfish/jersey/server/internal/**"
     ]
 }
 
