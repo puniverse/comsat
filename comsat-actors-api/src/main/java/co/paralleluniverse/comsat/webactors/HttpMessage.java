@@ -47,7 +47,7 @@ public abstract class HttpMessage implements WebMessage {
         return getAtrributes().get(name);
     }
     
-    private <V> V first(Collection<V> c) {
+    private static <V> V first(Collection<V> c) {
         if (c == null || c.isEmpty())
             return null;
         return c.iterator().next();
