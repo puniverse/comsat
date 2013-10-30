@@ -65,10 +65,10 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
                     return stmt().executeQuery();
                 }
             }));
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
             throw Exceptions.rethrowUnwrap(ex, SQLException.class);
+        } catch (SuspendExecution ex) {
+            throw new AssertionError(ex);
         }
     }
 
@@ -82,10 +82,27 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
                     return stmt().executeUpdate();
                 }
             }));
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
         } catch (InterruptedException | ExecutionException ex) {
             throw Exceptions.rethrowUnwrap(ex, SQLException.class);
+        } catch (SuspendExecution ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    @Override
+    @Suspendable
+    public boolean execute() throws SQLException {
+        try {
+            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws Exception {
+                    return stmt().execute();
+                }
+            }));
+        } catch (InterruptedException | ExecutionException ex) {
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
+        } catch (SuspendExecution ex) {
+            throw new AssertionError(ex);
         }
     }
 
@@ -187,23 +204,6 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
     @Override
     public void setObject(int parameterIndex, Object x) throws SQLException {
         stmt().setObject(parameterIndex, x);
-    }
-
-    @Override
-    @Suspendable
-    public boolean execute() throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return stmt().execute();
-                }
-            }));
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        }
     }
 
     @Override

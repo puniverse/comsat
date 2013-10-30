@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.jdbc;
 
+import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
@@ -61,10 +62,10 @@ public class AsyncDataSource implements DataSource {
                     return new FiberConnection(ds.getConnection(), exec);
                 }
             }));
+        } catch (InterruptedException | ExecutionException ex) {
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
-        } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
         }
     }
 
@@ -78,10 +79,10 @@ public class AsyncDataSource implements DataSource {
                     return new FiberConnection(ds.getConnection(username, password), exec);
                 }
             }));
+        } catch (InterruptedException | ExecutionException ex) {
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
-        } catch (InterruptedException | ExecutionException ex) {
-            throw new RuntimeException(ex);
         }
     }
 
