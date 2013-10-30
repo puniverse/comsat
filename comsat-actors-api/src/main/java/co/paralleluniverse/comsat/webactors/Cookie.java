@@ -13,8 +13,6 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
-import java.util.Date;
-
 
 public class Cookie {
     private final String name;

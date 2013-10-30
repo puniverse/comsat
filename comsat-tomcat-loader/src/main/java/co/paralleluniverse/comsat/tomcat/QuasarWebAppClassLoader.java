@@ -1,3 +1,16 @@
+/*
+ * COMSAT
+ * Copyright (C) 2013, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
+ */
 package co.paralleluniverse.comsat.tomcat;
 
 import co.paralleluniverse.fibers.instrument.Log;
@@ -9,19 +22,19 @@ import org.apache.catalina.loader.WebappClassLoader;
 /**
  * See:
  * http://tomcat.apache.org/tomcat-6.0-doc/config/loader.html
- * 
+ *
  * @author pron
  */
 public class QuasarWebAppClassLoader extends WebappClassLoader {
     private final QuasarInstrumentor instrumentor;
 
     public QuasarWebAppClassLoader() {
-        instrumentor = newInstrumentor();
+        this.instrumentor = newInstrumentor();
     }
 
     public QuasarWebAppClassLoader(ClassLoader parent) {
         super(parent);
-        instrumentor = newInstrumentor();
+        this.instrumentor = newInstrumentor();
     }
 
     private QuasarInstrumentor newInstrumentor() {
@@ -47,7 +60,7 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
     protected ResourceEntry findResourceInternal(String name, String path) {
         ResourceEntry entry = super.findResourceInternal(name, path);
         if (entry != null && path.endsWith(".class")) {
-            if(name.endsWith(".class"))
+            if (name.endsWith(".class"))
                 name = name.substring(0, name.length() - ".class".length());
             entry.binaryContent = instrumentor.instrumentClass(name, entry.binaryContent);
         }
