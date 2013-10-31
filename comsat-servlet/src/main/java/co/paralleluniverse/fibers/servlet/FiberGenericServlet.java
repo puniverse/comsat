@@ -17,7 +17,6 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.AsyncContext;
 import javax.servlet.GenericServlet;
 import javax.servlet.ServletConfig;
@@ -46,6 +45,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
     }
 
     /**
+     * @inheritDoc
      * 
      * @return Wrapped version of the ServletContext initiated by {@link #init(javax.servlet.ServletConfig) }
      */
@@ -54,11 +54,6 @@ public abstract class FiberGenericServlet extends GenericServlet {
         return contextAD;
     }
 
-    /**
-     * Initiates context and config before calling {@link #init()}.
-     * @param config
-     * @throws ServletException 
-     */
     @Override
     public final void init(ServletConfig config) throws ServletException {
         this.contextAD = new FiberServletContext(config.getServletContext(), currentAsyncContext);
@@ -67,6 +62,8 @@ public abstract class FiberGenericServlet extends GenericServlet {
     }
 
     /**
+     * @inheritDoc
+     * 
      * Called by the servlet container to allow the servlet to respond to
      * a request. This implementation calls the {@link #suspendableService} in fiber context in order 
      * to enable suspendable calls.
