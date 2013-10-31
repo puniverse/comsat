@@ -722,7 +722,7 @@ public abstract class FiberHttpServlet extends FiberGenericServlet {
      * @see javax.servlet.Servlet#service
      */
     @Override
-    public final void suspendableService(javax.servlet.ServletRequest req, ServletResponse res)
+    public void suspendableService(javax.servlet.ServletRequest req, ServletResponse res)
         throws ServletException, IOException, SuspendExecution {
 
         HttpServletRequest  request;

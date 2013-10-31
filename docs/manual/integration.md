@@ -20,7 +20,23 @@ To learn about writing servlets, you can refer to the [Java Servlets tutorial](h
 
 ## REST Services
 
+You can easily create Comsat REST services with the [JAX-RS API](https://jax-rs-spec.java.net/nonav/2.0/apidocs/index.html), the standard Java REST service API. Comsat integrates with [Jersey](https://jersey.java.net/), the reference JAX-RS implementation. 
 
+All you need to do in order to enjoy Comsat's scalabilty, is replace the line
+
+~~~ xml
+<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+~~~
+
+in you `web.xml` file, which is how you would normally use Jersey in a Servlet container, with:
+
+~~~ xml
+<servlet-class>co.paralleluniverse.fibers.jersey.ServletContainer</servlet-class>
+~~~
+
+Your resource methods (the ones you annotate with `@GET`, `@POST` etc.) can now be made suspendable by declaring `throws SuspendExecution`. Comsat would then run each request in a fiber. Your resource methods are free to use Comsat's JDBC implementation, or Comsat's JAX-RS client.
+
+To learn about writing REST services with JAX-RS, please refer to the [Jersey User Guide](https://jersey.java.net/documentation/latest/user-guide.html).
 
 ## HTTP Client
 

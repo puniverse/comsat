@@ -49,12 +49,12 @@ public abstract class FiberGenericServlet extends GenericServlet {
      * @return Wrapped version of the ServletContext initiated by {@link #init(javax.servlet.ServletConfig) }
      */
     @Override
-    public final ServletContext getServletContext() {
+    public ServletContext getServletContext() {
         return contextAD;
     }
 
     @Override
-    public final void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         this.contextAD = new FiberServletContext(config.getServletContext(), currentAsyncContext);
         this.configAD = new FiberServletConfig(config, contextAD);
         this.init();
@@ -90,25 +90,16 @@ public abstract class FiberGenericServlet extends GenericServlet {
     }
 
     /**
-     * Called by the servlet container to allow the servlet to respond to
-     * a request. See {@link javax.servlet.Servlet#service}. This methods may call
-     * suspendable functions since it runs in fiber context.
+     * Called by the servlet container to allow the servlet to respond to a request. See {@link javax.servlet.Servlet#service}. 
+     * This methods may call suspendable functions since it runs in fiber context.
      *
-     * <p>This method is declared abstract so subclasses, such as
-     * {@code FiberHttpServlet}, must override it.
+     * <p>This method is declared abstract so subclasses, such as {@code FiberHttpServlet}, must override it.
      *
-     * @param req the <code>ServletRequest</code> object
-     * that contains the client's request
-     *
-     * @param res the <code>ServletResponse</code> object
-     * that will contain the servlet's response
-     *
-     * @exception ServletException if an exception occurs that
-     * interferes with the servlet's
-     * normal operation occurred
-     *
-     * @exception IOException if an input or output
-     * exception occurs
+     * @param req the {@code ServletRequest} object that contains the client's request
+     * @param res the {@code ServletResponse} object that will contain the servlet's response
+     * 
+     * @exception ServletException if an exception occurs that interferes with the servlet's normal operation occurred
+     * @exception IOException if an input or output exception occurs
      */
     protected abstract void suspendableService(ServletRequest req, ServletResponse res)
             throws ServletException, IOException, SuspendExecution;
