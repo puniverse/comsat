@@ -18,8 +18,6 @@ import co.paralleluniverse.actors.LocalActorUtil;
 import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -42,10 +40,10 @@ public class WebActorServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        sentToActor(req, resp);
+        sendToActor(req, resp);
     }
 
-    private void sentToActor(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+    private void sendToActor(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
         ActorRef<Object> actor = (ActorRef<Object>) req.getSession().getAttribute(ACTOR_KEY);
         if (actor == null) {
             resp.sendRedirect(redirectPath);
@@ -61,7 +59,7 @@ public class WebActorServlet extends HttpServlet {
         try {
             actor.send(new ServletHttpMessage(req, resp));
         } catch (SuspendExecution ex) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+            req.getServletContext().log("Exception: ", ex);
         }
     }
 

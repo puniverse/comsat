@@ -17,11 +17,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public class HttpResponse implements WebResponse {
-    private final String string;
+    private final String contentType;
+    private final String charset;
+    private final String strBody;
+    private final ByteBuffer binBody;
     private final List<Cookie> cookies;
     private final Multimap<String, String> headers;
     private final int status;
@@ -29,16 +33,34 @@ public class HttpResponse implements WebResponse {
     private final String redirectPath;
 
     public static class Builder {
-        private final String string;
+        private final String strBody;
+        private final ByteBuffer binBody;
+        private String contentType;
+        private String charset;
         private List<Cookie> cookies;
         private Multimap<String, String> headers;
         private int status;
         private Throwable error;
         private String redirectPath;
 
-        public Builder(String string) {
-            this.string = string;
+        public Builder(String body) {
+            this.strBody = body;
+            this.binBody = null;
             this.status = 200;
+        }
+
+        public Builder(ByteBuffer body) {
+            this.binBody = body;
+            this.strBody = null;
+            this.status = 200;
+        }
+
+        public void setContentType(String contentType) {
+            this.contentType = contentType;
+        }
+
+        public void setCharacterEncoding(String charset) {
+            this.charset = charset;
         }
 
         public void addHeader(final String key, final String val) {
@@ -68,14 +90,17 @@ public class HttpResponse implements WebResponse {
             this.error = error;
             return this;
         }
-        
+
         public HttpResponse build() {
             return new HttpResponse(this);
         }
     }
 
     private HttpResponse(Builder builder) {
-        this.string = builder.string;
+        this.contentType = builder.contentType;
+        this.charset = builder.charset;
+        this.strBody = builder.strBody;
+        this.binBody = builder.binBody;
         this.cookies = ImmutableList.copyOf(builder.cookies);
         this.error = builder.error;
         this.headers = ImmutableMultimap.copyOf(builder.headers);
@@ -83,12 +108,28 @@ public class HttpResponse implements WebResponse {
         this.redirectPath = builder.redirectPath;
     }
 
+    public boolean isBinary() {
+        return binBody != null;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public String getCharacterEncoding() {
+        return charset;
+    }
+    
     public String getRedirectPath() {
         return redirectPath;
     }
 
-    public String getString() {
-        return string;
+    public String getStringBody() {
+        return strBody;
+    }
+
+    public ByteBuffer getBinBody() {
+        return binBody;
     }
 
     public List<Cookie> getCookies() {
