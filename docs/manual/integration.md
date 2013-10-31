@@ -58,10 +58,20 @@ or use the builder API
 Client client = AsyncClientBuilder.newBuilder()....build();
 ~~~
 
-To learn how to use the HTTP client, please refer to the [Jersey documentation](https://jersey.java.net/documentation/latest/user-guide.html#client).
+To learn how to use the HTTP client, please refer to the [Jersey documentation](https://jersey.java.net/documentation/latest/user-guide.html#client), or the [JAX-RS client Javadoc](http://docs.oracle.com/javaee/7/api/javax/ws/rs/client/package-summary.html).
+
+All of the JAX-RS API is supported, and blocking calls are fiber- rather than thread-blocking. If you want to execute several requests in parallel, you may use any of the "async" methods that return a `Future`:
+
+~~~ java
+Future response = resourceTarget.request("text/plain").header("Foo", "bar").async().get(String.class);
+~~~
+
+Calling `Future.get()` would also just block the fiber and not any OS thread. 
 
 {:.alert .alert-info}
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
+
+
 
 ## JDBC
 
