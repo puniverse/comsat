@@ -35,9 +35,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
-
-
-
 /*
  * A response wrapper for use in (dumb) "HEAD" support.
  * This just swallows that body, counting the bytes in order to set
@@ -725,7 +722,7 @@ public abstract class FiberHttpServlet extends FiberGenericServlet {
      * @see javax.servlet.Servlet#service
      */
     @Override
-    public void suspendableService(javax.servlet.ServletRequest req, ServletResponse res)
+    public final void suspendableService(javax.servlet.ServletRequest req, ServletResponse res)
         throws ServletException, IOException, SuspendExecution {
 
         HttpServletRequest  request;

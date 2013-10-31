@@ -26,8 +26,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 /**
- *
- * Extends javax.servlet.GenericServlet in order to enable suspendable services using fibers.
+ * Implements a {@link GenericServlet} that services requests using a fiber-per-request model.
  */
 public abstract class FiberGenericServlet extends GenericServlet {
     private static final long serialVersionUID = 1L;
@@ -64,9 +63,9 @@ public abstract class FiberGenericServlet extends GenericServlet {
     /**
      * @inheritDoc
      * 
-     * Called by the servlet container to allow the servlet to respond to
-     * a request. This implementation calls the {@link #suspendableService} in fiber context in order 
-     * to enable suspendable calls.
+     * Called by the servlet container to allow the servlet to respond to a request. 
+     * This implementation puts the servlet in async mode and then spawns a fiber that calls 
+     * {@link #suspendableService} to service the request.
      */
     @Override
     public final void service(final ServletRequest req, final ServletResponse res) {
@@ -93,10 +92,10 @@ public abstract class FiberGenericServlet extends GenericServlet {
     /**
      * Called by the servlet container to allow the servlet to respond to
      * a request. See {@link javax.servlet.Servlet#service}. This methods may call
-     * suspendable functions since it runs in Fiber context
+     * suspendable functions since it runs in fiber context.
      *
      * <p>This method is declared abstract so subclasses, such as
-     * <code>HttpServlet</code>, must override it.
+     * {@code FiberHttpServlet}, must override it.
      *
      * @param req the <code>ServletRequest</code> object
      * that contains the client's request
