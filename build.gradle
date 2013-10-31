@@ -49,6 +49,7 @@ subprojects {
     }
 
     configurations {
+        srcFiles
         markdownDoclet
     }
     
@@ -71,13 +72,18 @@ subprojects {
         from sourceSets.main.allSource
     }
     javadoc {
-        //        classpath = configurations.compile
-        options.links = ['http://docs.oracle.com/javaee/7/api/',
+        options {
+            // docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
+            // doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+            // addStringOption("parse-timeout", "10")
+            // stylesheetFile = rootProject.file('./baselib/javadoc.css')
+            links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
                 'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
                 'http://docs.oracle.com/javaee/7/api/',
                 'http://jersey.java.net/apidocs/latest/jersey/']
+        }
     }
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
@@ -178,6 +184,7 @@ project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
         compile 'co.paralleluniverse:jetty-connector:0.1.0-SNAPSHOT'
+        srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
     }
     
 }
@@ -220,7 +227,8 @@ project (':comsat-actors-servlet') {
     dependencies {
         compile project (':comsat-actors-api')
         compile 'javax.websocket:javax.websocket-api:1.0'
-        compile 'javax.servlet:javax.servlet-api:3.1.0'            
+        compile 'javax.servlet:javax.servlet-api:3.1.0' 
+        srcFiles 'javax.servlet:javax.servlet-api:3.1.0:sources' 
     }
 }
 project(':comsat-actors-netty') {
@@ -255,24 +263,26 @@ project(':comsat-jetty-loader') {
 task javadoc(type: Javadoc) {
     title = "Comsat ${project(':comsat-actors-api').version}"
     destinationDir = file("docs/javadoc")
-    source = project(':comsat-actors-api').sourceSets.main.allJava +
-    project(':comsat-servlet').sourceSets.main.allJava +
-    project(':comsat-jdbc').sourceSets.main.allJava + 
-    project(':comsat-jersey-server').sourceSets.main.allJava +
-    project(':comsat-jax-rs-client').sourceSets.main.allJava
+    source = 
+        project(':comsat-actors-api').sourceSets.main.allJava +
+        project(':comsat-servlet').sourceSets.main.allJava +
+        project(':comsat-jdbc').sourceSets.main.allJava + 
+        project(':comsat-jersey-server').sourceSets.main.allJava +
+        project(':comsat-jax-rs-client').sourceSets.main.allJava
     
     classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
     options {
-        //        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
-        //        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
-        //        addStringOption("parse-timeout", "10")
-        // stylesheetFile = rootProject.file('./baselib/javadoc.css')
+        addStringOption('sourcepath', subprojects.configurations.srcFiles.files.flatten().join(':'))
         links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
                 'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
                 'http://docs.oracle.com/javaee/7/api/',
                 'http://jersey.java.net/apidocs/latest/jersey/']
+        //        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
+        //        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+        //        addStringOption("parse-timeout", "10")
+        // stylesheetFile = rootProject.file('./baselib/javadoc.css')
     }
     excludes = [
         "org/glassfish/jersey/server/internal/**"

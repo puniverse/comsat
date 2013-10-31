@@ -35,16 +35,34 @@ public class AsyncClientBuilder extends ClientBuilder {
         this.clientBuilder = clientBuilder;
     }
 
-    // Instantiate
+    /**
+     * Create a new {@code ClientBuilder} instance using the default client builder
+     * implementation class provided by the JAX-RS implementation provider.
+     *
+     * @return new client builder instance.
+     */
     public static ClientBuilder newBuilder() {
         return new AsyncClientBuilder(ClientBuilder.newBuilder());
     }
 
-    // Wrap FiberClient
+    /**
+     * Create a new {@link Client} instance using the default client builder implementation
+     * class provided by the JAX-RS implementation provider.
+     *
+     * @return new client instance.
+     */
     public static Client newClient() {
         return newClient(null);
     }
 
+    /**
+     * Create a new custom-configured {@link Client} instance using the default client builder
+     * implementation class provided by the JAX-RS implementation provider.
+     *
+     * @param configuration data used to provide initial configuration for the new
+     * client instance.
+     * @return new configured client instance.
+     */
     public static Client newClient(Configuration userConfig) {
         final RequestExecutorsProvider singleThreadPool = new RequestExecutorsProvider() {
             private ExecutorService tp = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-puniverse-single-worker-%d").build());
@@ -72,7 +90,6 @@ public class AsyncClientBuilder extends ClientBuilder {
         return new FiberClient(clientBuilder.build());
     }
 
-    // Return this
     @Override
     public ClientBuilder withConfig(Configuration config) {
         clientBuilder.withConfig(config);
@@ -163,7 +180,6 @@ public class AsyncClientBuilder extends ClientBuilder {
         return this;
     }
 
-    // Delegate
     @Override
     public Configuration getConfiguration() {
         return clientBuilder.getConfiguration();
