@@ -31,6 +31,7 @@ public class HttpResponse implements WebResponse {
     private final int status;
     private final Throwable error;
     private final String redirectPath;
+    private final boolean hasMore;
 
     public static class Builder {
         private final String strBody;
@@ -42,6 +43,7 @@ public class HttpResponse implements WebResponse {
         private int status;
         private Throwable error;
         private String redirectPath;
+        private boolean hasMore;
 
         public Builder(String body) {
             this.strBody = body;
@@ -55,18 +57,21 @@ public class HttpResponse implements WebResponse {
             this.status = 200;
         }
 
-        public void setContentType(String contentType) {
+        public Builder setContentType(String contentType) {
             this.contentType = contentType;
+            return this;
         }
 
-        public void setCharacterEncoding(String charset) {
+        public Builder setCharacterEncoding(String charset) {
             this.charset = charset;
+            return this;
         }
 
-        public void addHeader(final String key, final String val) {
+        public Builder addHeader(final String key, final String val) {
             if (headers == null)
                 headers = LinkedHashMultimap.create();
             headers.put(key, val);
+            return this;
         }
 
         public Builder redirect(String redirectPath) {
@@ -91,6 +96,16 @@ public class HttpResponse implements WebResponse {
             return this;
         }
 
+        public Builder close() {
+            this.hasMore = false;
+            return this;
+        }
+
+        public Builder hasMore() {
+            this.hasMore = false;
+            return this;
+        }
+
         public HttpResponse build() {
             return new HttpResponse(this);
         }
@@ -106,6 +121,7 @@ public class HttpResponse implements WebResponse {
         this.headers = ImmutableMultimap.copyOf(builder.headers);
         this.status = builder.status;
         this.redirectPath = builder.redirectPath;
+        this.hasMore = builder.hasMore;
     }
 
     public boolean isBinary() {
@@ -119,7 +135,7 @@ public class HttpResponse implements WebResponse {
     public String getCharacterEncoding() {
         return charset;
     }
-    
+
     public String getRedirectPath() {
         return redirectPath;
     }
@@ -146,5 +162,9 @@ public class HttpResponse implements WebResponse {
 
     public Throwable getError() {
         return error;
+    }
+
+    public boolean hasMore() {
+        return hasMore;
     }
 }

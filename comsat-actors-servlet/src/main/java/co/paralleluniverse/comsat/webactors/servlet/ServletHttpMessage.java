@@ -17,6 +17,7 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
+import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import co.paralleluniverse.comsat.webactors.HttpMessage;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
@@ -25,19 +26,17 @@ import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -45,10 +44,15 @@ import javax.servlet.http.HttpServletResponse;
 
 public class ServletHttpMessage extends HttpMessage {
     private final HttpServletRequest request;
-    private final HttpServletResponse response;
     private Multimap<String, String> headers;
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
+    private final SendPort<HttpResponse> sender;
+
+    public ServletHttpMessage(HttpServletRequest request, HttpServletResponse response) {
+        this.request = request;
+        this.sender = new Peer(request.getAsyncContext());
+    }
 
     @Override
     public Collection<Cookie> getCookies() {
@@ -72,11 +76,11 @@ public class ServletHttpMessage extends HttpMessage {
     public String getBody() {
         try {
             StringBuilder sb = new StringBuilder();
-            ServletInputStream inputStream = request.getInputStream();
-            byte[] b = new byte[1024];
-            int len = -1;
-            while ((len = inputStream.read(b)) != -1)
-                sb.append(Arrays.toString(b));
+            BufferedReader reader = request.getReader();
+            char[] b = new char[1024];
+            int len;
+            while ((len = reader.read(b)) != -1)
+                sb.append(b, 0, len);
             return sb.toString();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -89,18 +93,14 @@ public class ServletHttpMessage extends HttpMessage {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ServletInputStream inputStream = request.getInputStream();
             byte[] b = new byte[1024];
-            while (inputStream.read(b) != -1)
-                bos.write(b);
+            int len;
+            while ((len = inputStream.read(b)) != -1)
+                bos.write(b, 0, len);
 
             return ByteBuffer.wrap(bos.toByteArray());
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
-    }
-
-    public ServletHttpMessage(HttpServletRequest request, HttpServletResponse response) {
-        this.request = request;
-        this.response = response;
     }
 
     @Override
@@ -203,55 +203,38 @@ public class ServletHttpMessage extends HttpMessage {
         return request.getPathInfo();
     }
 
-    @Override
-    public SendPort<HttpResponse> sender() {
-        return new SendPort<HttpResponse>() {
-            @Override
-            public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
-                trySend(message);
+    private static class Peer implements SendPort<HttpResponse> {
+        private final AsyncContext ctx;
+        private Throwable exception;
+
+        public Peer(AsyncContext ctx) {
+            this.ctx = ctx;
+        }
+
+        @Override
+        public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
+            if (!trySend(message)) {
+                if (exception == null)
+                    throw new RuntimeException("Port closed");
+                throw Exceptions.rethrow(exception);
             }
+        }
 
-            @Override
-            public boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
-                return trySend(message);
-            }
+        @Override
+        public boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+            send(message);
+            return true;
+        }
 
-            @Override
-            public boolean trySend(HttpResponse message) {
-                try {
-                    if (!request.isAsyncStarted())
-                        throw new RuntimeException("Request is already commited, cannot send again");
+        @Override
+        public boolean trySend(HttpResponse message) {
+            try {
+                if (!ctx.getRequest().isAsyncStarted())
+                    return false;
 
-                    final PrintWriter writer;
-                    final ServletOutputStream out;
+                final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
 
-                    if (message.isBinary()) {
-                        out = response.getOutputStream();
-                        writer = null;
-                        ByteBuffer bb = message.getBinBody();
-//                        WritableByteChannel wc = Channels.newChannel(out);
-//                        wc.write(bb);
-                        if (bb.hasArray()) {
-                            out.write(bb.array(), bb.arrayOffset() + bb.position(), bb.remaining());
-                            bb.position(bb.limit());
-                        } else {
-                            byte[] arr = new byte[bb.remaining()];
-                            bb.get(arr);
-                            out.write(arr);
-                        }
-                    } else {
-                        writer = response.getWriter();
-                        out = null;
-                        writer.print(message.getStringBody());
-                    }
-
-                    if (message.getContentType() != null)
-                        response.setContentType(message.getContentType());
-                    // TODO: content length
-
-                    if (message.getCharacterEncoding() != null)
-                        response.setCharacterEncoding(message.getCharacterEncoding());
-                    response.setStatus(message.getStatus());
+                if (!response.isCommitted()) {
                     if (message.getCookies() != null) {
                         for (Cookie wc : message.getCookies())
                             response.addCookie(getServletCookie(wc));
@@ -260,33 +243,87 @@ public class ServletHttpMessage extends HttpMessage {
                         for (Map.Entry<String, String> h : message.getHeaders().entries())
                             response.addHeader(h.getKey(), h.getValue());
                     }
-                    if (message.getError() != null) {
-                        response.sendError(message.getStatus(), message.getError().toString());
-                    }
-                    if (message.getRedirectPath() != null)
-                        response.sendRedirect(message.getRedirectPath());
-
-                    if (message.isBinary())
-                        out.close();
-                    else
-                        writer.close();
-                    request.getAsyncContext().complete();
-                    return true;
-                } catch (IOException ex) {
-                    request.getServletContext().log("IOException", ex);
-                    try {
-                        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    } catch (IOException ex2) {
-                        request.getServletContext().log("IOException", ex2);
-                    }
-                    throw new RuntimeException(ex);
                 }
-            }
 
-            @Override
-            public void close() {
+                if (message.getError() != null) {
+                    response.sendError(message.getStatus(), message.getError().toString());
+                    close();
+                    return true;
+                }
+                if (message.getRedirectPath() != null) {
+                    response.sendRedirect(message.getRedirectPath());
+                    close();
+                    return true;
+                }
+
+                if (!response.isCommitted()) {
+                    response.setStatus(message.getStatus());
+
+                    if (message.getContentType() != null)
+                        response.setContentType(message.getContentType());
+                    if (message.getCharacterEncoding() != null)
+                        response.setCharacterEncoding(message.getCharacterEncoding());
+                }
+
+                final byte[] arr;
+                final int offset;
+                final int length;
+                if (message.isBinary()) {
+                    ByteBuffer bb = message.getBinBody();
+//                        WritableByteChannel wc = Channels.newChannel(out);
+//                        wc.write(bb);
+                    if (bb.hasArray()) {
+                        arr = bb.array();
+                        offset = bb.arrayOffset() + bb.position();
+                        length = bb.remaining();
+                        bb.position(bb.limit());
+                    } else {
+                        arr = new byte[bb.remaining()];
+                        bb.get(arr);
+                        offset = 0;
+                        length = arr.length;
+                    }
+                } else {
+                    arr = message.getStringBody().getBytes(response.getCharacterEncoding());
+                    offset = 0;
+                    length = arr.length;
+                }
+
+                if (!response.isCommitted())
+                    response.setContentLength(length);
+
+                final ServletOutputStream out = response.getOutputStream();
+                out.write(arr, offset, length);
+                out.flush(); // commits the response
+
+                if (!message.hasMore()) {
+                    out.close();
+                    close();
+                }
+                return true;
+            } catch (IOException ex) {
+                ctx.getRequest().getServletContext().log("IOException", ex);
+                close();
+                this.exception = ex;
+//                try {
+//                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+//                } catch (IOException ex2) {
+//                    request.getServletContext().log("IOException", ex2);
+//                }
+
+                return false;
             }
-        };
+        }
+
+        @Override
+        public void close() {
+            ctx.complete();
+        }
+    }
+
+    @Override
+    public SendPort<HttpResponse> sender() {
+        return sender;
     }
 
     public static javax.servlet.http.Cookie getServletCookie(Cookie wc) {
