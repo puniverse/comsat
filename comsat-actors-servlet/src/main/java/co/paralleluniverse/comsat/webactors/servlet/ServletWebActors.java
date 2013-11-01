@@ -14,7 +14,7 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.comsat.webactors.WebSocketMessage;
+import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
@@ -34,14 +34,14 @@ public class ServletWebActors {
             throw new RuntimeException("Session is already attached to an actor.");
         session.getUserProperties().put(ACTOR_KEY, actor);
         // TODO: register the handler in order to enable detach
-        final SendPort<WebSocketMessage> sp = new WebSocketSendPort(session);
+        final SendPort<WebDataMessage> sp = new WebSocketSendPort(session);
         session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
             @Override
             public void onMessage(final ByteBuffer message) {
                 try {
-                    actor.send(new WebSocketMessage(message) {
+                    actor.send(new WebDataMessage(message) {
                         @Override
-                        public SendPort<WebSocketMessage> sender() {
+                        public SendPort<WebDataMessage> sender() {
                             return sp;
                         }
                     });
@@ -54,9 +54,9 @@ public class ServletWebActors {
             @Override
             public void onMessage(final String message) {
                 try {
-                    actor.send(new WebSocketMessage(message) {
+                    actor.send(new WebDataMessage(message) {
                         @Override
-                        public SendPort<WebSocketMessage> sender() {
+                        public SendPort<WebDataMessage> sender() {
                             return sp;
                         }
                     });

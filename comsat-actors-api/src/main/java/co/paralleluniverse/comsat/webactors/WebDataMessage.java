@@ -16,21 +16,21 @@ package co.paralleluniverse.comsat.webactors;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
 
-public class WebSocketMessage implements WebResponse, WebMessage {
+public class WebDataMessage implements WebResponse, WebMessage {
     private final String string;
     private final ByteBuffer byteBuffer;
 
     @Override
-    public SendPort<WebSocketMessage> sender() {
+    public SendPort<WebDataMessage> sender() {
         return null;
     }
 
-    public WebSocketMessage(String str) {
+    public WebDataMessage(String str) {
         this.string = str;
         this.byteBuffer = null;
     }
 
-    public WebSocketMessage(ByteBuffer bb) {
+    public WebDataMessage(ByteBuffer bb) {
         this.string = null;
         this.byteBuffer = bb;
     }

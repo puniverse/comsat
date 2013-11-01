@@ -101,8 +101,8 @@ public class HttpResponse implements WebResponse {
             return this;
         }
 
-        public Builder hasMore() {
-            this.hasMore = false;
+        public Builder dontClose() {
+            this.hasMore = true;
             return this;
         }
 
@@ -164,7 +164,7 @@ public class HttpResponse implements WebResponse {
         return error;
     }
 
-    public boolean hasMore() {
-        return hasMore;
+    public boolean shouldClose() {
+        return !hasMore;
     }
 }

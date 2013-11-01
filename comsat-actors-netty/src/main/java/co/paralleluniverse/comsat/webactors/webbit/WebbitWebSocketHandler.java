@@ -1,7 +1,7 @@
 package co.paralleluniverse.comsat.webactors.webbit;
 
 import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.comsat.webactors.WebSocketMessage;
+import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
 import org.webbitserver.WebSocketConnection;
@@ -30,13 +30,13 @@ public abstract class WebbitWebSocketHandler implements WebSocketHandler {
         connection.data(MH_KEY, new WebbitMessageHandler() {
             final SendPort<String> stringPort = new WebbitWebSocketStringPort(connection);
             final SendPort<ByteBuffer> binaryPort = new WebbitWebSocketBinaryPort(connection);
-            final SendPort<WebSocketMessage> sp = new WebbitWebSocketPort(connection);
+            final SendPort<WebDataMessage> sp = new WebbitWebSocketPort(connection);
 
             @Override
             public void onMessage(WebSocketConnection conn, final String msg) throws Throwable {
-                actor.send(new WebSocketMessage(msg) {
+                actor.send(new WebDataMessage(msg) {
                     @Override
-                    public SendPort<WebSocketMessage> sender() {
+                    public SendPort<WebDataMessage> sender() {
                         return sp;
                     }
                 });
@@ -44,9 +44,9 @@ public abstract class WebbitWebSocketHandler implements WebSocketHandler {
 
             @Override
             public void onMessage(WebSocketConnection conn, final byte[] msg) throws Throwable {
-                actor.send(new WebSocketMessage(ByteBuffer.wrap(msg)) {
+                actor.send(new WebDataMessage(ByteBuffer.wrap(msg)) {
                     @Override
-                    public SendPort<WebSocketMessage> sender() {
+                    public SendPort<WebDataMessage> sender() {
                         return sp;
                     }
                 });

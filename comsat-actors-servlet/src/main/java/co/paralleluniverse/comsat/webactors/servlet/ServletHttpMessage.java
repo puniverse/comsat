@@ -19,9 +19,10 @@ package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.comsat.webactors.Cookie;
-import co.paralleluniverse.comsat.webactors.HttpMessage;
+import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.strands.channels.ChannelClosedException;
 import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
@@ -42,7 +43,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class ServletHttpMessage extends HttpMessage {
+public class ServletHttpMessage extends HttpRequest {
     private final HttpServletRequest request;
     private Multimap<String, String> headers;
     private Multimap<String, String> params;
@@ -215,7 +216,7 @@ public class ServletHttpMessage extends HttpMessage {
         public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
             if (!trySend(message)) {
                 if (exception == null)
-                    throw new RuntimeException("Port closed");
+                    throw new ChannelClosedException(this, exception);
                 throw Exceptions.rethrow(exception);
             }
         }
@@ -284,19 +285,20 @@ public class ServletHttpMessage extends HttpMessage {
                         length = arr.length;
                     }
                 } else {
-                    arr = message.getStringBody().getBytes(response.getCharacterEncoding());
+                    arr = message.getStringBody() != null ? message.getStringBody().getBytes(response.getCharacterEncoding()) : null;
                     offset = 0;
-                    length = arr.length;
+                    length = arr != null ? arr.length : 0;
                 }
 
                 if (!response.isCommitted())
                     response.setContentLength(length);
 
                 final ServletOutputStream out = response.getOutputStream();
-                out.write(arr, offset, length);
+                if (arr != null)
+                    out.write(arr, offset, length);
                 out.flush(); // commits the response
 
-                if (!message.hasMore()) {
+                if (message.shouldClose()) {
                     out.close();
                     close();
                 }

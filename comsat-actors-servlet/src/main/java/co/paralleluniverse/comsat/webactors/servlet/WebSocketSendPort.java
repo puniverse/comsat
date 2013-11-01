@@ -13,7 +13,7 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
-import co.paralleluniverse.comsat.webactors.WebSocketMessage;
+import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.websocket.Session;
 
-public class WebSocketSendPort implements SendPort<WebSocketMessage> {
+public class WebSocketSendPort implements SendPort<WebDataMessage> {
     private final Session session;
 
     public WebSocketSendPort(Session session) {
@@ -30,17 +30,17 @@ public class WebSocketSendPort implements SendPort<WebSocketMessage> {
     }
 
     @Override
-    public void send(WebSocketMessage message) throws SuspendExecution, InterruptedException {
+    public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
         trySend(message);
     }
 
     @Override
-    public boolean send(WebSocketMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+    public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
         return trySend(message);
     }
 
     @Override
-    public boolean trySend(WebSocketMessage message) {
+    public boolean trySend(WebDataMessage message) {
         if (!session.isOpen())
             return false;
         if (message.isString())

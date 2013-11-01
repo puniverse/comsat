@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class HttpMessage implements WebMessage {
+public abstract class HttpRequest implements WebMessage {
     ////
     public abstract Multimap<String, String> getParameters();
 
