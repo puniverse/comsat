@@ -13,18 +13,20 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
+import co.paralleluniverse.actors.ActorRef;
+
 /**
  * 
  * @author pron
  */
 public final class SSE {
     // see http://www.html5rocks.com/en/tutorials/eventsource/basics/
-    public static HttpResponse startSSE() {
-        return startSSE(new HttpResponse.Builder((String) null)).build();
+    public static HttpResponse startSSE(ActorRef<? super WebMessage> from) {
+        return startSSE(new HttpResponse.Builder(from, (String) null)).build();
     }
 
-    public static HttpResponse startSSE(long reconnectTimeout) {
-        return startSSE(new HttpResponse.Builder(retryString(reconnectTimeout) + '\n')).build();
+    public static HttpResponse startSSE(ActorRef<? super WebMessage> from, long reconnectTimeout) {
+        return startSSE(new HttpResponse.Builder(from, retryString(reconnectTimeout) + '\n')).build();
     }
 
     private static HttpResponse.Builder startSSE(HttpResponse.Builder builder) {

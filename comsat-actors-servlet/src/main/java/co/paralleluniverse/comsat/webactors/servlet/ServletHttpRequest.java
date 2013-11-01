@@ -21,6 +21,7 @@ import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
+import co.paralleluniverse.comsat.webactors.WebResponse;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.ChannelClosedException;
 import co.paralleluniverse.strands.channels.SendPort;
@@ -43,14 +44,14 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class ServletHttpMessage extends HttpRequest {
+public class ServletHttpRequest extends HttpRequest {
     private final HttpServletRequest request;
     private Multimap<String, String> headers;
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
-    private final SendPort<HttpResponse> sender;
+    private final SendPort<WebResponse> sender;
 
-    public ServletHttpMessage(HttpServletRequest request, HttpServletResponse response) {
+    public ServletHttpRequest(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
         this.sender = new Peer(request.getAsyncContext());
     }
@@ -74,7 +75,7 @@ public class ServletHttpMessage extends HttpRequest {
     }
 
     @Override
-    public String getBody() {
+    public String getStringBody() {
         try {
             StringBuilder sb = new StringBuilder();
             BufferedReader reader = request.getReader();
@@ -89,7 +90,7 @@ public class ServletHttpMessage extends HttpRequest {
     }
 
     @Override
-    public ByteBuffer getBinaryBody() {
+    public ByteBuffer getByteBufferBody() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ServletInputStream inputStream = request.getInputStream();
@@ -204,7 +205,7 @@ public class ServletHttpMessage extends HttpRequest {
         return request.getPathInfo();
     }
 
-    private static class Peer implements SendPort<HttpResponse> {
+    private static class Peer implements SendPort<WebResponse> {
         private final AsyncContext ctx;
         private Throwable exception;
 
@@ -213,7 +214,7 @@ public class ServletHttpMessage extends HttpRequest {
         }
 
         @Override
-        public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
+        public void send(WebResponse message) throws SuspendExecution, InterruptedException {
             if (!trySend(message)) {
                 if (exception == null)
                     throw new ChannelClosedException(this, exception);
@@ -222,83 +223,57 @@ public class ServletHttpMessage extends HttpRequest {
         }
 
         @Override
-        public boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+        public boolean send(WebResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
             send(message);
             return true;
         }
 
         @Override
-        public boolean trySend(HttpResponse message) {
+        public boolean trySend(WebResponse message) {
             try {
                 if (!ctx.getRequest().isAsyncStarted())
                     return false;
 
                 final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
 
-                if (!response.isCommitted()) {
-                    if (message.getCookies() != null) {
-                        for (Cookie wc : message.getCookies())
-                            response.addCookie(getServletCookie(wc));
+                if (message instanceof HttpResponse) {
+                    final HttpResponse msg = (HttpResponse) message;
+                    if (!response.isCommitted()) {
+                        if (msg.getCookies() != null) {
+                            for (Cookie wc : msg.getCookies())
+                                response.addCookie(getServletCookie(wc));
+                        }
+                        if (msg.getHeaders() != null) {
+                            for (Map.Entry<String, String> h : msg.getHeaders().entries())
+                                response.addHeader(h.getKey(), h.getValue());
+                        }
                     }
-                    if (message.getHeaders() != null) {
-                        for (Map.Entry<String, String> h : message.getHeaders().entries())
-                            response.addHeader(h.getKey(), h.getValue());
+
+                    if (msg.getError() != null) {
+                        response.sendError(msg.getStatus(), msg.getError().toString());
+                        close();
+                        return true;
+                    }
+                    if (msg.getRedirectPath() != null) {
+                        response.sendRedirect(msg.getRedirectPath());
+                        close();
+                        return true;
+                    }
+
+                    if (!response.isCommitted()) {
+                        response.setStatus(msg.getStatus());
+
+                        if (msg.getContentType() != null)
+                            response.setContentType(msg.getContentType());
+                        if (msg.getCharacterEncoding() != null)
+                            response.setCharacterEncoding(msg.getCharacterEncoding());
                     }
                 }
 
-                if (message.getError() != null) {
-                    response.sendError(message.getStatus(), message.getError().toString());
-                    close();
-                    return true;
-                }
-                if (message.getRedirectPath() != null) {
-                    response.sendRedirect(message.getRedirectPath());
-                    close();
-                    return true;
-                }
-
-                if (!response.isCommitted()) {
-                    response.setStatus(message.getStatus());
-
-                    if (message.getContentType() != null)
-                        response.setContentType(message.getContentType());
-                    if (message.getCharacterEncoding() != null)
-                        response.setCharacterEncoding(message.getCharacterEncoding());
-                }
-
-                final byte[] arr;
-                final int offset;
-                final int length;
-                if (message.isBinary()) {
-                    ByteBuffer bb = message.getBinBody();
-//                        WritableByteChannel wc = Channels.newChannel(out);
-//                        wc.write(bb);
-                    if (bb.hasArray()) {
-                        arr = bb.array();
-                        offset = bb.arrayOffset() + bb.position();
-                        length = bb.remaining();
-                        bb.position(bb.limit());
-                    } else {
-                        arr = new byte[bb.remaining()];
-                        bb.get(arr);
-                        offset = 0;
-                        length = arr.length;
-                    }
-                } else {
-                    arr = message.getStringBody() != null ? message.getStringBody().getBytes(response.getCharacterEncoding()) : null;
-                    offset = 0;
-                    length = arr != null ? arr.length : 0;
-                }
-
-                if (!response.isCommitted())
-                    response.setContentLength(length);
-
-                final ServletOutputStream out = response.getOutputStream();
-                if (arr != null)
-                    out.write(arr, offset, length);
+                ServletOutputStream out = writeBody(message, response);
                 out.flush(); // commits the response
 
-                if (message.shouldClose()) {
+                if (message instanceof HttpResponse && ((HttpResponse) message).shouldClose()) {
                     out.close();
                     close();
                 }
@@ -317,6 +292,45 @@ public class ServletHttpMessage extends HttpRequest {
             }
         }
 
+        private ServletOutputStream writeBody(WebResponse message, HttpServletResponse response) throws IOException {
+            final byte[] arr;
+            final int offset;
+            final int length;
+            ByteBuffer bb;
+            String sb;
+            if ((bb = message.getByteBufferBody()) != null) {
+//                        WritableByteChannel wc = Channels.newChannel(out);
+//                        wc.write(bb);
+                if (bb.hasArray()) {
+                    arr = bb.array();
+                    offset = bb.arrayOffset() + bb.position();
+                    length = bb.remaining();
+                    bb.position(bb.limit());
+                } else {
+                    arr = new byte[bb.remaining()];
+                    bb.get(arr);
+                    offset = 0;
+                    length = arr.length;
+                }
+            } else if ((sb = message.getStringBody()) != null) {
+                arr = sb.getBytes(response.getCharacterEncoding());
+                offset = 0;
+                length = arr.length;
+            } else {
+                arr = null;
+                offset = 0;
+                length = 0;
+            }
+
+            if (!response.isCommitted())
+                response.setContentLength(length);
+
+            final ServletOutputStream out = response.getOutputStream();
+            if (arr != null)
+                out.write(arr, offset, length);
+            return out;
+        }
+
         @Override
         public void close() {
             ctx.complete();
@@ -324,7 +338,7 @@ public class ServletHttpMessage extends HttpRequest {
     }
 
     @Override
-    public SendPort<HttpResponse> sender() {
+    public SendPort<WebResponse> sender() {
         return sender;
     }
 

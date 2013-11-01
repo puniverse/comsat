@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
+import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedHashMultimap;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HttpResponse implements WebResponse {
+    private final SendPort<WebMessage> sender;
     private final String contentType;
     private final String charset;
     private final String strBody;
@@ -34,6 +36,7 @@ public class HttpResponse implements WebResponse {
     private final boolean hasMore;
 
     public static class Builder {
+        private final SendPort<WebMessage> sender;
         private final String strBody;
         private final ByteBuffer binBody;
         private String contentType;
@@ -45,13 +48,15 @@ public class HttpResponse implements WebResponse {
         private String redirectPath;
         private boolean hasMore;
 
-        public Builder(String body) {
+        public Builder(SendPort<? super WebMessage> from, String body) {
+            this.sender = (SendPort<WebMessage>)from;
             this.strBody = body;
             this.binBody = null;
             this.status = 200;
         }
 
-        public Builder(ByteBuffer body) {
+        public Builder(SendPort<? super WebMessage> from, ByteBuffer body) {
+            this.sender = (SendPort<WebMessage>)from;
             this.binBody = body;
             this.strBody = null;
             this.status = 200;
@@ -112,6 +117,7 @@ public class HttpResponse implements WebResponse {
     }
 
     private HttpResponse(Builder builder) {
+        this.sender = builder.sender;
         this.contentType = builder.contentType;
         this.charset = builder.charset;
         this.strBody = builder.strBody;
@@ -124,8 +130,9 @@ public class HttpResponse implements WebResponse {
         this.hasMore = builder.hasMore;
     }
 
-    public boolean isBinary() {
-        return binBody != null;
+    @Override
+    public SendPort<WebMessage> sender() {
+        return sender;
     }
 
     public String getContentType() {
@@ -140,11 +147,13 @@ public class HttpResponse implements WebResponse {
         return redirectPath;
     }
 
+    @Override
     public String getStringBody() {
         return strBody;
     }
 
-    public ByteBuffer getBinBody() {
+    @Override
+    public ByteBuffer getByteBufferBody() {
         return binBody;
     }
 

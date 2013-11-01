@@ -57,7 +57,7 @@ public class WebActorServlet extends HttpServlet {
         req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         req.startAsync();
         try {
-            actor.send(new ServletHttpMessage(req, resp));
+            actor.send(new ServletHttpRequest(req, resp));
         } catch (SuspendExecution ex) {
             req.getServletContext().log("Exception: ", ex);
         }

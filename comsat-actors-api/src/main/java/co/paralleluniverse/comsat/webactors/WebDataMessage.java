@@ -17,33 +17,38 @@ import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
 
 public class WebDataMessage implements WebResponse, WebMessage {
+    private final SendPort<WebDataMessage> sender;
     private final String string;
     private final ByteBuffer byteBuffer;
 
-    @Override
-    public SendPort<WebDataMessage> sender() {
-        return null;
-    }
-
-    public WebDataMessage(String str) {
+    public WebDataMessage(SendPort<? super WebDataMessage> from, String str) {
+        this.sender = (SendPort<WebDataMessage>)from;
         this.string = str;
         this.byteBuffer = null;
     }
 
-    public WebDataMessage(ByteBuffer bb) {
+    public WebDataMessage(SendPort<? super WebDataMessage> from, ByteBuffer bb) {
+        this.sender = (SendPort<WebDataMessage>)from;
         this.string = null;
         this.byteBuffer = bb;
     }
 
-    public String getString() {
-        return string;
+    @Override
+    public SendPort<WebDataMessage> sender() {
+        return sender;
     }
 
     public boolean isString() {
         return (string != null);
     }
 
-    public ByteBuffer getByteBuffer() {
+    @Override
+    public String getStringBody() {
+        return string;
+    }
+
+    @Override
+    public ByteBuffer getByteBufferBody() {
         return byteBuffer;
     }
 }

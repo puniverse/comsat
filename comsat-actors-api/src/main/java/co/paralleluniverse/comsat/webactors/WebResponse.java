@@ -13,5 +13,5 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
-public interface WebResponse {
+public interface WebResponse extends WebMessage {
 }

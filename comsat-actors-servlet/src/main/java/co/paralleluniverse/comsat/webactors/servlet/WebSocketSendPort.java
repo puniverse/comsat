@@ -44,9 +44,9 @@ public class WebSocketSendPort implements SendPort<WebDataMessage> {
         if (!session.isOpen())
             return false;
         if (message.isString())
-            session.getAsyncRemote().sendText(message.getString()); // TODO: use fiber async instead of servlet Async ?
+            session.getAsyncRemote().sendText(message.getStringBody()); // TODO: use fiber async instead of servlet Async ?
         else
-            session.getAsyncRemote().sendBinary(message.getByteBuffer());
+            session.getAsyncRemote().sendBinary(message.getByteBufferBody());
         return true;
     }
 

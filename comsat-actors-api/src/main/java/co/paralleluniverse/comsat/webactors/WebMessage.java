@@ -14,7 +14,12 @@
 package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.strands.channels.SendPort;
+import java.nio.ByteBuffer;
 
 public interface WebMessage {
-    public SendPort<? extends WebResponse> sender();
+    SendPort<? extends WebMessage> sender();
+
+    String getStringBody();
+
+    ByteBuffer getByteBufferBody();
 }

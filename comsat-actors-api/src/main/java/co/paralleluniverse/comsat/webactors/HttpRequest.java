@@ -15,7 +15,6 @@ package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.Multimap;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
@@ -73,10 +72,6 @@ public abstract class HttpRequest implements WebMessage {
 
     public abstract int getContentLength();
 
-    public abstract String getBody();
-
-    public abstract ByteBuffer getBinaryBody();
-
     public abstract String getContentType();
 
     public abstract String getServerName();
@@ -86,5 +81,5 @@ public abstract class HttpRequest implements WebMessage {
     //////////////////
     /// response methods
     @Override
-    public abstract SendPort<HttpResponse> sender();
+    public abstract SendPort<WebResponse> sender();
 }

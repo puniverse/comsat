@@ -39,12 +39,7 @@ public class ServletWebActors {
             @Override
             public void onMessage(final ByteBuffer message) {
                 try {
-                    actor.send(new WebDataMessage(message) {
-                        @Override
-                        public SendPort<WebDataMessage> sender() {
-                            return sp;
-                        }
-                    });
+                    actor.send(new WebDataMessage(sp, message));
                 } catch (SuspendExecution ex) {
                     throw new AssertionError(ex);
                 }
@@ -54,12 +49,7 @@ public class ServletWebActors {
             @Override
             public void onMessage(final String message) {
                 try {
-                    actor.send(new WebDataMessage(message) {
-                        @Override
-                        public SendPort<WebDataMessage> sender() {
-                            return sp;
-                        }
-                    });
+                    actor.send(new WebDataMessage(sp, message));
                 } catch (SuspendExecution ex) {
                     throw new AssertionError(ex);
                 }
