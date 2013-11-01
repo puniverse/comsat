@@ -49,14 +49,14 @@ public class HttpResponse implements WebResponse {
         private boolean hasMore;
 
         public Builder(SendPort<? super WebMessage> from, String body) {
-            this.sender = (SendPort<WebMessage>)from;
+            this.sender = (SendPort<WebMessage>) from;
             this.strBody = body;
             this.binBody = null;
             this.status = 200;
         }
 
         public Builder(SendPort<? super WebMessage> from, ByteBuffer body) {
-            this.sender = (SendPort<WebMessage>)from;
+            this.sender = (SendPort<WebMessage>) from;
             this.binBody = body;
             this.strBody = null;
             this.status = 200;
@@ -114,6 +114,25 @@ public class HttpResponse implements WebResponse {
         public HttpResponse build() {
             return new HttpResponse(this);
         }
+    }
+
+    /**
+     * Use when forwarding
+     * @param from
+     * @param httpResponse 
+     */
+    public HttpResponse(SendPort<? super WebMessage> from, HttpResponse httpResponse) {
+        this.sender = (SendPort<WebMessage>) from;
+        this.contentType = httpResponse.contentType;
+        this.charset = httpResponse.charset;
+        this.strBody = httpResponse.strBody;
+        this.binBody = httpResponse.binBody;
+        this.cookies = httpResponse.cookies;
+        this.error = httpResponse.error;
+        this.headers = httpResponse.headers;
+        this.status = httpResponse.status;
+        this.redirectPath = httpResponse.redirectPath;
+        this.hasMore = httpResponse.hasMore;
     }
 
     private HttpResponse(Builder builder) {
