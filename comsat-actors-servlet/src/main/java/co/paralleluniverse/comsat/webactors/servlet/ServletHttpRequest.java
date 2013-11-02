@@ -11,14 +11,11 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.comsat.webactors.Cookie;
+import static co.paralleluniverse.comsat.webactors.Cookie.*;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.comsat.webactors.WebResponse;
@@ -62,9 +59,9 @@ public class ServletHttpRequest extends HttpRequest {
         List<Cookie> list = new ArrayList<>();
         for (int i = 0; i < cookies.length; i++) {
             final javax.servlet.http.Cookie c = cookies[i];
-            list.add(new Cookie(c.getName(), c.getValue()).setComment(c.getComment()).setDomain(c.getDomain()).
+            list.add(cookie(c.getName(), c.getValue()).setComment(c.getComment()).setDomain(c.getDomain()).
                     setMaxAge(c.getMaxAge()).setHttpOnly(c.isHttpOnly()).setPath(c.getPath()).setSecure(c.getSecure()).
-                    setVersion(c.getVersion()));
+                    setVersion(c.getVersion()).build());
         }
         return list;
     }
