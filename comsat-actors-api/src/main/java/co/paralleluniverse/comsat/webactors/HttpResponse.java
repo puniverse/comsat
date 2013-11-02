@@ -23,6 +23,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HttpResponse implements WebResponse {
+    public static Builder ok(String body) {
+        return new Builder(body);
+    }
+
+    public static Builder ok(ByteBuffer body) {
+        return new Builder(body);
+    }
+
+    public static Builder error(int status, Throwable cause) {
+        return new Builder().status(status).error(cause);
+    }
+
+    public static Builder error(int status, String body) {
+        return new Builder(body).status(status);
+    }
+
+    public static Builder redirect(String redirectPath) {
+        return new Builder().redirect(redirectPath);
+    }
+    
     private final SendPort<WebMessage> sender;
     private final String contentType;
     private final String charset;
@@ -60,6 +80,22 @@ public class HttpResponse implements WebResponse {
             this.binBody = body;
             this.strBody = null;
             this.status = 200;
+        }
+
+        public Builder(SendPort<? super WebMessage> from) {
+            this(from, (String) null);
+        }
+
+        Builder(String body) {
+            this(null, body);
+        }
+
+        Builder(ByteBuffer body) {
+            this(null, body);
+        }
+
+        Builder() {
+            this((String)null);
         }
 
         public Builder setContentType(String contentType) {
@@ -112,14 +148,15 @@ public class HttpResponse implements WebResponse {
         }
 
         public HttpResponse build() {
-            return new HttpResponse(this);
+            return new HttpResponse(sender, this);
         }
     }
 
     /**
      * Use when forwarding
+     *
      * @param from
-     * @param httpResponse 
+     * @param httpResponse
      */
     public HttpResponse(SendPort<? super WebMessage> from, HttpResponse httpResponse) {
         this.sender = (SendPort<WebMessage>) from;
@@ -135,8 +172,8 @@ public class HttpResponse implements WebResponse {
         this.hasMore = httpResponse.hasMore;
     }
 
-    private HttpResponse(Builder builder) {
-        this.sender = builder.sender;
+    public HttpResponse(SendPort<? super WebMessage> from, Builder builder) {
+        this.sender = (SendPort<WebMessage>) from;
         this.contentType = builder.contentType;
         this.charset = builder.charset;
         this.strBody = builder.strBody;
