@@ -42,18 +42,6 @@ public class HttpResponse implements WebResponse {
     public static Builder redirect(String redirectPath) {
         return new Builder().redirect(redirectPath);
     }
-    
-    private final SendPort<WebMessage> sender;
-    private final String contentType;
-    private final String charset;
-    private final String strBody;
-    private final ByteBuffer binBody;
-    private final List<Cookie> cookies;
-    private final Multimap<String, String> headers;
-    private final int status;
-    private final Throwable error;
-    private final String redirectPath;
-    private final boolean hasMore;
 
     public static class Builder {
         private final SendPort<WebMessage> sender;
@@ -95,7 +83,7 @@ public class HttpResponse implements WebResponse {
         }
 
         Builder() {
-            this((String)null);
+            this((String) null);
         }
 
         public Builder setContentType(String contentType) {
@@ -151,6 +139,18 @@ public class HttpResponse implements WebResponse {
             return new HttpResponse(sender, this);
         }
     }
+    //
+    private final SendPort<WebMessage> sender;
+    private final String contentType;
+    private final String charset;
+    private final String strBody;
+    private final ByteBuffer binBody;
+    private final List<Cookie> cookies;
+    private final Multimap<String, String> headers;
+    private final int status;
+    private final Throwable error;
+    private final String redirectPath;
+    private final boolean hasMore;
 
     /**
      * Use when forwarding
