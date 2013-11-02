@@ -8,7 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.webbitserver.WebSocketConnection;
 
-public class WebbitWebSocketBinaryPort implements SendPort<ByteBuffer> {
+class WebbitWebSocketBinaryPort implements SendPort<ByteBuffer> {
     private final WebSocketConnection connection;
 
     public WebbitWebSocketBinaryPort(WebSocketConnection connection) {

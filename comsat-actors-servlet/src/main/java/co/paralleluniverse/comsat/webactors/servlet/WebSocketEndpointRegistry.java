@@ -15,8 +15,6 @@ package co.paralleluniverse.comsat.webactors.servlet;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -42,7 +40,7 @@ public class WebSocketEndpointRegistry implements ServletContextListener {
                 try {
                     scon.addEndpoint(sec.configurator(new EmbedHttpSessionWsConfigurator()).build());
                 } catch (DeploymentException ex) {
-                    Logger.getLogger(WebSocketEndpointRegistry.class.getName()).log(Level.SEVERE, null, ex);
+                    sc.log("Unable to deploy endpoint", ex);
                 }
 
             }

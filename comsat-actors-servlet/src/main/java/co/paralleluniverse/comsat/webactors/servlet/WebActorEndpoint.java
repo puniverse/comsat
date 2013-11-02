@@ -24,7 +24,7 @@ import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
-public class WebActorEndPoint extends Endpoint {
+public class WebActorEndpoint extends Endpoint {
     @Override
     public void onOpen(final Session session, EndpointConfig config) {
         ActorRef<Object> actor = getHttpSessionActor(config);
@@ -34,7 +34,7 @@ public class WebActorEndPoint extends Endpoint {
             try {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "session actor not found"));
             } catch (IOException ex) {
-                Logger.getLogger(WebActorEndPoint.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(WebActorEndpoint.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }

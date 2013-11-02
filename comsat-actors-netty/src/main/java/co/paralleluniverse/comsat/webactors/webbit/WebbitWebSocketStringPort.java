@@ -7,7 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.webbitserver.WebSocketConnection;
 
-public class WebbitWebSocketStringPort implements SendPort<String> {
+class WebbitWebSocketStringPort implements SendPort<String> {
     private final WebSocketConnection connection;
 
     public WebbitWebSocketStringPort(WebSocketConnection connection) {

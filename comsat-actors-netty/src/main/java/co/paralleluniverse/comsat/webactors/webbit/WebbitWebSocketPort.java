@@ -26,10 +26,10 @@ class WebbitWebSocketPort implements SendPort<WebDataMessage> {
 
     @Override
     public boolean trySend(WebDataMessage message) {
-        if (message.isString())
-            connection.send(message.getString());
+        if (!message.isBinary())
+            connection.send(message.getStringBody());
         else 
-            connection.send(message.getByteBuffer().array());
+            connection.send(message.getByteBufferBody().array());
         return true;
     }
 

@@ -38,8 +38,8 @@ public class WebDataMessage implements WebResponse, WebMessage {
         return sender;
     }
 
-    public boolean isString() {
-        return (string != null);
+    public boolean isBinary() {
+        return (byteBuffer != null);
     }
 
     @Override

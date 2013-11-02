@@ -5,10 +5,9 @@
 package co.paralleluniverse.comsat.webactors.webbit;
 
 import org.webbitserver.WebSocketConnection;
-public interface WebbitMessageHandler {
 
+interface WebbitMessageHandler {
     public void onMessage(WebSocketConnection connection, String msg) throws Throwable;
 
     public void onMessage(WebSocketConnection connection, byte[] msg) throws Throwable;
-    
 }

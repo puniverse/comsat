@@ -34,7 +34,7 @@ public class ServletWebActors {
             throw new RuntimeException("Session is already attached to an actor.");
         session.getUserProperties().put(ACTOR_KEY, actor);
         // TODO: register the handler in order to enable detach
-        final SendPort<WebDataMessage> sp = new WebSocketSendPort(session);
+        final SendPort<WebDataMessage> sp = new WebSocketChannel(session);
         session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
             @Override
             public void onMessage(final ByteBuffer message) {

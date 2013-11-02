@@ -22,10 +22,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.websocket.Session;
 
-public class WebSocketSendPort implements SendPort<WebDataMessage> {
+class WebSocketChannel implements SendPort<WebDataMessage> {
     private final Session session;
 
-    public WebSocketSendPort(Session session) {
+    public WebSocketChannel(Session session) {
         this.session = session;
     }
 
@@ -43,7 +43,7 @@ public class WebSocketSendPort implements SendPort<WebDataMessage> {
     public boolean trySend(WebDataMessage message) {
         if (!session.isOpen())
             return false;
-        if (message.isString())
+        if (!message.isBinary())
             session.getAsyncRemote().sendText(message.getStringBody()); // TODO: use fiber async instead of servlet Async ?
         else
             session.getAsyncRemote().sendBinary(message.getByteBufferBody());
@@ -55,7 +55,7 @@ public class WebSocketSendPort implements SendPort<WebDataMessage> {
         try {
             session.close();
         } catch (IOException ex) {
-            Logger.getLogger(WebSocketSendPort.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(WebSocketChannel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
