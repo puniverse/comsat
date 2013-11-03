@@ -18,10 +18,11 @@ import com.google.common.collect.Multimap;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class HttpRequest implements WebMessage {
+public abstract class HttpRequest implements HttpMessage {
     ////
     public abstract Multimap<String, String> getParameters();
 
+    @Override
     public abstract Multimap<String, String> getHeaders();
 
     public abstract Map<String, Object> getAtrributes();
@@ -52,6 +53,7 @@ public abstract class HttpRequest implements WebMessage {
         return c.iterator().next();
     }
     
+    @Override
     public abstract Collection<Cookie> getCookies();
 
     public abstract String getMethod();
@@ -81,5 +83,5 @@ public abstract class HttpRequest implements WebMessage {
     //////////////////
     /// response methods
     @Override
-    public abstract SendPort<WebResponse> sender();
+    public abstract SendPort<WebMessage> sender();
 }

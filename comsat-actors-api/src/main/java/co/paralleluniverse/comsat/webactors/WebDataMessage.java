@@ -16,7 +16,7 @@ package co.paralleluniverse.comsat.webactors;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
 
-public class WebDataMessage implements WebResponse, WebMessage {
+public class WebDataMessage implements WebMessage {
     private final SendPort<WebDataMessage> sender;
     private final String string;
     private final ByteBuffer byteBuffer;

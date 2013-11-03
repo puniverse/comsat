@@ -13,5 +13,15 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
-public interface WebResponse extends WebMessage {
+import com.google.common.collect.Multimap;
+import java.util.Collection;
+
+/**
+ *
+ * @author pron
+ */
+public interface HttpMessage extends WebMessage {
+    Multimap<String, String> getHeaders();
+
+    Collection<Cookie> getCookies();
 }

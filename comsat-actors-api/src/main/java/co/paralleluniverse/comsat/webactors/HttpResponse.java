@@ -20,9 +20,10 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public class HttpResponse implements WebResponse {
+public class HttpResponse implements HttpMessage {
     public static Builder ok(String body) {
         return new Builder(body);
     }
@@ -213,10 +214,12 @@ public class HttpResponse implements WebResponse {
         return binBody;
     }
 
-    public List<Cookie> getCookies() {
+    @Override
+    public Collection<Cookie> getCookies() {
         return cookies;
     }
 
+    @Override
     public Multimap<String, String> getHeaders() {
         return headers;
     }

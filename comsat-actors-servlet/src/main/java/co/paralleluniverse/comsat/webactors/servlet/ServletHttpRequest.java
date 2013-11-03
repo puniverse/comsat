@@ -18,7 +18,7 @@ import co.paralleluniverse.comsat.webactors.Cookie;
 import static co.paralleluniverse.comsat.webactors.Cookie.*;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
-import co.paralleluniverse.comsat.webactors.WebResponse;
+import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.ChannelClosedException;
 import co.paralleluniverse.strands.channels.SendPort;
@@ -46,7 +46,7 @@ public class ServletHttpRequest extends HttpRequest {
     private Multimap<String, String> headers;
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
-    private final SendPort<WebResponse> sender;
+    private final SendPort<WebMessage> sender;
 
     public ServletHttpRequest(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
@@ -202,7 +202,7 @@ public class ServletHttpRequest extends HttpRequest {
         return request.getPathInfo();
     }
 
-    private static class Peer implements SendPort<WebResponse> {
+    private static class Peer implements SendPort<WebMessage> {
         private final AsyncContext ctx;
         private Throwable exception;
 
@@ -211,7 +211,7 @@ public class ServletHttpRequest extends HttpRequest {
         }
 
         @Override
-        public void send(WebResponse message) throws SuspendExecution, InterruptedException {
+        public void send(WebMessage message) throws SuspendExecution, InterruptedException {
             if (!trySend(message)) {
                 if (exception == null)
                     throw new ChannelClosedException(this, exception);
@@ -220,13 +220,13 @@ public class ServletHttpRequest extends HttpRequest {
         }
 
         @Override
-        public boolean send(WebResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+        public boolean send(WebMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
             send(message);
             return true;
         }
 
         @Override
-        public boolean trySend(WebResponse message) {
+        public boolean trySend(WebMessage message) {
             try {
                 if (!ctx.getRequest().isAsyncStarted())
                     return false;
@@ -289,7 +289,7 @@ public class ServletHttpRequest extends HttpRequest {
             }
         }
 
-        private ServletOutputStream writeBody(WebResponse message, HttpServletResponse response) throws IOException {
+        private ServletOutputStream writeBody(WebMessage message, HttpServletResponse response) throws IOException {
             final byte[] arr;
             final int offset;
             final int length;
@@ -335,7 +335,7 @@ public class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public SendPort<WebResponse> sender() {
+    public SendPort<WebMessage> sender() {
         return sender;
     }
 
