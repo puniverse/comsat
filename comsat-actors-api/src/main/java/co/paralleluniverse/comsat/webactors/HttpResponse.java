@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class HttpResponse implements HttpMessage {
         private final String strBody;
         private final ByteBuffer binBody;
         private String contentType;
-        private String charset;
+        private Charset charset;
         private List<Cookie> cookies;
         private Multimap<String, String> headers;
         private int status;
@@ -92,7 +93,7 @@ public class HttpResponse implements HttpMessage {
             return this;
         }
 
-        public Builder setCharacterEncoding(String charset) {
+        public Builder setCharacterEncoding(Charset charset) {
             this.charset = charset;
             return this;
         }
@@ -143,7 +144,7 @@ public class HttpResponse implements HttpMessage {
     //
     private final SendPort<WebMessage> sender;
     private final String contentType;
-    private final String charset;
+    private final Charset charset;
     private final String strBody;
     private final ByteBuffer binBody;
     private final List<Cookie> cookies;
@@ -164,7 +165,7 @@ public class HttpResponse implements HttpMessage {
         this.contentType = httpResponse.contentType;
         this.charset = httpResponse.charset;
         this.strBody = httpResponse.strBody;
-        this.binBody = httpResponse.binBody;
+        this.binBody = httpResponse.binBody != null ? httpResponse.binBody.duplicate() : null;
         this.cookies = httpResponse.cookies;
         this.error = httpResponse.error;
         this.headers = httpResponse.headers;
@@ -178,7 +179,7 @@ public class HttpResponse implements HttpMessage {
         this.contentType = builder.contentType;
         this.charset = builder.charset;
         this.strBody = builder.strBody;
-        this.binBody = builder.binBody;
+        this.binBody = builder.binBody != null ? builder.binBody.duplicate() : null;
         this.cookies = ImmutableList.copyOf(builder.cookies);
         this.error = builder.error;
         this.headers = ImmutableMultimap.copyOf(builder.headers);
@@ -196,8 +197,17 @@ public class HttpResponse implements HttpMessage {
         return contentType;
     }
 
-    public String getCharacterEncoding() {
+    @Override
+    public Charset getCharacterEncoding() {
         return charset;
+    }
+
+    @Override
+    public int getContentLength() {
+        if (binBody != null)
+            return binBody.remaining();
+        else
+            return -1;
     }
 
     public String getRedirectPath() {

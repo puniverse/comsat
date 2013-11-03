@@ -14,6 +14,7 @@
 package co.paralleluniverse.comsat.webactors;
 
 import com.google.common.collect.Multimap;
+import java.nio.charset.Charset;
 import java.util.Collection;
 
 /**
@@ -24,4 +25,8 @@ public interface HttpMessage extends WebMessage {
     Multimap<String, String> getHeaders();
 
     Collection<Cookie> getCookies();
+
+    Charset getCharacterEncoding();
+    
+    int getContentLength();
 }

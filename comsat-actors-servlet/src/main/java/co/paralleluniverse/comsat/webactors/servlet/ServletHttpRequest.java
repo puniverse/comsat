@@ -25,10 +25,12 @@ import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -47,6 +49,8 @@ public class ServletHttpRequest extends HttpRequest {
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
     private final SendPort<WebMessage> sender;
+    private String strBody;
+    private byte[] binBody;
 
     public ServletHttpRequest(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
@@ -73,30 +77,42 @@ public class ServletHttpRequest extends HttpRequest {
 
     @Override
     public String getStringBody() {
-        try {
-            StringBuilder sb = new StringBuilder();
-            BufferedReader reader = request.getReader();
-            char[] b = new char[1024];
-            int len;
-            while ((len = reader.read(b)) != -1)
-                sb.append(b, 0, len);
-            return sb.toString();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+        if (strBody == null) {
+            if (binBody != null)
+                return null;
+            byte[] ba = readBody();
+            String enc = request.getCharacterEncoding();
+            try {
+                this.strBody = new String(ba, enc);
+            } catch (UnsupportedEncodingException e) {
+                throw new UnsupportedCharsetException(enc);
+            }
         }
+        return strBody;
     }
 
     @Override
     public ByteBuffer getByteBufferBody() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ServletInputStream inputStream = request.getInputStream();
-            byte[] b = new byte[1024];
-            int len;
-            while ((len = inputStream.read(b)) != -1)
-                bos.write(b, 0, len);
+        if (binBody == null) {
+            if (strBody != null)
+                return null;
+            this.binBody = readBody();
+        }
+        return ByteBuffer.wrap(binBody).asReadOnlyBuffer();
+    }
 
-            return ByteBuffer.wrap(bos.toByteArray());
+    private byte[] readBody() {
+        try {
+            ServletInputStream is = request.getInputStream();
+            int length = request.getContentLength();
+            byte[] ba;
+            if (length < 0)
+                ba = ByteStreams.toByteArray(is);
+            else {
+                ba = new byte[length];
+                ByteStreams.readFully(is, ba);
+            }
+            return ba;
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -202,6 +218,11 @@ public class ServletHttpRequest extends HttpRequest {
         return request.getPathInfo();
     }
 
+    @Override
+    public Charset getCharacterEncoding() {
+        return Charset.forName(request.getCharacterEncoding());
+    }
+
     private static class Peer implements SendPort<WebMessage> {
         private final AsyncContext ctx;
         private Throwable exception;
@@ -263,7 +284,7 @@ public class ServletHttpRequest extends HttpRequest {
                         if (msg.getContentType() != null)
                             response.setContentType(msg.getContentType());
                         if (msg.getCharacterEncoding() != null)
-                            response.setCharacterEncoding(msg.getCharacterEncoding());
+                            response.setCharacterEncoding(msg.getCharacterEncoding().name());
                     }
                 }
 

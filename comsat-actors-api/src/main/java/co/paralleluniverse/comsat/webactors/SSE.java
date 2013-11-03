@@ -13,6 +13,8 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
+import java.nio.charset.Charset;
+
 /**
  *
  * @author pron
@@ -25,14 +27,14 @@ public final class SSE {
     public static HttpResponse.Builder startSSE() {
         return new HttpResponse.Builder()
                 .setContentType("text/event-stream")
-                .setCharacterEncoding("UTF-8")
+                .setCharacterEncoding(Charset.forName("UTF-8"))
                 .dontClose();
     }
 
     public static HttpResponse.Builder startSSE(long reconnectTimeout) {
         return new HttpResponse.Builder(retryString(reconnectTimeout) + '\n')
                 .setContentType("text/event-stream")
-                .setCharacterEncoding("UTF-8")
+                .setCharacterEncoding(Charset.forName("UTF-8"))
                 .dontClose();
     }
 

@@ -72,6 +72,7 @@ public abstract class HttpRequest implements HttpMessage {
 
     public abstract String getServletPath();
 
+    @Override
     public abstract int getContentLength();
 
     public abstract String getContentType();
