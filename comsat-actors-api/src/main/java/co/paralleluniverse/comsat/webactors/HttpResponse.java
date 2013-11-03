@@ -165,7 +165,7 @@ public class HttpResponse implements HttpMessage {
         this.contentType = httpResponse.contentType;
         this.charset = httpResponse.charset;
         this.strBody = httpResponse.strBody;
-        this.binBody = httpResponse.binBody != null ? httpResponse.binBody.duplicate() : null;
+        this.binBody = httpResponse.binBody != null ? httpResponse.binBody.asReadOnlyBuffer() : null;
         this.cookies = httpResponse.cookies;
         this.error = httpResponse.error;
         this.headers = httpResponse.headers;
@@ -179,7 +179,7 @@ public class HttpResponse implements HttpMessage {
         this.contentType = builder.contentType;
         this.charset = builder.charset;
         this.strBody = builder.strBody;
-        this.binBody = builder.binBody != null ? builder.binBody.duplicate() : null;
+        this.binBody = builder.binBody != null ? builder.binBody.asReadOnlyBuffer() : null;
         this.cookies = ImmutableList.copyOf(builder.cookies);
         this.error = builder.error;
         this.headers = ImmutableMultimap.copyOf(builder.headers);
@@ -221,7 +221,7 @@ public class HttpResponse implements HttpMessage {
 
     @Override
     public ByteBuffer getByteBufferBody() {
-        return binBody;
+        return binBody.duplicate();
     }
 
     @Override
