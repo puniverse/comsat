@@ -272,6 +272,7 @@ public class ServletHttpRequest extends HttpRequest {
                         close();
                         return true;
                     }
+                    
                     if (msg.getRedirectPath() != null) {
                         response.sendRedirect(msg.getRedirectPath());
                         close();
@@ -300,12 +301,6 @@ public class ServletHttpRequest extends HttpRequest {
                 ctx.getRequest().getServletContext().log("IOException", ex);
                 close();
                 this.exception = ex;
-//                try {
-//                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-//                } catch (IOException ex2) {
-//                    request.getServletContext().log("IOException", ex2);
-//                }
-
                 return false;
             }
         }
