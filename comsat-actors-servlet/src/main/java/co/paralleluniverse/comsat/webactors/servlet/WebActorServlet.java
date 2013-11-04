@@ -20,16 +20,9 @@ import co.paralleluniverse.actors.LocalActorUtil;
 import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -37,9 +30,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class WebActorServlet extends HttpServlet {
-    public String redirectPath = null;
-    public String actorClassName = null;
-    public String[] actorParams = null;
+    private String redirectPath = null;
+    private String actorClassName = null;
+    private String[] actorParams = null;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
