@@ -43,6 +43,9 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Wraps a {@link HttpServletRequest} as a {@link HttpRequest}
+ */
 public class ServletHttpRequest extends HttpRequest {
     private final HttpServletRequest request;
     private Multimap<String, String> headers;
