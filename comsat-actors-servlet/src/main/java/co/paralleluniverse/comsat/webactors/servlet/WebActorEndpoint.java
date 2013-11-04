@@ -16,8 +16,6 @@ package co.paralleluniverse.comsat.webactors.servlet;
 import co.paralleluniverse.actors.ActorRef;
 import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
@@ -25,8 +23,12 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
 public class WebActorEndpoint extends Endpoint {
+    private volatile EndpointConfig config;
+
     @Override
     public void onOpen(final Session session, EndpointConfig config) {
+        if (this.config == null)
+            this.config = config;
         ActorRef<Object> actor = getHttpSessionActor(config);
         if (actor != null) {
             ServletWebActors.attachWebSocket(session, actor);
@@ -34,9 +36,14 @@ public class WebActorEndpoint extends Endpoint {
             try {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "session actor not found"));
             } catch (IOException ex) {
-                Logger.getLogger(WebActorEndpoint.class.getName()).log(Level.SEVERE, null, ex);
+                getHttpSession(config).getServletContext().log("IOException", ex);
             }
         }
+    }
+
+    @Override
+    public void onError(Session session, Throwable t) {
+        getHttpSession(config).getServletContext().log("onError", t);
     }
 
     private ActorRef<Object> getHttpSessionActor(EndpointConfig config) {

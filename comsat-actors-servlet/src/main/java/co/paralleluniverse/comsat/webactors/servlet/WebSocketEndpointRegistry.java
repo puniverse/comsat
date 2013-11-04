@@ -42,7 +42,6 @@ public class WebSocketEndpointRegistry implements ServletContextListener {
                 } catch (DeploymentException ex) {
                     sc.log("Unable to deploy endpoint", ex);
                 }
-
             }
         }
     }
