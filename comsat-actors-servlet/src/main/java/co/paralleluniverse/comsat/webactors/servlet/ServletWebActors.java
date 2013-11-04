@@ -55,7 +55,6 @@ public class ServletWebActors {
                 }
             }
         });
-
     }
 
     public static void detachWebSocket(final Session session) {
@@ -68,5 +67,12 @@ public class ServletWebActors {
 
     public static boolean isHttpAttached(HttpSession session) {
         return (session.getAttribute(ACTOR_KEY) != null);
+    }
+
+    public static ActorRef<Object> getHttpAttached(HttpSession session) {
+        Object actor = session.getAttribute(ACTOR_KEY);
+        if ((actor!=null) && (actor instanceof ActorRef))
+            return (ActorRef<Object>)actor;
+        return null;
     }
 }

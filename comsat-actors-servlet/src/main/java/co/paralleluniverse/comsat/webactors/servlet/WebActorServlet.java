@@ -13,11 +13,23 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
+import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorRef;
+import co.paralleluniverse.actors.ActorSpec;
 import co.paralleluniverse.actors.LocalActorUtil;
 import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -26,15 +38,40 @@ import javax.servlet.http.HttpServletResponse;
 
 public class WebActorServlet extends HttpServlet {
     public String redirectPath = null;
+    public String actorClassName = null;
+    public String[] actorParams = null;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        setRedirectNoSessionPath(config.getInitParameter("redirectNoSessionPath"));
+        Enumeration<String> initParameterNames = config.getInitParameterNames();
+        SortedMap<Integer, String> map = new TreeMap<>();
+        while (initParameterNames.hasMoreElements()) {
+            String name = initParameterNames.nextElement();
+            if (name.equals("redirectNoSessionPath"))
+                setRedirectNoSessionPath(config.getInitParameter(name));
+            else if (name.equals("actor"))
+                setActorClassName(config.getInitParameter(name));
+            else if (name.startsWith("actorParam")) {
+                try {
+                    int num = Integer.parseInt(name.substring("actorParam".length()));
+                    map.put(num, config.getInitParameter(name));
+                } catch (NumberFormatException nfe) {
+                    getServletContext().log("Wrong actor parameter number: ", nfe);
+                }
+
+            }
+        }
+        actorParams = map.values().toArray(new String[0]);
     }
 
     public WebActorServlet setRedirectNoSessionPath(String path) {
         this.redirectPath = path;
+        return this;
+    }
+
+    public WebActorServlet setActorClassName(String className) {
+        this.actorClassName = className;
         return this;
     }
 
@@ -44,10 +81,23 @@ public class WebActorServlet extends HttpServlet {
     }
 
     private void sendToActor(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
-        ActorRef<Object> actor = (ActorRef<Object>) req.getSession().getAttribute(ACTOR_KEY);
+        ActorRef<Object> actor = ServletWebActors.getHttpAttached(req.getSession());
+
         if (actor == null) {
-            resp.sendRedirect(redirectPath);
-            return;
+            if (actorClassName != null) {
+                try {
+                    actor = Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
+                    ServletWebActors.attachHttpSession(req.getSession(), actor);
+                } catch (ClassNotFoundException ex) {
+                    req.getServletContext().log("Unable to load actorClass: ", ex);
+                    return;
+                }
+            } else if (redirectPath!=null) {
+                resp.sendRedirect(redirectPath);
+                return;
+            } else {
+                resp.sendError(500, "Actor not found");
+            }
         }
         if (LocalActorUtil.isDone(actor)) {
             req.getSession().removeAttribute(ACTOR_KEY);
