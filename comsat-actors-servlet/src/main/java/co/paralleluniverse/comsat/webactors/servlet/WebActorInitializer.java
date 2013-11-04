@@ -55,7 +55,7 @@ public class WebActorInitializer implements ServletContextListener {
         
         String servletName = waAnn.name();
         Dynamic d = sc.addServlet(servletName, new WebActorServlet());
-        d.setInitParameter("actor", webActorClass.getName());
+        d.setInitParameter(WebActorServlet.ACTOR_CLASS_PARAM, webActorClass.getName());
         d.addMapping(waAnn.httpUrlPatterns());
 
         for (String wsPath : waAnn.webSocketUrlPatterns())

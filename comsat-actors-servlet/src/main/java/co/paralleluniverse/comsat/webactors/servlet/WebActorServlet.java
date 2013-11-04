@@ -30,6 +30,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class WebActorServlet extends HttpServlet {
+    static final String ACTOR_CLASS_PARAM = "actor";
+    static final String ACTOR_PARAM_PREFIX = "actorParam";
     private String redirectPath = null;
     private String actorClassName = null;
     private String[] actorParams = null;
@@ -43,9 +45,9 @@ public class WebActorServlet extends HttpServlet {
             String name = initParameterNames.nextElement();
             if (name.equals("redirectNoSessionPath"))
                 setRedirectNoSessionPath(config.getInitParameter(name));
-            else if (name.equals("actor"))
+            else if (name.equals(ACTOR_CLASS_PARAM))
                 setActorClassName(config.getInitParameter(name));
-            else if (name.startsWith("actorParam")) {
+            else if (name.startsWith(ACTOR_PARAM_PREFIX)) {
                 try {
                     int num = Integer.parseInt(name.substring("actorParam".length()));
                     map.put(num, config.getInitParameter(name));
