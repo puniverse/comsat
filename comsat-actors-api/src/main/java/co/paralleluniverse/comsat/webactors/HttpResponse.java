@@ -180,9 +180,9 @@ public class HttpResponse implements HttpMessage {
         this.charset = builder.charset;
         this.strBody = builder.strBody;
         this.binBody = builder.binBody != null ? builder.binBody.asReadOnlyBuffer() : null;
-        this.cookies = ImmutableList.copyOf(builder.cookies);
+        this.cookies = builder.cookies !=null ? ImmutableList.copyOf(builder.cookies): null;
         this.error = builder.error;
-        this.headers = ImmutableMultimap.copyOf(builder.headers);
+        this.headers = builder.headers != null ? ImmutableMultimap.copyOf(builder.headers) : null;
         this.status = builder.status;
         this.redirectPath = builder.redirectPath;
         this.hasMore = builder.hasMore;
@@ -221,7 +221,7 @@ public class HttpResponse implements HttpMessage {
 
     @Override
     public ByteBuffer getByteBufferBody() {
-        return binBody.duplicate();
+        return binBody!=null ? binBody.duplicate(): null;
     }
 
     @Override
