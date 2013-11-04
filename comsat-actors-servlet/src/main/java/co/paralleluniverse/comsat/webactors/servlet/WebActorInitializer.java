@@ -53,9 +53,9 @@ public class WebActorInitializer implements ServletContextListener {
     private void registerWebActor(ServletContext sc, Class<?> webActorClass) {
         final WebActor waAnn = webActorClass.getAnnotation(WebActor.class);
         
-        String servletName = waAnn.name();
-        Dynamic d = sc.addServlet(servletName, new WebActorServlet());
+        Dynamic d = sc.addServlet(waAnn.name(), new WebActorServlet());
         d.setInitParameter(WebActorServlet.ACTOR_CLASS_PARAM, webActorClass.getName());
+        d.setAsyncSupported(true);
         d.addMapping(waAnn.httpUrlPatterns());
 
         for (String wsPath : waAnn.webSocketUrlPatterns())

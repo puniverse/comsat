@@ -51,21 +51,6 @@ public @interface WebActor {
     String[] webSocketUrlPatterns() default {};
 
     /**
-     * @return load on startup ordering hint
-     */
-    int loadOnStartup() default -1;
-
-    /**
-     * @return small icon for this WebActor, if present
-     */
-    String smallIcon() default "";
-
-    /**
-     * @return large icon for this WebActor, if present
-     */
-    String largeIcon() default "";
-
-    /**
      * @return description of this WebActor, if present
      */
     String description() default "";
