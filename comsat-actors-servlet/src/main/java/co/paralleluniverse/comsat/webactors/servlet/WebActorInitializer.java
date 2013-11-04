@@ -57,6 +57,7 @@ public class WebActorInitializer implements ServletContextListener {
         d.setInitParameter(WebActorServlet.ACTOR_CLASS_PARAM, webActorClass.getName());
         d.setAsyncSupported(true);
         d.addMapping(waAnn.httpUrlPatterns());
+        d.addMapping(waAnn.value());
 
         for (String wsPath : waAnn.webSocketUrlPatterns())
             WebSocketEndpointRegistry.registerEndpoint(sc, ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath));
