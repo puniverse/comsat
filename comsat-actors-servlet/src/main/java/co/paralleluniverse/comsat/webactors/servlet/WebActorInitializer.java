@@ -39,7 +39,7 @@ public class WebActorInitializer implements ServletContextListener {
             final ClassPath classpath = ClassPath.from(cl);
             for (ClassPath.ClassInfo ci : classpath.getTopLevelClasses()) {
                 try {
-                    if (AnnotationUtil.hasClassAnnotation(WebActor.class, cl.getResourceAsStream(ci.getName())))
+                    if (AnnotationUtil.hasClassAnnotation(WebActor.class, cl.getResourceAsStream(ci.getName().replace('.', '/') + ".class")))
                         registerWebActor(sc, ci.load());
                 } catch (IOException e) {
                     sc.log("IOException while scanning class " + ci.getName() + " for WebActor annotation", e);
