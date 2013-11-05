@@ -19,6 +19,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.nio.ByteBuffer;
 import javax.servlet.http.HttpSession;
+import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 
@@ -29,12 +30,12 @@ public class ServletWebActors {
         session.setAttribute(ACTOR_KEY, actor);
     }
 
-    public static void attachWebSocket(final Session session, final ActorRef<Object> actor) {
+    public static void attachWebSocket(final Session session, EndpointConfig config, final ActorRef<Object> actor) {
         if (session.getUserProperties().containsKey(ACTOR_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
         session.getUserProperties().put(ACTOR_KEY, actor);
         // TODO: register the handler in order to enable detach
-        final SendPort<WebDataMessage> sp = new WebSocketChannel(session);
+        final SendPort<WebDataMessage> sp = new WebSocketChannel(session, config);
         session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
             @Override
             public void onMessage(final ByteBuffer message) {

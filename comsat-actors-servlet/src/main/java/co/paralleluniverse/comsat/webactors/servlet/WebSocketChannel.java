@@ -18,15 +18,16 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
 class WebSocketChannel implements SendPort<WebDataMessage> {
     private final Session session;
+    private final EndpointConfig config;
 
-    public WebSocketChannel(Session session) {
+    public WebSocketChannel(Session session, EndpointConfig config) {
         this.session = session;
+        this.config = config;
     }
 
     @Override
@@ -55,7 +56,7 @@ class WebSocketChannel implements SendPort<WebDataMessage> {
         try {
             session.close();
         } catch (IOException ex) {
-            Logger.getLogger(WebSocketChannel.class.getName()).log(Level.SEVERE, null, ex);
+            WebActorEndpoint.getHttpSession(config).getServletContext().log("IOException on close", ex);
         }
     }
 }

@@ -31,7 +31,7 @@ public class WebActorEndpoint extends Endpoint {
             this.config = config;
         ActorRef<Object> actor = getHttpSessionActor(config);
         if (actor != null) {
-            ServletWebActors.attachWebSocket(session, actor);
+            ServletWebActors.attachWebSocket(session, config, actor);
         } else {
             try {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "session actor not found"));
@@ -46,14 +46,14 @@ public class WebActorEndpoint extends Endpoint {
         getHttpSession(config).getServletContext().log("onError", t);
     }
 
-    private ActorRef<Object> getHttpSessionActor(EndpointConfig config) {
+    static ActorRef<Object> getHttpSessionActor(EndpointConfig config) {
         HttpSession httpSession = getHttpSession(config);
         if (httpSession == null)
             throw new RuntimeException("HttpSession hasn't been embedded by the EndPoint Configurator.");
         return (ActorRef<Object>) httpSession.getAttribute(ACTOR_KEY);
     }
 
-    private HttpSession getHttpSession(EndpointConfig config) {
+    static HttpSession getHttpSession(EndpointConfig config) {
         return (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
     }
 }
