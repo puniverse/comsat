@@ -14,9 +14,9 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.comsat.webactors.WebActor;
-import co.paralleluniverse.fibers.instrument.AnnotationUtil;
-import com.google.common.reflect.ClassPath;
+import co.paralleluniverse.fibers.instrument.*;
 import java.io.IOException;
+import java.net.URL;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -36,15 +36,31 @@ public class WebActorInitializer implements ServletContextListener {
         final ServletContext sc = sce.getServletContext();
         try {
             final ClassLoader cl = sc.getClassLoader();
-            final ClassPath classpath = ClassPath.from(cl);
-            for (ClassPath.ClassInfo ci : classpath.getTopLevelClasses()) {
-                try {
-                    if (AnnotationUtil.hasClassAnnotation(WebActor.class, cl.getResourceAsStream(ci.getName().replace('.', '/') + ".class")))
-                        registerWebActor(sc, ci.load());
-                } catch (IOException e) {
-                    sc.log("IOException while scanning class " + ci.getName() + " for WebActor annotation", e);
+
+            ClassLoaderUtil.accept(cl, new ClassLoaderUtil.Visitor() {
+                @Override
+                public void visit(String resource, URL url) {
+                    if (!ClassLoaderUtil.isClassfile(resource))
+                        return;
+                    final String className = ClassLoaderUtil.resourceToClass(resource);
+                    try {
+                        if (AnnotationUtil.hasClassAnnotation(WebActor.class, cl.getResourceAsStream(resource)))
+                            registerWebActor(sc, cl.loadClass(className));
+                    } catch (IOException | ClassNotFoundException e) {
+                        sc.log("Exception while scanning class " + className + " for WebActor annotation", e);
+                        throw new RuntimeException(e);
+                    }
                 }
-            }
+            });
+//            final ClassPath classpath = ClassPath.from(cl);
+//            for (ClassPath.ClassInfo ci : classpath.getTopLevelClasses()) {
+//                try {
+//                    if (AnnotationUtil.hasClassAnnotation(WebActor.class, cl.getResourceAsStream(ci.getName().replace('.', '/') + ".class")))
+//                        registerWebActor(sc, ci.load());
+//                } catch (IOException e) {
+//                    sc.log("IOException while scanning class " + ci.getName() + " for WebActor annotation", e);
+//                }
+//            }
         } catch (IOException e) {
             sc.log("IOException while scanning classes for WebActor annotation", e);
         }
@@ -52,7 +68,7 @@ public class WebActorInitializer implements ServletContextListener {
 
     private void registerWebActor(ServletContext sc, Class<?> webActorClass) {
         final WebActor waAnn = webActorClass.getAnnotation(WebActor.class);
-        
+
         Dynamic d = sc.addServlet(waAnn.name() != null ? waAnn.name() : webActorClass.getName(), WebActorServlet.class);
         d.setInitParameter(WebActorServlet.ACTOR_CLASS_PARAM, webActorClass.getName());
         d.setAsyncSupported(true);
