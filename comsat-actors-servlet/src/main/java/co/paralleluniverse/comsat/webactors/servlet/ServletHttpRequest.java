@@ -237,9 +237,9 @@ public class ServletHttpRequest extends HttpRequest {
         @Override
         public void send(WebMessage message) throws SuspendExecution, InterruptedException {
             if (!trySend(message)) {
-                if (exception == null)
-                    throw new ChannelClosedException(this, exception);
-                throw Exceptions.rethrow(exception);
+//                if (exception == null)
+//                    throw new ChannelClosedException(this, exception);
+//                throw Exceptions.rethrow(exception);
             }
         }
 
