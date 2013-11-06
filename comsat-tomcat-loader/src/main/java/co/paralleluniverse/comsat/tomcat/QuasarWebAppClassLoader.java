@@ -15,7 +15,9 @@ package co.paralleluniverse.comsat.tomcat;
 
 import co.paralleluniverse.fibers.instrument.Log;
 import co.paralleluniverse.fibers.instrument.LogLevel;
+import co.paralleluniverse.fibers.instrument.MethodDatabase;
 import co.paralleluniverse.fibers.instrument.QuasarInstrumentor;
+import java.util.Arrays;
 import org.apache.catalina.loader.ResourceEntry;
 import org.apache.catalina.loader.WebappClassLoader;
 
@@ -60,9 +62,15 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
     protected ResourceEntry findResourceInternal(String name, String path) {
         ResourceEntry entry = super.findResourceInternal(name, path);
         if (entry != null && path.endsWith(".class")) {
-            if (name.endsWith(".class"))
-                name = name.substring(0, name.length() - ".class".length());
-            entry.binaryContent = instrumentor.instrumentClass(name, entry.binaryContent);
+            String className = name.substring(0, name.length() - ".class".length());
+            try {
+                entry.binaryContent = instrumentor.instrumentClass(className, entry.binaryContent);
+            } catch (Exception ex) {
+                if (MethodDatabase.isProblematicClass(className))
+                    instrumentor.log(LogLevel.INFO, "Skipping problematic class instrumentation %s - %s %s", className, ex, Arrays.toString(ex.getStackTrace()));
+                else
+                    instrumentor.error("Unable to instrument " + className, ex);
+            }
         }
         return entry;
     }
