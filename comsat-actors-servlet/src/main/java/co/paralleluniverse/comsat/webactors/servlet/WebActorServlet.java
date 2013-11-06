@@ -20,6 +20,7 @@ import co.paralleluniverse.actors.LocalActorUtil;
 import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -87,7 +88,7 @@ public class WebActorServlet extends HttpServlet {
                     req.getServletContext().log("Unable to load actorClass: ", ex);
                     return;
                 }
-            } else if (redirectPath!=null) {
+            } else if (redirectPath != null) {
                 resp.sendRedirect(redirectPath);
                 return;
             } else {
@@ -95,8 +96,12 @@ public class WebActorServlet extends HttpServlet {
             }
         }
         if (LocalActorUtil.isDone(actor)) {
+            Throwable deathCause = LocalActorUtil.getDeathCause(actor);
             req.getSession().removeAttribute(ACTOR_KEY);
-            resp.sendError(500, "Actor is dead, please login again");
+            if (deathCause != null)
+                resp.sendError(500, "Actor is dead because of " + deathCause.getMessage());
+            else 
+                resp.sendError(500, "Actor is finised.");
             return;
         }
         req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);

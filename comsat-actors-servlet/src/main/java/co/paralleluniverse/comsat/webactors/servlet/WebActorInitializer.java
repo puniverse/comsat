@@ -16,6 +16,7 @@ package co.paralleluniverse.comsat.webactors.servlet;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.fibers.instrument.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -35,16 +36,14 @@ public class WebActorInitializer implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         final ServletContext sc = sce.getServletContext();
         try {
-            final ClassLoader cl = sc.getClassLoader();
-
-            ClassLoaderUtil.accept(cl, new ClassLoaderUtil.Visitor() {
+            ClassLoaderUtil.accept(sc.getClassLoader(), new ClassLoaderUtil.Visitor() {
                 @Override
-                public void visit(String resource, URL url) {
+                public void visit(String resource, URL url, ClassLoader cl) {
                     if (!ClassLoaderUtil.isClassfile(resource))
                         return;
                     final String className = ClassLoaderUtil.resourceToClass(resource);
-                    try {
-                        if (AnnotationUtil.hasClassAnnotation(WebActor.class, cl.getResourceAsStream(resource)))
+                    try(InputStream is = cl.getResourceAsStream(resource)) {
+                        if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
                             registerWebActor(sc, cl.loadClass(className));
                     } catch (IOException | ClassNotFoundException e) {
                         sc.log("Exception while scanning class " + className + " for WebActor annotation", e);
@@ -68,13 +67,12 @@ public class WebActorInitializer implements ServletContextListener {
 
     private void registerWebActor(ServletContext sc, Class<?> webActorClass) {
         final WebActor waAnn = webActorClass.getAnnotation(WebActor.class);
-
-        Dynamic d = sc.addServlet(waAnn.name() != null ? waAnn.name() : webActorClass.getName(), WebActorServlet.class);
+        final String name = (waAnn.name() != null && !waAnn.name().isEmpty()) ? waAnn.name() : webActorClass.getName();
+        Dynamic d = sc.addServlet(name, WebActorServlet.class);
         d.setInitParameter(WebActorServlet.ACTOR_CLASS_PARAM, webActorClass.getName());
         d.setAsyncSupported(true);
         d.addMapping(waAnn.httpUrlPatterns());
         d.addMapping(waAnn.value());
-
         for (String wsPath : waAnn.webSocketUrlPatterns())
             WebSocketEndpointRegistry.registerEndpoint(sc, ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath));
     }
