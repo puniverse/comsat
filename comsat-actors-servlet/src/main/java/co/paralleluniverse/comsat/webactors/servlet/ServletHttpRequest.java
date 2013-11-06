@@ -13,14 +13,12 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
-import co.paralleluniverse.common.util.Exceptions;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import static co.paralleluniverse.comsat.webactors.Cookie.*;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.strands.channels.ChannelClosedException;
 import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
