@@ -16,39 +16,29 @@ package co.paralleluniverse.comsat.webactors;
 import co.paralleluniverse.actors.ActorRef;
 import java.nio.ByteBuffer;
 
-public class WebDataMessage implements WebMessage {
-    private final ActorRef<WebDataMessage> sender;
-    private final String string;
-    private final ByteBuffer byteBuffer;
+/**
+ *
+ * @author pron
+ */
+public class WebSocketOpened implements WebMessage {
+    private final ActorRef<WebDataMessage> actor;
 
-    public WebDataMessage(ActorRef<? super WebDataMessage> from, String str) {
-        this.sender = (ActorRef<WebDataMessage>)from;
-        this.string = str;
-        this.byteBuffer = null;
+    public WebSocketOpened(ActorRef<WebDataMessage> actor) {
+        this.actor = actor;
     }
-
-    public WebDataMessage(ActorRef<? super WebDataMessage> from, ByteBuffer bb) {
-        this.sender = (ActorRef<WebDataMessage>)from;
-        this.string = null;
-        this.byteBuffer = bb;
-    }
-
+    
     @Override
     public ActorRef<WebDataMessage> sender() {
-        return sender;
-    }
-
-    public boolean isBinary() {
-        return (byteBuffer != null);
+        return actor;
     }
 
     @Override
     public String getStringBody() {
-        return string;
+        return null;
     }
 
     @Override
     public ByteBuffer getByteBufferBody() {
-        return byteBuffer;
+        return null;
     }
 }
