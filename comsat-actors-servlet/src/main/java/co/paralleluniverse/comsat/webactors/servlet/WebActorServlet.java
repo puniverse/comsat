@@ -109,11 +109,13 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
     }
 
     @Override
-    public void sessionCreated(HttpSessionEvent session) {
+    public void sessionCreated(HttpSessionEvent se) {
     }
 
     @Override
-    public void sessionDestroyed(HttpSessionEvent session) {
+    public void sessionDestroyed(HttpSessionEvent se) {
+        HttpActorRef ha = getHttpActorRef(se.getSession());
+        ha.die(null);
     }
 
     @Override
