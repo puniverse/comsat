@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
+import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.Multimap;
 import java.util.Collection;
@@ -53,6 +54,8 @@ public abstract class HttpRequest implements HttpMessage {
         return c.iterator().next();
     }
     
+    public abstract SendPort<WebDataMessage> openChannel();
+    
     @Override
     public abstract Collection<Cookie> getCookies();
 
@@ -70,8 +73,6 @@ public abstract class HttpRequest implements HttpMessage {
 
     public abstract String getRequestURL();
 
-    public abstract String getServletPath();
-
     @Override
     public abstract int getContentLength();
 
@@ -84,5 +85,5 @@ public abstract class HttpRequest implements HttpMessage {
     //////////////////
     /// response methods
     @Override
-    public abstract SendPort<WebMessage> sender();
+    public abstract ActorRef<HttpResponse> sender();
 }

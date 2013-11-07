@@ -13,7 +13,7 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
-import co.paralleluniverse.strands.channels.SendPort;
+import co.paralleluniverse.actors.ActorRef;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedHashMultimap;
@@ -25,28 +25,29 @@ import java.util.Collection;
 import java.util.List;
 
 public class HttpResponse implements HttpMessage {
-    public static Builder ok(String body) {
-        return new Builder(body);
+    public static Builder ok(HttpRequest request, String body) {
+        return new Builder(request, body);
     }
 
-    public static Builder ok(ByteBuffer body) {
-        return new Builder(body);
+    public static Builder ok(HttpRequest request, ByteBuffer body) {
+        return new Builder(request, body);
     }
 
-    public static Builder error(int status, Throwable cause) {
-        return new Builder().status(status).error(cause);
+    public static Builder error(HttpRequest request, int status, Throwable cause) {
+        return new Builder(request).status(status).error(cause);
     }
 
-    public static Builder error(int status, String body) {
-        return new Builder(body).status(status);
+    public static Builder error(HttpRequest request, int status, String body) {
+        return new Builder(request, body).status(status);
     }
 
-    public static Builder redirect(String redirectPath) {
-        return new Builder().redirect(redirectPath);
+    public static Builder redirect(HttpRequest request, String redirectPath) {
+        return new Builder(request).redirect(redirectPath);
     }
 
     public static class Builder {
-        private final SendPort<WebMessage> sender;
+        private final ActorRef<WebMessage> sender;
+        private final HttpRequest request;
         private final String strBody;
         private final ByteBuffer binBody;
         private String contentType;
@@ -56,36 +57,37 @@ public class HttpResponse implements HttpMessage {
         private int status;
         private Throwable error;
         private String redirectPath;
-        private boolean hasMore;
 
-        public Builder(SendPort<? super WebMessage> from, String body) {
-            this.sender = (SendPort<WebMessage>) from;
+        public Builder(ActorRef<? super WebMessage> from, HttpRequest request, String body) {
+            this.sender = (ActorRef<WebMessage>) from;
+            this.request = request;
             this.strBody = body;
             this.binBody = null;
             this.status = 200;
         }
 
-        public Builder(SendPort<? super WebMessage> from, ByteBuffer body) {
-            this.sender = (SendPort<WebMessage>) from;
+        public Builder(ActorRef<? super WebMessage> from, HttpRequest request, ByteBuffer body) {
+            this.sender = (ActorRef<WebMessage>) from;
+            this.request = request;
             this.binBody = body;
             this.strBody = null;
             this.status = 200;
         }
 
-        public Builder(SendPort<? super WebMessage> from) {
-            this(from, (String) null);
+        public Builder(ActorRef<? super WebMessage> from, HttpRequest request) {
+            this(from, request, (String) null);
         }
 
-        Builder(String body) {
-            this(null, body);
+        Builder(HttpRequest request, String body) {
+            this(null, request, body);
         }
 
-        Builder(ByteBuffer body) {
-            this(null, body);
+        Builder(HttpRequest request, ByteBuffer body) {
+            this(null, request, body);
         }
 
-        Builder() {
-            this((String) null);
+        Builder(HttpRequest request) {
+            this(request, (String) null);
         }
 
         public Builder setContentType(String contentType) {
@@ -127,22 +129,13 @@ public class HttpResponse implements HttpMessage {
             return this;
         }
 
-        public Builder close() {
-            this.hasMore = false;
-            return this;
-        }
-
-        public Builder dontClose() {
-            this.hasMore = true;
-            return this;
-        }
-
         public HttpResponse build() {
             return new HttpResponse(sender, this);
         }
     }
     //
-    private final SendPort<WebMessage> sender;
+    private final ActorRef<WebMessage> sender;
+    private final HttpRequest request;
     private final String contentType;
     private final Charset charset;
     private final String strBody;
@@ -152,7 +145,6 @@ public class HttpResponse implements HttpMessage {
     private final int status;
     private final Throwable error;
     private final String redirectPath;
-    private final boolean hasMore;
 
     /**
      * Use when forwarding
@@ -160,8 +152,9 @@ public class HttpResponse implements HttpMessage {
      * @param from
      * @param httpResponse
      */
-    public HttpResponse(SendPort<? super WebMessage> from, HttpResponse httpResponse) {
-        this.sender = (SendPort<WebMessage>) from;
+    public HttpResponse(ActorRef<? super WebMessage> from, HttpResponse httpResponse) {
+        this.sender = (ActorRef<WebMessage>) from;
+        this.request = httpResponse.request;
         this.contentType = httpResponse.contentType;
         this.charset = httpResponse.charset;
         this.strBody = httpResponse.strBody;
@@ -171,26 +164,29 @@ public class HttpResponse implements HttpMessage {
         this.headers = httpResponse.headers;
         this.status = httpResponse.status;
         this.redirectPath = httpResponse.redirectPath;
-        this.hasMore = httpResponse.hasMore;
     }
 
-    public HttpResponse(SendPort<? super WebMessage> from, Builder builder) {
-        this.sender = (SendPort<WebMessage>) from;
+    public HttpResponse(ActorRef<? super WebMessage> from, Builder builder) {
+        this.sender = (ActorRef<WebMessage>) from;
+        this.request = builder.request;
         this.contentType = builder.contentType;
         this.charset = builder.charset;
         this.strBody = builder.strBody;
         this.binBody = builder.binBody != null ? builder.binBody.asReadOnlyBuffer() : null;
-        this.cookies = builder.cookies !=null ? ImmutableList.copyOf(builder.cookies): null;
+        this.cookies = builder.cookies != null ? ImmutableList.copyOf(builder.cookies) : null;
         this.error = builder.error;
         this.headers = builder.headers != null ? ImmutableMultimap.copyOf(builder.headers) : null;
         this.status = builder.status;
         this.redirectPath = builder.redirectPath;
-        this.hasMore = builder.hasMore;
     }
 
     @Override
-    public SendPort<WebMessage> sender() {
+    public ActorRef<WebMessage> sender() {
         return sender;
+    }
+
+    public HttpRequest getRequest() {
+        return request;
     }
 
     public String getContentType() {
@@ -221,7 +217,7 @@ public class HttpResponse implements HttpMessage {
 
     @Override
     public ByteBuffer getByteBufferBody() {
-        return binBody!=null ? binBody.duplicate(): null;
+        return binBody != null ? binBody.duplicate() : null;
     }
 
     @Override
@@ -240,9 +236,5 @@ public class HttpResponse implements HttpMessage {
 
     public Throwable getError() {
         return error;
-    }
-
-    public boolean shouldClose() {
-        return !hasMore;
     }
 }

@@ -13,12 +13,12 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
+import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import static co.paralleluniverse.comsat.webactors.Cookie.*;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
-import co.paralleluniverse.comsat.webactors.WebMessage;
-import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
@@ -34,10 +34,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import javax.servlet.AsyncContext;
 import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -45,17 +42,20 @@ import javax.servlet.http.HttpServletResponse;
  * Wraps a {@link HttpServletRequest} as a {@link HttpRequest}
  */
 public class ServletHttpRequest extends HttpRequest {
-    private final HttpServletRequest request;
+    final HttpServletRequest request;
+    final HttpServletResponse response;
     private Multimap<String, String> headers;
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
-    private final SendPort<WebMessage> sender;
+    private final ActorRef<HttpResponse> sender;
     private String strBody;
     private byte[] binBody;
+    private SendPort<WebDataMessage> channel;
 
-    public ServletHttpRequest(HttpServletRequest request, HttpServletResponse response) {
+    public ServletHttpRequest(WebActorServlet.HttpActorRef sender, HttpServletRequest request, HttpServletResponse response) {
+        this.sender = sender;
         this.request = request;
-        this.sender = new Peer(request.getAsyncContext());
+        this.response = response;
     }
 
     @Override
@@ -180,11 +180,6 @@ public class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public String getServletPath() {
-        return request.getServletPath();
-    }
-
-    @Override
     public String getServerName() {
         return request.getServerName();
     }
@@ -224,148 +219,19 @@ public class ServletHttpRequest extends HttpRequest {
         return Charset.forName(request.getCharacterEncoding());
     }
 
-    private static class Peer implements SendPort<WebMessage> {
-        private final AsyncContext ctx;
-        private Throwable exception;
-
-        public Peer(AsyncContext ctx) {
-            this.ctx = ctx;
-        }
-
-        @Override
-        public void send(WebMessage message) throws SuspendExecution, InterruptedException {
-            if (!trySend(message)) {
-//                if (exception == null)
-//                    throw new ChannelClosedException(this, exception);
-//                throw Exceptions.rethrow(exception);
-            }
-        }
-
-        @Override
-        public boolean send(WebMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
-            send(message);
-            return true;
-        }
-
-        @Override
-        public boolean trySend(WebMessage message) {
-            try {
-                if (!ctx.getRequest().isAsyncStarted())
-                    return false;
-
-                final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
-
-                if (message instanceof HttpResponse) {
-                    final HttpResponse msg = (HttpResponse) message;
-                    if (!response.isCommitted()) {
-                        if (msg.getCookies() != null) {
-                            for (Cookie wc : msg.getCookies())
-                                response.addCookie(getServletCookie(wc));
-                        }
-                        if (msg.getHeaders() != null) {
-                            for (Map.Entry<String, String> h : msg.getHeaders().entries())
-                                response.addHeader(h.getKey(), h.getValue());
-                        }
-                    }
-
-                    if (msg.getError() != null) {
-                        response.sendError(msg.getStatus(), msg.getError().toString());
-                        close();
-                        return true;
-                    }
-                    
-                    if (msg.getRedirectPath() != null) {
-                        response.sendRedirect(msg.getRedirectPath());
-                        close();
-                        return true;
-                    }
-
-                    if (!response.isCommitted()) {
-                        response.setStatus(msg.getStatus());
-
-                        if (msg.getContentType() != null)
-                            response.setContentType(msg.getContentType());
-                        if (msg.getCharacterEncoding() != null)
-                            response.setCharacterEncoding(msg.getCharacterEncoding().name());
-                    }
-                }
-
-                ServletOutputStream out = writeBody(message, response);
-                out.flush(); // commits the response
-
-                if (message instanceof HttpResponse && ((HttpResponse) message).shouldClose()) {
-                    out.close();
-                    close();
-                }
-                return true;
-            } catch (IOException ex) {
-                ctx.getRequest().getServletContext().log("IOException", ex);
-                close();
-                this.exception = ex;
-                return false;
-            }
-        }
-
-        private ServletOutputStream writeBody(WebMessage message, HttpServletResponse response) throws IOException {
-            final byte[] arr;
-            final int offset;
-            final int length;
-            ByteBuffer bb;
-            String sb;
-            if ((bb = message.getByteBufferBody()) != null) {
-//                        WritableByteChannel wc = Channels.newChannel(out);
-//                        wc.write(bb);
-                if (bb.hasArray()) {
-                    arr = bb.array();
-                    offset = bb.arrayOffset() + bb.position();
-                    length = bb.remaining();
-                    bb.position(bb.limit());
-                } else {
-                    arr = new byte[bb.remaining()];
-                    bb.get(arr);
-                    offset = 0;
-                    length = arr.length;
-                }
-            } else if ((sb = message.getStringBody()) != null) {
-                arr = sb.getBytes(response.getCharacterEncoding());
-                offset = 0;
-                length = arr.length;
-            } else {
-                arr = null;
-                offset = 0;
-                length = 0;
-            }
-
-            if (!response.isCommitted())
-                response.setContentLength(length);
-
-            final ServletOutputStream out = response.getOutputStream();
-            if (arr != null)
-                out.write(arr, offset, length);
-            return out;
-        }
-
-        @Override
-        public void close() {
-            ctx.complete();
-        }
-    }
-
     @Override
-    public SendPort<WebMessage> sender() {
+    public ActorRef<HttpResponse> sender() {
         return sender;
     }
 
-    public static javax.servlet.http.Cookie getServletCookie(Cookie wc) {
-        javax.servlet.http.Cookie c = new javax.servlet.http.Cookie(wc.getName(), wc.getValue());
-        c.setComment(wc.getComment());
-        if (wc.getDomain() != null)
-            c.setDomain(wc.getDomain());
-        c.setMaxAge(wc.getMaxAge());
-        c.setPath(wc.getPath());
-        c.setSecure(wc.isSecure());
-        c.setHttpOnly(wc.isHttpOnly());
-        c.setVersion(wc.getVersion());
-        return c;
+    @Override
+    public SendPort<WebDataMessage> openChannel() {
+        if(channel == null)
+            channel = WebActorServlet.openChannel(request, response);
+        return channel;
+    }
+    
+    boolean shouldClose() {
+        return channel == null;
     }
 }

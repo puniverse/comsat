@@ -45,7 +45,7 @@ public class WebActorEndpoint extends Endpoint {
             this.config = config;
         ActorRef<Object> actor = getHttpSessionActor(config);
         if (actor != null) {
-            WebSocketActorRef wsa = attachWebSocket(session, config, actor);
+            WebSocketActorRef wsa = attachWebActor(session, config, actor);
             wsa.onOpen();
         } else {
             try {
@@ -56,7 +56,7 @@ public class WebActorEndpoint extends Endpoint {
         }
     }
 
-    static WebSocketActorRef attachWebSocket(final Session session, EndpointConfig config, final ActorRef<? super WebMessage> actor) {
+    static WebSocketActorRef attachWebActor(final Session session, EndpointConfig config, final ActorRef<? super WebMessage> actor) {
         if (session.getUserProperties().containsKey(ACTOR_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
         WebSocketActorRef wsa = new WebSocketActorRef(session, config, actor);

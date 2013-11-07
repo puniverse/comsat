@@ -16,20 +16,37 @@ package co.paralleluniverse.comsat.webactors.servlet;
 import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.actors.ActorSpec;
-import co.paralleluniverse.actors.LocalActorUtil;
+import co.paralleluniverse.actors.ExitMessage;
+import co.paralleluniverse.actors.FakeActor;
+import co.paralleluniverse.actors.LifecycleMessage;
+import co.paralleluniverse.comsat.webactors.Cookie;
+import co.paralleluniverse.comsat.webactors.HttpRequest;
+import co.paralleluniverse.comsat.webactors.HttpResponse;
+import co.paralleluniverse.comsat.webactors.WebDataMessage;
+import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
 
-public class WebActorServlet extends HttpServlet {
+@WebListener
+public class WebActorServlet extends HttpServlet implements HttpSessionListener {
     static final String ACTOR_KEY = "co.paralleluniverse.actor";
     static final String ACTOR_CLASS_PARAM = "actor";
     static final String ACTOR_PARAM_PREFIX = "actorParam";
@@ -71,34 +88,43 @@ public class WebActorServlet extends HttpServlet {
         return this;
     }
 
-    static void attachHttpSession(HttpSession session, ActorRef<Object> actor) {
-        session.setAttribute(ACTOR_KEY, actor);
+    static void attachWebActor(HttpSession session, ActorRef<? super HttpRequest> actor) {
+        session.setAttribute(ACTOR_KEY, new HttpActorRef(session, actor));
     }
 
-    static boolean isHttpAttached(HttpSession session) {
+    static boolean isWebActorAttached(HttpSession session) {
         return (session.getAttribute(ACTOR_KEY) != null);
     }
 
-    static ActorRef<Object> getHttpAttached(HttpSession session) {
+    static HttpActorRef getHttpActorRef(HttpSession session) {
         Object actor = session.getAttribute(ACTOR_KEY);
         if ((actor != null) && (actor instanceof ActorRef))
-            return (ActorRef<Object>) actor;
+            return (HttpActorRef) actor;
         return null;
+    }
+
+    static ActorRef<? super HttpRequest> getWebActor(HttpSession session) {
+        HttpActorRef har = getHttpActorRef(session);
+        return har != null ? har.webActor : null;
+    }
+
+    @Override
+    public void sessionCreated(HttpSessionEvent session) {
+    }
+
+    @Override
+    public void sessionDestroyed(HttpSessionEvent session) {
     }
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        sendToActor(req, resp);
-    }
+        HttpActorRef ha = getHttpActorRef(req.getSession());
 
-    private void sendToActor(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
-        ActorRef<Object> actor = getHttpAttached(req.getSession());
-
-        if (actor == null) {
+        if (ha == null) {
             if (actorClassName != null) {
                 try {
-                    actor = Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
-                    attachHttpSession(req.getSession(), actor);
+                    ActorRef<WebMessage> actor = (ActorRef<WebMessage>) Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
+                    attachWebActor(req.getSession(), actor);
                 } catch (ClassNotFoundException ex) {
                     req.getServletContext().log("Unable to load actorClass: ", ex);
                     return;
@@ -108,23 +134,269 @@ public class WebActorServlet extends HttpServlet {
                 return;
             } else {
                 resp.sendError(500, "Actor not found");
+                return;
             }
         }
-        if (LocalActorUtil.isDone(actor)) {
-            Throwable deathCause = LocalActorUtil.getDeathCause(actor);
-            req.getSession().removeAttribute(ACTOR_KEY);
-            if (deathCause != null)
-                resp.sendError(500, "Actor is dead because of " + deathCause.getMessage());
-            else
-                resp.sendError(500, "Actor is finised.");
-            return;
+
+        ha.service(req, resp);
+    }
+
+    static class HttpActorRef extends FakeActor<HttpResponse> {
+        private final HttpSession session;
+        private final ActorRef<? super HttpRequest> webActor;
+
+        public HttpActorRef(HttpSession session, ActorRef<? super HttpRequest> webActor) {
+            super(session.toString(), new HttpChannel());
+
+            this.session = session;
+            this.webActor = webActor;
+            watch(webActor);
         }
-        req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
-        req.startAsync();
-        try {
-            actor.send(new ServletHttpRequest(req, resp));
-        } catch (SuspendExecution ex) {
-            req.getServletContext().log("Exception: ", ex);
+
+        void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            if (isDone()) {
+                Throwable deathCause = getDeathCause();
+                req.getSession().removeAttribute(ACTOR_KEY);
+                if (deathCause != null)
+                    resp.sendError(500, "Actor is dead because of " + deathCause.getMessage());
+                else
+                    resp.sendError(500, "Actor is finised.");
+                return;
+            }
+            
+            req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
+            req.startAsync();
+            try {
+                webActor.send(new ServletHttpRequest(this, req, resp));
+            } catch (SuspendExecution ex) {
+                req.getServletContext().log("Exception: ", ex);
+            }
         }
+
+        ActorRef<? super HttpRequest> getWebActor() {
+            return webActor;
+        }
+
+        @Override
+        protected HttpResponse handleLifecycleMessage(LifecycleMessage m) {
+            if (m instanceof ExitMessage) {
+                ExitMessage em = (ExitMessage) m;
+                if (em.getActor() != null && em.getActor().equals(webActor))
+                    die(em.getCause());
+            }
+            return null;
+        }
+
+        @Override
+        protected void throwIn(RuntimeException e) {
+            die(e);
+        }
+
+        @Override
+        public void interrupt() {
+            die(new InterruptedException());
+        }
+
+        @Override
+        protected void die(Throwable cause) {
+            super.die(cause);
+            try {
+                session.invalidate();
+            } catch (Exception e) {
+            }
+        }
+
+        private void log(String message) {
+            session.getServletContext().log(message);
+        }
+
+        private void log(String message, Throwable t) {
+            session.getServletContext().log(message, t);
+        }
+    }
+
+    private static class HttpChannel implements SendPort<HttpResponse> {
+        private Throwable exception;
+
+        HttpChannel() {
+        }
+
+        @Override
+        public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
+            if (!trySend(message)) {
+//                if (exception == null)
+//                    throw new ChannelClosedException(this, exception);
+//                throw Exceptions.rethrow(exception);
+            }
+        }
+
+        @Override
+        public boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+            send(message);
+            return true;
+        }
+
+        @Override
+        public boolean trySend(HttpResponse message) {
+            final ServletHttpRequest req = (ServletHttpRequest) message.getRequest();
+            final HttpServletRequest request = req.request;
+            if (!request.isAsyncStarted())
+                return false;
+
+            final AsyncContext ctx = request.getAsyncContext();
+            final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
+            try {
+                if (message instanceof HttpResponse) {
+                    final HttpResponse msg = (HttpResponse) message;
+                    if (!response.isCommitted()) {
+                        if (msg.getCookies() != null) {
+                            for (Cookie wc : msg.getCookies())
+                                response.addCookie(getServletCookie(wc));
+                        }
+                        if (msg.getHeaders() != null) {
+                            for (Map.Entry<String, String> h : msg.getHeaders().entries())
+                                response.addHeader(h.getKey(), h.getValue());
+                        }
+                    }
+
+                    if (msg.getError() != null) {
+                        response.sendError(msg.getStatus(), msg.getError().toString());
+                        close();
+                        return true;
+                    }
+
+                    if (msg.getRedirectPath() != null) {
+                        response.sendRedirect(msg.getRedirectPath());
+                        close();
+                        return true;
+                    }
+
+                    if (!response.isCommitted()) {
+                        response.setStatus(msg.getStatus());
+
+                        if (msg.getContentType() != null)
+                            response.setContentType(msg.getContentType());
+                        if (msg.getCharacterEncoding() != null)
+                            response.setCharacterEncoding(msg.getCharacterEncoding().name());
+                    }
+                }
+
+                ServletOutputStream out = writeBody(message, response);
+                out.flush(); // commits the response
+
+                if (req.shouldClose()) {
+                    out.close();
+                    ctx.complete();
+                }
+                return true;
+            } catch (IOException ex) {
+                request.getServletContext().log("IOException", ex);
+                ctx.complete();
+                this.exception = ex;
+                return false;
+            }
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    static SendPort<WebDataMessage> openChannel(final HttpServletRequest request, final HttpServletResponse response) {
+        return new SendPort<WebDataMessage>() {
+            private final AsyncContext ctx = request.getAsyncContext();
+
+            @Override
+            public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
+                if (!trySend(message)) {
+//                if (exception == null)
+//                    throw new ChannelClosedException(this, exception);
+//                throw Exceptions.rethrow(exception);
+                }
+            }
+
+            @Override
+            public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+                send(message);
+                return true;
+            }
+
+            @Override
+            public boolean trySend(WebDataMessage message) {
+                try {
+                    ServletOutputStream os = writeBody(message, response);
+                    os.flush();
+                } catch (IOException ex) {
+                    request.getServletContext().log("IOException", ex);
+                    close();
+                    return false;
+                }
+                return true;
+            }
+
+            @Override
+            public void close() {
+                try {
+                    ServletOutputStream os = response.getOutputStream();
+                    os.close();
+                } catch (IOException e) {
+                    ctx.getRequest().getServletContext().log("error", e);
+                }
+                ctx.complete();
+            }
+        };
+    }
+
+    static ServletOutputStream writeBody(WebMessage message, HttpServletResponse response) throws IOException {
+        final byte[] arr;
+        final int offset;
+        final int length;
+        ByteBuffer bb;
+        String sb;
+        if ((bb = message.getByteBufferBody()) != null) {
+//                        WritableByteChannel wc = Channels.newChannel(out);
+//                        wc.write(bb);
+            if (bb.hasArray()) {
+                arr = bb.array();
+                offset = bb.arrayOffset() + bb.position();
+                length = bb.remaining();
+                bb.position(bb.limit());
+            } else {
+                arr = new byte[bb.remaining()];
+                bb.get(arr);
+                offset = 0;
+                length = arr.length;
+            }
+        } else if ((sb = message.getStringBody()) != null) {
+            arr = sb.getBytes(response.getCharacterEncoding());
+            offset = 0;
+            length = arr.length;
+        } else {
+            arr = null;
+            offset = 0;
+            length = 0;
+        }
+
+        if (!response.isCommitted())
+            response.setContentLength(length);
+
+        final ServletOutputStream out = response.getOutputStream();
+        if (arr != null)
+            out.write(arr, offset, length);
+        return out;
+    }
+
+    private static javax.servlet.http.Cookie getServletCookie(Cookie wc) {
+        javax.servlet.http.Cookie c = new javax.servlet.http.Cookie(wc.getName(), wc.getValue());
+        c.setComment(wc.getComment());
+        if (wc.getDomain() != null)
+            c.setDomain(wc.getDomain());
+        c.setMaxAge(wc.getMaxAge());
+        c.setPath(wc.getPath());
+        c.setSecure(wc.isSecure());
+        c.setHttpOnly(wc.isHttpOnly());
+        c.setVersion(wc.getVersion());
+        return c;
     }
 }

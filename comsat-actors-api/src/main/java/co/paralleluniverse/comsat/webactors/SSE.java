@@ -23,19 +23,16 @@ public final class SSE {
     //
     // see http://www.html5rocks.com/en/tutorials/eventsource/basics/
     //
-
-    public static HttpResponse.Builder startSSE() {
-        return new HttpResponse.Builder()
+    public static HttpResponse.Builder startSSE(HttpRequest request) {
+        return new HttpResponse.Builder(request)
                 .setContentType("text/event-stream")
-                .setCharacterEncoding(Charset.forName("UTF-8"))
-                .dontClose();
+                .setCharacterEncoding(Charset.forName("UTF-8"));
     }
 
-    public static HttpResponse.Builder startSSE(long reconnectTimeout) {
-        return new HttpResponse.Builder(retryString(reconnectTimeout) + '\n')
+    public static HttpResponse.Builder startSSE(HttpRequest request, long reconnectTimeout) {
+        return new HttpResponse.Builder(request, retryString(reconnectTimeout) + '\n')
                 .setContentType("text/event-stream")
-                .setCharacterEncoding(Charset.forName("UTF-8"))
-                .dontClose();
+                .setCharacterEncoding(Charset.forName("UTF-8"));
     }
 
     public static long getLastEventId(HttpRequest request) {
