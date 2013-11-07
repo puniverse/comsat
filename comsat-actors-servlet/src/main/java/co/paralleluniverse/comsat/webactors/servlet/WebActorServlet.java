@@ -88,12 +88,20 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         return this;
     }
 
-    static void attachWebActor(HttpSession session, ActorRef<? super HttpRequest> actor) {
-        session.setAttribute(ACTOR_KEY, new HttpActorRef(session, actor));
+    static <T> ActorRef<T> attachWebActor(HttpSession session, ActorRef<T> actor) {
+        synchronized (session) {
+            Object oldActor;
+            if((oldActor = session.getAttribute(ACTOR_KEY)) != null)
+                return (ActorRef<T>)oldActor;
+            session.setAttribute(ACTOR_KEY, new HttpActorRef(session, (ActorRef<HttpRequest>)actor));
+            return actor;
+        }
     }
 
     static boolean isWebActorAttached(HttpSession session) {
-        return (session.getAttribute(ACTOR_KEY) != null);
+        synchronized (session) {
+            return (session.getAttribute(ACTOR_KEY) != null);
+        }
     }
 
     static HttpActorRef getHttpActorRef(HttpSession session) {
@@ -165,7 +173,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                     resp.sendError(500, "Actor is finised.");
                 return;
             }
-            
+
             req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
             req.startAsync();
             try {

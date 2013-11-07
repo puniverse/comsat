@@ -15,13 +15,14 @@ package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
+import co.paralleluniverse.comsat.webactors.WebMessage;
 import javax.servlet.http.HttpSession;
 import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
 public class ServletWebActors {
-    public static void attachWebActor(HttpSession session, ActorRef<Object> actor) {
-        WebActorServlet.attachWebActor(session, actor);
+    public static <T> ActorRef<T> attachWebActor(HttpSession session, ActorRef<T> actor) {
+        return WebActorServlet.attachWebActor(session, actor);
     }
 
     public static boolean isWebActorAttached(HttpSession session) {
@@ -32,7 +33,8 @@ public class ServletWebActors {
         return WebActorServlet.getWebActor(session);
     }
 
-    public static void attachWebActor(Session session, EndpointConfig config, ActorRef<Object> actor) {
-        WebActorEndpoint.attachWebActor(session, config, actor);
+    public static <T> ActorRef<T> attachWebActor(Session session, EndpointConfig config, ActorRef<T> actor) {
+        WebActorEndpoint.attachWebActor(session, config, (ActorRef<WebMessage>)actor);
+        return actor;
     }
 }
