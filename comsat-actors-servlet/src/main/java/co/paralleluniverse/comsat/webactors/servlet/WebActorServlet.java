@@ -17,7 +17,6 @@ import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.actors.ActorSpec;
 import co.paralleluniverse.actors.LocalActorUtil;
-import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -28,8 +27,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 public class WebActorServlet extends HttpServlet {
+    static final String ACTOR_KEY = "co.paralleluniverse.actor";
     static final String ACTOR_CLASS_PARAM = "actor";
     static final String ACTOR_PARAM_PREFIX = "actorParam";
     private String redirectPath = null;
@@ -70,19 +71,34 @@ public class WebActorServlet extends HttpServlet {
         return this;
     }
 
+    static void attachHttpSession(HttpSession session, ActorRef<Object> actor) {
+        session.setAttribute(ACTOR_KEY, actor);
+    }
+
+    static boolean isHttpAttached(HttpSession session) {
+        return (session.getAttribute(ACTOR_KEY) != null);
+    }
+
+    static ActorRef<Object> getHttpAttached(HttpSession session) {
+        Object actor = session.getAttribute(ACTOR_KEY);
+        if ((actor != null) && (actor instanceof ActorRef))
+            return (ActorRef<Object>) actor;
+        return null;
+    }
+
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         sendToActor(req, resp);
     }
 
     private void sendToActor(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
-        ActorRef<Object> actor = ServletWebActors.getHttpAttached(req.getSession());
+        ActorRef<Object> actor = getHttpAttached(req.getSession());
 
         if (actor == null) {
             if (actorClassName != null) {
                 try {
                     actor = Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
-                    ServletWebActors.attachHttpSession(req.getSession(), actor);
+                    attachHttpSession(req.getSession(), actor);
                 } catch (ClassNotFoundException ex) {
                     req.getServletContext().log("Unable to load actorClass: ", ex);
                     return;
@@ -99,7 +115,7 @@ public class WebActorServlet extends HttpServlet {
             req.getSession().removeAttribute(ACTOR_KEY);
             if (deathCause != null)
                 resp.sendError(500, "Actor is dead because of " + deathCause.getMessage());
-            else 
+            else
                 resp.sendError(500, "Actor is finised.");
             return;
         }
@@ -111,5 +127,4 @@ public class WebActorServlet extends HttpServlet {
             req.getServletContext().log("Exception: ", ex);
         }
     }
-
 }

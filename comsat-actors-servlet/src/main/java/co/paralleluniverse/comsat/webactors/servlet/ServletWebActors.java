@@ -14,57 +14,24 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.comsat.webactors.WebDataMessage;
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.strands.channels.SendPort;
-import java.nio.ByteBuffer;
 import javax.servlet.http.HttpSession;
 import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 
 public class ServletWebActors {
-    static final String ACTOR_KEY = "co.paralleluniverse.actor";
-
     public static void attachHttpSession(HttpSession session, ActorRef<Object> actor) {
-        session.setAttribute(ACTOR_KEY, actor);
+        WebActorServlet.attachHttpSession(session, actor);
     }
 
     public static boolean isHttpAttached(HttpSession session) {
-        return (session.getAttribute(ACTOR_KEY) != null);
+        return WebActorServlet.isHttpAttached(session);
     }
 
     public static ActorRef<Object> getHttpAttached(HttpSession session) {
-        Object actor = session.getAttribute(ACTOR_KEY);
-        if ((actor != null) && (actor instanceof ActorRef))
-            return (ActorRef<Object>) actor;
-        return null;
+        return WebActorServlet.getHttpAttached(session);
     }
 
-    public static void attachWebSocket(final Session session, EndpointConfig config, final ActorRef<Object> actor) {
-        if (session.getUserProperties().containsKey(ACTOR_KEY))
-            throw new RuntimeException("Session is already attached to an actor.");
-        session.getUserProperties().put(ACTOR_KEY, actor);
-        final SendPort<WebDataMessage> sp = new WebSocketChannel(session, config);
-        session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
-            @Override
-            public void onMessage(final ByteBuffer message) {
-                try {
-                    actor.send(new WebDataMessage(sp, message));
-                } catch (SuspendExecution ex) {
-                    throw new AssertionError(ex);
-                }
-            }
-        });
-        session.addMessageHandler(new MessageHandler.Whole<String>() {
-            @Override
-            public void onMessage(final String message) {
-                try {
-                    actor.send(new WebDataMessage(sp, message));
-                } catch (SuspendExecution ex) {
-                    throw new AssertionError(ex);
-                }
-            }
-        });
+    public static void attachWebSocket(Session session, EndpointConfig config, ActorRef<Object> actor) {
+        WebActorEndpoint.attachWebSocket(session, config, actor);
     }
 }

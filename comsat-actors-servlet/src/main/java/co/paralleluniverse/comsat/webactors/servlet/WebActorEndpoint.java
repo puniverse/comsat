@@ -14,24 +14,56 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.actors.ActorRef;
-import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
+import co.paralleluniverse.comsat.webactors.WebDataMessage;
+import static co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.ACTOR_KEY;
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
+import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 
 public class WebActorEndpoint extends Endpoint {
     private volatile EndpointConfig config;
 
+    static void attachWebSocket(final Session session, EndpointConfig config, final ActorRef<Object> actor) {
+        if (session.getUserProperties().containsKey(ACTOR_KEY))
+            throw new RuntimeException("Session is already attached to an actor.");
+        session.getUserProperties().put(ACTOR_KEY, actor);
+        final SendPort<WebDataMessage> sp = new WebSocketChannel(session, config);
+        session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
+            @Override
+            public void onMessage(final ByteBuffer message) {
+                try {
+                    actor.send(new WebDataMessage(sp, message));
+                } catch (SuspendExecution ex) {
+                    throw new AssertionError(ex);
+                }
+            }
+        });
+        session.addMessageHandler(new MessageHandler.Whole<String>() {
+            @Override
+            public void onMessage(final String message) {
+                try {
+                    actor.send(new WebDataMessage(sp, message));
+                } catch (SuspendExecution ex) {
+                    throw new AssertionError(ex);
+                }
+            }
+        });
+    }
+    
     @Override
     public void onOpen(final Session session, EndpointConfig config) {
         if (this.config == null)
             this.config = config;
         ActorRef<Object> actor = getHttpSessionActor(config);
         if (actor != null) {
-            ServletWebActors.attachWebSocket(session, config, actor);
+            attachWebSocket(session, config, actor);
         } else {
             try {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "session actor not found"));
