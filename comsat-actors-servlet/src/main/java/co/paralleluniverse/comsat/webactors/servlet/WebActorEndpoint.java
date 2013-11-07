@@ -20,6 +20,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
@@ -56,7 +57,7 @@ public class WebActorEndpoint extends Endpoint {
             }
         });
     }
-    
+
     @Override
     public void onOpen(final Session session, EndpointConfig config) {
         if (this.config == null)
@@ -80,9 +81,8 @@ public class WebActorEndpoint extends Endpoint {
 
     @Override
     public void onClose(Session session, CloseReason closeReason) {
-        
     }
-    
+
     static ActorRef<Object> getHttpSessionActor(EndpointConfig config) {
         HttpSession httpSession = getHttpSession(config);
         if (httpSession == null)
@@ -92,5 +92,45 @@ public class WebActorEndpoint extends Endpoint {
 
     static HttpSession getHttpSession(EndpointConfig config) {
         return (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
+    }
+
+    private static class WebSocketChannel implements SendPort<WebDataMessage> {
+        private final Session session;
+        private final EndpointConfig config;
+
+        public WebSocketChannel(Session session, EndpointConfig config) {
+            this.session = session;
+            this.config = config;
+        }
+
+        @Override
+        public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
+            trySend(message);
+        }
+
+        @Override
+        public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+            return trySend(message);
+        }
+
+        @Override
+        public boolean trySend(WebDataMessage message) {
+            if (!session.isOpen())
+                return false;
+            if (!message.isBinary())
+                session.getAsyncRemote().sendText(message.getStringBody()); // TODO: use fiber async instead of servlet Async ?
+            else
+                session.getAsyncRemote().sendBinary(message.getByteBufferBody());
+            return true;
+        }
+
+        @Override
+        public void close() {
+            try {
+                session.close();
+            } catch (IOException ex) {
+                WebActorEndpoint.getHttpSession(config).getServletContext().log("IOException on close", ex);
+            }
+        }
     }
 }
