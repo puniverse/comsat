@@ -30,11 +30,21 @@ public class ServletWebActors {
         session.setAttribute(ACTOR_KEY, actor);
     }
 
+    public static boolean isHttpAttached(HttpSession session) {
+        return (session.getAttribute(ACTOR_KEY) != null);
+    }
+
+    public static ActorRef<Object> getHttpAttached(HttpSession session) {
+        Object actor = session.getAttribute(ACTOR_KEY);
+        if ((actor != null) && (actor instanceof ActorRef))
+            return (ActorRef<Object>) actor;
+        return null;
+    }
+
     public static void attachWebSocket(final Session session, EndpointConfig config, final ActorRef<Object> actor) {
         if (session.getUserProperties().containsKey(ACTOR_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
         session.getUserProperties().put(ACTOR_KEY, actor);
-        // TODO: register the handler in order to enable detach
         final SendPort<WebDataMessage> sp = new WebSocketChannel(session, config);
         session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
             @Override
@@ -56,24 +66,5 @@ public class ServletWebActors {
                 }
             }
         });
-    }
-
-    public static void detachWebSocket(final Session session) {
-        ActorRef<?> get = (ActorRef<?>) session.getUserProperties().get(ACTOR_KEY);
-        if (get != null) {
-            session.getUserProperties().remove(ACTOR_KEY);
-//            session.removeMessageHandler(null);
-        }
-    }
-
-    public static boolean isHttpAttached(HttpSession session) {
-        return (session.getAttribute(ACTOR_KEY) != null);
-    }
-
-    public static ActorRef<Object> getHttpAttached(HttpSession session) {
-        Object actor = session.getAttribute(ACTOR_KEY);
-        if ((actor!=null) && (actor instanceof ActorRef))
-            return (ActorRef<Object>)actor;
-        return null;
     }
 }

@@ -46,6 +46,11 @@ public class WebActorEndpoint extends Endpoint {
         getHttpSession(config).getServletContext().log("onError", t);
     }
 
+    @Override
+    public void onClose(Session session, CloseReason closeReason) {
+        
+    }
+    
     static ActorRef<Object> getHttpSessionActor(EndpointConfig config) {
         HttpSession httpSession = getHttpSession(config);
         if (httpSession == null)

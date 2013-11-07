@@ -23,6 +23,8 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletRegistration.Dynamic;
 import javax.servlet.annotation.WebListener;
+import javax.websocket.DeploymentException;
+import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpointConfig;
 
 /**
@@ -42,7 +44,7 @@ public class WebActorInitializer implements ServletContextListener {
                     if (!ClassLoaderUtil.isClassfile(resource))
                         return;
                     final String className = ClassLoaderUtil.resourceToClass(resource);
-                    try(InputStream is = cl.getResourceAsStream(resource)) {
+                    try (InputStream is = cl.getResourceAsStream(resource)) {
                         if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
                             registerWebActor(sc, cl.loadClass(className));
                     } catch (IOException | ClassNotFoundException e) {
@@ -68,13 +70,22 @@ public class WebActorInitializer implements ServletContextListener {
     private void registerWebActor(ServletContext sc, Class<?> webActorClass) {
         final WebActor waAnn = webActorClass.getAnnotation(WebActor.class);
         final String name = (waAnn.name() != null && !waAnn.name().isEmpty()) ? waAnn.name() : webActorClass.getName();
+        // servlet
         Dynamic d = sc.addServlet(name, WebActorServlet.class);
         d.setInitParameter(WebActorServlet.ACTOR_CLASS_PARAM, webActorClass.getName());
         d.setAsyncSupported(true);
         d.addMapping(waAnn.httpUrlPatterns());
         d.addMapping(waAnn.value());
-        for (String wsPath : waAnn.webSocketUrlPatterns())
-            WebSocketEndpointRegistry.registerEndpoint(sc, ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath));
+
+        // web socket
+        final ServerContainer scon = (ServerContainer) sc.getAttribute("javax.websocket.server.ServerContainer");
+        for (String wsPath : waAnn.webSocketUrlPatterns()) {
+            try {
+                scon.addEndpoint(ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath).configurator(new EmbedHttpSessionWsConfigurator()).build());
+            } catch (DeploymentException ex) {
+                sc.log("Unable to deploy endpoint", ex);
+            }
+        }
     }
 
     @Override

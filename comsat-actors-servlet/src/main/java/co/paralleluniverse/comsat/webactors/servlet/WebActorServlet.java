@@ -20,7 +20,6 @@ import co.paralleluniverse.actors.LocalActorUtil;
 import static co.paralleluniverse.comsat.webactors.servlet.ServletWebActors.ACTOR_KEY;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.SortedMap;
 import java.util.TreeMap;
