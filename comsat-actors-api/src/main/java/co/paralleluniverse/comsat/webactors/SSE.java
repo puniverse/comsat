@@ -24,12 +24,16 @@ public final class SSE {
     // see http://www.html5rocks.com/en/tutorials/eventsource/basics/
     //
     public static HttpResponse.Builder startSSE(HttpRequest request) {
+        if (request.shouldClose())
+            throw new IllegalStateException("HttpRequest.openChannel() has not been called");
         return new HttpResponse.Builder(request)
                 .setContentType("text/event-stream")
                 .setCharacterEncoding(Charset.forName("UTF-8"));
     }
 
     public static HttpResponse.Builder startSSE(HttpRequest request, long reconnectTimeout) {
+        if (request.shouldClose())
+            throw new IllegalStateException("HttpRequest.openChannel() has not been called");
         return new HttpResponse.Builder(request, retryString(reconnectTimeout) + '\n')
                 .setContentType("text/event-stream")
                 .setCharacterEncoding(Charset.forName("UTF-8"));

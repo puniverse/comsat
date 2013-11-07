@@ -56,6 +56,8 @@ public abstract class HttpRequest implements HttpMessage {
     
     public abstract SendPort<WebDataMessage> openChannel();
     
+    public abstract boolean shouldClose();
+    
     @Override
     public abstract Collection<Cookie> getCookies();
 

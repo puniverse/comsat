@@ -47,12 +47,12 @@ public class ServletHttpRequest extends HttpRequest {
     private Multimap<String, String> headers;
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
-    private final ActorRef<HttpResponse> sender;
+    private final ActorRef<? super HttpResponse> sender;
     private String strBody;
     private byte[] binBody;
     private SendPort<WebDataMessage> channel;
 
-    public ServletHttpRequest(WebActorServlet.HttpActorRef sender, HttpServletRequest request, HttpServletResponse response) {
+    public ServletHttpRequest(ActorRef<? super HttpResponse> sender, HttpServletRequest request, HttpServletResponse response) {
         this.sender = sender;
         this.request = request;
         this.response = response;
@@ -221,17 +221,18 @@ public class ServletHttpRequest extends HttpRequest {
 
     @Override
     public ActorRef<HttpResponse> sender() {
-        return sender;
+        return (ActorRef<HttpResponse>) sender;
     }
 
     @Override
     public SendPort<WebDataMessage> openChannel() {
-        if(channel == null)
+        if (channel == null)
             channel = WebActorServlet.openChannel(request, response);
         return channel;
     }
-    
-    boolean shouldClose() {
+
+    @Override
+    public boolean shouldClose() {
         return channel == null;
     }
 }
