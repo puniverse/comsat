@@ -60,13 +60,38 @@ subprojects {
 
     defaultTasks 'install'
 
-    task scanSuspendables(type: JavaExec, dependsOn: classes) { // used to run SuspendableScanner
-        main = "co.paralleluniverse.fibers.instrument.SuspendablesScanner"
-        classpath = sourceSets.main.runtimeClasspath
-        args = ["co.paralleluniverse.fibers"]
+    //    task scanSuspendables(type: JavaExec, dependsOn: classes) { // used to run SuspendableScanner
+    //        main = "co.paralleluniverse.fibers.instrument.SuspendablesScanner"
+    //        classpath = sourceSets.main.runtimeClasspath
+    //        args = ["co.paralleluniverse.fibers"]
+    //    }
+    //    tasks.jar.dependsOn scanSuspendables
+    compileJava {
+        doLast {
+            println("Scanning for suspandables...")
+            ant.taskdef(name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', classpath: "build/classes/main:" + configurations.compile.asPath)
+            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
+                fileset(dir: sourceSets.main.output.classesDir)
+            }
+            
+            println("Instrumenting classes...")
+            ant.taskdef(name:'instrumentation', classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
+            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+                fileset(dir: sourceSets.main.output.classesDir) {
+                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
+                }
+            }
+                
+        }
     }
-    tasks.jar.dependsOn scanSuspendables
-
+    //    compileJava {
+    //        doLast {
+    //            ant.taskdef(name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', classpath: "build/classes/main:" + configurations.compile.asPath)
+    //            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
+    //                fileset(dir: sourceSets.main.output.classesDir)
+    //            }
+    //        }
+    //    }
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -264,11 +289,11 @@ task javadoc(type: Javadoc) {
     title = "Comsat ${project(':comsat-actors-api').version}"
     destinationDir = file("docs/javadoc")
     source = 
-        project(':comsat-actors-api').sourceSets.main.allJava +
-        project(':comsat-servlet').sourceSets.main.allJava +
-        project(':comsat-jdbc').sourceSets.main.allJava + 
-        project(':comsat-jersey-server').sourceSets.main.allJava +
-        project(':comsat-jax-rs-client').sourceSets.main.allJava
+    project(':comsat-actors-api').sourceSets.main.allJava +
+    project(':comsat-servlet').sourceSets.main.allJava +
+    project(':comsat-jdbc').sourceSets.main.allJava + 
+    project(':comsat-jersey-server').sourceSets.main.allJava +
+    project(':comsat-jax-rs-client').sourceSets.main.allJava
     
     classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
     options {
