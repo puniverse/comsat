@@ -34,22 +34,12 @@ public abstract class WebbitWebSocketHandler implements WebSocketHandler {
 
             @Override
             public void onMessage(WebSocketConnection conn, final String msg) throws Throwable {
-                actor.send(new WebDataMessage(sp, msg) {
-                    @Override
-                    public SendPort<WebDataMessage> sender() {
-                        return sp;
-                    }
-                });
+                actor.send(new WebDataMessage(null, msg));
             }
 
             @Override
             public void onMessage(WebSocketConnection conn, final byte[] msg) throws Throwable {
-                actor.send(new WebDataMessage(sp, ByteBuffer.wrap(msg)) {
-                    @Override
-                    public SendPort<WebDataMessage> sender() {
-                        return sp;
-                    }
-                });
+                actor.send(new WebDataMessage(null, ByteBuffer.wrap(msg))); // TODO: copy
             }
         });
     }

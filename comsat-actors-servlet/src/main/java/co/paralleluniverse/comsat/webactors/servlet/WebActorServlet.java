@@ -91,9 +91,9 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
     static <T> ActorRef<T> attachWebActor(HttpSession session, ActorRef<T> actor) {
         synchronized (session) {
             Object oldActor;
-            if((oldActor = session.getAttribute(ACTOR_KEY)) != null)
-                return (ActorRef<T>)oldActor;
-            session.setAttribute(ACTOR_KEY, new HttpActorRef(session, (ActorRef<HttpRequest>)actor));
+            if ((oldActor = session.getAttribute(ACTOR_KEY)) != null)
+                return (ActorRef<T>) oldActor;
+            session.setAttribute(ACTOR_KEY, new HttpActorRef(session, (ActorRef<HttpRequest>) actor));
             return actor;
         }
     }
@@ -135,6 +135,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                 try {
                     ActorRef<WebMessage> actor = (ActorRef<WebMessage>) Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
                     attachWebActor(req.getSession(), actor);
+                    ha = getHttpActorRef(req.getSession());
                 } catch (ClassNotFoundException ex) {
                     req.getServletContext().log("Unable to load actorClass: ", ex);
                     return;
@@ -154,6 +155,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
     static class HttpActorRef extends FakeActor<HttpResponse> {
         private final HttpSession session;
         private final ActorRef<? super HttpRequest> webActor;
+        private volatile boolean dead;
 
         public HttpActorRef(HttpSession session, ActorRef<? super HttpRequest> webActor) {
             super(session.toString(), new HttpChannel());
@@ -209,11 +211,14 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
         @Override
         protected void die(Throwable cause) {
+            if (dead)
+                return;
+            this.dead = true;
             super.die(cause);
             try {
                 session.invalidate();
             } catch (Exception e) {
-            }
+            } 
         }
 
         private void log(String message) {

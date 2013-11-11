@@ -69,19 +69,22 @@ subprojects {
     compileJava {
         doLast {
             println("Scanning for suspandables...")
-            ant.taskdef(name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', classpath: "build/classes/main:" + configurations.compile.asPath)
+            ant.taskdef(name:'scanSuspendables', 
+                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
+                classpath: "build/classes/main:" + configurations.compile.asPath)
             ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
-            
-            println("Instrumenting classes...")
-            ant.taskdef(name:'instrumentation', classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
-            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
-                fileset(dir: sourceSets.main.output.classesDir) {
-                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
-                }
-            }
-                
+//            
+//            println("Instrumenting classes...")
+//            ant.taskdef(name:'instrumentation', 
+//                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
+//                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
+//            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+//                fileset(dir: sourceSets.main.output.classesDir) {
+//                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
+//                }
+//            }       
         }
     }
     //    compileJava {
@@ -202,6 +205,27 @@ buildscript {
 project (':comsat-jdbc') {
     dependencies {
         compile 'com.google.guava:guava:15.0'
+    }
+    compileJava {
+        doLast {
+//            println("Scanning for suspandables...")
+//            ant.taskdef(name:'scanSuspendables', 
+//                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
+//                classpath: "build/classes/main:" + configurations.compile.asPath)
+//            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
+//                fileset(dir: sourceSets.main.output.classesDir)
+//            }
+//            
+            println("Instrumenting classes...")
+            ant.taskdef(name:'instrumentation', 
+                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
+                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
+            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+                fileset(dir: sourceSets.main.output.classesDir) {
+                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
+                }
+            }       
+        }
     }
 }
 
