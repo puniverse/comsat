@@ -13,13 +13,26 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
-import co.paralleluniverse.strands.channels.SendPort;
+import co.paralleluniverse.actors.ActorRef;
 import java.nio.ByteBuffer;
 
-public interface WebMessage {
-    SendPort<? extends WebMessage> sender();
+/**
+ * A message that is received from or can be set to a web client (via HTTP or WebSockets).
+ * The message has either a {@link #getStringBody() text body} or a {@link #getByteBufferBody() binary} body (but not both).
+ */
+public abstract class WebMessage {
+    /**
+     * The actor that sent this message. This can be a virtual actor representing the web client.
+     */
+    public abstract ActorRef<? extends WebMessage> sender();
 
-    String getStringBody();
+    /**
+     * The message's text body, if it has one; {@code null} otherwise.
+     */
+    public abstract String getStringBody();
 
-    ByteBuffer getByteBufferBody();
+    /**
+     * The message's binary body, if it has one; {@code null} otherwise.
+     */
+    public abstract ByteBuffer getByteBufferBody();
 }

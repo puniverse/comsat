@@ -25,6 +25,7 @@ import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,6 +46,9 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
+/**
+ * A servlet that forwards requests to a web actor.
+ */
 @WebListener
 public class WebActorServlet extends HttpServlet implements HttpSessionListener {
     static final String ACTOR_KEY = "co.paralleluniverse.actor";
@@ -218,7 +222,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             try {
                 session.invalidate();
             } catch (Exception e) {
-            } 
+            }
         }
 
         private void log(String message) {
@@ -252,6 +256,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
 
         @Override
+        public boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
+            return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
+        }
+        
+        @Override
         public boolean trySend(HttpResponse message) {
             final ServletHttpRequest req = (ServletHttpRequest) message.getRequest();
             final HttpServletRequest request = req.request;
@@ -274,8 +283,8 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                         }
                     }
 
-                    if (msg.getError() != null) {
-                        response.sendError(msg.getStatus(), msg.getError().toString());
+                    if (msg.getStatus() >= 400 && msg.getStatus() < 600) {
+                        response.sendError(msg.getStatus(), msg.getError() != null ? msg.getError().toString() : null);
                         close();
                         return true;
                     }
@@ -337,6 +346,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                 return true;
             }
 
+            @Override
+            public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
+                return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
+            }
+            
             @Override
             public boolean trySend(WebDataMessage message) {
                 try {

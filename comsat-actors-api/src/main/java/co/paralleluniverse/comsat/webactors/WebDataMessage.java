@@ -16,21 +16,34 @@ package co.paralleluniverse.comsat.webactors;
 import co.paralleluniverse.actors.ActorRef;
 import java.nio.ByteBuffer;
 
-public class WebDataMessage implements WebMessage {
+/**
+ * A message that can be received from or sent to a web client, and contains only data (and no metadata like headers).
+ */
+public class WebDataMessage extends WebMessage {
     private final ActorRef<WebDataMessage> sender;
     private final String string;
     private final ByteBuffer byteBuffer;
 
-    public WebDataMessage(ActorRef<? super WebDataMessage> from, String str) {
+    /**
+     * Constructs a {@code WebDataMessage} with a text body.
+     * @param from the message sender
+     * @param body the message body
+     */
+    public WebDataMessage(ActorRef<? super WebDataMessage> from, String body) {
         this.sender = (ActorRef<WebDataMessage>)from;
-        this.string = str;
+        this.string = body;
         this.byteBuffer = null;
     }
 
-    public WebDataMessage(ActorRef<? super WebDataMessage> from, ByteBuffer bb) {
+    /**
+     * Constructs a {@code WebDataMessage} with a binary body.
+     * @param from the message sender
+     * @param body the message body
+     */
+    public WebDataMessage(ActorRef<? super WebDataMessage> from, ByteBuffer body) {
         this.sender = (ActorRef<WebDataMessage>)from;
         this.string = null;
-        this.byteBuffer = bb;
+        this.byteBuffer = body;
     }
 
     @Override
@@ -38,6 +51,10 @@ public class WebDataMessage implements WebMessage {
         return sender;
     }
 
+    /**
+     * Whether this is a binary message or a text message.
+     * @return {@code true} if this is a binary message; {@code false} if this is a text mesasge.
+     */
     public boolean isBinary() {
         return (byteBuffer != null);
     }

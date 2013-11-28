@@ -39,14 +39,36 @@ public final class SSE {
                 .setCharacterEncoding(Charset.forName("UTF-8"));
     }
 
+    /**
+     * Returns the SSE last-event-id value from the request (the {@code Last-Event-ID} header).
+     *
+     * @param request the request
+     * @return the SSE last-event-id value from the request, or {@code -1} if not specified.
+     */
     public static long getLastEventId(HttpRequest request) {
-        return Long.parseLong(request.getHeader("Last-Event-ID"));
+        String str = request.getHeader("Last-Event-ID");
+        if (str == null)
+            return -1;
+        return Long.parseLong(str);
     }
 
+    /**
+     * Encodes a given payload as an SSE event message. The returned value can be used as the body of a {@link WebDataMessage}.
+     *
+     * @param payload the message payload
+     * @return the payload encoded as an SSE event
+     */
     public static String sseMessage(String payload) {
         return dataString(payload) + '\n';
     }
 
+    /**
+     * Encodes a given payload and id as an SSE event message. The returned value can be used as the body of a {@link WebDataMessage}.
+     *
+     * @param id      the SSE event id
+     * @param payload the message payload
+     * @return the id and payload encoded as an SSE event
+     */
     public static String sseMessage(long id, String payload) {
         return idString(id) + dataString(payload) + '\n';
     }

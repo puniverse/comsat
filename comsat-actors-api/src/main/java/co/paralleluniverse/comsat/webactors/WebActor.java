@@ -20,8 +20,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
- * @author pron
+ * A class annotated with this annotation will be automatically loaded by COMSAT
+ * and spawned as a web actor.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
