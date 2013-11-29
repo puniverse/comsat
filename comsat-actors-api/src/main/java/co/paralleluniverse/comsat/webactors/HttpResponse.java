@@ -26,6 +26,9 @@ import java.util.List;
 
 /**
  * An HTTP response message sent as a {@link HttpRequest#sender() response} to an {@link HttpRequest}.
+ * When this response is sent to an {@link HttpRequest}'s {@link HttpRequest#sender() sender}, the connection stream will be closed
+ * if {@link HttpRequest#openChannel() openChannel} has not been called on the request,
+ * and will be flushed but not closed if {@link HttpRequest#openChannel() openChannel} <i>has</i> been called on the request.
  */
 public class HttpResponse extends HttpMessage {
     /**

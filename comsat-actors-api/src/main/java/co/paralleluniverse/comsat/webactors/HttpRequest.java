@@ -194,6 +194,7 @@ public abstract class HttpRequest extends HttpMessage {
      * Returns a {@link SendPort channel} to which further messages will be sent to the client in the same stream as the response.
      * If this method is called, the connection to the client is not closed when the web actor responds to this requests with an
      * {@link HttpResponse}. To close the connection, {@link SendPort#close() close()} must be called on the returned channel.
+     * <p/>Every message sent to the channel will be written to the HTTP output stream and then will flush the stream.
      *
      * @return a {@link SendPort channel} to which further messages will be sent to the client in the same stream as the response.
      */
