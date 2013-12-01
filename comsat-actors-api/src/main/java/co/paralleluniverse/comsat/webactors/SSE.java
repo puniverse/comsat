@@ -26,7 +26,11 @@ import java.nio.charset.Charset;
  * // send events
  * sseChannel.send(new WebDataMessage(self(), SSE.event("this is an SSE event!")));
  * ```
- *
+ * 
+ * You might want to consider wrapping the channel returned by {@link HttpRequest#openChannel()} with a 
+ * {@link co.paralleluniverse.strands.channels.Channels#map(co.paralleluniverse.strands.channels.SendPort, com.google.common.base.Function) mapping channel}
+ * to transform a specialized message class into {@link WebDataMessage} using the methods in this class.
+ * 
  * For a good tutorial on SSE, please see: <a href="http://www.html5rocks.com/en/tutorials/eventsource/basics/">Stream Updates with Server-Sent Events</a>,
  * by Eric Bidelman
  */

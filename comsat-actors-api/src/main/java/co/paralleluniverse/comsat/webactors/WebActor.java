@@ -28,35 +28,37 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 public @interface WebActor {
     /**
-     * @return name of the WebActor
+     * The name of the WebActor.
      */
     String name() default "";
 
     /**
-     * A convenience method, to allow extremely simple annotation of a class.
-     *
-     * @return array of HTTP URL patterns
-     * @see #urlPatterns()
+     * Display name of this WebActor, if present.
      */
-    String[] value() default {};
+    String displayName() default "";
 
     /**
-     * @return array of HTTP URL patterns to which this WebActor applies
-     */
-    String[] httpUrlPatterns() default {};
-
-    /**
-     * @return array of WebSocket URL patterns to which this WebActor applies
-     */
-    String[] webSocketUrlPatterns() default {};
-
-    /**
-     * @return description of this WebActor, if present
+     * Description of this WebActor, if present.
      */
     String description() default "";
 
     /**
-     * @return display name of this WebActor, if present
+     * Array of HTTP URL patterns to which this WebActor applies.
+     * For example {@code /myservice}, or {@code /myservice/*}.
      */
-    String displayName() default "";
+    String[] httpUrlPatterns() default {};
+
+    /**
+     * Array of WebSocket URI patterns to which this WebActor applies.
+     * For example {@code /myservice/ws}, or {@code /myservice/ws/*}.
+     */
+    String[] webSocketUrlPatterns() default {};
+
+    /**
+     * A convenience property, to allow extremely simple annotation of a class -
+     * Array of HTTP URL patterns.
+     *
+     * @see #urlPatterns()
+     */
+    String[] value() default {};
 }
