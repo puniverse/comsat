@@ -38,6 +38,9 @@ Your resource methods (the ones you annotate with `@GET`, `@PUT`, `@POST` etc.) 
 
 To learn about writing REST services with JAX-RS, please refer to the [Jersey User Guide](https://jersey.java.net/documentation/latest/user-guide.html).
 
+{:.alert .alert-info}
+**Note**: [Web Actors](webactors.html) are a great way to write REST services, as well as web-socket services, for interactive web applications.
+
 ## HTTP Client
 
 Comsat's integrated HTTP client is a JAX-RS client (specifically, Jersey client). To create a client instance compatible with Quasar fibers, use the [`AsyncClientBuilder`]({{javadoc}}/fibers/ws/rs/client/AsyncClientBuilder.html) class:
@@ -70,8 +73,6 @@ Calling `Future.get()` would also just block the fiber and not any OS thread.
 
 {:.alert .alert-info}
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
-
-
 
 ## JDBC
 

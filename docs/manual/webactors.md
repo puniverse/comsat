@@ -16,6 +16,18 @@ A web actor is attached to a web session. It can be spawned and attached manuall
 
 For automatic deployment, all you have to do is define an actor class (one that extends `BasicActor` or `Actor`), and annotate it with the [`WebActor`](webactors/WebActor.html) annotation. For example:
 
+~~~ java
+@WebActor(name="chat", httpUrlPatterns="/chat", webSocketUrlPatterns="/chat/ws")
+public class ChatActor extends BasicActor<WebMessage, Void> {
+	@Override
+	protected Void doRun() {
+		// ...
+	}
+}
+~~~
+
+In this example, all HTTP requests to the `/chat` resource, as well as all websocket messages to `/chat/ws` will be received as messages by the actor. A new `ChatActor` will be spawned for every new HTTP session.
+
 For details, see the [Javadoc](webactors/WebActor.html).
 
 ## HTTP (REST Services)
