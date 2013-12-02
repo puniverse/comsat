@@ -51,8 +51,8 @@ public class ServletContainer extends FiberHttpServlet implements Filter, Contai
      *
      * @param resourceConfig container configuration.
      */
-    public ServletContainer(ResourceConfig rc) {
-        this.jerseySC = new org.glassfish.jersey.servlet.ServletContainer(rc);
+    public ServletContainer(ResourceConfig resourceConfig) {
+        this.jerseySC = new org.glassfish.jersey.servlet.ServletContainer(resourceConfig);
     }
 
     /**

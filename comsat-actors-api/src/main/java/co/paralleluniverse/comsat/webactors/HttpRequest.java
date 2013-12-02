@@ -38,8 +38,6 @@ public abstract class HttpRequest extends HttpMessage {
      * <code>javax.servlet.request.X509Certificate</code> can be used to
      * retrieve information on the certificate of the client.
      *
-     * @param name a <code>String</code> specifying the name of the attribute
-     *
      * @return an {@code Object} containing the value of the attribute,
      *         or {@code null} if the attribute does not exist
      */

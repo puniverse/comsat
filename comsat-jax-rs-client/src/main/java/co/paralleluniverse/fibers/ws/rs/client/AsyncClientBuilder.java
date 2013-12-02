@@ -59,11 +59,10 @@ public class AsyncClientBuilder extends ClientBuilder {
      * Create a new custom-configured {@link Client} instance using the default client builder
      * implementation class provided by the JAX-RS implementation provider.
      *
-     * @param configuration data used to provide initial configuration for the new
-     * client instance.
-     * @return new configured client instance.
+     * @param configuration data used to provide initial configuration for the new client instance.
+     * @return a new, configured, client instance.
      */
-    public static Client newClient(Configuration userConfig) {
+    public static Client newClient(Configuration configuration) {
         final RequestExecutorsProvider singleThreadPool = new RequestExecutorsProvider() {
             private ExecutorService tp = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-puniverse-single-worker-%d").build());
 
@@ -74,8 +73,8 @@ public class AsyncClientBuilder extends ClientBuilder {
         };
         final ClientConfig config = new ClientConfig().
                 register(singleThreadPool, RequestExecutorsProvider.class);
-        if (userConfig != null)
-            config.loadFrom(userConfig);
+        if (configuration != null)
+            config.loadFrom(configuration);
         if (config.getConnector() == null)
             config.connector(new JettyConnector(new ClientConfig().
                     property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20)));

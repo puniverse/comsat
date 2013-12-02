@@ -113,7 +113,7 @@ public class Cookie {
          * be deleted when the Web browser exits.
          * A zero value causes the cookie to be deleted.
          *
-         * @param expiry an integer specifying the maximum age of the
+         * @param maxAge an integer specifying the maximum age of the
          *               cookie in seconds; if negative, means
          *               the cookie is not stored; if zero, deletes the cookie
          *
@@ -189,8 +189,8 @@ public class Cookie {
          *
          * @see Cookie#isSecure
          */
-        public Builder setSecure(boolean secure) {
-            this.secure = secure;
+        public Builder setSecure(boolean flag) {
+            this.secure = flag;
             return this;
         }
 
@@ -248,7 +248,7 @@ public class Cookie {
      *
      * @return	a {@code String} specifying a path that contains a servlet name, for example, <i>/catalog</i>
      *
-     * @see #setPath
+     * @see Builder#setPath
      */
     public String getPath() {
         return path;

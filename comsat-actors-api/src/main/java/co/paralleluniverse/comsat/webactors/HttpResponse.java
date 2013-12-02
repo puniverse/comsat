@@ -151,7 +151,7 @@ public class HttpResponse extends HttpMessage {
          * The {@code Content-Type} header is used to communicate the content type and the character
          * encoding used in the response writer to the client
          *
-         * @param type the MIME type of the content
+         * @param contentType the MIME type of the content
          *
          */
         public Builder setContentType(String contentType) {
@@ -162,8 +162,7 @@ public class HttpResponse extends HttpMessage {
         /**
          * Sets the character encoding (MIME charset) of the response being sent to the client,
          * for example, {@code UTF-8}.
-         * If the character encoding has already been set by
-         * {@link #setContentType} or {@link #setLocale}, this method overrides it.
+         * If the character encoding has already been set by {@link #setContentType}, this method overrides it.
          * Calling {@link #setContentType} with {@code "text/html"} and calling this method with {@code Charset.forName("UTF-8")}
          * is equivalent with calling {@code setContentType} with {@code "text/html; charset=UTF-8"}.
          * <p/>
@@ -189,10 +188,10 @@ public class HttpResponse extends HttpMessage {
          * @param value the additional header value.
          *              If it contains octet string, it should be encoded according to RFC 2047 (http://www.ietf.org/rfc/rfc2047.txt)
          */
-        public Builder addHeader(final String key, final String val) {
+        public Builder addHeader(final String name, final String value) {
             if (headers == null)
                 headers = LinkedHashMultimap.create();
-            headers.put(key, val);
+            headers.put(name, value);
             return this;
         }
 
@@ -203,10 +202,10 @@ public class HttpResponse extends HttpMessage {
          * @param cookie the {@link Cookie} to return to the client
          * @return {@code this}
          */
-        public Builder addCookie(Cookie wc) {
+        public Builder addCookie(Cookie cookie) {
             if (cookies == null)
                 cookies = new ArrayList<>();
-            cookies.add(wc);
+            cookies.add(cookie);
             return this;
         }
 
@@ -223,8 +222,8 @@ public class HttpResponse extends HttpMessage {
          * @return {@code this}
          * @see #error
          */
-        public Builder status(int status) {
-            this.status = status;
+        public Builder status(int sc) {
+            this.status = sc;
             return this;
         }
 

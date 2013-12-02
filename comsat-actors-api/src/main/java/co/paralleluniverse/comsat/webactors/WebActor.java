@@ -58,7 +58,7 @@ public @interface WebActor {
      * A convenience property, to allow extremely simple annotation of a class -
      * Array of HTTP URL patterns.
      *
-     * @see #urlPatterns()
+     * @see #httpUrlPatterns()
      */
     String[] value() default {};
 }
