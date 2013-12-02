@@ -209,6 +209,9 @@ public abstract class HttpRequest extends HttpMessage {
 
     /**
      * Returns an actor representing the client to which an {@link HttpResponse} should be sent as a response to this request.
+     * All {@code HttpRequest}s from the same session will have the same sender. It will appear to have died (i.e. send an 
+     * {@link co.paralleluniverse.actors.ExitMessage ExitMessage} if {@link co.paralleluniverse.actors.Actor#watch(co.paralleluniverse.actors.ActorRef) watched})
+     * when the session is terminated.
      *
      * @return an actor representing the client
      */
