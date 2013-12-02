@@ -40,9 +40,6 @@ public class Cookie {
         return new Builder(name, value);
     }
 
-    /**
-     * A {@link Cookie} builder
-     */
     public static class Builder {
         private final String name;
         private final String value;

@@ -75,16 +75,16 @@ subprojects {
             ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
-//            
-//            println("Instrumenting classes...")
-//            ant.taskdef(name:'instrumentation', 
-//                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
-//                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
-//            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
-//                fileset(dir: sourceSets.main.output.classesDir) {
-//                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
-//                }
-//            }       
+            //            
+            //            println("Instrumenting classes...")
+            //            ant.taskdef(name:'instrumentation', 
+            //                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
+            //                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
+            //            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+            //                fileset(dir: sourceSets.main.output.classesDir) {
+            //                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
+            //                }
+            //            }       
         }
     }
     //    compileJava {
@@ -101,9 +101,9 @@ subprojects {
     }
     javadoc {
         options {
-            // docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
-            // doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
-            // addStringOption("parse-timeout", "10")
+            docletpath = configurations.markdownDoclet.files.asType(List)
+            doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+            addStringOption("parse-timeout", "10")
             // stylesheetFile = rootProject.file('./baselib/javadoc.css')
             links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
@@ -208,14 +208,14 @@ project (':comsat-jdbc') {
     }
     compileJava {
         doLast {
-//            println("Scanning for suspandables...")
-//            ant.taskdef(name:'scanSuspendables', 
-//                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
-//                classpath: "build/classes/main:" + configurations.compile.asPath)
-//            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
-//                fileset(dir: sourceSets.main.output.classesDir)
-//            }
-//            
+            //            println("Scanning for suspandables...")
+            //            ant.taskdef(name:'scanSuspendables', 
+            //                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
+            //                classpath: "build/classes/main:" + configurations.compile.asPath)
+            //            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
+            //                fileset(dir: sourceSets.main.output.classesDir)
+            //            }
+            //            
             println("Instrumenting classes...")
             ant.taskdef(name:'instrumentation', 
                 classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
@@ -322,16 +322,16 @@ task javadoc(type: Javadoc) {
     classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
     options {
         addStringOption('sourcepath', subprojects.configurations.srcFiles.files.flatten().join(':'))
+        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
+        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+        addStringOption("parse-timeout", "10")
+        // stylesheetFile = rootProject.file('./baselib/javadoc.css')
         links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
                 'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
                 'http://docs.oracle.com/javaee/7/api/',
                 'http://jersey.java.net/apidocs/latest/jersey/']
-        //        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
-        //        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
-        //        addStringOption("parse-timeout", "10")
-        // stylesheetFile = rootProject.file('./baselib/javadoc.css')
     }
     excludes = [
         "org/glassfish/jersey/server/internal/**"
