@@ -28,6 +28,9 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.spi.RequestExecutorsProvider;
 
+/**
+ * Main entry point to the client API used to bootstrap Client instances that integrate with Quasar fibers.
+ */
 public class AsyncClientBuilder extends ClientBuilder {
     private final ClientBuilder clientBuilder;
 

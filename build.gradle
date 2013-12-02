@@ -314,6 +314,7 @@ task javadoc(type: Javadoc) {
     destinationDir = file("docs/javadoc")
     source = 
     project(':comsat-actors-api').sourceSets.main.allJava +
+    project(':comsat-actors-servlet').sourceSets.main.allJava +
     project(':comsat-servlet').sourceSets.main.allJava +
     project(':comsat-jdbc').sourceSets.main.allJava + 
     project(':comsat-jersey-server').sourceSets.main.allJava +
@@ -334,7 +335,10 @@ task javadoc(type: Javadoc) {
                 'http://jersey.java.net/apidocs/latest/jersey/']
     }
     excludes = [
-        "org/glassfish/jersey/server/internal/**"
+        "org/glassfish/jersey/server/internal/**",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorEndpoint.java",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
     ]
 }
 

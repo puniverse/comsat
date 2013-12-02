@@ -33,7 +33,9 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spi.Container;
 
 /**
+ * A Servlet for deploying root resource classes that assign a fiber per request.
  *
+ * @see org.glassfish.jersey.servlet.ServletContainer
  * @author eitan
  */
 public class ServletContainer extends FiberHttpServlet implements Filter, Container {
@@ -99,12 +101,12 @@ public class ServletContainer extends FiberHttpServlet implements Filter, Contai
     /**
      * Dispatch client requests to a resource class.
      *
-     * @param baseUri the base URI of the request.
+     * @param baseUri    the base URI of the request.
      * @param requestUri the URI of the request.
-     * @param request the {@link javax.servlet.http.HttpServletRequest} object that contains the request the client made to the Web component.
-     * @param response the {@link javax.servlet.http.HttpServletResponse} object that contains the response the Web component returns to the client.
+     * @param request    the {@link javax.servlet.http.HttpServletRequest} object that contains the request the client made to the Web component.
+     * @param response   the {@link javax.servlet.http.HttpServletResponse} object that contains the response the Web component returns to the client.
      * @return lazily initialized response status code {@link Value value provider}.
-     * @throws IOException if an input or output error occurs while the Web component is handling the HTTP request.
+     * @throws IOException      if an input or output error occurs while the Web component is handling the HTTP request.
      * @throws ServletException if the HTTP request cannot be handled.
      */
     public Value<Integer> service(URI baseUri, URI requestUri, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
