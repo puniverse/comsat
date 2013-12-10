@@ -32,7 +32,8 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        maven { url 'https://maven.java.net/content/repositories/snapshots' }
     }
 
     configurations.all {
@@ -66,6 +67,7 @@ subprojects {
     //        args = ["co.paralleluniverse.fibers"]
     //    }
     //    tasks.jar.dependsOn scanSuspendables
+    
     compileJava {
         doLast {
             println("Scanning for suspandables...")
@@ -87,14 +89,7 @@ subprojects {
             //            }       
         }
     }
-    //    compileJava {
-    //        doLast {
-    //            ant.taskdef(name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', classpath: "build/classes/main:" + configurations.compile.asPath)
-    //            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
-    //                fileset(dir: sourceSets.main.output.classesDir)
-    //            }
-    //        }
-    //    }
+
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -232,7 +227,7 @@ project (':comsat-jdbc') {
 project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
-        compile 'co.paralleluniverse:jetty-connector:0.1.0-SNAPSHOT'
+        compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.5-SNAPSHOT'
         srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
     }
     
@@ -255,11 +250,11 @@ project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.0' // instead of old cglib in jersey
-        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.3' ) {
+        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.4.1' ) {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
-        compile ('org.glassfish.jersey.core:jersey-client:2.3') {
+        compile ('org.glassfish.jersey.core:jersey-client:2.4.1') {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
@@ -347,5 +342,5 @@ task clean(dependsOn: subprojects.clean) << {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.8'
+    gradleVersion = '1.9'
 }

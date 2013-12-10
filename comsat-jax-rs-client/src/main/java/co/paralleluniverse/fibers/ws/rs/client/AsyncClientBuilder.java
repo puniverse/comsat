@@ -13,7 +13,6 @@
  */
 package co.paralleluniverse.fibers.ws.rs.client;
 
-import co.paralleluniverse.jersey.connector.JettyConnector;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.security.KeyStore;
 import java.util.Map;
@@ -26,6 +25,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.jetty.connector.JettyConnector;
 import org.glassfish.jersey.spi.RequestExecutorsProvider;
 
 /**
