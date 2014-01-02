@@ -1,6 +1,7 @@
 package co.paralleluniverse.comsat.webactors.webbit;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -21,6 +22,12 @@ class WebbitWebSocketStringPort implements SendPort<String> {
 
     @Override
     public boolean send(String message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+        send(message);
+        return true;
+    }
+
+    @Override
+    public boolean send(String message, Timeout timeout) throws SuspendExecution, InterruptedException {
         send(message);
         return true;
     }

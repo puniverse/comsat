@@ -24,6 +24,7 @@ import static co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.ACTOR
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
+import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -206,6 +207,11 @@ public class WebActorEndpoint extends Endpoint {
 
         @Override
         public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+            return trySend(message);
+        }
+
+        @Override
+        public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
             return trySend(message);
         }
 

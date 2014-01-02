@@ -13,6 +13,8 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
+import co.paralleluniverse.common.reflection.AnnotationUtil;
+import co.paralleluniverse.common.reflection.ClassLoaderUtil;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.fibers.instrument.*;
 import java.io.IOException;
@@ -41,7 +43,7 @@ public class WebActorInitializer implements ServletContextListener {
             ClassLoaderUtil.accept(sc.getClassLoader(), new ClassLoaderUtil.Visitor() {
                 @Override
                 public void visit(String resource, URL url, ClassLoader cl) {
-                    if (!ClassLoaderUtil.isClassfile(resource))
+                    if (!ClassLoaderUtil.isClassFile(resource))
                         return;
                     final String className = ClassLoaderUtil.resourceToClass(resource);
                     try (InputStream is = cl.getResourceAsStream(resource)) {

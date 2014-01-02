@@ -25,6 +25,7 @@ import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -252,6 +253,12 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
 
         @Override
+        public boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
+            send(message);
+            return true;
+        }
+        
+        @Override
         public boolean trySend(HttpResponse message) {
             final ServletHttpRequest req = (ServletHttpRequest) message.getRequest();
             final HttpServletRequest request = req.request;
@@ -333,6 +340,12 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
             @Override
             public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+                send(message);
+                return true;
+            }
+
+            @Override
+            public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
                 send(message);
                 return true;
             }
