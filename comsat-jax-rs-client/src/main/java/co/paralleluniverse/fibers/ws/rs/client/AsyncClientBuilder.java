@@ -25,8 +25,8 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.jetty.connector.JettyConnector;
-import org.glassfish.jersey.spi.RequestExecutorsProvider;
+import org.glassfish.jersey.jetty.connector.JettyConnectorProvider;
+import org.glassfish.jersey.spi.RequestExecutorProvider;
 
 /**
  * Main entry point to the client API used to bootstrap Client instances that integrate with Quasar fibers.
@@ -66,23 +66,23 @@ public class AsyncClientBuilder extends ClientBuilder {
      * @return a new, configured, client instance.
      */
     public static Client newClient(Configuration configuration) {
-        final RequestExecutorsProvider singleThreadPool = new RequestExecutorsProvider() {
+        final RequestExecutorProvider singleThreadPool = new RequestExecutorProvider() {
             private ExecutorService tp = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-puniverse-single-worker-%d").build());
-
             @Override
             public ExecutorService getRequestingExecutor() {
                 return tp;
             }
+
+            @Override
+            public void releaseRequestingExecutor(ExecutorService es) {
+            }
         };
         final ClientConfig config = new ClientConfig().
-                register(singleThreadPool, RequestExecutorsProvider.class);
+                register(singleThreadPool, RequestExecutorProvider.class);
         if (configuration != null)
             config.loadFrom(configuration);
         if (config.getConnector() == null)
-            config.connector(new JettyConnector(new ClientConfig().
-                    property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20)));
-//            config.connector(new AsyncHttpConnector(new ClientConfig().
-//                    property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20)));
+            config.property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20).connectorProvider(new JettyConnectorProvider());
 
         return new FiberClient(ClientBuilder.newClient(config));
     }
