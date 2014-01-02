@@ -252,9 +252,4 @@ class ServletHttpRequest extends HttpRequest {
     public boolean shouldClose() {
         return channel == null;
     }
-
-    @Override
-    public String getRequestURL() {
-        return request.getRequestURL().toString();
-    }
 }
