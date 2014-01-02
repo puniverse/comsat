@@ -16,7 +16,6 @@ package co.paralleluniverse.comsat.webactors.servlet;
 import co.paralleluniverse.common.reflection.AnnotationUtil;
 import co.paralleluniverse.common.reflection.ClassLoaderUtil;
 import co.paralleluniverse.comsat.webactors.WebActor;
-import co.paralleluniverse.fibers.instrument.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -31,8 +30,6 @@ import javax.websocket.server.ServerEndpointConfig;
 
 /**
  * Registers WebActors annotated with the {@link WebActor} annotation.
- *
- * @author pron
  */
 @WebListener
 public class WebActorInitializer implements ServletContextListener {

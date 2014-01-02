@@ -17,26 +17,37 @@ import co.paralleluniverse.actors.ActorRef;
 import java.nio.ByteBuffer;
 
 /**
- *
- * @author pron
+ * A message sent by a virtual actor representing a WebSocket client indicating that a WebSocket has been opened.
  */
-public class WebSocketOpened implements WebMessage {
+public class WebSocketOpened extends WebMessage {
     private final ActorRef<WebDataMessage> actor;
 
     public WebSocketOpened(ActorRef<WebDataMessage> actor) {
         this.actor = actor;
     }
-    
+
     @Override
     public ActorRef<WebDataMessage> sender() {
         return actor;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>This method returns {@code null}, as it has no body.
+     *
+     * @return {@code null}
+     */
     @Override
     public String getStringBody() {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>This method returns {@code null}, as it has no body.
+     *
+     * @return {@code null}
+     */
     @Override
     public ByteBuffer getByteBufferBody() {
         return null;

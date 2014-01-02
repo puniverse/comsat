@@ -19,7 +19,7 @@ import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpointConfig;
 import javax.websocket.server.ServerEndpointConfig.Configurator;
 
-public class EmbedHttpSessionWsConfigurator extends Configurator {
+class EmbedHttpSessionWsConfigurator extends Configurator {
     @Override
     public void modifyHandshake(ServerEndpointConfig sec, HandshakeRequest request, HandshakeResponse response) {
         // save the http session based on idea from

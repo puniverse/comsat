@@ -20,6 +20,8 @@ import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.strands.channels.SendPort;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
@@ -29,10 +31,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Wraps a {@link HttpServletRequest} as a {@link HttpRequest}
  */
-public class ServletHttpRequest extends HttpRequest {
+class ServletHttpRequest extends HttpRequest {
     final HttpServletRequest request;
     final HttpServletResponse response;
     private Multimap<String, String> headers;
@@ -51,31 +51,25 @@ public class ServletHttpRequest extends HttpRequest {
     private String strBody;
     private byte[] binBody;
     private SendPort<WebDataMessage> channel;
+    private Collection<Cookie> cookies;
 
+    /**
+     * Constructs a {@code ServletHttpRequest} message
+     *
+     * @param sender this message's sender
+     * @param request the {@link HttpServletRequest}
+     * @param response the {@link HttpServletResponse}
+     */
     public ServletHttpRequest(ActorRef<? super HttpResponse> sender, HttpServletRequest request, HttpServletResponse response) {
         this.sender = sender;
         this.request = request;
         this.response = response;
     }
 
-    @Override
-    public Collection<Cookie> getCookies() {
-        final javax.servlet.http.Cookie[] cookies = request.getCookies();
-        List<Cookie> list = new ArrayList<>();
-        for (int i = 0; i < cookies.length; i++) {
-            final javax.servlet.http.Cookie c = cookies[i];
-            list.add(cookie(c.getName(), c.getValue()).setComment(c.getComment()).setDomain(c.getDomain()).
-                    setMaxAge(c.getMaxAge()).setHttpOnly(c.isHttpOnly()).setPath(c.getPath()).setSecure(c.getSecure()).
-                    setVersion(c.getVersion()).build());
-        }
-        return list;
-    }
-
-    @Override
-    public String getRequestURL() {
-        return request.getRequestURL().toString();
-    }
-
+//    @Override
+//    public String getRequestURL() {
+//        return request.getRequestURL().toString();
+//    }
     @Override
     public String getStringBody() {
         if (strBody == null) {
@@ -165,6 +159,29 @@ public class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
+    public Collection<Cookie> getCookies() {
+        if (cookies == null) {
+            final javax.servlet.http.Cookie[] cs = request.getCookies();
+            ImmutableCollection.Builder<Cookie> collb = ImmutableList.builder();
+            if (cs != null) {
+                for (javax.servlet.http.Cookie c : cs) {
+                    collb.add(cookie(c.getName(), c.getValue())
+                            .setComment(c.getComment())
+                            .setDomain(c.getDomain())
+                            .setMaxAge(c.getMaxAge())
+                            .setHttpOnly(c.isHttpOnly())
+                            .setPath(c.getPath())
+                            .setSecure(c.getSecure())
+                            .setVersion(c.getVersion())
+                            .build());
+                }
+            }
+            this.cookies = collb.build();
+        }
+        return cookies;
+    }
+
+    @Override
     public long getDateHeader(String name) {
         return request.getDateHeader(name);
     }
@@ -216,7 +233,7 @@ public class ServletHttpRequest extends HttpRequest {
 
     @Override
     public Charset getCharacterEncoding() {
-        return Charset.forName(request.getCharacterEncoding());
+        return request.getCharacterEncoding() != null ? Charset.forName(request.getCharacterEncoding()) : null;
     }
 
     @Override
@@ -234,5 +251,10 @@ public class ServletHttpRequest extends HttpRequest {
     @Override
     public boolean shouldClose() {
         return channel == null;
+    }
+
+    @Override
+    public String getRequestURL() {
+        return request.getRequestURL().toString();
     }
 }

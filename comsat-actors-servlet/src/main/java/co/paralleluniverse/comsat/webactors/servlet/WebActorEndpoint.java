@@ -37,11 +37,14 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 
+/**
+ * A WebSocket endpoint that forwards requests to a web actor.
+ */
 public class WebActorEndpoint extends Endpoint {
     private volatile EndpointConfig config;
 
     @Override
-    public void onOpen(final Session session, EndpointConfig config) {
+    public void onOpen(Session session, EndpointConfig config) {
         if (this.config == null)
             this.config = config;
         ActorRef<Object> actor = getHttpSessionActor(config);
@@ -57,13 +60,16 @@ public class WebActorEndpoint extends Endpoint {
         }
     }
 
-    static WebSocketActorRef attachWebActor(final Session session, EndpointConfig config, final ActorRef<? super WebMessage> actor) {
+    static WebSocketActorRef attachWebActor(Session session, EndpointConfig config, ActorRef<? super WebMessage> actor) {
+        return attachWebActor(session, getHttpSession(config), actor);
+    }
+
+    static WebSocketActorRef attachWebActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> actor) {
         if (session.getUserProperties().containsKey(ACTOR_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
-        WebSocketActorRef wsa = new WebSocketActorRef(session, config, actor);
+        WebSocketActorRef wsa = new WebSocketActorRef(session, httpSession, actor);
         session.getUserProperties().put(ACTOR_KEY, wsa);
         return wsa;
-
     }
 
     @Override
@@ -93,13 +99,17 @@ public class WebActorEndpoint extends Endpoint {
 
     static class WebSocketActorRef extends FakeActor<WebDataMessage> {
         private final Session session;
-        private final EndpointConfig config;
+        private final HttpSession httpSession;
         private final ActorRef<? super WebMessage> webActor;
 
         public WebSocketActorRef(Session session, EndpointConfig config, ActorRef<? super WebMessage> webActor) {
-            super(session.toString(), new WebSocketChannel(session, config));
+            this(session, getHttpSession(config), webActor);
+        }
+
+        public WebSocketActorRef(Session session, HttpSession httpSession, ActorRef<? super WebMessage> webActor) {
+            super(session.toString(), new WebSocketChannel(session, httpSession));
             this.session = session;
-            this.config = config;
+            this.httpSession = httpSession;
             this.webActor = webActor;
             watch(webActor);
 
@@ -183,21 +193,21 @@ public class WebActorEndpoint extends Endpoint {
         }
 
         private void log(String message) {
-            getHttpSession(config).getServletContext().log(message);
+            httpSession.getServletContext().log(message);
         }
 
         private void log(String message, Throwable t) {
-            getHttpSession(config).getServletContext().log(message, t);
+            httpSession.getServletContext().log(message, t);
         }
     }
 
     private static class WebSocketChannel implements SendPort<WebDataMessage> {
         private final Session session;
-        private final EndpointConfig config;
+        private final HttpSession httpSession;
 
-        public WebSocketChannel(Session session, EndpointConfig config) {
+        public WebSocketChannel(Session session, HttpSession httpSession) {
             this.session = session;
-            this.config = config;
+            this.httpSession = httpSession;
         }
 
         @Override
@@ -212,7 +222,7 @@ public class WebActorEndpoint extends Endpoint {
 
         @Override
         public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
-            return trySend(message);
+            return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
         }
 
         @Override
@@ -231,7 +241,7 @@ public class WebActorEndpoint extends Endpoint {
             try {
                 session.close();
             } catch (IOException ex) {
-                getHttpSession(config).getServletContext().log("IOException on close", ex);
+                httpSession.getServletContext().log("IOException on close", ex);
             }
         }
     }

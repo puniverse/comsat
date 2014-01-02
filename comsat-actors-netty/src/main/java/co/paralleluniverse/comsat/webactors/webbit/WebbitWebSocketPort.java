@@ -24,10 +24,11 @@ class WebbitWebSocketPort implements SendPort<WebDataMessage> {
     public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
         return trySend(message);
     }
-
+    
+    
     @Override
     public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
-        return trySend(message);
+        return send(message,timeout.nanosLeft(),TimeUnit.NANOSECONDS);
     }
 
     @Override

@@ -16,13 +16,38 @@ package co.paralleluniverse.comsat.webactors;
 import java.nio.charset.Charset;
 
 /**
+ * Utility classes for SSE (<a href="http://dev.w3.org/html5/eventsource/">Server-Sent Events</a>).
+ * To send an SSE stream in response to an {@link HttpRequest}, do the following:
  *
- * @author pron
+ * ```java
+ * SendPort<WebDataMessage> sseChannel = request.openChannel();
+ * request.sender().send(SSE.startSSE(request).build());
+ *
+ * // send events
+ * sseChannel.send(new WebDataMessage(self(), SSE.event("this is an SSE event!")));
+ * ```
+ * 
+ * You might want to consider wrapping the channel returned by {@link HttpRequest#openChannel()} with a 
+ * {@link co.paralleluniverse.strands.channels.Channels#map(co.paralleluniverse.strands.channels.SendPort, com.google.common.base.Function) mapping channel}
+ * to transform a specialized message class into {@link WebDataMessage} using the methods in this class.
+ * 
+ * For a good tutorial on SSE, please see: <a href="http://www.html5rocks.com/en/tutorials/eventsource/basics/">Stream Updates with Server-Sent Events</a>,
+ * by Eric Bidelman
  */
 public final class SSE {
-    //
-    // see http://www.html5rocks.com/en/tutorials/eventsource/basics/
-    //
+    /*
+     *see http://www.html5rocks.com/en/tutorials/eventsource/basics/
+     */
+    /**
+     * This method returns a new {@link HttpResponse HttpResponse} with
+     * its {@link HttpResponse.Builder#setContentType(String) content type}
+     * and {@link HttpResponse.Builder#setCharacterEncoding(java.nio.charset.Charset) character encoding} set
+     * in compliance with to the SSE spec, and an empty body.
+     *
+     * @param request the {@link HttpRequest} in response to which we wish to start an SSE stream.
+     * @return an {@link HttpResponse.Builder HttpResponse.Builder} (which can have other metadata, such as headers or cookies added to).
+     * @throws IllegalStateException if {@link HttpRequest#openChannel() request.openChannel()} has not been called
+     */
     public static HttpResponse.Builder startSSE(HttpRequest request) {
         if (request.shouldClose())
             throw new IllegalStateException("HttpRequest.openChannel() has not been called");
@@ -31,6 +56,18 @@ public final class SSE {
                 .setCharacterEncoding(Charset.forName("UTF-8"));
     }
 
+    /**
+     * This method returns a new {@link HttpResponse HttpResponse} with
+     * its {@link HttpResponse.Builder#setContentType(String) content type}
+     * and {@link HttpResponse.Builder#setCharacterEncoding(java.nio.charset.Charset) character encoding} set
+     * in compliance with to the SSE spec, and a body encoding a {@link #reconnectTimeout(long) reconnection timeout} indication.
+     *
+     * @param request          the {@link HttpRequest} in response to which we wish to start an SSE stream.
+     * @param reconnectTimeout the amount of time, in milliseconds, the client should wait before attempting to reconnect
+     *                         after the connection has closed (will be encoded in the message body as {@code retry: ...})
+     * @return an {@link HttpResponse.Builder HttpResponse.Builder} (which can have other metadata, such as headers or cookies added to).
+     * @throws IllegalStateException if {@link HttpRequest#openChannel() request.openChannel()} has not been called
+     */
     public static HttpResponse.Builder startSSE(HttpRequest request, long reconnectTimeout) {
         if (request.shouldClose())
             throw new IllegalStateException("HttpRequest.openChannel() has not been called");
@@ -39,24 +76,81 @@ public final class SSE {
                 .setCharacterEncoding(Charset.forName("UTF-8"));
     }
 
+    /**
+     * Returns the SSE last-event-id value from the request (the {@code Last-Event-ID} header).
+     *
+     * @param request the request
+     * @return the SSE last-event-id value from the request, or {@code -1} if not specified.
+     */
     public static long getLastEventId(HttpRequest request) {
-        return Long.parseLong(request.getHeader("Last-Event-ID"));
+        String str = request.getHeader("Last-Event-ID");
+        if (str == null)
+            return -1;
+        return Long.parseLong(str);
     }
 
-    public static String sseMessage(String payload) {
+    /**
+     * Encodes a given payload as an SSE event message. The returned value can be used as the body of a {@link WebDataMessage}.
+     *
+     * @param id        the SSE event id (will be encoded in the message as {@code id: ...})
+     * @param eventType the name of the type of the event (will be encoded in the message as {@code event: ...})
+     * @param payload   the message payload (will be encoded in the message as {@code data: ...})
+     * @return the payload encoded as an SSE event
+     */
+    public static String event(long id, String eventType, String payload) {
+        return idString(id) + eventString(eventType) + dataString(payload) + '\n';
+    }
+
+    /**
+     * Encodes a given payload as an SSE event message. The returned value can be used as the body of a {@link WebDataMessage}.
+     *
+     * @param eventType the name of the type of the event (will be encoded in the message as {@code event: ...})
+     * @param payload   the message payload (will be encoded in the message as {@code data: ...})
+     * @return the payload encoded as an SSE event
+     */
+    public static String event(String eventType, String payload) {
         return dataString(payload) + '\n';
     }
 
-    public static String sseMessage(long id, String payload) {
+    /**
+     * Encodes a given payload and id as an SSE event message. The returned value can be used as the body of a {@link WebDataMessage}.
+     *
+     * @param id      the SSE event id (will be encoded in the message as {@code id: ...})
+     * @param payload the message payload (will be encoded in the message as {@code data: ...})
+     * @return the id and payload encoded as an SSE event
+     */
+    public static String event(long id, String payload) {
         return idString(id) + dataString(payload) + '\n';
     }
 
-    public static String sseMessage(long reconnectTimeout, long id, String payload) {
-        return retryString(reconnectTimeout) + idString(id) + dataString(payload) + '\n';
+    /**
+     * Encodes a given payload as an SSE event message. The returned value can be used as the body of a {@link WebDataMessage}.
+     *
+     * @param payload the message payload the message payload (will be encoded in the message as {@code data: ...})
+     * @return the payload encoded as an SSE event
+     */
+    public static String event(String payload) {
+        return dataString(payload) + '\n';
+    }
+
+    /**
+     * Encodes an indication to the client to attempt a reconnect if the connection is closed within the given time.
+     * This string may be concatenated ahead of a string encoding an SSE event, like so: {@code reconnectTimeout(t) + event(x)}).
+     *
+     * @param reconnectTimeout the amount of time, in milliseconds, the client should wait before attempting to reconnect
+     *                         after the connection has closed (will be encoded in the message as {@code retry: ...})
+     * @return a string encoding the reconnection timeout indication
+     */
+    public static String reconnectTimeout(long reconnectTimeout) {
+        return retryString(reconnectTimeout);
     }
 
     private static String idString(long id) {
         return "id: " + id + '\n';
+    }
+
+    private static String eventString(String eventName) {
+        return "event: " + eventName + '\n';
     }
 
     private static String retryString(long reconnectTimeout) {

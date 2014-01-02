@@ -32,7 +32,8 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        maven { url 'https://maven.java.net/content/repositories/snapshots' }
     }
 
     configurations.all {
@@ -66,6 +67,7 @@ subprojects {
     //        args = ["co.paralleluniverse.fibers"]
     //    }
     //    tasks.jar.dependsOn scanSuspendables
+    
     compileJava {
         doLast {
             println("Scanning for suspandables...")
@@ -75,35 +77,28 @@ subprojects {
             ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
-//            
-//            println("Instrumenting classes...")
-//            ant.taskdef(name:'instrumentation', 
-//                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
-//                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
-//            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
-//                fileset(dir: sourceSets.main.output.classesDir) {
-//                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
-//                }
-//            }       
+            //            
+            //            println("Instrumenting classes...")
+            //            ant.taskdef(name:'instrumentation', 
+            //                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
+            //                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
+            //            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+            //                fileset(dir: sourceSets.main.output.classesDir) {
+            //                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
+            //                }
+            //            }       
         }
     }
-    //    compileJava {
-    //        doLast {
-    //            ant.taskdef(name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', classpath: "build/classes/main:" + configurations.compile.asPath)
-    //            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
-    //                fileset(dir: sourceSets.main.output.classesDir)
-    //            }
-    //        }
-    //    }
+
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
     }
     javadoc {
         options {
-            // docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
-            // doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
-            // addStringOption("parse-timeout", "10")
+            docletpath = configurations.markdownDoclet.files.asType(List)
+            doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+            addStringOption("parse-timeout", "10")
             // stylesheetFile = rootProject.file('./baselib/javadoc.css')
             links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
@@ -208,14 +203,14 @@ project (':comsat-jdbc') {
     }
     compileJava {
         doLast {
-//            println("Scanning for suspandables...")
-//            ant.taskdef(name:'scanSuspendables', 
-//                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
-//                classpath: "build/classes/main:" + configurations.compile.asPath)
-//            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
-//                fileset(dir: sourceSets.main.output.classesDir)
-//            }
-//            
+            //            println("Scanning for suspandables...")
+            //            ant.taskdef(name:'scanSuspendables', 
+            //                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
+            //                classpath: "build/classes/main:" + configurations.compile.asPath)
+            //            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
+            //                fileset(dir: sourceSets.main.output.classesDir)
+            //            }
+            //            
             println("Instrumenting classes...")
             ant.taskdef(name:'instrumentation', 
                 classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
@@ -232,7 +227,7 @@ project (':comsat-jdbc') {
 project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
-        compile 'co.paralleluniverse:jetty-connector:0.1.0-SNAPSHOT'
+        compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.5-SNAPSHOT'
         srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
     }
     
@@ -255,11 +250,11 @@ project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.0' // instead of old cglib in jersey
-        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.3' ) {
+        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.4.1' ) {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
-        compile ('org.glassfish.jersey.core:jersey-client:2.3') {
+        compile ('org.glassfish.jersey.core:jersey-client:2.4.1') {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
@@ -314,6 +309,7 @@ task javadoc(type: Javadoc) {
     destinationDir = file("docs/javadoc")
     source = 
     project(':comsat-actors-api').sourceSets.main.allJava +
+    project(':comsat-actors-servlet').sourceSets.main.allJava +
     project(':comsat-servlet').sourceSets.main.allJava +
     project(':comsat-jdbc').sourceSets.main.allJava + 
     project(':comsat-jersey-server').sourceSets.main.allJava +
@@ -322,19 +318,22 @@ task javadoc(type: Javadoc) {
     classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
     options {
         addStringOption('sourcepath', subprojects.configurations.srcFiles.files.flatten().join(':'))
+        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
+        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
+        addStringOption("parse-timeout", "10")
+        // stylesheetFile = rootProject.file('./baselib/javadoc.css')
         links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
                 'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
                 'http://docs.oracle.com/javaee/7/api/',
                 'http://jersey.java.net/apidocs/latest/jersey/']
-        //        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
-        //        doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
-        //        addStringOption("parse-timeout", "10")
-        // stylesheetFile = rootProject.file('./baselib/javadoc.css')
     }
     excludes = [
-        "org/glassfish/jersey/server/internal/**"
+        "org/glassfish/jersey/server/internal/**",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorEndpoint.java",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
     ]
 }
 
@@ -343,5 +342,5 @@ task clean(dependsOn: subprojects.clean) << {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.8'
+    gradleVersion = '1.9'
 }
