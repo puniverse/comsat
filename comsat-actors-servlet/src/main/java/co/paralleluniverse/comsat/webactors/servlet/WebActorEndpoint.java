@@ -152,7 +152,8 @@ public class WebActorEndpoint extends Endpoint {
         }
 
         void onClose(CloseReason closeReason) {
-            die(closeReason.getCloseCode() == CloseReason.CloseCodes.NORMAL_CLOSURE ? null : new RuntimeException(closeReason.toString()));
+            // don't call die because the session is already closed.
+            super.die(closeReason.getCloseCode() == CloseReason.CloseCodes.NORMAL_CLOSURE ? null : new RuntimeException(closeReason.toString()));
         }
 
         void onError(Throwable t) {
