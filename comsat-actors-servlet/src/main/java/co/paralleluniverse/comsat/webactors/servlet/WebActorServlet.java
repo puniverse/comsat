@@ -259,7 +259,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         public boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
             return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
         }
-        
+
         @Override
         public boolean trySend(HttpResponse message) {
             final ServletHttpRequest req = (ServletHttpRequest) message.getRequest();
@@ -304,8 +304,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                             response.setCharacterEncoding(msg.getCharacterEncoding().name());
                     }
                 }
-
-                ServletOutputStream out = writeBody(message, response);
+                ServletOutputStream out = writeBody(message, response, req.shouldClose());
                 out.flush(); // commits the response
 
                 if (req.shouldClose()) {
@@ -350,11 +349,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
                 return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
             }
-            
+
             @Override
             public boolean trySend(WebDataMessage message) {
                 try {
-                    ServletOutputStream os = writeBody(message, response);
+                    ServletOutputStream os = writeBody(message, response, false);
                     os.flush();
                 } catch (IOException ex) {
                     request.getServletContext().log("IOException", ex);
@@ -377,7 +376,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         };
     }
 
-    static ServletOutputStream writeBody(WebMessage message, HttpServletResponse response) throws IOException {
+    static ServletOutputStream writeBody(WebMessage message, HttpServletResponse response, boolean shouldClose) throws IOException {
         final byte[] arr;
         final int offset;
         final int length;
@@ -407,7 +406,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             length = 0;
         }
 
-        if (!response.isCommitted())
+        if (!response.isCommitted() && shouldClose)
             response.setContentLength(length);
 
         final ServletOutputStream out = response.getOutputStream();
