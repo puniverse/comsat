@@ -356,8 +356,8 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                     ServletOutputStream os = writeBody(message, response, false);
                     os.flush();
                 } catch (IOException ex) {
-                    request.getServletContext().log("IOException", ex);
-                    close();
+//                    request.getServletContext().log("SSE client closed: IOException", ex);
+//                    close(); 
                     return false;
                 }
                 return true;
@@ -367,7 +367,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             public void close() {
                 try {
                     ServletOutputStream os = response.getOutputStream();
-                    os.close();
+                        os.close();
                 } catch (IOException e) {
                     ctx.getRequest().getServletContext().log("error", e);
                 }
