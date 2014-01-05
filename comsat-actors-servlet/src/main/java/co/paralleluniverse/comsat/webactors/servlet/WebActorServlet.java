@@ -356,8 +356,8 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                     ServletOutputStream os = writeBody(message, response, false);
                     os.flush();
                 } catch (IOException ex) {
-//                    request.getServletContext().log("SSE client closed: IOException", ex);
-//                    close(); 
+                    // may be caused when client closed the connection
+                    // TODO: what about other cases ? who will close the connection ?
                     return false;
                 }
                 return true;
