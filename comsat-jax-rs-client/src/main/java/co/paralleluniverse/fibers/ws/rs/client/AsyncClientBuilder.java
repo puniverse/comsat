@@ -78,11 +78,12 @@ public class AsyncClientBuilder extends ClientBuilder {
             }
         };
         final ClientConfig config = new ClientConfig().
-                register(singleThreadPool, RequestExecutorProvider.class);
+                register(singleThreadPool, RequestExecutorProvider.class).
+                property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20);
         if (configuration != null)
             config.loadFrom(configuration);
-        if (config.getConnector() == null)
-            config.property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20).connectorProvider(new JettyConnectorProvider());
+        if (config.getConnectorProvider() == null)
+            config.connectorProvider(new JettyConnectorProvider());
 
         return new FiberClient(ClientBuilder.newClient(config));
     }
