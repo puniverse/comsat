@@ -1,0 +1,9 @@
+javax.ws.rs.client.SyncInvoker.get
+javax.ws.rs.client.SyncInvoker.put
+javax.ws.rs.client.SyncInvoker.post
+javax.ws.rs.client.SyncInvoker.delete
+javax.ws.rs.client.SyncInvoker.head
+javax.ws.rs.client.SyncInvoker.options
+javax.ws.rs.client.SyncInvoker.trace
+javax.ws.rs.client.SyncInvoker.method
+javax.ws.rs.client.Invocation.invoke
