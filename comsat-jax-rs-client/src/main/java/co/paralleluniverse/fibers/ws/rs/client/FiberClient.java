@@ -28,6 +28,7 @@ class FiberClient implements Client {
     private final Client client;
 
     public FiberClient(Client client) {
+        client.target("http://www.dummyCallLoadLazyObjects.com").request().buildGet();
         this.client = client;
     }
 
