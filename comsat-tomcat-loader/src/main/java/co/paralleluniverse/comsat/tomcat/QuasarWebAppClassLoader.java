@@ -28,19 +28,17 @@ import org.apache.catalina.loader.WebappClassLoader;
  * @author pron
  */
 public class QuasarWebAppClassLoader extends WebappClassLoader {
-    private final QuasarInstrumentor instrumentor;
+    private QuasarInstrumentor instrumentor;
 
     public QuasarWebAppClassLoader() {
-        this.instrumentor = newInstrumentor();
     }
 
     public QuasarWebAppClassLoader(ClassLoader parent) {
         super(parent);
-        this.instrumentor = newInstrumentor();
     }
 
     private QuasarInstrumentor newInstrumentor() {
-        QuasarInstrumentor inst = new QuasarInstrumentor(this);
+        QuasarInstrumentor inst = new QuasarInstrumentor(this); // must be called *after* construction has completed
         inst.setLog(new Log() {
             @Override
             public void log(LogLevel level, String msg, Object... args) {
@@ -58,8 +56,14 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
         return inst;
     }
 
+    private synchronized void initInstrumentor() {
+        if (instrumentor == null)
+            this.instrumentor = newInstrumentor();
+    }
+
     @Override
     protected ResourceEntry findResourceInternal(String name, String path) {
+        initInstrumentor();
         ResourceEntry entry = super.findResourceInternal(name, path);
         if (entry != null && path.endsWith(".class")) {
             String className = name.substring(0, name.length() - ".class".length());
