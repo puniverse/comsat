@@ -70,7 +70,6 @@ subprojects {
     
     compileJava {
         doLast {
-            println("Scanning for suspandables...")
             ant.taskdef(name:'scanSuspendables', 
                 classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
                 classpath: "build/classes/main:" + configurations.compile.asPath)
