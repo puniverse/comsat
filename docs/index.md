@@ -88,9 +88,9 @@ Or, if you have gradle installed, run:
 
 # User Manual
 
-## Comsat Integration
-
 {% capture javadoc %}{{site.baseurl}}/javadoc/co/paralleluniverse{% endcapture %}
+
+## Comsat Integration
 
 ### Servlets
 
@@ -180,8 +180,6 @@ If you want to learn how to use JDBC, the [JDBC tutorial](http://docs.oracle.com
 
 ## Web Actors
 
-{% capture javadoc %}{{site.baseurl}}/javadoc/co/paralleluniverse{% endcapture %}
-
 Web Acotrs are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, SSE and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
 
 ### Deployment
@@ -231,17 +229,23 @@ SSE, or [Server-Sent Events](http://dev.w3.org/html5/eventsource/), is an HTML5 
 
 The [`SSE`]({{javadoc}}/comsat/webactors/SSE.html) class contains a set of static utility methods that encode the events according to the SSE standard, and ensure that the response headers are set correctly (in terms of character encoding, etc.).
 
-Here's how SSE can be used with a web actor:
+To start an SSE stream in response to an `HttpRequest`, do the following:
 
 ~~~ java
-SendPort<WebDataMessage> sseChannel = request.openChannel();
-request.sender().send(SSE.startSSE(request).build());
+request.getFrom().send(new HttpResponse(self(), SSE.startSSE(request)));
+~~~
 
-// ... send events
-sseChannel.send(new WebDataMessage(self(), SSE.event("this is an SSE event!")));
+This will set `HttpResponse`'s `startActor` flag, which will leave the response stream open and send back an [`HttpStreamOpened`]({{javadoc}}/comsat/webactors/HttpStreamOpened.html) message from a newly created actor representing the SSE stream. Once you receive
+the message, you send SSE events by sending `WebDataMessage`s to that actor:
 
-// ... close the stream
-sseChannel.close()
+~~~ java
+sseActor.send(new WebDataMessage(self(), SSE.event("this is an SSE event!")));
+~~~
+
+To close the stream, you send a `co.paralleluniverse.actors.ShutdownMessage` to the SSE actor like so:
+
+~~~ java
+co.paralleluniverse.actors.ActorUtil.sendOrInterrupt(sseActor, new ShutdownMessage());
 ~~~
 
 It might be convient (and elegant) to wrap the channel returned by `openStream` with a *mapping channel* (see the Quasar docs), that will transform a message class representing the event into an SSE-encoded `WebDataMessage`.

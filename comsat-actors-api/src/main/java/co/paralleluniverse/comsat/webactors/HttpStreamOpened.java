@@ -14,21 +14,39 @@
 package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.actors.ActorRef;
+import co.paralleluniverse.actors.behaviors.IdMessage;
 import java.nio.ByteBuffer;
 
 /**
- * A message sent by a virtual actor representing a WebSocket client indicating that a WebSocket has been opened.
+ * A message sent by a virtual actor representing an open HTTP stream signifying that an HTTP stream has been opened.
  */
-public class WebSocketOpened extends WebMessage {
+public class HttpStreamOpened extends WebMessage implements IdMessage {
     private final ActorRef<WebDataMessage> actor;
+    private final HttpResponse response;
 
-    public WebSocketOpened(ActorRef<WebDataMessage> actor) {
+    public HttpStreamOpened(ActorRef<WebDataMessage> actor, HttpResponse response) {
         this.actor = actor;
+        this.response = response;
     }
 
+    /**
+     * {@inheritDoc }
+     * <p/>
+     * Returns the actor to be used for sending {@link WebDataMessage}s over the stream.
+     */
     @Override
     public ActorRef<WebDataMessage> getFrom() {
         return actor;
+    }
+
+    /**
+     * {@inheritDoc }
+     * <p/>
+     * Returns the {@link HttpResponse} passed to the constructor.
+     */
+    @Override
+    public Object getId() {
+        return response;
     }
 
     /**

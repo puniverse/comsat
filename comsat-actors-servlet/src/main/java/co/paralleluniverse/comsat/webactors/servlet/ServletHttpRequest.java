@@ -237,19 +237,7 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public ActorRef<HttpResponse> sender() {
+    public ActorRef<HttpResponse> getFrom() {
         return (ActorRef<HttpResponse>) sender;
-    }
-
-    @Override
-    public SendPort<WebDataMessage> openChannel() {
-        if (channel == null)
-            channel = WebActorServlet.openChannel(request, response);
-        return channel;
-    }
-
-    @Override
-    public boolean shouldClose() {
-        return channel == null;
     }
 }

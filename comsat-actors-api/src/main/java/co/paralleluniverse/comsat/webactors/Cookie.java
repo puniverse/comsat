@@ -193,6 +193,7 @@ public class Cookie {
 
         /**
          * Instantiates a new immutable {@link Cookie} based on the values set in this builder.
+         *
          * @return a new {@link Cookie}
          */
         public Cookie build() {
@@ -323,6 +324,22 @@ public class Cookie {
 
     @Override
     public String toString() {
-        return "Cookie{" + "name=" + name + ", value=" + value + ", path=" + path + ", domain=" + domain + ", maxAge=" + maxAge + ", comment=" + comment + ", version=" + version + ", httpOnly=" + httpOnly + ", secure=" + secure + '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cookie[");
+        sb.append("name: ").append(name);
+        sb.append(" value: ").append(value);
+        if (path != null)
+            sb.append(" path: ").append(path);
+        if (domain != null)
+            sb.append(" domain: ").append(domain);
+        sb.append(" maxAge: ").append(maxAge);
+        if (comment != null)
+            sb.append(" comment: ").append(comment);
+        sb.append(" version: ").append(version);
+        if (httpOnly)
+            sb.append(" httpOnly: ").append(httpOnly);
+        sb.append(" secure: ").append(secure);
+        sb.append(']');
+        return sb.toString();
     }
 }

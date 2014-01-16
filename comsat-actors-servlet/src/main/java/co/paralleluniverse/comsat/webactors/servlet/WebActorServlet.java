@@ -19,9 +19,11 @@ import co.paralleluniverse.actors.ActorSpec;
 import co.paralleluniverse.actors.ExitMessage;
 import co.paralleluniverse.actors.FakeActor;
 import co.paralleluniverse.actors.LifecycleMessage;
+import co.paralleluniverse.actors.ShutdownMessage;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
+import co.paralleluniverse.comsat.webactors.HttpStreamOpened;
 import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.fibers.SuspendExecution;
@@ -262,8 +264,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
         @Override
         public boolean trySend(HttpResponse message) {
-            final ServletHttpRequest req = (ServletHttpRequest) message.getRequest();
-            final HttpServletRequest request = req.request;
+            final HttpServletRequest request = ((ServletHttpRequest) message.getRequest()).request;
             if (!request.isAsyncStarted())
                 return false;
 
@@ -304,10 +305,16 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                             response.setCharacterEncoding(msg.getCharacterEncoding().name());
                     }
                 }
-                ServletOutputStream out = writeBody(message, response, req.shouldClose());
+                ServletOutputStream out = writeBody(message, response, !message.shouldStartActor());
                 out.flush(); // commits the response
 
-                if (req.shouldClose()) {
+                if (message.shouldStartActor()) {
+                    try {
+                        message.getFrom().send(new HttpStreamOpened(new HttpStreamActorRef(request, response), message));
+                    } catch (SuspendExecution e) {
+                        throw new AssertionError(e);
+                    }
+                } else {
                     out.close();
                     ctx.complete();
                 }
@@ -326,10 +333,114 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
     }
 
-    static SendPort<WebDataMessage> openChannel(final HttpServletRequest request, final HttpServletResponse response) {
-        return new SendPort<WebDataMessage>() {
-            private final AsyncContext ctx = request.getAsyncContext();
+    private static class HttpStreamActorRef extends FakeActor<WebDataMessage> {
+        private final AsyncContext ctx;
+        private final HttpServletResponse response;
+        private volatile boolean dead;
 
+        public HttpStreamActorRef(final HttpServletRequest request, final HttpServletResponse response) {
+            super(request.toString(), new HttpStreamChannel(request.getAsyncContext(), response));
+            this.ctx = request.getAsyncContext();
+            this.response = response;
+            ((HttpStreamChannel) (Object) mailbox()).actor = this;
+        }
+
+        @Override
+        protected WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
+            if (m instanceof ShutdownMessage) {
+                die(null);
+            }
+            return null;
+        }
+
+        @Override
+        protected void throwIn(RuntimeException e) {
+            die(e);
+        }
+
+        @Override
+        public void interrupt() {
+            die(new InterruptedException());
+        }
+
+        @Override
+        protected void die(Throwable cause) {
+            if (dead)
+                return;
+            this.dead = true;
+            super.die(cause);
+            assert (Object) mailbox() instanceof HttpStreamChannel;
+            mailbox().close();
+        }
+
+        private void log(String message) {
+            ctx.getRequest().getServletContext().log(message);
+        }
+
+        private void log(String message, Throwable t) {
+            ctx.getRequest().getServletContext().log(message, t);
+        }
+    }
+
+    private static class HttpStreamChannel implements SendPort<WebDataMessage> {
+        HttpStreamActorRef actor;
+        final AsyncContext ctx;
+        final HttpServletResponse response;
+
+        public HttpStreamChannel(AsyncContext ctx, HttpServletResponse response) {
+            this.ctx = ctx;
+            this.response = response;
+        }
+
+        @Override
+        public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
+            if (!trySend(message)) {
+//                if (exception == null)
+//                    throw new ChannelClosedException(this, exception);
+//                throw Exceptions.rethrow(exception);
+            }
+        }
+
+        @Override
+        public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+            send(message);
+            return true;
+        }
+
+        @Override
+        public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
+            return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
+        }
+
+        @Override
+        public boolean trySend(WebDataMessage message) {
+            try {
+                ServletOutputStream os = writeBody(message, response, false);
+                os.flush();
+            } catch (IOException ex) {
+                actor.die(ex);
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public void close() {
+            try {
+                try {
+                    ServletOutputStream os = response.getOutputStream();
+                    os.close();
+                } catch (IOException e) {
+                    ctx.getRequest().getServletContext().log("error", e);
+                }
+                ctx.complete();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    static SendPort<WebDataMessage> openChannel(final HttpStreamActorRef actor, final AsyncContext ctx, final HttpServletResponse response) {
+        return new SendPort<WebDataMessage>() {
             @Override
             public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
                 if (!trySend(message)) {
@@ -356,8 +467,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                     ServletOutputStream os = writeBody(message, response, false);
                     os.flush();
                 } catch (IOException ex) {
-                    // may be caused when client closed the connection
-                    // TODO: what about other cases ? who will close the connection ?
+                    actor.die(ex);
                     return false;
                 }
                 return true;
@@ -365,13 +475,6 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
             @Override
             public void close() {
-                try {
-                    ServletOutputStream os = response.getOutputStream();
-                        os.close();
-                } catch (IOException e) {
-                    ctx.getRequest().getServletContext().log("error", e);
-                }
-                ctx.complete();
             }
         };
     }

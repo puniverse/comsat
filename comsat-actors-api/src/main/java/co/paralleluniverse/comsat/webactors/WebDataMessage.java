@@ -47,7 +47,7 @@ public class WebDataMessage extends WebMessage {
     }
 
     @Override
-    public ActorRef<WebDataMessage> sender() {
+    public ActorRef<WebDataMessage> getFrom() {
         return sender;
     }
 
@@ -67,5 +67,12 @@ public class WebDataMessage extends WebMessage {
     @Override
     public ByteBuffer getByteBufferBody() {
         return byteBuffer;
+    }
+
+    @Override
+    protected String contentString() {
+        return super.contentString() + 
+                " size: " + (string != null ? string.length() : byteBuffer != null ? byteBuffer.remaining() : 0) +
+                (isBinary() ? "" : " data: " + string);
     }
 }

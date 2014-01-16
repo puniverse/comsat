@@ -109,6 +109,7 @@ public class HttpResponse extends HttpMessage {
         private int status;
         private Throwable error;
         private String redirectPath;
+        private boolean startActor;
 
         public Builder(ActorRef<? super WebMessage> from, HttpRequest request, String body) {
             this.sender = (ActorRef<WebMessage>) from;
@@ -239,6 +240,17 @@ public class HttpResponse extends HttpMessage {
             return this;
         }
 
+        /**
+         * Indicates that the connection to the client must not be closed after sending this response;
+         * rather an {@link HttpStreamOpened} message will be sent to the actor sending this response.
+         *
+         * @return {@code this}
+         */
+        public Builder startActor() {
+            this.startActor = true;
+            return this;
+        }
+
         Builder redirect(String redirectPath) {
             this.redirectPath = redirectPath;
             this.status = 302;
@@ -266,6 +278,7 @@ public class HttpResponse extends HttpMessage {
     private final int status;
     private final Throwable error;
     private final String redirectPath;
+    private final boolean startActor;
 
     /**
      * Use when forwarding
@@ -285,6 +298,7 @@ public class HttpResponse extends HttpMessage {
         this.headers = httpResponse.headers;
         this.status = httpResponse.status;
         this.redirectPath = httpResponse.redirectPath;
+        this.startActor = httpResponse.startActor;
     }
 
     public HttpResponse(ActorRef<? super WebMessage> from, Builder builder) {
@@ -299,10 +313,11 @@ public class HttpResponse extends HttpMessage {
         this.headers = builder.headers != null ? ImmutableMultimap.copyOf(builder.headers) : null;
         this.status = builder.status;
         this.redirectPath = builder.redirectPath;
+        this.startActor = builder.startActor;
     }
 
     @Override
-    public ActorRef<WebMessage> sender() {
+    public ActorRef<WebMessage> getFrom() {
         return sender;
     }
 
@@ -370,5 +385,27 @@ public class HttpResponse extends HttpMessage {
      */
     public String getRedirectPath() {
         return redirectPath;
+    }
+
+    public boolean shouldStartActor() {
+        return startActor;
+    }
+
+    @Override
+    protected String contentString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" ").append(getStatus());
+        sb.append(" headers: ").append(getHeaders());
+        sb.append(" cookies: ").append(getCookies());
+        sb.append(" contentLength: ").append(getContentLength());
+        sb.append(" charEncoding: ").append(getCharacterEncoding());
+        if (strBody != null)
+            sb.append(" body: ").append(strBody);
+        if(redirectPath != null)
+            sb.append(" redirectPath: ").append(getRedirectPath());
+        if(error != null)
+            sb.append(" error: ").append(getError());
+        sb.append(" shouldStartActor: ").append(shouldStartActor());
+        return super.contentString() + sb;
     }
 }

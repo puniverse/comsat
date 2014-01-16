@@ -17,17 +17,21 @@ import java.nio.charset.Charset;
 
 /**
  * Utility classes for SSE (<a href="http://dev.w3.org/html5/eventsource/">Server-Sent Events</a>).
- * To send an SSE stream in response to an {@link HttpRequest}, do the following:
+ * To start an SSE stream in response to an {@link HttpRequest}, do the following:
  *
  * ```java
- * SendPort<WebDataMessage> sseChannel = request.openChannel();
- * request.sender().send(SSE.startSSE(request).build());
- *
+ * request.getFrom().send(new HttpResponse(self(), SSE.startSSE(request)));
+ * ```
+ * This will result in a {@link HttpStreamOpened} message being sent to the web actor from a newly 
+ * created actor that represents the SSE connection. To send SSE events, simply send {@link WebDataMessage}s
+ * to that actor:
+ * 
+ * ```java
  * // send events
- * sseChannel.send(new WebDataMessage(self(), SSE.event("this is an SSE event!")));
+ * sseActor.send(new WebDataMessage(self(), SSE.event("this is an SSE event!")));
  * ```
  * 
- * You might want to consider wrapping the channel returned by {@link HttpRequest#openChannel()} with a 
+ * You might want to consider wrapping the actor sending {@link HttpStreamOpened} with a 
  * {@link co.paralleluniverse.strands.channels.Channels#map(co.paralleluniverse.strands.channels.SendPort, com.google.common.base.Function) mapping channel}
  * to transform a specialized message class into {@link WebDataMessage} using the methods in this class.
  * 
@@ -46,14 +50,12 @@ public final class SSE {
      *
      * @param request the {@link HttpRequest} in response to which we wish to start an SSE stream.
      * @return an {@link HttpResponse.Builder HttpResponse.Builder} (which can have other metadata, such as headers or cookies added to).
-     * @throws IllegalStateException if {@link HttpRequest#openChannel() request.openChannel()} has not been called
      */
     public static HttpResponse.Builder startSSE(HttpRequest request) {
-        if (request.shouldClose())
-            throw new IllegalStateException("HttpRequest.openChannel() has not been called");
         return new HttpResponse.Builder(request)
                 .setContentType("text/event-stream")
-                .setCharacterEncoding(Charset.forName("UTF-8"));
+                .setCharacterEncoding(Charset.forName("UTF-8"))
+                .startActor();
     }
 
     /**
@@ -66,14 +68,12 @@ public final class SSE {
      * @param reconnectTimeout the amount of time, in milliseconds, the client should wait before attempting to reconnect
      *                         after the connection has closed (will be encoded in the message body as {@code retry: ...})
      * @return an {@link HttpResponse.Builder HttpResponse.Builder} (which can have other metadata, such as headers or cookies added to).
-     * @throws IllegalStateException if {@link HttpRequest#openChannel() request.openChannel()} has not been called
      */
     public static HttpResponse.Builder startSSE(HttpRequest request, long reconnectTimeout) {
-        if (request.shouldClose())
-            throw new IllegalStateException("HttpRequest.openChannel() has not been called");
         return new HttpResponse.Builder(request, retryString(reconnectTimeout) + '\n')
                 .setContentType("text/event-stream")
-                .setCharacterEncoding(Charset.forName("UTF-8"));
+                .setCharacterEncoding(Charset.forName("UTF-8"))
+                .startActor();
     }
 
     /**

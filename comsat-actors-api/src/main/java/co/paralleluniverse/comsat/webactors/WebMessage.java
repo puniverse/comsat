@@ -14,17 +14,20 @@
 package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.actors.ActorRef;
+import co.paralleluniverse.actors.behaviors.ActorMessage;
+import co.paralleluniverse.actors.behaviors.FromMessage;
 import java.nio.ByteBuffer;
 
 /**
  * A message that is received from or can be set to a web client (via HTTP or WebSockets).
  * The message has either a {@link #getStringBody() text body} or a {@link #getByteBufferBody() binary} body (but not both).
  */
-public abstract class WebMessage {
+public abstract class WebMessage extends ActorMessage implements FromMessage {
     /**
      * The actor that sent this message. This can be a virtual actor representing the web client.
      */
-    public abstract ActorRef<? extends WebMessage> sender();
+    @Override
+    public abstract ActorRef<? extends WebMessage> getFrom();
 
     /**
      * The message's text body, if it has one; {@code null} otherwise.
@@ -35,4 +38,9 @@ public abstract class WebMessage {
      * The message's binary body, if it has one; {@code null} otherwise.
      */
     public abstract ByteBuffer getByteBufferBody();
+
+    @Override
+    protected String contentString() {
+        return super.contentString() + " from: " + getFrom();
+    }
 }

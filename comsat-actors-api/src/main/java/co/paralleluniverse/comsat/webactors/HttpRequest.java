@@ -14,7 +14,6 @@
 package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.Multimap;
 import java.util.Collection;
 import java.util.Map;
@@ -171,7 +170,6 @@ public abstract class HttpRequest extends HttpMessage {
 //     * @return the reconstructed URL
 //     */
 //    public abstract String getRequestURL();
-    
     /**
      * The host name of the server to which the request was sent.
      * It is the value of the part before ":" in the {@code Host} header value, if any,
@@ -189,30 +187,28 @@ public abstract class HttpRequest extends HttpMessage {
     public abstract int getServerPort();
 
     /**
-     * Returns a {@link SendPort channel} to which further messages will be sent to the client in the same stream as the response.
-     * If this method is called, the connection to the client is not closed when the web actor responds to this requests with an
-     * {@link HttpResponse}. To close the connection, {@link SendPort#close() close()} must be called on the returned channel.
-     * <p/>Every message sent to the channel will be written to the HTTP output stream and then will flush the stream.
-     *
-     * @return a {@link SendPort channel} to which further messages will be sent to the client in the same stream as the response.
-     */
-    public abstract SendPort<WebDataMessage> openChannel();
-
-    /**
-     * Whether or not the response should be closed when received.
-     *
-     * @return {@code false} if {@link #openChannel()} has been called on this request; {@code false} otherwise.
-     */
-    protected abstract boolean shouldClose();
-
-    /**
      * Returns an actor representing the client to which an {@link HttpResponse} should be sent as a response to this request.
-     * All {@code HttpRequest}s from the same session will have the same sender. It will appear to have died (i.e. send an 
+     * All {@code HttpRequest}s from the same session will have the same sender. It will appear to have died (i.e. send an
      * {@link co.paralleluniverse.actors.ExitMessage ExitMessage} if {@link co.paralleluniverse.actors.Actor#watch(co.paralleluniverse.actors.ActorRef) watched})
      * when the session is terminated.
      *
      * @return an actor representing the client
      */
     @Override
-    public abstract ActorRef<HttpResponse> sender();
+    public abstract ActorRef<HttpResponse> getFrom();
+
+    @Override
+    protected String contentString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" ").append(getMethod());
+        sb.append(" uri: ").append(getRequestURI());
+        sb.append(" query: ").append(getQueryString());
+        sb.append(" params: ").append(getParameters());
+        sb.append(" headers: ").append(getHeaders());
+        sb.append(" cookies: ").append(getCookies());
+        sb.append(" contentLength: ").append(getContentLength());
+        sb.append(" charEncoding: ").append(getCharacterEncoding());
+        sb.append(" body: ").append(getStringBody());
+        return super.contentString() + sb;
+    }
 }
