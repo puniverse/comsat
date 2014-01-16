@@ -201,6 +201,11 @@ public class WebActorEndpoint extends Endpoint {
         private void log(String message, Throwable t) {
             httpSession.getServletContext().log(message, t);
         }
+
+        @Override
+        public String toString() {
+            return "WebSocketActor{" + "session=" + session + ", webActor=" + webActor + '}';
+        }
     }
 
     private static class WebSocketChannel implements SendPort<WebDataMessage> {

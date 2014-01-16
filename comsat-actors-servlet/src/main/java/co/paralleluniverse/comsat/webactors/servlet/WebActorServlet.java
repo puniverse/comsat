@@ -234,6 +234,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         private void log(String message, Throwable t) {
             session.getServletContext().log(message, t);
         }
+
+        @Override
+        public String toString() {
+            return "ServletHttpActor{" + "session=" + session + ", webActor=" + webActor + '}';
+        }
     }
 
     private static class HttpChannel implements SendPort<HttpResponse> {
