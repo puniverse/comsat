@@ -15,28 +15,22 @@ package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.actors.behaviors.IdMessage;
-import java.nio.ByteBuffer;
 
 /**
- * A message sent by a virtual actor representing an open HTTP stream signifying that an HTTP stream has been opened.
+ * A message sent to a web actor indicating that a new stream has been opened.
+ * This message is sent as a result of the web actor replying to an {@link HttpRequest}
+ * with an {@link HttpResponse} whose {@link HttpResponse.Builder#startActor() startActor} method has been called.
+ * The actor sending this message writes all received {@link WebDataMessage} to the HTTP response stream that's been left
+ * open after the {@link HttpResponse}.
+ * <p/>
+ * This is usually used by SSE.
  */
-public class HttpStreamOpened extends WebMessage implements IdMessage {
-    private final ActorRef<WebDataMessage> actor;
+public class HttpStreamOpened extends WebStreamOpened implements IdMessage {
     private final HttpResponse response;
 
     public HttpStreamOpened(ActorRef<WebDataMessage> actor, HttpResponse response) {
-        this.actor = actor;
+        super(actor);
         this.response = response;
-    }
-
-    /**
-     * {@inheritDoc }
-     * <p/>
-     * Returns the actor to be used for sending {@link WebDataMessage}s over the stream.
-     */
-    @Override
-    public ActorRef<WebDataMessage> getFrom() {
-        return actor;
     }
 
     /**
@@ -47,27 +41,5 @@ public class HttpStreamOpened extends WebMessage implements IdMessage {
     @Override
     public Object getId() {
         return response;
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>This method returns {@code null}, as it has no body.
-     *
-     * @return {@code null}
-     */
-    @Override
-    public String getStringBody() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>This method returns {@code null}, as it has no body.
-     *
-     * @return {@code null}
-     */
-    @Override
-    public ByteBuffer getByteBufferBody() {
-        return null;
     }
 }
