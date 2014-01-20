@@ -246,6 +246,7 @@ project (':comsat-servlet') {
         compile 'javax.servlet:javax.servlet-api:3.0.1'            
     }
 }
+
 project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
@@ -275,18 +276,21 @@ project (':comsat-actors-servlet') {
         srcFiles 'javax.servlet:javax.servlet-api:3.1.0:sources' 
     }
 }
+
 project(':comsat-actors-netty') {
     dependencies {
         compile 'org.webbitserver:webbit:0.4.15'
         compile project (':comsat-actors-api')
     }
 }
+
 project(':comsat-actors-undertow') {
     dependencies {
         compile 'io.undertow:undertow-core:1.0.0.Beta18'
         compile project (':comsat-actors-api')
     }
 }
+
 project(':comsat-tomcat-loader') {
     dependencies {
         compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.0-RC3'
@@ -295,6 +299,7 @@ project(':comsat-tomcat-loader') {
         from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
     } 
 }
+
 project(':comsat-jetty-loader') {
     dependencies {
         compile 'org.eclipse.jetty:jetty-webapp:9.1.0.RC0'
