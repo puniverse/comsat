@@ -36,7 +36,7 @@ When running code that uses Quasar, the instrumentation agent must be run by add
 
 ## Getting help
 
-Questions and suggestions are welcome at this [forum/mailing list](https://groups.google.com/forum/?fromgroups#!forum/quasar-pulsar-user).
+Questions and suggestions are welcome at this [forum/mailing list](https://groups.google.com/forum/#!forum/comsat-user).
 
 ## License 
 
