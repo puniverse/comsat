@@ -45,22 +45,29 @@ Where `ARTIFACT` is:
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – contains an implementation of Web Actors on top of Servlet and WebSocket (JSR-356) containers
 
-### Activating Comsat
+### Enabling Comsat
 
-#### Using a Java agent
+Comsat runs code in [Quasar](http://docs.paralleluniverse.co/quasar/) fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat; or at compilation time.
 
-Then, the following must be added to the java command line (or use your favorite build tool to add this as a JVM argument):
+AOT instrumentation is eplained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instruemtnation).
+
+#### The Java Agent
+
+To use the Java agent, the following must be added to the java command line (or use your favorite build tool to add this as a JVM argument) when launching the process (Servlet container if you're deploying your app as a WAR file):
 
 ~~~ sh
 -javaagent:path-to-quasar-jar.jar
 ~~~
 
+#### In Tomcat
 
-### In Tomcat
+If you're using Tomcat as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-tomcat-loader-{{site.version}}.jar` into Tomcat's `lib` directory.
 
+Then, include the following in your webapp's `context.xml` (in the `META-INF` directory):
 
-### In Jetty
-
+~~~ xml
+<Loader loaderClass="co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader"/>
+~~~
 
 ### Building Quasar {#build}
 
