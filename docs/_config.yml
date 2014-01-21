@@ -14,6 +14,7 @@ kramdown:
 
 # Site globals used throughout docs.
 project: Comsat
+version: 0.1.0
 github: puniverse/comsat
 google_group: "https://groups.google.com/forum/#!forum/comsat-user"
 tagline: "Scalable web application libraries"

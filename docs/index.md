@@ -4,7 +4,7 @@ layout: default
 
 # Overview
 
-Comsat is a set of open source libraries that integrate [Quasar](http://puniverse.github.io/quasar/) with various web or enterprise technologies (like HTTP services and database access). With Comsat, you can write web applications that are scalable and performant while, at the same time, are simple to code and maintain.
+COMSAT (or Comsat) is a set of open source libraries that integrate [Quasar](http://puniverse.github.io/quasar/) with various web or enterprise technologies (like HTTP services and database access). With Comsat, you can write web applications that are scalable and performant while, at the same time, are simple to code and maintain.
 
 Comsat is not a web framework. In fact, it does not add new APIs at all (with one exception, Web Actors, mentioned later). It provides implementation to popular (and often, standard) APIs like Servlet, JAX-RS, and JDBC, that can be called within Quasar fibers. 
 
@@ -14,27 +14,17 @@ Comsat does provide one new API that you may choose to use: [Web Actors](manual/
 
 ## News
 
-### October 15, 2013
+### January 22, 2014
 
-Quasar 0.3.0 has been released.
-
-A [new spaceships demo](https://github.com/puniverse/spaceships-demo) showcases Quasar's (and SpaceBase's) abilities.
-
-### July 19, 2013
-
-Quasar/Pulsar 0.2.0 [has been released](http://blog.paralleluniverse.co/post/55876031297/quasar-pulsar-0-2-0-distributed-actors-supervisors).
-
-### May 2, 2013
-
-Introductory blog post: [Erlang (and Go) in Clojure (and Java), Lightweight Threads, Channels and Actors for the JVM](<http://blog.paralleluniverse.co/post/49445260575/quasar-pulsar>). 
+COMSAT 0.1.0 has been released.
 
 # Getting Started
 
 ### System requirements
 
-Java 7 and is required to use Comsat.
+Java 7 and is required to use COMSAT.
 
-### Using Leiningen {#lein}
+### Using Maven {#maven}
 
 Add the following dependency to Maven:
 
@@ -42,7 +32,7 @@ Add the following dependency to Maven:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>ARTIFACT</artifactId>
-    <version>0.1.0</version>
+    <version>{{site.version}}</version>
 </dependency>
 ~~~
 
@@ -168,10 +158,6 @@ The `comsat-jdbc` project integrates the JDBC API with applications employing Qu
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
 
 Normally, Comsat transforms asynchronous (callback based) API into fiber-blocking operations. JDBC, however, has no asynchronous API. comsat-jdbc simply runs the actual thread-blocking JDBC operations in a thread pool, and blocks the calling fiber until the operation has completed execution in the thread pool. As a result, you will not get any scalability benefits by calling your database in fibers (unlike, say, calling web services), because an OS thread will still block on every JDBC call. In practice, though, it matters little, as your database is likely to be a narrower bottleneck than the OS scheduler anyway.
-
-
-XXXXXXXXXX Deployment in Servlet (JNDI?)
-
 
 {:.alert .alert-warn}
 **Note**: Your application may only may direct use of the Comsat JDBC data source, because methods calling the API must be declared suspendable (or run on regular threads). Database access frameworks (like various ORM solutions) that make use of JDBC cannot use this data source and be used in Quasar fibers. In the future, we will provide separate integration module for some popular database access libraries.
