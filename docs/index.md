@@ -268,5 +268,4 @@ The virtual actor that's the *sender* of the messages received from the client r
 
 ## Examples
 
-{% capture examples %}https://github.com/{{site.github}}/tree/master/src/test/java/co/paralleluniverse/examples{% endcapture %}
-
+This GitHub project contains examples covering most of the COMSAT functionality: [puniverse/comsat-examples](https://github.com/puniverse/comsat-examples).
