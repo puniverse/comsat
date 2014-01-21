@@ -178,6 +178,26 @@ XXXXXXXXXX Deployment in Servlet (JNDI?)
 
 If you want to learn how to use JDBC, the [JDBC tutorial](http://docs.oracle.com/javase/tutorial/jdbc/basics/) is a good resource.
 
+#### JDBC Deployment Via JNDI
+
+Servlets often make use of JDBC data sources exposed through JNDI. If you do that, you can declare a COMSAT (i.e. a fiber-aware) JDBC data source through JNDI that will wrap your native data source. To do so, you will use the `co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory` DataSource factory, and pass in the number of threads you'd like COMSAT to use in the JDBC worker pool.
+
+If you're using COMSAT, the following example is a snippet of `context.xml` that will declare a DataSource under the `jdbc/fiberdb` name, which wraps a native DB declared under the `jdbc/tdb` name:
+
+~~~ xml
+<!--link to the global db resource-->
+<ResourceLink name="jdbc/tdb"
+              global="jdbc/gdb"
+              type="javax.sql.DataSource" />
+<!--wrap the linked global db resource by fiber wrapper-->
+<Resource name="jdbc/fiberdb" auth="Container" 
+          type="javax.sql.DataSource"
+          rawDataSource="jdbc/tdb"
+          threadsCount="10"
+          url="fiber"
+          factory="co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory"/>
+~~~
+
 ## Web Actors
 
 Web Acotrs are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, SSE and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
