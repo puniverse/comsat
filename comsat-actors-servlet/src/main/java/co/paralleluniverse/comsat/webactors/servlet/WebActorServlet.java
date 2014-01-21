@@ -373,9 +373,8 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             if (dead)
                 return;
             this.dead = true;
-            super.die(cause);
-            assert (Object) mailbox() instanceof HttpStreamChannel;
             mailbox().close();
+            super.die(cause);
         }
 
         private void log(String message) {
@@ -384,6 +383,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
         private void log(String message, Throwable t) {
             ctx.getRequest().getServletContext().log(message, t);
+        }
+
+        @Override
+        public String toString() {
+            return "HttpStreamActor{request + " + getName() + "}";
         }
     }
 
@@ -436,7 +440,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                     ServletOutputStream os = response.getOutputStream();
                     os.close();
                 } catch (IOException e) {
-                    ctx.getRequest().getServletContext().log("error", e);
+                    //ctx.getRequest().getServletContext().log("error", e);
                 }
                 ctx.complete();
             } catch (Exception e) {
