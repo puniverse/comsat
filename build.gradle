@@ -264,7 +264,8 @@ project (':comsat-jersey-server') {
 
 project (':comsat-actors-api') {    
     dependencies {
-        compile  'co.paralleluniverse:quasar-actors:0.4.0'
+        compile 'co.paralleluniverse:quasar-actors:0.4.0'
+        compile 'com.google.guava:guava:15.0'
     }
 }
 
