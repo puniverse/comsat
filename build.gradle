@@ -6,7 +6,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.1.0-SNAPSHOT"
+    version             = "0.1.0"
     status              = "integration"
     description         = "Fibers services for web"
     ext.url             = "http://puniverse.github.com/comsat"
@@ -55,7 +55,7 @@ subprojects {
     }
     
     dependencies {
-        compile 'co.paralleluniverse:quasar-core:0.4.0-SNAPSHOT'
+        compile 'co.paralleluniverse:quasar-core:0.4.0'
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
 
@@ -264,7 +264,7 @@ project (':comsat-jersey-server') {
 
 project (':comsat-actors-api') {    
     dependencies {
-        compile  'co.paralleluniverse:quasar-actors:0.4.0-SNAPSHOT'
+        compile  'co.paralleluniverse:quasar-actors:0.4.0'
     }
 }
 

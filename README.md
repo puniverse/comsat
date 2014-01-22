@@ -30,18 +30,10 @@ Or, build from sources by running:
 
 ## Usage
 
-* [Documentation](http://puniverse.github.io/comsat/)
-* [Javadoc](http://puniverse.github.io/comsat/javadoc)
+* [Documentation](http://docs.paralleluniverse.co/comsat/)
+* [Javadoc](http://docs.paralleluniverse.co/comsat/javadoc)
 
-You can also study the examples [here](https://github.com/puniverse/quasar/tree/master/quasar-actors/src/test/java/co/paralleluniverse/actors).
-
-You can also read the introductory [blog post](http://blog.paralleluniverse.co/post/49445260575/quasar-pulsar).
-
-When running code that uses Quasar, the instrumentation agent must be run by adding this to the `java` command line:
-
-```
--javaagent:path-to-quasar-jar.jar
-```
+You can also study the examples [here](https://github.com/puniverse/comsat-examples).
 
 ## Getting help
 
