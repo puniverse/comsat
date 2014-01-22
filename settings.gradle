@@ -1,2 +1,0 @@
-rootProject.name = 'comsat'
-include 'comsat-jdbc','comsat-jersey-server','comsat-servlet','comsat-jax-rs-client','comsat-actors-api','comsat-actors-servlet','comsat-actors-netty','comsat-actors-undertow','comsat-tomcat-loader','comsat-jetty-loader'//,'comsat-httpclient'
