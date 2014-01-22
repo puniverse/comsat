@@ -1,12 +1,11 @@
 subprojects {
-
     apply plugin: 'java'
 
     sourceCompatibility = '1.7'
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.1.0"
+    version             = "0.1.1-SNAPSHOT"
     status              = "integration"
     description         = "Fibers services for web"
     ext.url             = "http://puniverse.github.com/comsat"
@@ -43,10 +42,10 @@ subprojects {
             force "com.google.guava:guava:15.0"
             force "org.ow2.asm:asm:4.2"
             force "org.slf4j:slf4j-api:1.7.5"
-            force "log4j:log4j:1.2.16"
-            force "junit:junit:4.10"
-            //            force "org.apache.httpcomponents:httpcore:4.3"
-            //            force "org.apache.httpcomponents:httpclient:4.3-beta2"
+            force "log4j:log4j:1.2.17"
+            force "junit:junit:4.11"
+            //            force "org.apache.httpcomponents:httpcore:4.3.1"
+            //            force "org.apache.httpcomponents:httpclient:4.3.1"
         }
     }
 
@@ -193,7 +192,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.6.0'
     }
 }    
 
@@ -236,9 +235,9 @@ project (':comsat-jax-rs-client') {
 
 //project (':comsat-httpclient') {
 //    dependencies {
-//        compile 'org.apache.httpcomponents:httpcore:4.3'
-//        compile 'org.apache.httpcomponents:httpclient:4.3-beta2'
-//        compile 'org.apache.httpcomponents:httpasyncclient:4.0-beta4'
+//        compile 'org.apache.httpcomponents:httpcore:4.3.1'
+//        compile 'org.apache.httpcomponents:httpclient:4.3.1'
+//        compile 'org.apache.httpcomponents:httpasyncclient:4.0'
 //    }
 //}
 
@@ -251,7 +250,7 @@ project (':comsat-servlet') {
 project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
-        compile 'org.sonatype.sisu.inject:cglib:3.0' // instead of old cglib in jersey
+        compile 'org.sonatype.sisu.inject:cglib:3.1.1' // instead of old cglib in jersey
         compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.5.1' ) {
             exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
@@ -288,14 +287,14 @@ project(':comsat-actors-netty') {
 
 project(':comsat-actors-undertow') {
     dependencies {
-        compile 'io.undertow:undertow-core:1.0.0.Beta18'
+        compile 'io.undertow:undertow-core:1.0.0.Beta31'
         compile project (':comsat-actors-api')
     }
 }
 
 project(':comsat-tomcat-loader') {
     dependencies {
-        compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.0-RC3'
+        compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.0-RC10'
     }
     jar {
         from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
