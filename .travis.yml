@@ -8,7 +8,7 @@ branches:
     - gh-pages
 env:
   global:
-    - secure: "NTxp50e11DMSJH1ApQbjlBxY4bcsLAGSw3mYzodOlceybMBh+hbpiAmqBpCZ9878wm5AZcPVq6ULzB47IrdfQG3Xn3SybwWLWpZRI3B0eaqoyhk71J5Uuu9rr+xXoD1C1q/TV1Z0Zf5unR1jz5DmUZ5En8yf4lZ4MI7gft6tDFI="
+    - secure: "I8awdba2QYgO+vKmbsIa10L7dGPpcvt/l0sfE+NH2On4ZtBFuX7X4tFncmWizHhrqa0xvoAEl8hZFZ6+RjbAOzd9kDLfdHevLVv6z8VQusvY58GbAHPP0h4yd4PA0YsSeiLv1F7X7bCH6weZo16t42lVh4NrAS2XHqSOOvMyAWo="
     - DOCS_BRANCH="0.1.0"
     - GEN_APIDOCS="gradle javadoc"
 
