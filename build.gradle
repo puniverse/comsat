@@ -40,7 +40,7 @@ subprojects {
         resolutionStrategy {
             failOnVersionConflict()
             force "com.google.guava:guava:15.0"
-            force "org.ow2.asm:asm:4.2"
+            force "org.ow2.asm:asm:5.0_BETA"
             force "org.slf4j:slf4j-api:1.7.5"
             force "log4j:log4j:1.2.17"
             force "junit:junit:4.11"
