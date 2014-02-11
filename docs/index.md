@@ -1,5 +1,7 @@
 ---
 layout: default
+title: Comsat
+description: "Comsat integrates lightweight threads and actors with the JVM web stack."
 ---
 
 # Overview
