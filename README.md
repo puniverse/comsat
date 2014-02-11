@@ -9,7 +9,7 @@ In Maven:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>ARTIFACT</artifactId>
-    <version>{{site.version}}</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
