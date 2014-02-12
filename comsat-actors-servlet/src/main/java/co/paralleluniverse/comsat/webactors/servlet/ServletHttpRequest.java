@@ -19,11 +19,13 @@ import static co.paralleluniverse.comsat.webactors.Cookie.*;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.comsat.webactors.WebDataMessage;
+import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
@@ -44,7 +46,7 @@ import javax.servlet.http.HttpServletResponse;
 class ServletHttpRequest extends HttpRequest {
     final HttpServletRequest request;
     final HttpServletResponse response;
-    private Multimap<String, String> headers;
+    private ListMultimap<String, String> headers;
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
     private final ActorRef<? super HttpResponse> sender;
@@ -114,7 +116,7 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public Multimap<String, String> getHeaders() {
+    public ListMultimap<String, String> getHeaders() {
         if (headers == null) {
             ImmutableListMultimap.Builder<String, String> mm = ImmutableListMultimap.builder();// LinkedHashMultimap.create();
             for (Enumeration<String> hs = request.getHeaderNames(); hs.hasMoreElements();) {
@@ -192,6 +194,12 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
+    public String getScheme() {
+        return request.getScheme();
+    }
+
+    
+    @Override
     public String getQueryString() {
         return request.getQueryString();
     }
@@ -237,7 +245,7 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public ActorRef<HttpResponse> getFrom() {
-        return (ActorRef<HttpResponse>) sender;
+    public ActorRef<WebMessage> getFrom() {
+        return (ActorRef<WebMessage>) sender;
     }
 }

@@ -15,9 +15,9 @@ package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.actors.ActorRef;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.ListMultimap;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -30,7 +30,50 @@ import java.util.List;
  * if {@link HttpRequest#openChannel() openChannel} has not been called on the request,
  * and will be flushed but not closed if {@link HttpRequest#openChannel() openChannel} <i>has</i> been called on the request.
  */
-public class HttpResponse extends HttpMessage {
+public abstract class HttpResponse extends HttpMessage {
+    @Override
+    public abstract ActorRef<WebMessage> getFrom();
+
+    /**
+     * The {@link HttpRequest} this is a response to.
+     */
+    public abstract HttpRequest getRequest();
+
+    /**
+     * The response's HTTP status code.
+     */
+    public abstract int getStatus();
+
+    /**
+     * An exception optionally associated with an error status code.
+     */
+    public abstract Throwable getError();
+
+    /**
+     * The redirect URL target if this is a {@link #redirect(HttpRequest, String) redirect} response.
+     */
+    public abstract String getRedirectPath();
+
+    public abstract boolean shouldStartActor();
+
+    @Override
+    protected String contentString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" ").append(getStatus());
+        sb.append(" headers: ").append(getHeaders());
+        sb.append(" cookies: ").append(getCookies());
+        sb.append(" contentLength: ").append(getContentLength());
+        sb.append(" charEncoding: ").append(getCharacterEncoding());
+        if (getStringBody() != null)
+            sb.append(" body: ").append(getStringBody());
+        if (getRedirectPath() != null)
+            sb.append(" redirectPath: ").append(getRedirectPath());
+        if (getError() != null)
+            sb.append(" error: ").append(getError());
+        sb.append(" shouldStartActor: ").append(shouldStartActor());
+        return super.contentString() + sb;
+    }
+
     /**
      * Creates an {@link HttpResponse} with a text body and response code {@code 200}.
      *
@@ -105,7 +148,7 @@ public class HttpResponse extends HttpMessage {
         private String contentType;
         private Charset charset;
         private List<Cookie> cookies;
-        private Multimap<String, String> headers;
+        private ListMultimap<String, String> headers;
         private int status;
         private Throwable error;
         private String redirectPath;
@@ -191,7 +234,7 @@ public class HttpResponse extends HttpMessage {
          */
         public Builder addHeader(final String name, final String value) {
             if (headers == null)
-                headers = LinkedHashMultimap.create();
+                headers = LinkedListMultimap.create();
             headers.put(name, value);
             return this;
         }
@@ -213,10 +256,12 @@ public class HttpResponse extends HttpMessage {
         /**
          * Sets the status code for this response.
          *
-         * <p>This method is used to set the return status code
+         * <p>
+         * This method is used to set the return status code
          * Valid status codes are those in the 2XX, 3XX, 4XX, and 5XX ranges.
          * Other status codes are treated as container specific.
-         * <p>codes in the 4XX and 5XX range will be treated as error codes, and
+         * <p>
+         * codes in the 4XX and 5XX range will be treated as error codes, and
          * will trigger the container's error reporting.
          *
          * @param sc the status code
@@ -263,149 +308,139 @@ public class HttpResponse extends HttpMessage {
          * @return a new {@link HttpResponse}
          */
         public HttpResponse build() {
-            return new HttpResponse(sender, this);
+            return new SimpleHttpResponse(sender, this);
         }
     }
-    //
-    private final ActorRef<WebMessage> sender;
-    private final HttpRequest request;
-    private final String contentType;
-    private final Charset charset;
-    private final String strBody;
-    private final ByteBuffer binBody;
-    private final List<Cookie> cookies;
-    private final Multimap<String, String> headers;
-    private final int status;
-    private final Throwable error;
-    private final String redirectPath;
-    private final boolean startActor;
 
-    /**
-     * Use when forwarding
-     *
-     * @param from
-     * @param httpResponse
-     */
-    public HttpResponse(ActorRef<? super WebMessage> from, HttpResponse httpResponse) {
-        this.sender = (ActorRef<WebMessage>) from;
-        this.request = httpResponse.request;
-        this.contentType = httpResponse.contentType;
-        this.charset = httpResponse.charset;
-        this.strBody = httpResponse.strBody;
-        this.binBody = httpResponse.binBody != null ? httpResponse.binBody.asReadOnlyBuffer() : null;
-        this.cookies = httpResponse.cookies;
-        this.error = httpResponse.error;
-        this.headers = httpResponse.headers;
-        this.status = httpResponse.status;
-        this.redirectPath = httpResponse.redirectPath;
-        this.startActor = httpResponse.startActor;
-    }
+    private static class SimpleHttpResponse extends HttpResponse {
+        //
+        private final ActorRef<WebMessage> sender;
+        private final HttpRequest request;
+        private final String contentType;
+        private final Charset charset;
+        private final String strBody;
+        private final ByteBuffer binBody;
+        private final Collection<Cookie> cookies;
+        private final ListMultimap<String, String> headers;
+        private final int status;
+        private final Throwable error;
+        private final String redirectPath;
+        private final boolean startActor;
 
-    public HttpResponse(ActorRef<? super WebMessage> from, Builder builder) {
-        this.sender = (ActorRef<WebMessage>) from;
-        this.request = builder.request;
-        this.contentType = builder.contentType;
-        this.charset = builder.charset;
-        this.strBody = builder.strBody;
-        this.binBody = builder.binBody != null ? builder.binBody.asReadOnlyBuffer() : null;
-        this.cookies = builder.cookies != null ? ImmutableList.copyOf(builder.cookies) : null;
-        this.error = builder.error;
-        this.headers = builder.headers != null ? ImmutableMultimap.copyOf(builder.headers) : null;
-        this.status = builder.status;
-        this.redirectPath = builder.redirectPath;
-        this.startActor = builder.startActor;
-    }
+        /**
+         * Use when forwarding
+         *
+         * @param from
+         * @param httpResponse
+         */
+        public SimpleHttpResponse(ActorRef<? super WebMessage> from, HttpResponse httpResponse) {
+            this.sender = (ActorRef<WebMessage>) from;
+            this.request = httpResponse.getRequest();
+            this.contentType = httpResponse.getContentType();
+            this.charset = httpResponse.getCharacterEncoding();
+            this.strBody = httpResponse.getStringBody();
+            this.binBody = httpResponse.getByteBufferBody() != null ? httpResponse.getByteBufferBody().asReadOnlyBuffer() : null;
+            this.cookies = httpResponse.getCookies();
+            this.headers = httpResponse.getHeaders();
+            this.error = httpResponse.getError();
+            this.status = httpResponse.getStatus();
+            this.redirectPath = httpResponse.getRedirectPath();
+            this.startActor = httpResponse.shouldStartActor();
+        }
 
-    @Override
-    public ActorRef<WebMessage> getFrom() {
-        return sender;
-    }
+        public SimpleHttpResponse(ActorRef<? super WebMessage> from, Builder builder) {
+            this.sender = (ActorRef<WebMessage>) from;
+            this.request = builder.request;
+            this.contentType = builder.contentType;
+            this.charset = builder.charset;
+            this.strBody = builder.strBody;
+            this.binBody = builder.binBody != null ? builder.binBody.asReadOnlyBuffer() : null;
+            this.cookies = builder.cookies != null ? ImmutableList.copyOf(builder.cookies) : null;
+            this.headers = builder.headers != null ? ImmutableListMultimap.copyOf(builder.headers) : null;
+            this.error = builder.error;
+            this.status = builder.status;
+            this.redirectPath = builder.redirectPath;
+            this.startActor = builder.startActor;
+        }
 
-    @Override
-    public String getContentType() {
-        return contentType;
-    }
+        @Override
+        public ActorRef<WebMessage> getFrom() {
+            return sender;
+        }
 
-    @Override
-    public Charset getCharacterEncoding() {
-        return charset;
-    }
+        @Override
+        public String getContentType() {
+            return contentType;
+        }
 
-    @Override
-    public int getContentLength() {
-        if (binBody != null)
-            return binBody.remaining();
-        else
-            return -1;
-    }
+        @Override
+        public Charset getCharacterEncoding() {
+            return charset;
+        }
 
-    @Override
-    public String getStringBody() {
-        return strBody;
-    }
+        @Override
+        public int getContentLength() {
+            if (binBody != null)
+                return binBody.remaining();
+            else
+                return -1;
+        }
 
-    @Override
-    public ByteBuffer getByteBufferBody() {
-        return binBody != null ? binBody.duplicate() : null;
-    }
+        @Override
+        public String getStringBody() {
+            return strBody;
+        }
 
-    @Override
-    public Collection<Cookie> getCookies() {
-        return cookies;
-    }
+        @Override
+        public ByteBuffer getByteBufferBody() {
+            return binBody != null ? binBody.duplicate() : null;
+        }
 
-    @Override
-    public Multimap<String, String> getHeaders() {
-        return headers;
-    }
+        @Override
+        public Collection<Cookie> getCookies() {
+            return cookies;
+        }
 
-    /**
-     * The {@link HttpRequest} this is a response to.
-     */
-    public HttpRequest getRequest() {
-        return request;
-    }
+        @Override
+        public ListMultimap<String, String> getHeaders() {
+            return headers;
+        }
 
-    /**
-     * The response's HTTP status code.
-     */
-    public int getStatus() {
-        return status;
-    }
+        /**
+         * The {@link HttpRequest} this is a response to.
+         */
+        @Override
+        public HttpRequest getRequest() {
+            return request;
+        }
 
-    /**
-     * An exception optionally associated with an error status code.
-     */
-    public Throwable getError() {
-        return error;
-    }
+        /**
+         * The response's HTTP status code.
+         */
+        @Override
+        public int getStatus() {
+            return status;
+        }
 
-    /**
-     * The redirect URL target if this is a {@link #redirect(HttpRequest, String) redirect} response.
-     */
-    public String getRedirectPath() {
-        return redirectPath;
-    }
+        /**
+         * An exception optionally associated with an error status code.
+         */
+        @Override
+        public Throwable getError() {
+            return error;
+        }
 
-    public boolean shouldStartActor() {
-        return startActor;
-    }
+        /**
+         * The redirect URL target if this is a {@link #redirect(HttpRequest, String) redirect} response.
+         */
+        @Override
+        public String getRedirectPath() {
+            return redirectPath;
+        }
 
-    @Override
-    protected String contentString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(" ").append(getStatus());
-        sb.append(" headers: ").append(getHeaders());
-        sb.append(" cookies: ").append(getCookies());
-        sb.append(" contentLength: ").append(getContentLength());
-        sb.append(" charEncoding: ").append(getCharacterEncoding());
-        if (strBody != null)
-            sb.append(" body: ").append(strBody);
-        if(redirectPath != null)
-            sb.append(" redirectPath: ").append(getRedirectPath());
-        if(error != null)
-            sb.append(" error: ").append(getError());
-        sb.append(" shouldStartActor: ").append(shouldStartActor());
-        return super.contentString() + sb;
+        @Override
+        public boolean shouldStartActor() {
+            return startActor;
+        }
     }
 }

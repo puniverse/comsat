@@ -13,7 +13,7 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ListMultimap;
 import java.nio.charset.Charset;
 import java.util.Collection;
 
@@ -25,7 +25,7 @@ public abstract class HttpMessage extends WebMessage {
      * A multimap of the headers contained in this message and (all) their values.
      * If the request has no headers, returns an empty multimap.
      */
-    public abstract Multimap<String, String> getHeaders();
+    public abstract ListMultimap<String, String> getHeaders();
 
     /**
      * A collection all of the {@link Cookie} objects the client sent with this message.
