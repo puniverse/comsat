@@ -287,7 +287,7 @@ project(':comsat-actors-netty') {
 
 project(':comsat-actors-undertow') {
     dependencies {
-        compile 'io.undertow:undertow-core:1.0.0.CR5'
+        compile 'io.undertow:undertow-core:1.0.0.Final'
         compile project (':comsat-actors-api')
     }
 }
