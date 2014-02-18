@@ -251,5 +251,10 @@ public class WebActorEndpoint extends Endpoint {
                 httpSession.getServletContext().log("IOException on close", ex);
             }
         }
+
+        @Override
+        public void close(Throwable t) {
+            close();
+        }
     }
 }

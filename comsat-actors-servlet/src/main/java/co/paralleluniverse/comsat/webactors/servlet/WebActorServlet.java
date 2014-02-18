@@ -336,6 +336,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         public void close() {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public void close(Throwable t) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private static class HttpStreamActorRef extends FakeActor<WebDataMessage> {
@@ -446,6 +451,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             } catch (Exception e) {
             }
         }
+
+        @Override
+        public void close(Throwable t) {
+            close();
+        }
     }
 
     static SendPort<WebDataMessage> openChannel(final HttpStreamActorRef actor, final AsyncContext ctx, final HttpServletResponse response) {
@@ -484,6 +494,10 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
             @Override
             public void close() {
+            }
+
+            @Override
+            public void close(Throwable t) {
             }
         };
     }

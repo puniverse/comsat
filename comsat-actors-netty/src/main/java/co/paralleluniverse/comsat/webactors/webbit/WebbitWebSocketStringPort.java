@@ -46,4 +46,9 @@ class WebbitWebSocketStringPort implements SendPort<String> {
     public void close() {
         connection.close();
     }
+    
+    @Override
+    public void close(Throwable t) {
+        close();
+    }
 }

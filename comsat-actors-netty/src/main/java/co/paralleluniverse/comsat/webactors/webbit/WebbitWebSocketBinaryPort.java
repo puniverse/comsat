@@ -47,4 +47,9 @@ class WebbitWebSocketBinaryPort implements SendPort<ByteBuffer> {
     public void close() {
         connection.close();
     }
+
+    @Override
+    public void close(Throwable t) {
+        connection.close();
+    }
 }

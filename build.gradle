@@ -39,13 +39,13 @@ subprojects {
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
-            force "com.google.guava:guava:15.0"
+            force "com.google.guava:guava:16.0.1"
             force "org.ow2.asm:asm:5.0_BETA"
-            force "org.slf4j:slf4j-api:1.7.5"
+            force "org.slf4j:slf4j-api:1.7.6"
             force "log4j:log4j:1.2.17"
             force "junit:junit:4.11"
-            //            force "org.apache.httpcomponents:httpcore:4.3.1"
-            //            force "org.apache.httpcomponents:httpclient:4.3.1"
+            //            force "org.apache.httpcomponents:httpcore:4.3.2"
+            //            force "org.apache.httpcomponents:httpclient:4.3.2"
         }
     }
 
@@ -192,13 +192,13 @@ buildscript {
     }
 
     dependencies {
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.6.0'
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.7.0'
     }
 }    
 
 project (':comsat-jdbc') {
     dependencies {
-        compile 'com.google.guava:guava:15.0'
+        compile 'com.google.guava:guava:16.0.1'
     }
     compileJava {
         doLast {
@@ -235,8 +235,8 @@ project (':comsat-jax-rs-client') {
 
 //project (':comsat-httpclient') {
 //    dependencies {
-//        compile 'org.apache.httpcomponents:httpcore:4.3.1'
-//        compile 'org.apache.httpcomponents:httpclient:4.3.1'
+//        compile 'org.apache.httpcomponents:httpcore:4.3.2'
+//        compile 'org.apache.httpcomponents:httpclient:4.3.2'
 //        compile 'org.apache.httpcomponents:httpasyncclient:4.0'
 //    }
 //}
@@ -265,7 +265,7 @@ project (':comsat-jersey-server') {
 project (':comsat-actors-api') {    
     dependencies {
         compile 'co.paralleluniverse:quasar-actors:0.5.0-SNAPSHOT'
-        compile 'com.google.guava:guava:15.0'
+        compile 'com.google.guava:guava:16.0.1'
     }
 }
 
@@ -287,14 +287,14 @@ project(':comsat-actors-netty') {
 
 project(':comsat-actors-undertow') {
     dependencies {
-        compile 'io.undertow:undertow-core:1.0.0.Beta31'
+        compile 'io.undertow:undertow-core:1.0.0.CR5'
         compile project (':comsat-actors-api')
     }
 }
 
 project(':comsat-tomcat-loader') {
     dependencies {
-        compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.0-RC10'
+        compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.3'
     }
     jar {
         from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
@@ -331,7 +331,7 @@ task javadoc(type: Javadoc) {
         links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
-                'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
+                'http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/',
                 'http://docs.oracle.com/javaee/7/api/',
                 'http://jersey.java.net/apidocs/latest/jersey/']
     }

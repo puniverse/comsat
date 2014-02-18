@@ -24,18 +24,17 @@ class WebbitWebSocketPort implements SendPort<WebDataMessage> {
     public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
         return trySend(message);
     }
-    
-    
+
     @Override
     public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
-        return send(message,timeout.nanosLeft(),TimeUnit.NANOSECONDS);
+        return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
     }
 
     @Override
     public boolean trySend(WebDataMessage message) {
         if (!message.isBinary())
             connection.send(message.getStringBody());
-        else 
+        else
             connection.send(message.getByteBufferBody().array());
         return true;
     }
@@ -43,5 +42,10 @@ class WebbitWebSocketPort implements SendPort<WebDataMessage> {
     @Override
     public void close() {
         connection.close();
+    }
+
+    @Override
+    public void close(Throwable t) {
+        close();
     }
 }
