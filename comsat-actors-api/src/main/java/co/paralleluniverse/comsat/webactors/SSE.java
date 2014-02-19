@@ -32,7 +32,7 @@ import java.nio.charset.Charset;
  * ```
  * 
  * You might want to consider wrapping the actor sending {@link HttpStreamOpened} with a 
- * {@link co.paralleluniverse.strands.channels.Channels#map(co.paralleluniverse.strands.channels.SendPort, com.google.common.base.Function) mapping channel}
+ * {@link co.paralleluniverse.strands.channels.Channels#mapSend(co.paralleluniverse.strands.channels.SendPort, com.google.common.base.Function) mapping channel}
  * to transform a specialized message class into {@link WebDataMessage} using the methods in this class.
  * 
  * For a good tutorial on SSE, please see: <a href="http://www.html5rocks.com/en/tutorials/eventsource/basics/">Stream Updates with Server-Sent Events</a>,
