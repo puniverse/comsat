@@ -305,6 +305,18 @@ project(':comsat-tomcat-loader') {
     jar {
         from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
     } 
+    
+    if (System.properties['java.version'].startsWith('1.8') ) { 
+        artifacts {
+            archives jar
+            archives project(':comsat-tomcat-loader-jdk8').jar
+            archives sourcesJar
+            archives javadocJar
+            //    archives distZip
+        }
+    
+        uploadArchives.dependsOn ':comsat-tomcat-loader-jdk8:jar'
+    }
 }
 
 project(':comsat-jetty-loader') {
