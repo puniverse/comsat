@@ -5,7 +5,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.2.0-SNAPSHOT"
+    version             = "0.1.1"
     status              = "integration"
     description         = "Fibers services for web"
     ext.url             = "http://puniverse.github.com/comsat"
@@ -35,12 +35,18 @@ subprojects {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         maven { url 'https://maven.java.net/content/repositories/snapshots' }
     }
-
+    
+    configurations {
+        provided
+        srcFiles
+        markdownDoclet
+    }
+    
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
             force "com.google.guava:guava:16.0.1"
-            force "org.ow2.asm:asm:5.0_BETA"
+            force "org.ow2.asm:asm:5.0.1"
             force "org.slf4j:slf4j-api:1.7.6"
             force "log4j:log4j:1.2.17"
             force "junit:junit:4.11"
@@ -49,14 +55,16 @@ subprojects {
         }
     }
 
-    configurations {
-        srcFiles
-        markdownDoclet
+    dependencies {
+        provided 'co.paralleluniverse:quasar-core:0.5.0'
+        markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
     
-    dependencies {
-        compile 'co.paralleluniverse:quasar-core:0.5.0-SNAPSHOT'
-        markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
+    sourceSets {
+        main.compileClasspath = main.compileClasspath + configurations.provided
+        main.runtimeClasspath = main.runtimeClasspath + configurations.provided
+        test.compileClasspath = test.compileClasspath + configurations.provided
+        test.runtimeClasspath = test.runtimeClasspath + configurations.provided
     }
 
     defaultTasks 'install'
@@ -72,7 +80,7 @@ subprojects {
         doLast {
             ant.taskdef(name:'scanSuspendables', 
                 classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
-                classpath: "build/classes/main:" + configurations.compile.asPath)
+                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.compile.asPath}")
             ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
@@ -213,7 +221,7 @@ project (':comsat-jdbc') {
             println("Instrumenting classes...")
             ant.taskdef(name:'instrumentation', 
                 classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
-                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
+                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.compile.asPath}")
             ant.instrumentation(verbose:'true', check:'true', debug:'true') {
                 fileset(dir: sourceSets.main.output.classesDir) {
                     exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
@@ -226,18 +234,17 @@ project (':comsat-jdbc') {
 project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
-        compile 'org.glassfish.jersey.core:jersey-client:2.5.1'
-        compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.5.1'
+        compile 'org.glassfish.jersey.core:jersey-client:2.7'
+        compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.7'
         srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
     }
-    
 }
 
 //project (':comsat-httpclient') {
 //    dependencies {
-//        compile 'org.apache.httpcomponents:httpcore:4.3.2'
-//        compile 'org.apache.httpcomponents:httpclient:4.3.2'
-//        compile 'org.apache.httpcomponents:httpasyncclient:4.0'
+//        compile 'org.apache.httpcomponents:httpcore:4.3.3'
+//        compile 'org.apache.httpcomponents:httpclient:4.3.3'
+//        compile 'org.apache.httpcomponents:httpasyncclient:4.1'
 //    }
 //}
 
@@ -251,12 +258,10 @@ project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.1.1' // instead of old cglib in jersey
-        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.5.1' ) {
-            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.7' ) {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
-        compile ('org.glassfish.jersey.core:jersey-client:2.5.1') {
-            exclude group: 'org.glassfish.hk2.external', module: 'asm-all-repackaged' 
+        compile ('org.glassfish.jersey.core:jersey-client:2.7') {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
     }
@@ -264,7 +269,7 @@ project (':comsat-jersey-server') {
 
 project (':comsat-actors-api') {    
     dependencies {
-        compile 'co.paralleluniverse:quasar-actors:0.5.0-SNAPSHOT'
+        compile 'co.paralleluniverse:quasar-actors:0.5.0'
         compile 'com.google.guava:guava:16.0.1'
     }
 }
@@ -272,8 +277,8 @@ project (':comsat-actors-api') {
 project (':comsat-actors-servlet') {
     dependencies {
         compile project (':comsat-actors-api')
-        compile 'javax.websocket:javax.websocket-api:1.0'
-        compile 'javax.servlet:javax.servlet-api:3.1.0' 
+        provided 'javax.websocket:javax.websocket-api:1.0'
+        provided 'javax.servlet:javax.servlet-api:3.1.0' 
         srcFiles 'javax.servlet:javax.servlet-api:3.1.0:sources' 
     }
 }
@@ -287,13 +292,14 @@ project(':comsat-actors-netty') {
 
 project(':comsat-actors-undertow') {
     dependencies {
-        compile 'io.undertow:undertow-core:1.0.0.Final'
+        compile 'io.undertow:undertow-core:1.0.2.Final'
         compile project (':comsat-actors-api')
     }
 }
 
 project(':comsat-tomcat-loader') {
     dependencies {
+        compile 'co.paralleluniverse:quasar-core:0.5.0'
         compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.3'
     }
     jar {
@@ -348,5 +354,5 @@ task clean(dependsOn: subprojects.clean) << {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.10'
+    gradleVersion = '1.11'
 }

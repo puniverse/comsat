@@ -39,6 +39,7 @@ import org.glassfish.jersey.server.spi.Container;
  * @author eitan
  */
 public class ServletContainer extends FiberHttpServlet implements Filter, Container {
+    private static final int DEFAULT_STACK_SIZE = 120;
     private final org.glassfish.jersey.servlet.ServletContainer jerseySC;
 
     /**
@@ -69,6 +70,8 @@ public class ServletContainer extends FiberHttpServlet implements Filter, Contai
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+        if (getStackSize() <= 0)
+            setStackSize(DEFAULT_STACK_SIZE);
     }
 
     /**

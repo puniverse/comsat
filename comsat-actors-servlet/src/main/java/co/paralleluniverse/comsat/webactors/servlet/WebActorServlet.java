@@ -129,7 +129,8 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
     @Override
     public void sessionDestroyed(HttpSessionEvent se) {
         HttpActorRef ha = getHttpActorRef(se.getSession());
-        ha.die(null);
+        if (ha != null)
+            ha.die(null);
     }
 
     @Override

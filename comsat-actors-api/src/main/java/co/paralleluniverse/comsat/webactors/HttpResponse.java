@@ -81,8 +81,8 @@ public abstract class HttpResponse extends HttpMessage {
      * @param body    the response body
      * @return A response {@link Builder} that can be used to add headers and other metadata to the response.
      */
-    public static Builder ok(HttpRequest request, String body) {
-        return new Builder(request, body);
+    public static Builder ok(ActorRef<? super WebMessage> from, HttpRequest request, String body) {
+        return new Builder(from, request, body);
     }
 
     /**
@@ -92,8 +92,8 @@ public abstract class HttpResponse extends HttpMessage {
      * @param body    the response body
      * @return A response {@link Builder} that can be used to add headers and other metadata to the response.
      */
-    public static Builder ok(HttpRequest request, ByteBuffer body) {
-        return new Builder(request, body);
+    public static Builder ok(ActorRef<? super WebMessage> from, HttpRequest request, ByteBuffer body) {
+        return new Builder(from, request, body);
     }
 
     /**
@@ -105,8 +105,8 @@ public abstract class HttpResponse extends HttpMessage {
      * @param cause   the exception that caused the error
      * @return A response {@link Builder} that can be used to add headers and other metadata to the response.
      */
-    public static Builder error(HttpRequest request, int status, Throwable cause) {
-        return new Builder(request).status(status).error(cause);
+    public static Builder error(ActorRef<? super WebMessage> from, HttpRequest request, int status, Throwable cause) {
+        return new Builder(from, request).status(status).error(cause);
     }
 
     /**
@@ -117,8 +117,8 @@ public abstract class HttpResponse extends HttpMessage {
      * @param body    the response body
      * @return A response {@link Builder} that can be used to add headers and other metadata to the response.
      */
-    public static Builder error(HttpRequest request, int status, String body) {
-        return new Builder(request, body).status(status);
+    public static Builder error(ActorRef<? super WebMessage> from, HttpRequest request, int status, String body) {
+        return new Builder(from, request, body).status(status);
     }
 
     /**

@@ -1,7 +1,3 @@
-sun.reflect.NativeMethodAccessorImpl.invoke0
-sun.reflect.NativeMethodAccessorImpl.invoke
-sun.reflect.DelegatingMethodAccessorImpl.invoke
-java.lang.reflect.Method.invoke
 org.glassfish.jersey.process.Inflector.apply
 org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory$1.invoke
 org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke

@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.servlet;
 
+import co.paralleluniverse.common.util.Debug;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
@@ -33,6 +34,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
     private transient FiberServletConfig configAD;
     private transient FiberServletContext contextAD;
     private final ThreadLocal<AsyncContext> currentAsyncContext = new ThreadLocal<AsyncContext>();
+    private int stackSize = -1;
  
     /**
      * 
@@ -57,7 +59,20 @@ public abstract class FiberGenericServlet extends GenericServlet {
     public void init(ServletConfig config) throws ServletException {
         this.contextAD = new FiberServletContext(config.getServletContext(), currentAsyncContext);
         this.configAD = new FiberServletConfig(config, contextAD);
+        
+        String sss = config.getInitParameter("stack-size");
+        if(sss != null)
+            stackSize = Integer.parseInt(sss);
+        
         this.init();
+    }
+
+    protected void setStackSize(int stackSize) {
+        this.stackSize = stackSize;
+    }
+
+    protected int getStackSize() {
+        return stackSize;
     }
 
     /**
@@ -72,7 +87,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
         req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         final AsyncContext ac = req.startAsync();
         final FiberServletRequest srad = wrapRequest(req);
-        new Fiber(new SuspendableRunnable() {
+        new Fiber(null, stackSize, new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {

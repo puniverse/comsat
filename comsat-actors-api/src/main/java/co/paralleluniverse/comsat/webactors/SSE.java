@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.comsat.webactors;
 
+import co.paralleluniverse.actors.ActorRef;
 import java.nio.charset.Charset;
 
 /**
@@ -51,8 +52,8 @@ public final class SSE {
      * @param request the {@link HttpRequest} in response to which we wish to start an SSE stream.
      * @return an {@link HttpResponse.Builder HttpResponse.Builder} (which can have other metadata, such as headers or cookies added to).
      */
-    public static HttpResponse.Builder startSSE(HttpRequest request) {
-        return new HttpResponse.Builder(request)
+    public static HttpResponse.Builder startSSE(ActorRef<? super WebMessage> from, HttpRequest request) {
+        return new HttpResponse.Builder(from, request)
                 .setContentType("text/event-stream")
                 .setCharacterEncoding(Charset.forName("UTF-8"))
                 .startActor();
@@ -69,8 +70,8 @@ public final class SSE {
      *                         after the connection has closed (will be encoded in the message body as {@code retry: ...})
      * @return an {@link HttpResponse.Builder HttpResponse.Builder} (which can have other metadata, such as headers or cookies added to).
      */
-    public static HttpResponse.Builder startSSE(HttpRequest request, long reconnectTimeout) {
-        return new HttpResponse.Builder(request, retryString(reconnectTimeout) + '\n')
+    public static HttpResponse.Builder startSSE(ActorRef<? super WebMessage> from, HttpRequest request, long reconnectTimeout) {
+        return new HttpResponse.Builder(from, request, retryString(reconnectTimeout) + '\n')
                 .setContentType("text/event-stream")
                 .setCharacterEncoding(Charset.forName("UTF-8"))
                 .startActor();

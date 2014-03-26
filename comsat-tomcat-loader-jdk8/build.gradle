@@ -1,0 +1,27 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+dependencies {
+    dependencies {
+        compile 'co.paralleluniverse:quasar-core:0.5.0:jdk8'
+        compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.3'
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ["../comsat-tomcat-loader/src/main/java"]
+        }
+    }
+}
+
+jar {
+    baseName = 'comsat-tomcat-loader'
+    classifier = 'jdk8'
+    
+    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+

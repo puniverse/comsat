@@ -51,8 +51,8 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
                 exc.printStackTrace(System.out);
             }
         });
-//        inst.setVerbose(true);
-//        inst.setDebug(true);
+        inst.setVerbose(false);
+        inst.setDebug(false);
         return inst;
     }
 
@@ -65,7 +65,7 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
     protected ResourceEntry findResourceInternal(String name, String path) {
         initInstrumentor();
         ResourceEntry entry = super.findResourceInternal(name, path);
-        if (entry != null && path.endsWith(".class")) {
+        if (entry != null && path.endsWith(".class") && entry.binaryContent != null) {
             String className = name.substring(0, name.length() - ".class".length());
             try {
                 entry.binaryContent = instrumentor.instrumentClass(className, entry.binaryContent);

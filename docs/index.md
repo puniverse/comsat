@@ -63,7 +63,7 @@ To use the Java agent, the following must be added to the java command line (or 
 
 #### In Tomcat
 
-If you're using Tomcat as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-tomcat-loader-{{site.version}}.jar` into Tomcat's `lib` directory.
+If you're using Tomcat as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-tomcat-loader-{{site.version}}.jar` (or, for JDK8, `comsat-tomcat-loader-{{site.version}}-jdk8.jar`) into Tomcat's `lib` directory.
 
 Then, include the following in your webapp's `context.xml` (in the `META-INF` directory):
 
