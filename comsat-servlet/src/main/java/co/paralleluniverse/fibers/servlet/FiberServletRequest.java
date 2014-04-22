@@ -241,4 +241,9 @@ class FiberServletRequest implements ServletRequest {
     public String toString() {
         return req.toString();
     }
+
+    @Override
+    public long getContentLengthLong() {
+        return req.getContentLengthLong();
+    }
 }

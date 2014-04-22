@@ -316,4 +316,9 @@ class FiberServletContext implements ServletContext {
     public String toString() {
         return sc.toString();
     }
+
+    @Override
+    public String getVirtualServerName() {
+        return sc.getVirtualServerName();
+    }
 }

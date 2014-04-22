@@ -5,7 +5,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.1.1"
+    version             = "0.1.2-SNAPSHOT"
     status              = "integration"
     description         = "Fibers services for web"
     ext.url             = "http://puniverse.github.com/comsat"
@@ -18,6 +18,8 @@ subprojects {
     ext.scmConnection   = "https://github.com/puniverse/comsat.git"
     ext.distDir         = "$buildDir/dist"
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+    ext.jerseyVersion   = "2.4.1"
+    ext.jettyVersion    = "9.1.0.RC0"
 
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
         println "sonatype username or password not set"
@@ -234,8 +236,9 @@ project (':comsat-jdbc') {
 project (':comsat-jax-rs-client') {
     dependencies {
         compile 'javax.ws.rs:javax.ws.rs-api:2.0'
-        compile 'org.glassfish.jersey.core:jersey-client:2.7'
-        compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.7'
+        compile "org.glassfish.jersey.core:jersey-client:$jerseyVersion"
+        compile "org.eclipse.jetty:jetty-client:$jettyVersion"
+//        compile "org.glassfish.jersey.connectors:jersey-jetty-connector:$jerseyVersion"
         srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
     }
 }
@@ -250,7 +253,7 @@ project (':comsat-jax-rs-client') {
 
 project (':comsat-servlet') {
     dependencies {
-        compile 'javax.servlet:javax.servlet-api:3.0.1'      
+        compile 'javax.servlet:javax.servlet-api:3.1.0'      
     }
 }
 
@@ -258,10 +261,10 @@ project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.1.1' // instead of old cglib in jersey
-        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.7' ) {
+        compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion" ) {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
-        compile ('org.glassfish.jersey.core:jersey-client:2.7') {
+        compile ("org.glassfish.jersey.core:jersey-client:$jerseyVersion") {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
     }
@@ -321,7 +324,7 @@ project(':comsat-tomcat-loader') {
 
 project(':comsat-jetty-loader') {
     dependencies {
-        compile 'org.eclipse.jetty:jetty-webapp:9.1.0.RC0'
+        compile "org.eclipse.jetty:jetty-webapp:$jettyVersion"
     }
     jar {
         from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
