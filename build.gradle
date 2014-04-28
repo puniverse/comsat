@@ -56,7 +56,7 @@ subprojects {
     }
 
     dependencies {
-        provided 'co.paralleluniverse:quasar-core:0.5.0'
+        provided 'co.paralleluniverse:quasar-core:0.6.0-SNAPSHOT'
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
     
@@ -269,7 +269,7 @@ project (':comsat-jersey-server') {
 
 project (':comsat-actors-api') {    
     dependencies {
-        compile 'co.paralleluniverse:quasar-actors:0.5.0'
+        compile 'co.paralleluniverse:quasar-actors:0.6.0-SNAPSHOT'
         compile 'com.google.guava:guava:16.0.1'
     }
 }
@@ -299,7 +299,7 @@ project(':comsat-actors-undertow') {
 
 project(':comsat-tomcat-loader') {
     dependencies {
-        compile 'co.paralleluniverse:quasar-core:0.5.0'
+        compile 'co.paralleluniverse:quasar-core:0.6.0-SNAPSHOT'
         compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.3'
     }
     jar {
