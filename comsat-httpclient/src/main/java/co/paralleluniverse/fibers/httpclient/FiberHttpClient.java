@@ -16,7 +16,10 @@ package co.paralleluniverse.fibers.httpclient;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -39,6 +42,7 @@ import org.apache.http.util.EntityUtils;
  * @author pron
  */
 public class FiberHttpClient extends CloseableHttpClient {
+    private final Log log = LogFactory.getLog(getClass());
     private final CloseableHttpAsyncClient client;
 
     public FiberHttpClient(CloseableHttpAsyncClient client) {
@@ -47,7 +51,7 @@ public class FiberHttpClient extends CloseableHttpClient {
 
     @Override
     public HttpParams getParams() {
-        return client.getParams();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -61,9 +65,8 @@ public class FiberHttpClient extends CloseableHttpClient {
         try {
             final HttpResponse response = new AsyncHttpReq() {
                 @Override
-                protected Void requestAsync() {
+                protected void requestAsync() {
                     client.execute(target, request, context, this);
-                    return null;
                 }
             }.run();
             return new CloseableHttpResponseWrapper(response);
@@ -95,9 +98,7 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public CloseableHttpResponse execute(final HttpUriRequest request, final HttpContext context) throws IOException, ClientProtocolException {
-        Args.notNull(request, "HTTP request");
-        final HttpHost target = determineTarget(request);
-        return doExecute(target, request, context);
+        return doExecute(determineTarget(request), request, context);
     }
 
     /**
@@ -106,8 +107,8 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public <T> T execute(final HttpUriRequest request, final ResponseHandler<? extends T> responseHandler, final HttpContext context) throws IOException, ClientProtocolException {
-        final HttpHost target = determineTarget(request);
-        return execute(target, request, responseHandler, context);
+        throw new UnsupportedOperationException();
+//        return execute(determineTarget(request), request, responseHandler, context);
     }
 
     /**
@@ -116,7 +117,8 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public CloseableHttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws IOException, ClientProtocolException {
-        return super.execute(target, request, context);
+        Args.notNull(request, "HTTP request");
+        return doExecute(target, request, context);
     }
 
     /**
@@ -125,7 +127,7 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public CloseableHttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
-        return super.execute(request);
+        return execute(request, (HttpContext) null);
     }
 
     /**
@@ -134,7 +136,7 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public CloseableHttpResponse execute(HttpHost target, HttpRequest request) throws IOException, ClientProtocolException {
-        return super.execute(target, request);
+        return execute(target, request, (HttpContext) null);
     }
 
     /**
@@ -143,7 +145,7 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
-        return super.execute(request, responseHandler);
+        return execute(determineTarget(request), request, responseHandler, null);
     }
 
     /**
@@ -152,7 +154,7 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
-        return super.execute(target, request, responseHandler);
+        return execute(target, request, responseHandler, null);
     }
 
     /**
@@ -161,7 +163,34 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Override
     @Suspendable
     public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException, ClientProtocolException {
-        return super.execute(target, request, responseHandler, context);
+        final HttpResponse response = doExecute(target, request, context);
+
+        final T result;
+        try {
+            result = responseHandler.handleResponse(response);
+        } catch (final Exception t) {
+            final HttpEntity entity = response.getEntity();
+            try {
+                EntityUtils.consume(entity);
+            } catch (final Exception t2) {
+                // Log this exception. The original exception is more
+                // important and will be thrown to the caller.
+                this.log.warn("Error consuming content after an exception.", t2);
+            }
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            }
+            if (t instanceof IOException) {
+                throw (IOException) t;
+            }
+            throw new UndeclaredThrowableException(t);
+        }
+
+        // Handling the response was successful. Ensure that the content has
+        // been fully consumed.
+        final HttpEntity entity = response.getEntity();
+        EntityUtils.consume(entity);
+        return result;
     }
 
     private static HttpHost determineTarget(final HttpUriRequest request) throws ClientProtocolException {
