@@ -5,7 +5,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.1.1"
+    version             = "0.2.0-SNAPSHOT"
     status              = "integration"
     description         = "Fibers services for web"
     ext.url             = "http://puniverse.github.com/comsat"
