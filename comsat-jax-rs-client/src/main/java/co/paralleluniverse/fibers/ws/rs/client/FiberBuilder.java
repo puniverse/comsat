@@ -260,9 +260,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<Response>() {
                 @Override
-                protected Void requestAsync() {
+                protected void requestAsync() {
                     builder.async().method(name, this);
-                    return null;
                 }
             }.run();
         } catch (SuspendExecution ex) {
@@ -276,9 +275,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync() {
+                protected void requestAsync() {
                     builder.async().method(name, this);
-                    return null;
                 }
             }.run();
         } catch (SuspendExecution ex) {
@@ -298,9 +296,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<Response>() {
                 @Override
-                protected Void requestAsync() {
+                protected void requestAsync() {
                     builder.async().method(name, entity, this);
-                    return null;
                 }
             }.run();
         } catch (SuspendExecution ex) {
@@ -314,9 +311,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync() {
+                protected void requestAsync() {
                     builder.async().method(name, entity, this);
-                    return null;
                 }
             }.run();
         } catch (SuspendExecution ex) {
@@ -330,9 +326,8 @@ class FiberBuilder implements Invocation.Builder {
         try {
             return new AsyncRs<T>() {
                 @Override
-                protected Void requestAsync() {
+                protected void requestAsync() {
                     builder.async().method(name, entity, this);
-                    return null;
                 }
             }.run();
         } catch (SuspendExecution ex) {

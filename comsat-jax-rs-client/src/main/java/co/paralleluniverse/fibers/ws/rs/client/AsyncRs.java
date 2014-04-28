@@ -17,7 +17,7 @@ import co.paralleluniverse.fibers.FiberAsync;
 import co.paralleluniverse.fibers.SuspendExecution;
 import javax.ws.rs.client.InvocationCallback;
 
-abstract class AsyncRs<ResponseType> extends FiberAsync<ResponseType, Void, RuntimeException> implements InvocationCallback<ResponseType> {
+abstract class AsyncRs<ResponseType> extends FiberAsync<ResponseType, RuntimeException> implements InvocationCallback<ResponseType> {
     @Override
     public ResponseType run() throws SuspendExecution {
         try {

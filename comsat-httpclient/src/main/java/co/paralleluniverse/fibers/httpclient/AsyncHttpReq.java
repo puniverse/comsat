@@ -19,7 +19,7 @@ import java.io.IOException;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 
-abstract class AsyncHttpReq extends FiberAsync<HttpResponse, Void, IOException> implements FutureCallback<HttpResponse> {
+abstract class AsyncHttpReq extends FiberAsync<HttpResponse, IOException> implements FutureCallback<HttpResponse> {
     @Override
     public HttpResponse run() throws IOException, SuspendExecution {
         try {

@@ -18,6 +18,7 @@ subprojects {
     ext.scmConnection   = "https://github.com/puniverse/comsat.git"
     ext.distDir         = "$buildDir/dist"
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+    ext.quasarVer       = "0.6.0-SNAPSHOT"
 
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
         println "sonatype username or password not set"
@@ -50,13 +51,12 @@ subprojects {
             force "org.slf4j:slf4j-api:1.7.6"
             force "log4j:log4j:1.2.17"
             force "junit:junit:4.11"
-            //            force "org.apache.httpcomponents:httpcore:4.3.2"
-            //            force "org.apache.httpcomponents:httpclient:4.3.2"
+            force "org.apache.httpcomponents:httpcore:4.3.2"
         }
     }
 
     dependencies {
-        provided 'co.paralleluniverse:quasar-core:0.5.0'
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
     
@@ -81,7 +81,9 @@ subprojects {
             ant.taskdef(name:'scanSuspendables', 
                 classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
                 classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.compile.asPath}")
-            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
+            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+                //                suspendablesFile: sourceSets.main.resources.srcDirs.join('')+"/META-INF/suspendables"
+            ) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
             //            
@@ -240,13 +242,14 @@ project (':comsat-jax-rs-client') {
     }
 }
 
-//project (':comsat-httpclient') {
-//    dependencies {
-//        compile 'org.apache.httpcomponents:httpcore:4.3.3'
-//        compile 'org.apache.httpcomponents:httpclient:4.3.3'
-//        compile 'org.apache.httpcomponents:httpasyncclient:4.1'
-//    }
-//}
+project (':comsat-httpclient') {
+    dependencies {
+        //        compile 'org.apache.httpcomponents:httpcore:4.3.3'
+        //        compile 'org.apache.httpcomponents:httpclient:4.3.3'
+        //        compile 'org.apache.httpcomponents:httpasyncclient:4.1'
+        compile 'org.apache.httpcomponents:httpasyncclient:4.0.1'
+    }
+}
 
 project (':comsat-servlet') {
     dependencies {
@@ -269,7 +272,7 @@ project (':comsat-jersey-server') {
 
 project (':comsat-actors-api') {    
     dependencies {
-        compile 'co.paralleluniverse:quasar-actors:0.5.0'
+        compile "co.paralleluniverse:quasar-actors:$quasarVer"
         compile 'com.google.guava:guava:16.0.1'
     }
 }
