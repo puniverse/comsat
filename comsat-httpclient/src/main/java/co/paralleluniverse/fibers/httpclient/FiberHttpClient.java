@@ -25,6 +25,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -37,16 +38,18 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.Args;
 import org.apache.http.util.EntityUtils;
 
-/**
- *
- * @author pron
- */
 public class FiberHttpClient extends CloseableHttpClient {
     private final Log log = LogFactory.getLog(getClass());
     private final CloseableHttpAsyncClient client;
+    private final HttpRequestRetryHandler httpRequestRetryHandler;
 
     public FiberHttpClient(CloseableHttpAsyncClient client) {
+        this(client, null);
+    }
+
+    public FiberHttpClient(CloseableHttpAsyncClient client, HttpRequestRetryHandler httpRequestRetryHandler) {
         this.client = client;
+        this.httpRequestRetryHandler = httpRequestRetryHandler;
     }
 
     @Override
@@ -63,13 +66,30 @@ public class FiberHttpClient extends CloseableHttpClient {
     @Suspendable
     protected final CloseableHttpResponse doExecute(final HttpHost target, final HttpRequest request, final HttpContext context) throws IOException, ClientProtocolException {
         try {
-            final HttpResponse response = new AsyncHttpReq() {
-                @Override
-                protected void requestAsync() {
-                    client.execute(target, request, context, this);
+            for (int executionCount = 0;; executionCount++) {
+                try {
+                    final HttpResponse response = new AsyncHttpReq() {
+                        @Override
+                        protected void requestAsync() {
+                            client.execute(target, request, context, this);
+                        }
+                    }.run();
+                    return new CloseableHttpResponseWrapper(response);
+                } catch (IOException ex) {
+                    if (httpRequestRetryHandler != null && httpRequestRetryHandler.retryRequest(ex, executionCount, context)) {
+                        if (this.log.isInfoEnabled()) {
+                            this.log.info("I/O exception (" + ex.getClass().getName()
+                                    + ") caught when processing request: "
+                                    + ex.getMessage());
+                        }
+                        if (this.log.isDebugEnabled()) {
+                            this.log.debug(ex.getMessage(), ex);
+                        }
+                        this.log.info("Retrying request");
+                    } else
+                        throw ex;
                 }
-            }.run();
-            return new CloseableHttpResponseWrapper(response);
+            }
         } catch (SuspendExecution e) {
             throw new AssertionError();
         }
