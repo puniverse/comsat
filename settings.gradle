@@ -3,6 +3,7 @@ include 'comsat-jersey-server','comsat-servlet','comsat-jax-rs-client','comsat-a
 'comsat-actors-servlet','comsat-actors-netty','comsat-actors-undertow',\
 'comsat-tomcat-loader','comsat-jetty-loader','comsat-httpclient'
 include 'comsat-jdbc','comsat-jdbi'
+include 'comsat-dropwizard'
 if (System.properties['java.version'].startsWith('1.8') ) { 
     include 'comsat-tomcat-loader-jdk8'
 }

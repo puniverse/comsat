@@ -52,6 +52,7 @@ subprojects {
             force "log4j:log4j:1.2.17"
             force "junit:junit:4.11"
             force "org.apache.httpcomponents:httpcore:4.3.2"
+            force 'com.codahale.metrics:metrics-core:3.0.2'
         }
     }
 
@@ -336,6 +337,21 @@ project(':comsat-jdbi') {
     dependencies {
         compile "org.jdbi:jdbi:2.53"
         compile project (':comsat-jdbc')
+    }    
+}
+
+project(':comsat-dropwizard') {
+    ext.dropwizardVer = "0.7.1-SNAPSHOT"
+    dependencies {
+        compile "io.dropwizard:dropwizard-core:$dropwizardVer"
+        compile "io.dropwizard:dropwizard-client:$dropwizardVer"
+        compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
+        compile project(":comsat-servlet")
+        compile project(":comsat-httpclient")
+        compile project(":comsat-jdbi")
+        compile ("co.paralleluniverse:quasar-core:$quasarVer")  {
+            exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl' 
+        }
     }    
 }
 
