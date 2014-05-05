@@ -22,9 +22,7 @@ public class FiberDriver implements Driver {
     @Suspendable
     @Override
     public Connection connect(final String url, final Properties info) throws SQLException {
-        System.out.println("url is "+url);
         final String dbURL = url.replaceFirst("fiber:", "");
-        System.out.println("dbURL is "+dbURL);
         int threadCount = Integer.parseInt(info.getProperty(THREADS_COUNT, "10"));
         info.remove(THREADS_COUNT);
         ExecutorService es = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build());
