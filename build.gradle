@@ -332,6 +332,13 @@ project(':comsat-jetty-loader') {
     } 
 }
 
+project(':comsat-jdbi') {
+    dependencies {
+        compile "org.jdbi:jdbi:2.53"
+        compile project (':comsat-jdbc')
+    }    
+}
+
 task javadoc(type: Javadoc) {
     title = "Comsat ${project(':comsat-actors-api').version}"
     destinationDir = file("docs/javadoc")
