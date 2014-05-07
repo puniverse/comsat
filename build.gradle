@@ -79,13 +79,12 @@ subprojects {
     classes {
         doFirst{
             println "Excuting scanSuspendables..."
-//            println configurations.runtime.asPath
+            //            println configurations.runtime.asPath
             ant.taskdef(name:'scanSuspendables', 
                 classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
                 classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
             ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
-                                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables"
-//                                suspendablesFile: sourceSets.main.resources.srcDirs.join('')+"/META-INF/suspendables"
+                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables"
             ) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
@@ -297,13 +296,13 @@ project(':comsat-actors-netty') {
     }
 }
 
-project(':comsat-actors-undertow') {
-    dependencies {
-        compile 'io.undertow:undertow-core:1.0.2.Final'
-        compile project (':comsat-actors-api')
-    }
-}
-
+//project(':comsat-actors-undertow') {
+//    dependencies {
+//        compile 'io.undertow:undertow-core:1.0.2.Final'
+//        compile project (':comsat-actors-api')
+//    }
+//}
+//
 project(':comsat-tomcat-loader') {
     dependencies {
         compile 'co.paralleluniverse:quasar-core:0.6.0-SNAPSHOT'

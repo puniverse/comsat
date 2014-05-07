@@ -1,6 +1,6 @@
 rootProject.name = 'comsat'
 include 'comsat-jersey-server','comsat-servlet','comsat-jax-rs-client','comsat-actors-api',\
-'comsat-actors-servlet','comsat-actors-netty','comsat-actors-undertow',\
+'comsat-actors-servlet','comsat-actors-netty',\
 'comsat-tomcat-loader','comsat-jetty-loader','comsat-httpclient'
 include 'comsat-jdbc','comsat-jdbi'
 include 'comsat-dropwizard'
