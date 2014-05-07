@@ -9,3 +9,6 @@ org.skife.jdbi.v2.Query.iterator
 org.skife.jdbi.v2.Query.fold
 org.skife.jdbi.v2.Query.first
 org.skife.jdbi.v2.QueryResultSetMunger.munge
+org.skife.jdbi.v2.BasicHandle.update
+org.skife.jdbi.v2.BasicHandle.execute
+org.skife.jdbi.v2.DefaultStatementBuilder.create

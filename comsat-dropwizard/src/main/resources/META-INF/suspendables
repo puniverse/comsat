@@ -11,3 +11,6 @@ com.sun.jersey.server.impl.application.WebApplicationImpl._handleRequest
 com.sun.jersey.server.impl.application.WebApplicationImpl.handleRequest
 com.sun.jersey.spi.container.servlet.WebComponent.service
 com.sun.jersey.spi.container.servlet.ServletContainer.service
+org.apache.tomcat.jdbc.pool.ProxyConnection.invoke
+org.apache.tomcat.jdbc.pool.JdbcInterceptor.invoke
+org.apache.tomcat.jdbc.pool.DisposableConnectionFacade.invoke
