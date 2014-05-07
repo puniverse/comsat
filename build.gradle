@@ -76,14 +76,16 @@ subprojects {
     //        args = ["co.paralleluniverse.fibers"]
     //    }
     //    tasks.jar.dependsOn scanSuspendables
-    
-    compileJava {
-        doLast {
+    classes {
+        doFirst{
+            println "Excuting scanSuspendables..."
+//            println configurations.runtime.asPath
             ant.taskdef(name:'scanSuspendables', 
                 classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
-                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.compile.asPath}")
+                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
             ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
-                //                suspendablesFile: sourceSets.main.resources.srcDirs.join('')+"/META-INF/suspendables"
+                                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables"
+//                                suspendablesFile: sourceSets.main.resources.srcDirs.join('')+"/META-INF/suspendables"
             ) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
@@ -341,7 +343,7 @@ project(':comsat-jdbi') {
 }
 
 project(':comsat-dropwizard') {
-    ext.dropwizardVer = "0.7.1-SNAPSHOT"
+    ext.dropwizardVer = "0.7.0"
     dependencies {
         compile "io.dropwizard:dropwizard-core:$dropwizardVer"
         compile "io.dropwizard:dropwizard-client:$dropwizardVer"
