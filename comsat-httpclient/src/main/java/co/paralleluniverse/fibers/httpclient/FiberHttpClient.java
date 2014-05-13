@@ -50,6 +50,8 @@ public class FiberHttpClient extends CloseableHttpClient {
     public FiberHttpClient(CloseableHttpAsyncClient client, HttpRequestRetryHandler httpRequestRetryHandler) {
         this.client = client;
         this.httpRequestRetryHandler = httpRequestRetryHandler;
+        if (!client.isRunning())
+            client.start();
     }
 
     @Override
