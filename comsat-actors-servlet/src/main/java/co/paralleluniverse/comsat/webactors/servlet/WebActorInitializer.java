@@ -35,10 +35,17 @@ import javax.websocket.server.ServerEndpointConfig;
 public class WebActorInitializer implements ServletContextListener {
     ClassLoader userClassLoader;
 
+    /**
+     * Scan classes of the servletContext classLoader for WebActor annotated classes
+     */
     public WebActorInitializer() {
         this(null);
     }
 
+    /**
+     *
+     * @param userClassLoader Scan classes of this classLoader WebActor annotated classes
+     */
     public WebActorInitializer(ClassLoader userClassLoader) {
         this.userClassLoader = userClassLoader;
     }
