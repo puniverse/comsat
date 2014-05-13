@@ -33,11 +33,22 @@ import javax.websocket.server.ServerEndpointConfig;
  */
 @WebListener
 public class WebActorInitializer implements ServletContextListener {
+    ClassLoader userClassLoader;
+
+    public WebActorInitializer() {
+        this(null);
+    }
+
+    public WebActorInitializer(ClassLoader userClassLoader) {
+        this.userClassLoader = userClassLoader;
+    }
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         final ServletContext sc = sce.getServletContext();
         try {
-            ClassLoaderUtil.accept(sc.getClassLoader(), new ClassLoaderUtil.Visitor() {
+            ClassLoader classLoader = userClassLoader != null ? userClassLoader : sc.getClassLoader();
+            ClassLoaderUtil.accept(classLoader, new ClassLoaderUtil.Visitor() {
                 @Override
                 public void visit(String resource, URL url, ClassLoader cl) {
                     if (!ClassLoaderUtil.isClassFile(resource))
@@ -66,7 +77,7 @@ public class WebActorInitializer implements ServletContextListener {
         }
     }
 
-    private void registerWebActor(ServletContext sc, Class<?> webActorClass) {
+    public static void registerWebActor(ServletContext sc, Class<?> webActorClass) {
         final WebActor waAnn = webActorClass.getAnnotation(WebActor.class);
         final String name = (waAnn.name() != null && !waAnn.name().isEmpty()) ? waAnn.name() : webActorClass.getName();
         // servlet
