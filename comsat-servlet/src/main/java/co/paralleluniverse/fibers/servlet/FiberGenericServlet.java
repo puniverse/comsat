@@ -86,6 +86,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
     public final void service(final ServletRequest req, final ServletResponse res) {
         req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         final AsyncContext ac = req.startAsync();
+        ac.setTimeout(120000);
         final FiberServletRequest srad = wrapRequest(req);
         new Fiber(null, stackSize, new SuspendableRunnable() {
             @Override
