@@ -28,7 +28,6 @@ class FiberWebTarget implements WebTarget {
         this.webTarget = webTarget;
     }
 
-    // Return wrapped builder
     @Override
     public Builder request() {
         return new FiberBuilder(webTarget.request());
