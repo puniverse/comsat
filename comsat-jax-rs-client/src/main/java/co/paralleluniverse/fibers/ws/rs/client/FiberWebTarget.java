@@ -28,72 +28,74 @@ class FiberWebTarget implements WebTarget {
         this.webTarget = webTarget;
     }
 
+    private static Builder wrap(Builder builder) {
+        return new FiberBuilder(builder);
+    }
+    
+    private WebTarget wrap(WebTarget webTarget) {
+//        if(webTarget instanceof FiberWebTarget && ((FiberWebTarget)webTarget).webTarget == this)
+//            return this;
+        return new FiberWebTarget(webTarget);
+    }
+    
     @Override
     public Builder request() {
-        return new FiberBuilder(webTarget.request());
+        return wrap(webTarget.request());
     }
 
     @Override
     public Builder request(String... acceptedResponseTypes) {
-        return new FiberBuilder(webTarget.request(acceptedResponseTypes));
+        return wrap(webTarget.request(acceptedResponseTypes));
     }
 
     @Override
     public Builder request(MediaType... acceptedResponseTypes) {
-        return new FiberBuilder(webTarget.request(acceptedResponseTypes));
+        return wrap(webTarget.request(acceptedResponseTypes));
     }
 
     @Override
     public WebTarget path(String path) {
-        return new FiberWebTarget(webTarget.path(path));
+        return wrap(webTarget.path(path));
     }
 
     @Override
     public WebTarget resolveTemplate(String name, Object value) {
-        webTarget.resolveTemplate(name, value);
-        return this;
+        return wrap(webTarget.resolveTemplate(name, value));
     }
 
     @Override
     public WebTarget resolveTemplate(String name, Object value, boolean encodeSlashInPath) {
-        webTarget.resolveTemplate(name, value, encodeSlashInPath);
-        return this;
+        return wrap(webTarget.resolveTemplate(name, value, encodeSlashInPath));
     }
 
     @Override
     public WebTarget resolveTemplateFromEncoded(String name, Object value) {
-        webTarget.resolveTemplateFromEncoded(name, value);
-        return this;
+        return wrap(webTarget.resolveTemplateFromEncoded(name, value));
     }
 
     @Override
     public WebTarget resolveTemplates(Map<String, Object> templateValues) {
-        webTarget.resolveTemplates(templateValues);
-        return this;
+        return wrap(webTarget.resolveTemplates(templateValues));
     }
 
     @Override
     public WebTarget resolveTemplates(Map<String, Object> templateValues, boolean encodeSlashInPath) {
-        webTarget.resolveTemplates(templateValues, encodeSlashInPath);
-        return this;
+        return wrap(webTarget.resolveTemplates(templateValues, encodeSlashInPath));
     }
 
     @Override
     public WebTarget resolveTemplatesFromEncoded(Map<String, Object> templateValues) {
-        webTarget.resolveTemplatesFromEncoded(templateValues);
-        return this;
+        return wrap(webTarget.resolveTemplatesFromEncoded(templateValues));
     }
 
     @Override
     public WebTarget matrixParam(String name, Object... values) {
-        webTarget.matrixParam(name, values);
-        return this;
+        return wrap(webTarget.matrixParam(name, values));
     }
 
     @Override
     public WebTarget queryParam(String name, Object... values) {
-        webTarget.queryParam(name, values);
-        return this;
+        return wrap(webTarget.queryParam(name, values));
     }
 
     @Override
