@@ -46,9 +46,9 @@ subprojects {
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
-            force "com.google.guava:guava:16.0.1"
-            force "org.ow2.asm:asm:5.0.1"
-            force "org.slf4j:slf4j-api:1.7.6"
+            force "com.google.guava:guava:17.0"
+            force "org.ow2.asm:asm:5.0.2"
+            force "org.slf4j:slf4j-api:1.7.7"
             force "log4j:log4j:1.2.17"
             force "junit:junit:4.11"
             force "org.apache.httpcomponents:httpcore:4.3.2"
@@ -112,7 +112,7 @@ subprojects {
             links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
-                'http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/',
+                'http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/',
                 'http://docs.oracle.com/javaee/7/api/',
                 'http://jersey.java.net/apidocs/latest/jersey/']
         }
@@ -208,7 +208,7 @@ buildscript {
 
 project (':comsat-jdbc') {
     dependencies {
-        compile 'com.google.guava:guava:16.0.1'
+        compile 'com.google.guava:guava:17.0'
     }
     compileJava {
         doLast {
@@ -274,7 +274,7 @@ project (':comsat-actors-api') {
     dependencies {
         compile 'co.paralleluniverse:quasar-actors:0.6.0-SNAPSHOT'
         compile "co.paralleluniverse:quasar-actors:$quasarVer"
-        compile 'com.google.guava:guava:16.0.1'
+        compile 'com.google.guava:guava:17.0'
     }
 }
 
@@ -296,7 +296,7 @@ project(':comsat-actors-netty') {
 
 project(':comsat-actors-undertow') {
     dependencies {
-        compile 'io.undertow:undertow-core:1.0.2.Final'
+        compile 'io.undertow:undertow-core:1.0.6.Final'
         compile project (':comsat-actors-api')
     }
 }
@@ -353,7 +353,7 @@ task javadoc(type: Javadoc) {
         links = ['http://docs.oracle.com/javaee/7/api/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
-                'http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/',
+                'http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/',
                 'http://docs.oracle.com/javaee/7/api/',
                 'http://jersey.java.net/apidocs/latest/jersey/']
     }
