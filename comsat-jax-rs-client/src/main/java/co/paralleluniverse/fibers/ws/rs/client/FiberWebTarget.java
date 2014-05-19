@@ -33,8 +33,8 @@ class FiberWebTarget implements WebTarget {
     }
     
     private WebTarget wrap(WebTarget webTarget) {
-//        if(webTarget instanceof FiberWebTarget && ((FiberWebTarget)webTarget).webTarget == this)
-//            return this;
+        if (webTarget instanceof FiberWebTarget && ((FiberWebTarget) webTarget).webTarget == this.webTarget)
+            return this;
         return new FiberWebTarget(webTarget);
     }
     
