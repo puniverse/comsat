@@ -47,8 +47,7 @@ class FiberWebTarget implements WebTarget {
     // Return this instead of webTarget
     @Override
     public WebTarget path(String path) {
-        webTarget.path(path);
-        return this;
+        return new FiberWebTarget(webTarget.path(path));
     }
 
     @Override
