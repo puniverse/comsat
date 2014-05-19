@@ -6,11 +6,17 @@ import javax.servlet.Servlet;
 public class JerseyContainerHolder {
     private Servlet container;
 
-    public JerseyContainerHolder(ServletContainer container) {
+    public JerseyContainerHolder(Servlet container) {
         this.container = container;
     }
 
-    public Servlet getContainer() {
+    public ServletContainer getContainer() {
+        if (container instanceof ServletContainer)
+            return (ServletContainer) container;
+        throw new RuntimeException("Not a servlet container. Use getServlet instead.");
+    }
+
+    public Servlet getServlet() {
         return container;
     }
 

@@ -2,7 +2,6 @@ package co.paralleluniverse.fibers.dropwizard;
 
 import com.google.common.base.Function;
 import com.sun.jersey.api.core.ResourceConfig;
-import com.sun.jersey.spi.container.servlet.ServletContainer;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
@@ -16,7 +15,7 @@ public abstract class FiberApplication<T extends Configuration> extends Applicat
         environment.jersey().replace(new Function<ResourceConfig, Servlet>() {
             @Override
             public Servlet apply(ResourceConfig f) {
-                return new FiberServletContainer((ServletContainer) environment.getJerseyServletContainer());
+                return new FiberServletContainer(environment.getJerseyServletContainer());
             }
         });
     }
