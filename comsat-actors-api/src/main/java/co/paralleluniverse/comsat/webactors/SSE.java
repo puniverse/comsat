@@ -14,6 +14,9 @@
 package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.actors.ActorRef;
+import co.paralleluniverse.strands.channels.Channels;
+import co.paralleluniverse.strands.channels.SendPort;
+import com.google.common.base.Function;
 import java.nio.charset.Charset;
 
 /**
@@ -75,6 +78,18 @@ public final class SSE {
                 .setContentType("text/event-stream")
                 .setCharacterEncoding(Charset.forName("UTF-8"))
                 .startActor();
+    }
+
+    /**
+     * Wrappes the whole string body
+     */
+    public static SendPort<WebDataMessage> wrapAsSSE(SendPort<WebDataMessage> actor) {
+        return Channels.mapSend(actor, new Function<WebDataMessage, WebDataMessage>() {
+            @Override
+            public WebDataMessage apply(WebDataMessage f) {
+                return new WebDataMessage(f.getFrom(), SSE.event(f.getStringBody()));
+            }
+        });
     }
 
     /**

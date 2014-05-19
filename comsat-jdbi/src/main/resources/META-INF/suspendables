@@ -1,0 +1,14 @@
+org.skife.jdbi.v2.DataSourceConnectionFactory.openConnection
+org.skife.jdbi.v2.DBI.open
+org.skife.jdbi.v2.SQLStatement.internalExecute
+org.skife.jdbi.v2.Update.executeAndReturnGeneratedKeys
+org.skife.jdbi.v2.Update.execute
+org.skife.jdbi.v2.Call.invoke
+org.skife.jdbi.v2.Query.list
+org.skife.jdbi.v2.Query.iterator
+org.skife.jdbi.v2.Query.fold
+org.skife.jdbi.v2.Query.first
+org.skife.jdbi.v2.QueryResultSetMunger.munge
+org.skife.jdbi.v2.BasicHandle.update
+org.skife.jdbi.v2.BasicHandle.execute
+org.skife.jdbi.v2.DefaultStatementBuilder.create

@@ -1,0 +1,16 @@
+com.sun.jersey.spi.container.JavaMethodInvokerFactory$1.invoke
+com.sun.jersey.server.impl.model.method.dispatch.AbstractResourceMethodDispatchProvider$TypeOutInvoker._dispatch
+com.sun.jersey.server.impl.model.method.dispatch.ResourceJavaMethodDispatcher.dispatch
+com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchProvider$TimedRequestDispatcher.dispatch
+io.dropwizard.jersey.guava.OptionalResourceMethodDispatchAdapter$OptionalRequestDispatcher.dispatch
+com.sun.jersey.server.impl.uri.rules.HttpMethodRule.accept
+com.sun.jersey.server.impl.uri.rules.ResourceObjectRule.accept
+com.sun.jersey.server.impl.uri.rules.RightHandPathRule.accept
+com.sun.jersey.server.impl.uri.rules.RootResourceClassesRule.accept
+com.sun.jersey.server.impl.application.WebApplicationImpl._handleRequest
+com.sun.jersey.server.impl.application.WebApplicationImpl.handleRequest
+com.sun.jersey.spi.container.servlet.WebComponent.service
+com.sun.jersey.spi.container.servlet.ServletContainer.service
+org.apache.tomcat.jdbc.pool.ProxyConnection.invoke
+org.apache.tomcat.jdbc.pool.JdbcInterceptor.invoke
+org.apache.tomcat.jdbc.pool.DisposableConnectionFacade.invoke

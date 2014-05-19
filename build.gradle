@@ -52,6 +52,7 @@ subprojects {
             force "log4j:log4j:1.2.17"
             force "junit:junit:4.11"
             force "org.apache.httpcomponents:httpcore:4.3.2"
+            force 'com.codahale.metrics:metrics-core:3.0.2'
         }
     }
 
@@ -75,14 +76,15 @@ subprojects {
     //        args = ["co.paralleluniverse.fibers"]
     //    }
     //    tasks.jar.dependsOn scanSuspendables
-    
-    compileJava {
-        doLast {
+    classes {
+        doFirst{
+            println "Excuting scanSuspendables..."
+            //            println configurations.runtime.asPath
             ant.taskdef(name:'scanSuspendables', 
                 classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
-                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.compile.asPath}")
+                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
             ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
-                //                suspendablesFile: sourceSets.main.resources.srcDirs.join('')+"/META-INF/suspendables"
+                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables"
             ) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
@@ -272,7 +274,6 @@ project (':comsat-jersey-server') {
 
 project (':comsat-actors-api') {    
     dependencies {
-        compile 'co.paralleluniverse:quasar-actors:0.6.0-SNAPSHOT'
         compile "co.paralleluniverse:quasar-actors:$quasarVer"
         compile 'com.google.guava:guava:17.0'
     }
@@ -330,6 +331,28 @@ project(':comsat-jetty-loader') {
     jar {
         from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
     } 
+}
+
+project(':comsat-jdbi') {
+    dependencies {
+        compile "org.jdbi:jdbi:2.53"
+        compile project (':comsat-jdbc')
+    }    
+}
+
+project(':comsat-dropwizard') {
+    ext.dropwizardVer = "0.7.0"
+    dependencies {
+        compile "io.dropwizard:dropwizard-core:$dropwizardVer"
+        compile "io.dropwizard:dropwizard-client:$dropwizardVer"
+        compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
+        compile project(":comsat-servlet")
+        compile project(":comsat-httpclient")
+        compile project(":comsat-jdbi")
+        compile ("co.paralleluniverse:quasar-core:$quasarVer")  {
+            exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl' 
+        }
+    }    
 }
 
 task javadoc(type: Javadoc) {
