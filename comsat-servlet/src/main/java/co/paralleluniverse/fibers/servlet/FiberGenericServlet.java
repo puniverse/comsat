@@ -92,6 +92,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
+                    // TODO: check if ac has expired
                     currentAsyncContext.set(ac);
                     suspendableService(srad, res);
                 } catch (Exception ex) {
