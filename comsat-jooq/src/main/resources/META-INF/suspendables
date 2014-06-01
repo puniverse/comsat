@@ -1,0 +1,11 @@
+org.jooq.impl.ProviderEnabledConnection.prepareStatement
+org.jooq.impl.SettingsEnabledConnection.prepareStatement
+org.jooq.impl.AbstractQuery.prepare
+org.jooq.impl.AbstractStoreQuery.prepare
+org.jooq.impl.AbstractQuery.execute
+org.jooq.impl.AbstractDelegatingQuery.execute
+org.jooq.tools.jdbc.DefaultPreparedStatement.execute
+org.jooq.impl.AbstractResultQuery.fetchLazy
+org.jooq.impl.AbstractResultQuery.fetchOne
+org.jooq.impl.SelectImpl.fetchOne
+org.jooq.tools.jdbc.DefaultStatement.getResultSet

@@ -5,6 +5,7 @@ include 'comsat-jersey-server','comsat-servlet','comsat-jax-rs-client','comsat-a
 include 'comsat-jdbc','comsat-jdbi'
 include 'comsat-dropwizard'
 include 'comsat-retrofit'
+include 'comsat-jooq'
 if (System.properties['java.version'].startsWith('1.8') ) { 
     include 'comsat-tomcat-loader-jdk8'
 }
