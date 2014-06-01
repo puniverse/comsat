@@ -340,6 +340,13 @@ project(':comsat-jdbi') {
     }    
 }
 
+project(':comsat-retrofit') {
+    dependencies {
+        compile 'com.squareup.retrofit:retrofit:1.5.1'
+        compile project (':comsat-httpclient')
+    }    
+}
+
 project(':comsat-dropwizard') {
     ext.dropwizardVer = "0.7.0"
     dependencies {
