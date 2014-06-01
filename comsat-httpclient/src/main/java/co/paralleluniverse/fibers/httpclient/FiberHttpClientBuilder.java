@@ -1,5 +1,6 @@
 package co.paralleluniverse.fibers.httpclient;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Collection;
 import javax.net.ssl.SSLContext;
 import org.apache.http.ConnectionReuseStrategy;
@@ -43,6 +44,7 @@ public class FiberHttpClientBuilder {
 
     public static FiberHttpClientBuilder create(int ioThreadCount) {
         return new FiberHttpClientBuilder(HttpAsyncClientBuilder.create().
+                setThreadFactory(new ThreadFactoryBuilder().setDaemon(true).build()).
                 setDefaultIOReactorConfig(IOReactorConfig.custom().setIoThreadCount(ioThreadCount).build()));
     }
 
