@@ -5,7 +5,12 @@ import co.paralleluniverse.fibers.instrument.MethodDatabase;
 import co.paralleluniverse.fibers.instrument.SimpleSuspendableClassifier;
 import co.paralleluniverse.fibers.instrument.SuspendableClassifier;
 
+/**
+ * Given classes and methodRegexps, Instrumenting all the extending methods in 
+ * the scope of given package prefix.
+ */
 public class JooqClassifier implements SuspendableClassifier {
+    private static final String PKG_PREFIX = "org/jooq";
     String[][] methodsArray = {
         {"java/sql/Statement", "execute.*"},
         {"java/sql/Connection", "prepareStatement", "execute.*", "getResultSet"},
@@ -13,9 +18,6 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/ResultQuery", "getResult", "fetch.*"},
         {"org/jooq/impl/AbstractQuery", "prepare"}
     };
-
-    public JooqClassifier() {
-    }
 
     @Override
     public MethodDatabase.SuspendableType isSuspendable(MethodDatabase db, String className, String superClassName, String[] interfaces, String methodName, String methodDesc, String methodSignature, String[] methodExceptions) {
@@ -32,7 +34,7 @@ public class JooqClassifier implements SuspendableClassifier {
         }
 
         // declares extending classes in jooq packacages as suspandables
-        if (!className.startsWith("org/jooq"))
+        if (!className.startsWith(PKG_PREFIX))
             return null;
         for (String[] susExtendables : methodsArray) {
             if (SimpleSuspendableClassifier.extendsOrImplements(susExtendables[0], db, className, superClassName, interfaces))
