@@ -244,6 +244,38 @@ project (':comsat-jax-rs-client') {
     }
 }
 
+project (':comsat-test-utils') {
+    ext.jettyVersion    = '9.2.0.M0'
+    ext.undertowVersion = '1.0.12.Final'
+    ext.tomcatVersion   = '8.0.8'
+    ext.log4jVersion    = '2.0-rc1'
+
+    dependencies {
+        compile "org.slf4j:slf4j-api:1.7.7"
+        //        compile "co.paralleluniverse:quasar-core:$quasarVersion"
+        //        quasar  "co.paralleluniverse:quasar-core:$quasarVersion"
+        //        compile "co.paralleluniverse:comsat-servlet:$comsatVersion"
+        //        compile "co.paralleluniverse:comsat-httpclient:$comsatVersion"    
+        //        compile "co.paralleluniverse:comsat-jersey-server:$comsatVersion"
+        compile 'org.apache.httpcomponents:httpclient:4.3.3'
+
+        compile "org.eclipse.jetty:jetty-server:$jettyVersion"
+        compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
+
+        compile "io.undertow:undertow-core:$undertowVersion"
+        compile "io.undertow:undertow-servlet:$undertowVersion"
+
+        compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
+        compile "org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVersion"
+        runtime "org.apache.tomcat.embed:tomcat-embed-logging-log4j:$tomcatVersion"
+
+        runtime "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
+        runtime "org.apache.logging.log4j:log4j-api:$log4jVersion"
+        runtime "org.apache.logging.log4j:log4j-core:$log4jVersion"
+        //        compile 'commons-cli:commons-cli:1.2'
+    }
+}
+
 project (':comsat-httpclient') {
     dependencies {
         //        compile 'org.apache.httpcomponents:httpcore:4.3.3'
