@@ -36,8 +36,9 @@ subprojects {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         maven { url 'https://maven.java.net/content/repositories/snapshots' }
     }
-    
+
     configurations {
+        quasar
         provided
         srcFiles
         markdownDoclet
@@ -53,10 +54,13 @@ subprojects {
             force "junit:junit:4.11"
             force "org.apache.httpcomponents:httpcore:4.3.2"
             force 'com.codahale.metrics:metrics-core:3.0.2'
+            force 'javax.servlet:javax.servlet-api:3.0.1' 
         }
     }
 
     dependencies {
+        quasar "co.paralleluniverse:quasar-core:$quasarVer" 
+        testCompile group: 'junit', name: 'junit', version: '4.10'
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
@@ -193,6 +197,11 @@ subprojects {
         skipExistingHeaders true
         mapping('java','SLASHSTAR_STYLE')
     }
+    
+    tasks.withType(Test) {
+        jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+    }
    
 }
 defaultTasks 'install'
@@ -288,7 +297,9 @@ project (':comsat-httpclient') {
 project (':comsat-servlet') {
     dependencies {
         compile 'javax.servlet:javax.servlet-api:3.0.1'      
+        testCompile project(':comsat-test-utils')
     }
+
 }
 
 project (':comsat-jersey-server') {
