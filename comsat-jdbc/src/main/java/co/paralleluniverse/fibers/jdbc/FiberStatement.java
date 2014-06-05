@@ -142,11 +142,6 @@ class FiberStatement implements Statement {
     }
 
     @Override
-    public boolean execute(String sql) throws SQLException {
-        return stmt.execute(sql);
-    }
-
-    @Override
     @Suspendable
     public ResultSet getResultSet() throws SQLException {
         try {
@@ -287,6 +282,23 @@ class FiberStatement implements Statement {
                 @Override
                 public Integer call() throws Exception {
                     return stmt().executeUpdate(sql, columnNames);
+                }
+            }));
+        } catch (InterruptedException | ExecutionException ex) {
+            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
+        } catch (SuspendExecution ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    @Suspendable
+    @Override
+    public boolean execute(final String sql) throws SQLException {
+        try {
+            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws Exception {
+                    return stmt.execute(sql);
                 }
             }));
         } catch (InterruptedException | ExecutionException ex) {
