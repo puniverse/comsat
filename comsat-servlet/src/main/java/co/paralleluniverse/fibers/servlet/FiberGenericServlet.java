@@ -13,7 +13,6 @@
  */
 package co.paralleluniverse.fibers.servlet;
 
-import co.paralleluniverse.common.util.Debug;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
