@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -64,7 +61,7 @@ public class FiberHttpServletTest {
         instance.addServlet("test", FiberTestServlet.class, "/*");
         instance.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
-                .setSocketTimeout(500).setConnectTimeout(500).setConnectionRequestTimeout(500)
+                .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
                 .build()).build();
     }
 

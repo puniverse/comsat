@@ -56,7 +56,7 @@ public class EmbeddedServerTest {
         instance.addServlet("test", TestServlet.class, "/*");
         instance.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
-                .setSocketTimeout(500).setConnectTimeout(500).setConnectionRequestTimeout(500)
+                .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
                 .build()).build();
     }
 
