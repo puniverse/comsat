@@ -3,7 +3,7 @@ package co.paralleluniverse.embedded;
 
 public abstract class AbstractEmbeddedServer implements EmbeddedServer {
     protected int port= 8080;
-    protected int nThreads = 10;
+    protected int nThreads = 100;
     protected int maxConn = 1000;
     
     @Override
