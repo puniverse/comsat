@@ -12,8 +12,8 @@ import co.paralleluniverse.fibers.instrument.SuspendableClassifier;
 public class JooqClassifier implements SuspendableClassifier {
     private static final String PKG_PREFIX = "org/jooq";
     String[][] methodsArray = {
-        {"java/sql/Statement", "execute.*"},
-        {"java/sql/Connection", "prepareStatement", "execute.*", "getResultSet"},
+        {"java/sql/Statement", "execute.*", "getResultSet"},
+        {"java/sql/Connection", "prepareStatement"},
         {"org/jooq/Query", "execute"},
         {"org/jooq/ResultQuery", "getResult", "fetch.*"},
         {"org/jooq/impl/AbstractQuery", "prepare"}
