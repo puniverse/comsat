@@ -89,6 +89,7 @@ public class FiberHttpServletTest {
     }
 
 //    @Test
+    // Inline is not supported yet by fiberServlet
     public void testInline() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
             assertEquals("testInlinetestGet", client.execute(new HttpGet("http://localhost:8080/inline"), BASIC_RESPONSE_HANDLER));
