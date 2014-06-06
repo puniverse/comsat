@@ -53,7 +53,7 @@ public class EmbeddedServerTest {
     @Before
     public void setUp() throws Exception {
         this.instance = cls.newInstance();
-        instance.addServlet("test", TestServlet.class, "/*");
+        instance.addServlet("test", TestServlet.class, "/");
         instance.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
@@ -69,13 +69,13 @@ public class EmbeddedServerTest {
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertEquals("testGet", client.execute(new HttpGet("http://localhost:" + 8080), BASIC_RESPONSE_HANDLER));
+            assertEquals("testGet", client.execute(new HttpGet("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
     }
 
     @Test
     public void testPost() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertEquals("testPost", client.execute(new HttpPost("http://localhost:" + 8080), BASIC_RESPONSE_HANDLER));
+            assertEquals("testPost", client.execute(new HttpPost("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
     }
 
     public static class TestServlet extends HttpServlet {

@@ -58,7 +58,9 @@ public class FiberHttpServletTest {
     @Before
     public void setUp() throws Exception {
         this.instance = cls.newInstance();
-        instance.addServlet("test", FiberTestServlet.class, "/*");
+        instance.addServlet("test", FiberTestServlet.class, "/");
+        instance.addServlet("forward", FiberForwardServlet.class, "/forward");
+        instance.addServlet("inline", FiberForwardServlet.class, "/inline");
         instance.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
@@ -74,13 +76,28 @@ public class FiberHttpServletTest {
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertEquals("testGet", client.execute(new HttpGet("http://localhost:" + 8080), BASIC_RESPONSE_HANDLER));
+            assertEquals("testGet", client.execute(new HttpGet("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
+    }
+
+//    @Test
+    // Fails on jetty after 5-10 iterations
+    // Fails on tomcat after 1000-2000 iterations
+    // Passes on undertow
+    public void testForward() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 5000; i++)
+            assertEquals(cls.getSimpleName()+" faild on iteration "+i,"testGet", client.execute(new HttpGet("http://localhost:8080/forward"), BASIC_RESPONSE_HANDLER));
+    }
+
+//    @Test
+    public void testInline() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 10; i++)
+            assertEquals("testInlinetestGet", client.execute(new HttpGet("http://localhost:8080/inline"), BASIC_RESPONSE_HANDLER));
     }
 
     @Test
     public void testPost() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertEquals("testPost", client.execute(new HttpPost("http://localhost:" + 8080), BASIC_RESPONSE_HANDLER));
+            assertEquals("testPost", client.execute(new HttpPost("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
     }
 
     public static class FiberTestServlet extends FiberHttpServlet {
@@ -98,6 +115,29 @@ public class FiberHttpServletTest {
             try (PrintWriter out = resp.getWriter()) {
                 Strand.sleep(1);
                 out.print("testGet");
+            } catch (InterruptedException ex) {
+            }
+        }
+    }
+
+    public static class FiberForwardServlet extends FiberHttpServlet {
+        @Override
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
+            try {
+                Strand.sleep(1);
+                getServletContext().getRequestDispatcher("/").forward(req, resp);
+            } catch (InterruptedException ex) {
+            }
+        }
+    }
+
+    public static class FiberInlineServlet extends FiberHttpServlet {
+        @Override
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
+            try (PrintWriter out = resp.getWriter()) {
+                Strand.sleep(1);
+                out.print("testInline");
+                getServletContext().getRequestDispatcher("/").include(req, resp);
             } catch (InterruptedException ex) {
             }
         }

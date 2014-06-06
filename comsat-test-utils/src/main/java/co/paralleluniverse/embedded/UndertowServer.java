@@ -7,7 +7,6 @@ import io.undertow.server.handlers.RequestLimit;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
 import javax.servlet.Servlet;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.HttpClients;
