@@ -26,7 +26,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.hibernate.validator.constraints.Length;
-import org.junit.Assert;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.IDBI;
 import org.skife.jdbi.v2.sqlobject.Bind;
@@ -41,15 +40,6 @@ public class HelloWorldApplication extends FiberApplication<HelloWorldConfigurat
     private IDBI jdbi;
     private MyDAO dao;
     private HttpClient httpClient;
-
-    @Override
-    public String getName() {
-        return "hello-world";
-    }
-
-    @Override
-    public void initialize(Bootstrap<HelloWorldConfiguration> bootstrap) {
-    }
 
     @Override
     public void fiberRun(HelloWorldConfiguration configuration,
