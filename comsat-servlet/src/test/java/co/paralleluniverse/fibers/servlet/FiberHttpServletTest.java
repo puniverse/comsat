@@ -6,10 +6,10 @@
 package co.paralleluniverse.fibers.servlet;
 
 import co.paralleluniverse.common.util.Debug;
-import co.paralleluniverse.embedded.EmbeddedServer;
-import co.paralleluniverse.embedded.JettyServer;
-import co.paralleluniverse.embedded.TomcatServer;
-import co.paralleluniverse.embedded.UndertowServer;
+import co.paralleluniverse.embedded.containers.EmbeddedServer;
+import co.paralleluniverse.embedded.containers.JettyServer;
+import co.paralleluniverse.embedded.containers.TomcatServer;
+import co.paralleluniverse.embedded.containers.UndertowServer;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.Strand;
 import java.io.IOException;

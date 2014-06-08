@@ -3,8 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package co.paralleluniverse.embedded;
+package co.paralleluniverse.embedded.containers;
 
+import co.paralleluniverse.embedded.containers.EmbeddedServer;
+import co.paralleluniverse.embedded.containers.JettyServer;
+import co.paralleluniverse.embedded.containers.TomcatServer;
+import co.paralleluniverse.embedded.containers.UndertowServer;
 import co.paralleluniverse.common.util.Debug;
 import java.io.IOException;
 import java.io.PrintWriter;

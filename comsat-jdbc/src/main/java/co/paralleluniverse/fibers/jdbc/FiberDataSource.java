@@ -59,6 +59,15 @@ public class FiberDataSource implements DataSource {
         this(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
     }
 
+    /**
+     * Wraps a JDBC {@link DataSource} with fixed 10 threads pool executor.
+     * @param ds The {@link DataSource} to wrap.
+     * @param numThreads The number of threads to create in the thread pool that will be used to execute JDBC operations.
+     */
+    public FiberDataSource(DataSource ds) {
+        this(ds, 10);
+    }
+
     private FiberDataSource(DataSource ds, ListeningExecutorService exec) {
         this.ds = ds;
         this.exec = exec;

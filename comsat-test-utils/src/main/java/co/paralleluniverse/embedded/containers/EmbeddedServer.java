@@ -1,4 +1,4 @@
-package co.paralleluniverse.embedded;
+package co.paralleluniverse.embedded.containers;
 
 import javax.servlet.Servlet;
 

@@ -1,4 +1,4 @@
-package co.paralleluniverse.embedded;
+package co.paralleluniverse.embedded.containers;
 
 
 public abstract class AbstractEmbeddedServer implements EmbeddedServer {

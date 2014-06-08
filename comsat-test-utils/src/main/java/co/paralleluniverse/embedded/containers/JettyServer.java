@@ -1,4 +1,4 @@
-package co.paralleluniverse.embedded;
+package co.paralleluniverse.embedded.containers;
 
 import java.io.IOException;
 import java.io.Writer;

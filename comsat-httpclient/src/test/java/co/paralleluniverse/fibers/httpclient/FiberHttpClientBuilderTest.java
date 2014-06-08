@@ -5,8 +5,8 @@
  */
 package co.paralleluniverse.fibers.httpclient;
 
-import co.paralleluniverse.embedded.EmbeddedServer;
-import co.paralleluniverse.embedded.JettyServer;
+import co.paralleluniverse.embedded.containers.EmbeddedServer;
+import co.paralleluniverse.embedded.containers.JettyServer;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
