@@ -6,10 +6,10 @@
 package co.paralleluniverse.fibers.jersey;
 
 import co.paralleluniverse.common.util.Debug;
-import co.paralleluniverse.embedded.EmbeddedServer;
-import co.paralleluniverse.embedded.JettyServer;
-import co.paralleluniverse.embedded.TomcatServer;
-import co.paralleluniverse.embedded.UndertowServer;
+import co.paralleluniverse.embedded.containers.EmbeddedServer;
+import co.paralleluniverse.embedded.containers.JettyServer;
+import co.paralleluniverse.embedded.containers.TomcatServer;
+import co.paralleluniverse.embedded.containers.UndertowServer;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
