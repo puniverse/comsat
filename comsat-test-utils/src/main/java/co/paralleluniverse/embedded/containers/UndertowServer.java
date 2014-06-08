@@ -19,6 +19,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.RequestLimit;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
+import java.io.IOException;
 import javax.servlet.Servlet;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
@@ -62,15 +63,9 @@ public class UndertowServer extends AbstractEmbeddedServer {
                 server.start();
             }
         }).start();
-        for (;;) {
-            Thread.sleep(10);
-            try {
-                if (HttpClients.createDefault().execute(new HttpGet("http://localhost:" + port)).getStatusLine().getStatusCode()>-100)
-                    break;
-            }catch(HttpHostConnectException ex) {          
-            }
-        }
+        waitUrlAvailable("http://localhost:" + port);
     }
+
 
     @Override
     public void stop() throws Exception {

@@ -1,0 +1,42 @@
+#template: Hello, %s!
+#defaultName: Stranger
+server:
+    maxThreads: 200
+    minThreads: 200
+    maxQueuedRequests: 9999    
+    requestLog:
+      appenders: []
+httpClient:
+    maxConnectionsPerRoute: 9999
+    maxConnections: 9999
+database:
+    driverClass: 
+        co.paralleluniverse.fibers.jdbc.FiberDriver
+
+    url:    
+        jdbc:fiber:h2:./build/h2testdb
+# for mysql use url such as this
+#        jdbc:fiber:mysql://localhost:3306/testjdbi?zeroDateTimeBehavior=convertToNull
+
+    properties:
+        charSet: UTF-8
+
+  # the maximum amount of time to wait on an empty pool before throwing an exception
+    maxWaitForConnection: 1s
+    user: root
+    password: root
+
+  # the SQL query to run when validating a connection's liveness
+    validationQuery: 
+        "/* MyService Health Check */ VALUES 1"
+# for mysql use validationQuery such as this
+#        "/* MyService Health Check */ SELECT 1"
+
+  # the minimum number of connections to keep open
+    minSize: 8
+
+  # the maximum number of connections to keep open
+    maxSize: 32
+
+  # whether or not idle connections should be validated
+    checkConnectionWhileIdle: false

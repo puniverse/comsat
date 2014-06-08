@@ -78,5 +78,4 @@ public class FiberSqlObjectAPITest {
         @SqlQuery("select name from something where id = :id")
         String findNameById(@Bind("id") int id);
     }
-
 }

@@ -275,9 +275,9 @@ project (':comsat-test-utils') {
         compile "org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVersion"
         runtime "org.apache.tomcat.embed:tomcat-embed-logging-log4j:$tomcatVersion"
 
-        runtime "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
-        runtime "org.apache.logging.log4j:log4j-api:$log4jVersion"
-        runtime "org.apache.logging.log4j:log4j-core:$log4jVersion"
+//        runtime "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
+//        runtime "org.apache.logging.log4j:log4j-api:$log4jVersion"
+//        runtime "org.apache.logging.log4j:log4j-core:$log4jVersion"
     }
 }
 
@@ -394,6 +394,15 @@ project(':comsat-retrofit') {
 
 project(':comsat-dropwizard') {
     ext.dropwizardVer = "0.7.0"
+
+    configurations.all {
+        resolutionStrategy {
+            force 'org.jboss.logging:jboss-logging:3.1.1.GA'
+            force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
+            force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
+        }
+    }
+
     dependencies {
         compile "io.dropwizard:dropwizard-core:$dropwizardVer"
         compile "io.dropwizard:dropwizard-client:$dropwizardVer"
@@ -404,6 +413,12 @@ project(':comsat-dropwizard') {
         compile ("co.paralleluniverse:quasar-core:$quasarVer")  {
             exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl' 
         }
+//        testCompile project(':comsat-test-utils') {
+//            exclude group: 'org.eclipse.jetty', module: 'jetty-server'             
+//            exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'             
+//        compile "org.eclipse.jetty:jetty-server:$jettyVersion"
+//        compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
+//        }
     }    
 }
 

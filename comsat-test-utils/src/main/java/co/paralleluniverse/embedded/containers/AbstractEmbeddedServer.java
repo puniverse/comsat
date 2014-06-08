@@ -13,6 +13,11 @@
  */
 package co.paralleluniverse.embedded.containers;
 
+import java.io.IOException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.impl.client.HttpClients;
+
 
 public abstract class AbstractEmbeddedServer implements EmbeddedServer {
     protected int port= 8080;
@@ -36,4 +41,14 @@ public abstract class AbstractEmbeddedServer implements EmbeddedServer {
         this.maxConn = maxConn;
         return this;
     }
-}
+
+    public static void waitUrlAvailable(final String url) throws InterruptedException, IOException {
+        for (;;) {
+            Thread.sleep(10);
+            try {
+                if (HttpClients.createDefault().execute(new HttpGet(url)).getStatusLine().getStatusCode()>-100)
+                    break;
+            }catch(HttpHostConnectException ex) {          
+            }
+        }
+    }}
