@@ -40,7 +40,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class FiberHttpServletTest {
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name="{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
             {JettyServer.class},
@@ -85,7 +85,7 @@ public class FiberHttpServletTest {
     // Passes on undertow
     public void testForward() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 5000; i++)
-            assertEquals(cls.getSimpleName()+" faild on iteration "+i,"testGet", client.execute(new HttpGet("http://localhost:8080/forward"), BASIC_RESPONSE_HANDLER));
+            assertEquals("Faild on iteration "+i,"testGet", client.execute(new HttpGet("http://localhost:8080/forward"), BASIC_RESPONSE_HANDLER));
     }
 
 //    @Test

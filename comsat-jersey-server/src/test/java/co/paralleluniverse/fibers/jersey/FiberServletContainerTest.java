@@ -34,7 +34,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class FiberServletContainerTest {
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name="{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
             {JettyServer.class},
