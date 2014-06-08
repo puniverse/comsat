@@ -22,7 +22,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.sql.DataSource;
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,7 +57,7 @@ public class FiberDataSourceTest {
                 try {
                     fiberDs.getConnection().close();
                 } catch (SQLException ex) {
-                    Assert.fail(ex.getMessage());
+                    fail(ex.getMessage());
                 }
             }
         }).start().join();
@@ -72,7 +72,7 @@ public class FiberDataSourceTest {
                 try {
                     fiberDs.getConnection("", "").close();
                 } catch (SQLException ex) {
-                    Assert.fail(ex.getMessage());
+                    fail(ex.getMessage());
                 }
             }
         }).start().join();

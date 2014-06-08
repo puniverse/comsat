@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.sql.DataSource;
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +58,7 @@ public class FiberSqlObjectAPITest {
                 dao.createSomethingTable();
                 for (int i = 0; i < 100; i++)
                     dao.insert(i, "name" + i);
-                Assert.assertEquals("name37", dao.findNameById(37));
+                assertEquals("name37", dao.findNameById(37));
                 dao.dropSomethingTable();
             }
         }).start().join();

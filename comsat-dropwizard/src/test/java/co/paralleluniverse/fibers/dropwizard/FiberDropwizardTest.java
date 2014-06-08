@@ -22,7 +22,7 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.After;
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -64,22 +64,22 @@ public class FiberDropwizardTest {
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            Assert.assertTrue(client.execute(new HttpGet("http://localhost:8080/?name=foo"), BASIC_RESPONSE_HANDLER).contains("foo"));
+            assertTrue(client.execute(new HttpGet("http://localhost:8080/?name=foo"), BASIC_RESPONSE_HANDLER).contains("foo"));
     }
     @Test
     public void testHttp() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            Assert.assertTrue(client.execute(new HttpGet("http://localhost:8080/http?name=bar"), BASIC_RESPONSE_HANDLER).contains("bar"));
+            assertTrue(client.execute(new HttpGet("http://localhost:8080/http?name=bar"), BASIC_RESPONSE_HANDLER).contains("bar"));
     }
     @Test
     public void testFluentAPI() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            Assert.assertEquals("37", client.execute(new HttpGet("http://localhost:8080/fluent?id=37"), BASIC_RESPONSE_HANDLER));
+            assertEquals("37", client.execute(new HttpGet("http://localhost:8080/fluent?id=37"), BASIC_RESPONSE_HANDLER));
     }
     @Test
     public void testDao() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            Assert.assertEquals("name37", client.execute(new HttpGet("http://localhost:8080/dao?id=37"), BASIC_RESPONSE_HANDLER));
+            assertEquals("name37", client.execute(new HttpGet("http://localhost:8080/dao?id=37"), BASIC_RESPONSE_HANDLER));
     }
     private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
 

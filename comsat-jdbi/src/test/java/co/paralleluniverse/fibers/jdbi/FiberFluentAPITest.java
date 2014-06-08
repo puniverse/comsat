@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.sql.DataSource;
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,7 +73,7 @@ public class FiberFluentAPITest {
                     h.execute("create table  if not exists testQueryFirst (id int primary key, name varchar(100))");
                     for (int i = 0; i < 100; i++)
                         h.execute("insert into testQueryFirst (id, name) values (?, ?)", i, "stranger " + i);
-                    Assert.assertEquals("stranger 37", h.createQuery("select name from testQueryFirst where id = :id")
+                    assertEquals("stranger 37", h.createQuery("select name from testQueryFirst where id = :id")
                             .bind("id", 37).map(StringMapper.FIRST).first());
                     h.execute("drop table testQueryFirst");
                 }
@@ -90,7 +90,7 @@ public class FiberFluentAPITest {
                     h.execute("create table if not exists testQueryList (id int primary key, name varchar(100))");
                     for (int i = 0; i < 100; i++)
                         h.execute("insert into testQueryList (id, name) values (?, ?)", i, "stranger " + i);
-                    Assert.assertEquals(37, h.createQuery("select name from testQueryList where id < :id order by id")
+                    assertEquals(37, h.createQuery("select name from testQueryList where id < :id order by id")
                             .bind("id", 37).map(StringMapper.FIRST).list().size());
                     h.execute("drop table testQueryList");
                 }

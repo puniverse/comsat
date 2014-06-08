@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import org.junit.After;
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,7 +68,7 @@ public class FiberConnectionTest {
                 try {
                     conn.createStatement().close();
                 } catch (SQLException ex) {
-                    Assert.fail(ex.getMessage());
+                    fail(ex.getMessage());
                 }
             }
         }).start().join();
@@ -82,7 +82,7 @@ public class FiberConnectionTest {
                 try {
                     conn.prepareStatement("create table tablename");
                 } catch (SQLException ex) {
-                    Assert.fail(ex.getMessage());
+                    fail(ex.getMessage());
                 }
             }
         }).start().join();
@@ -96,7 +96,7 @@ public class FiberConnectionTest {
                 try {
                     conn.prepareCall("create table tablename");
                 } catch (SQLException ex) {
-                    Assert.fail(ex.getMessage());
+                    fail(ex.getMessage());
                 }
             }
         }).start().join();
@@ -113,10 +113,10 @@ public class FiberConnectionTest {
                     conn.createStatement().execute("create table testCommit (id int primary key, name varchar(100))");
                     conn.createStatement().execute("insert into testCommit (id, name) values (1, 'name')");
                     conn.commit();
-                    Assert.assertTrue(conn.createStatement().executeQuery("select * from testCommit").next());
+                    assertTrue(conn.createStatement().executeQuery("select * from testCommit").next());
                     conn.createStatement().execute("drop table testCommit");
                 } catch (SQLException ex) {
-                    Assert.fail(ex.getMessage());
+                    fail(ex.getMessage());
                 }
             }
         }).start().join();
@@ -133,10 +133,10 @@ public class FiberConnectionTest {
                     conn.createStatement().execute("create table testRollback (id int primary key, name varchar(100))");
                     conn.createStatement().execute("insert into testRollback (id, name) values (1, 'name')");
                     conn.rollback();
-                    Assert.assertFalse(conn.createStatement().executeQuery("select * from testRollback").next());
+                    assertFalse(conn.createStatement().executeQuery("select * from testRollback").next());
                     conn.createStatement().execute("drop table testRollback");
                 } catch (SQLException ex) {
-                    Assert.fail(ex.getMessage());
+                    fail(ex.getMessage());
                 }
             }
         }).start().join();

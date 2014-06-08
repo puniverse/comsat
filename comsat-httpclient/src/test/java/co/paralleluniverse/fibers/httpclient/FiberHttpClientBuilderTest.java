@@ -32,8 +32,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.After;
-import org.junit.Assert;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,7 +77,7 @@ public class FiberHttpClientBuilderTest {
                         try {
                             assertEquals("testGet", client.execute(new HttpGet("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
                         } catch (IOException ex) {
-                            Assert.fail(ex.getMessage());
+                            fail(ex.getMessage());
                         } finally {
                             cdl.countDown();
                         }
