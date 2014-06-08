@@ -52,7 +52,7 @@ public class UndertowServer extends AbstractEmbeddedServer {
         for (;;) {
             Thread.sleep(10);
             try {
-                if (HttpClients.createDefault().execute(new HttpGet("http://localhost:" + port)).getStatusLine().getStatusCode()==200)
+                if (HttpClients.createDefault().execute(new HttpGet("http://localhost:" + port)).getStatusLine().getStatusCode()>-100)
                     break;
             }catch(HttpHostConnectException ex) {          
             }
