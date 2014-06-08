@@ -4,10 +4,12 @@ import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.FiberAsync;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.jdbc.FiberDataSource;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
@@ -40,6 +42,25 @@ public class FiberDBI implements IDBI {
     public FiberDBI(DataSource dataSource, ExecutorService es) {
         this(dataSource instanceof FiberDataSource ? new DBI(dataSource)
                 : new DBI(new FiberDataSource(dataSource, es)), es);
+    }
+
+    /**
+     * Constructor for use with a DataSource which will provide using fixed thread pool executor
+     *
+     * @param dataSource may or may not be FiberDataSource
+     * @param threadCount 
+     */
+    public FiberDBI(DataSource dataSource, int threadCount) {
+        this(dataSource, Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder().setDaemon(true).build()));
+    }
+
+    /**
+     * Constructor for use with a DataSource which will provide using 10 threads fixed pool executor
+     *
+     * @param dataSource may or may not be FiberDataSource
+     */
+    public FiberDBI(DataSource dataSource) {
+        this(dataSource, 10);
     }
 
     @Suspendable
