@@ -42,9 +42,11 @@ public class FiberConnectionTest {
 
     @Before
     public void setUp() throws Exception {
-        this.conn = new FiberConnection(cls.newInstance().getConnection(),
+        final Connection connection = cls.newInstance().getConnection();
+        this.conn = new FiberConnection(connection,
                 MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build())));
     }
+
     @After
     public void tearDown() throws Exception {
         conn.close();
@@ -57,6 +59,74 @@ public class FiberConnectionTest {
             public void run() throws SuspendExecution, InterruptedException {
                 try {
                     conn.createStatement().close();
+                } catch (SQLException ex) {
+                    Assert.fail(ex.getMessage());
+                }
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testPrepareStatement() throws IOException, InterruptedException, Exception {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                try {
+                    conn.prepareStatement("create table tablename");
+                } catch (SQLException ex) {
+                    Assert.fail(ex.getMessage());
+                }
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testPrepareCall() throws IOException, InterruptedException, Exception {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                try {
+                    conn.prepareCall("create table tablename");
+                } catch (SQLException ex) {
+                    Assert.fail(ex.getMessage());
+                }
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testCommit() throws IOException, InterruptedException, Exception {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                try {
+                    conn.setAutoCommit(false);
+                    conn.createStatement().execute("drop table if exists testCommit");
+                    conn.createStatement().execute("create table testCommit (id int primary key, name varchar(100))");
+                    conn.createStatement().execute("insert into testCommit (id, name) values (1, 'name')");
+                    conn.commit();
+                    Assert.assertTrue(conn.createStatement().executeQuery("select * from testCommit").next());
+                    conn.createStatement().execute("drop table testCommit");
+                } catch (SQLException ex) {
+                    Assert.fail(ex.getMessage());
+                }
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testRollback() throws IOException, InterruptedException, Exception {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                try {
+                    conn.setAutoCommit(false);
+                    conn.createStatement().execute("drop table if exists testRollback");
+                    conn.createStatement().execute("create table testRollback (id int primary key, name varchar(100))");
+                    conn.createStatement().execute("insert into testRollback (id, name) values (1, 'name')");
+                    conn.rollback();
+                    Assert.assertFalse(conn.createStatement().executeQuery("select * from testRollback").next());
+                    conn.createStatement().execute("drop table testRollback");
                 } catch (SQLException ex) {
                     Assert.fail(ex.getMessage());
                 }
