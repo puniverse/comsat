@@ -61,6 +61,7 @@ subprojects {
     dependencies {
         quasar "co.paralleluniverse:quasar-core:$quasarVer" 
         testCompile group: 'junit', name: 'junit', version: '4.10'
+        testCompile project(':comsat-test-utils')
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
@@ -297,7 +298,6 @@ project (':comsat-httpclient') {
 project (':comsat-servlet') {
     dependencies {
         compile 'javax.servlet:javax.servlet-api:3.0.1'      
-        testCompile project(':comsat-test-utils')
     }
 
 }
