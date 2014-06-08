@@ -267,7 +267,7 @@ project (':comsat-test-utils') {
         //        compile "co.paralleluniverse:comsat-servlet:$comsatVersion"
         //        compile "co.paralleluniverse:comsat-httpclient:$comsatVersion"    
         //        compile "co.paralleluniverse:comsat-jersey-server:$comsatVersion"
-        compile 'org.apache.httpcomponents:httpclient:4.3.3'
+        compile 'org.apache.httpcomponents:httpclient:4.3.2'
 
         compile "org.eclipse.jetty:jetty-server:$jettyVersion"
         compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
