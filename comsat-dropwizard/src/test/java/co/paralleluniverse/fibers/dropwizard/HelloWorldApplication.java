@@ -11,7 +11,6 @@ import com.sun.jersey.spi.resource.Singleton;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.HttpClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
