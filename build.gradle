@@ -255,10 +255,10 @@ project (':comsat-jax-rs-client') {
 }
 
 project (':comsat-test-utils') {
-    ext.jettyVersion    = '9.2.0.M0'
+    ext.jettyVersion    = '9.2.0.M1'
     ext.undertowVersion = '1.0.12.Final'
     ext.tomcatVersion   = '8.0.8'
-    ext.log4jVersion    = '2.0-rc1'
+//    ext.log4jVersion    = '2.0-rc1'
 
     dependencies {
         compile "org.slf4j:slf4j-api:1.7.7"
@@ -267,6 +267,8 @@ project (':comsat-test-utils') {
 
         compile "org.eclipse.jetty:jetty-server:$jettyVersion"
         compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
+        compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:$jettyVersion"
+        compile "org.eclipse.jetty.websocket:javax-websocket-client-impl:$jettyVersion"
 
         compile "io.undertow:undertow-core:$undertowVersion"
         compile "io.undertow:undertow-servlet:$undertowVersion"

@@ -14,6 +14,7 @@
 package co.paralleluniverse.embedded.containers;
 
 import javax.servlet.Servlet;
+import javax.servlet.ServletContextListener;
 
 
 public interface EmbeddedServer {
@@ -21,6 +22,7 @@ public interface EmbeddedServer {
     EmbeddedServer setNumThreads(int nThreads);
     EmbeddedServer setMaxConnections(int maxConn);
     ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping);
+    void addServletContextListener(ServletContextListener scl);
     
     void start() throws Exception;
     void stop() throws Exception;

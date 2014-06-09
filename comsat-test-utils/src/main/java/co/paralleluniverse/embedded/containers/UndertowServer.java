@@ -19,11 +19,8 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.RequestLimit;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
-import java.io.IOException;
 import javax.servlet.Servlet;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.HttpHostConnectException;
-import org.apache.http.impl.client.HttpClients;
+import javax.servlet.ServletContextListener;
 
 public class UndertowServer extends AbstractEmbeddedServer {
     private static final String ANY_LOCAL_ADDRESS = "0.0.0.0"; // not "localhost"!
@@ -71,6 +68,11 @@ public class UndertowServer extends AbstractEmbeddedServer {
     public void stop() throws Exception {
         if (server != null)
             server.stop();
+    }
+
+    @Override
+    public void addServletContextListener(ServletContextListener scl) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private static class UndertowServletDesc implements ServletDesc {

@@ -15,6 +15,7 @@ package co.paralleluniverse.embedded.containers;
 
 import java.io.File;
 import javax.servlet.Servlet;
+import javax.servlet.ServletContextListener;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
@@ -43,23 +44,18 @@ public class TomcatServer extends AbstractEmbeddedServer {
 
     @Override
     public void start() throws Exception {
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                } catch (LifecycleException ex) {
-//                    throw new RuntimeException(ex);
-//                }
-//            }
-//        }).start();
-//        Thread.sleep(100);
-                    tomcat.start();
+        tomcat.start();
     }
 
     @Override
     public void stop() throws Exception {
         tomcat.stop();
         tomcat.getConnector().destroy();
+    }
+
+    @Override
+    public void addServletContextListener(ServletContextListener scl) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private static class TomcatServletDesc implements ServletDesc {

@@ -13,16 +13,14 @@
  */
 package co.paralleluniverse.embedded.containers;
 
-import java.io.IOException;
-import java.io.Writer;
 import javax.servlet.Servlet;
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.ServletContextListener;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 
 public class JettyServer extends AbstractEmbeddedServer {
     private Server server;
@@ -51,8 +49,16 @@ public class JettyServer extends AbstractEmbeddedServer {
     }
 
     @Override
+    public void addServletContextListener(ServletContextListener scl) {
+        if (context==null)
+            build();
+        context.addEventListener(scl);
+    }
+
+    @Override
     public void start() throws Exception {
         server.setHandler(context);
+        WebSocketServerContainerInitializer.configureContext(context);
         server.start();
     }
 
