@@ -61,7 +61,6 @@ subprojects {
     dependencies {
         quasar "co.paralleluniverse:quasar-core:$quasarVer" 
         testCompile group: 'junit', name: 'junit', version: '4.10'
-        testCompile project(':comsat-test-utils')
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
@@ -221,6 +220,7 @@ buildscript {
 project (':comsat-jdbc') {
     dependencies {
         compile 'com.google.guava:guava:17.0'
+        testCompile project(':comsat-test-utils')
     }
     compileJava {
         doLast {
@@ -287,12 +287,14 @@ project (':comsat-httpclient') {
         //        compile 'org.apache.httpcomponents:httpclient:4.3.3'
         //        compile 'org.apache.httpcomponents:httpasyncclient:4.1'
         compile 'org.apache.httpcomponents:httpasyncclient:4.0.1'
+        testCompile project(':comsat-test-utils')
     }
 }
 
 project (':comsat-servlet') {
     dependencies {
         compile 'javax.servlet:javax.servlet-api:3.0.1'      
+        testCompile project(':comsat-test-utils')
     }
 
 }
@@ -307,6 +309,7 @@ project (':comsat-jersey-server') {
         compile ('org.glassfish.jersey.core:jersey-client:2.7') {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
+        testCompile project(':comsat-test-utils')
     }
 }
 
@@ -322,6 +325,7 @@ project (':comsat-actors-servlet') {
         compile project (':comsat-actors-api')
         provided 'javax.websocket:javax.websocket-api:1.0'
         provided 'javax.servlet:javax.servlet-api:3.1.0' 
+        testCompile project(':comsat-test-utils')
         srcFiles 'javax.servlet:javax.servlet-api:3.1.0:sources' 
     }
 }
@@ -375,6 +379,7 @@ project(':comsat-jdbi') {
     dependencies {
         compile "org.jdbi:jdbi:2.53"
         compile project (':comsat-jdbc')
+        testCompile project(':comsat-test-utils')
     }    
 }
 
@@ -382,6 +387,7 @@ project(':comsat-jooq') {
     dependencies {
         compile 'org.jooq:jooq:3.3.2'
         compile project (':comsat-jdbc')
+        testCompile project(':comsat-test-utils')
     }    
 }
 
@@ -403,15 +409,16 @@ project(':comsat-retrofit') {
 project(':comsat-dropwizard') {
     ext.dropwizardVer = "0.7.0"
 
-    configurations.all {
-        resolutionStrategy {
-            force 'org.jboss.logging:jboss-logging:3.1.1.GA'
-            force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
-            force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
-        }
-    }
+//    configurations.all {
+//        resolutionStrategy {
+//            force 'org.jboss.logging:jboss-logging:3.1.1.GA'
+//            force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
+//            force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
+//        }
+//    }
 
     dependencies {
+        testRuntime 'com.h2database:h2:1.4.178'
         compile "io.dropwizard:dropwizard-core:$dropwizardVer"
         compile "io.dropwizard:dropwizard-client:$dropwizardVer"
         compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"

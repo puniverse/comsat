@@ -13,11 +13,11 @@
  */
 package co.paralleluniverse.fibers.dropwizard;
 
-import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -31,7 +31,7 @@ public class FiberDropwizardTest {
     @BeforeClass
     public static void setUpClass() throws InterruptedException, IOException {
         Thread t = new Thread(new Runnable() {
-            
+
             @Override
             public void run() {
                 try {
@@ -42,12 +42,9 @@ public class FiberDropwizardTest {
         });
         t.setDaemon(true);
         t.start();
-        AbstractEmbeddedServer.waitUrlAvailable("http://localhost:8080");
+        waitUrlAvailable("http://localhost:8080");
     }
     private CloseableHttpClient client;
-
-    public FiberDropwizardTest() {
-    }
 
     @Before
     public void setUp() throws Exception {
@@ -66,21 +63,35 @@ public class FiberDropwizardTest {
         for (int i = 0; i < 10; i++)
             assertTrue(client.execute(new HttpGet("http://localhost:8080/?name=foo"), BASIC_RESPONSE_HANDLER).contains("foo"));
     }
+
     @Test
     public void testHttp() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
             assertTrue(client.execute(new HttpGet("http://localhost:8080/http?name=bar"), BASIC_RESPONSE_HANDLER).contains("bar"));
     }
+
     @Test
     public void testFluentAPI() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
             assertEquals("37", client.execute(new HttpGet("http://localhost:8080/fluent?id=37"), BASIC_RESPONSE_HANDLER));
     }
+
     @Test
     public void testDao() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
             assertEquals("name37", client.execute(new HttpGet("http://localhost:8080/dao?id=37"), BASIC_RESPONSE_HANDLER));
     }
     private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
+
+    public static void waitUrlAvailable(final String url) throws InterruptedException, IOException {
+        for (;;) {
+            Thread.sleep(10);
+            try {
+                if (HttpClients.createDefault().execute(new HttpGet(url)).getStatusLine().getStatusCode() > -100)
+                    break;
+            } catch (HttpHostConnectException ex) {
+            }
+        }
+    }
 
 }

@@ -13,7 +13,6 @@
  */
 package co.paralleluniverse.fibers.retrofit;
 
-import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
@@ -21,12 +20,14 @@ import co.paralleluniverse.fibers.retrofit.HelloWorldApplication.Contributor;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
 import java.util.List;
-import org.junit.After;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.impl.client.HttpClients;
 import static org.junit.Assert.*;
-import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-import retrofit.RestAdapter;
+import org.junit.rules.Timeout;
 import retrofit.http.GET;
 import retrofit.http.Path;
 
@@ -44,7 +45,7 @@ public class FiberServletContainerTest {
         });
         t.setDaemon(true);
         t.start();
-        AbstractEmbeddedServer.waitUrlAvailable("http://localhost:8080");
+        waitUrlAvailable("http://localhost:8080");
     }
 
     @Test
@@ -55,7 +56,7 @@ public class FiberServletContainerTest {
             public void run() throws SuspendExecution, InterruptedException {
                 List<Contributor> contributors = github.contributors("puniverse", "comsat");
                 assertEquals("puniverse", contributors.get(1).login);
-                assertEquals(4, contributors.size());                
+                assertEquals(4, contributors.size());
             }
         }).start().join();
     }
@@ -65,4 +66,18 @@ public class FiberServletContainerTest {
         @GET(value = "/repos/{owner}/{repo}/contributors")
         List<Contributor> contributors(@Path(value = "owner") String owner, @Path(value = "repo") String repo);
     }
+
+    public static void waitUrlAvailable(final String url) throws InterruptedException, IOException {
+        for (;;) {
+            Thread.sleep(10);
+            try {
+                if (HttpClients.createDefault().execute(new HttpGet(url)).getStatusLine().getStatusCode() > -100)
+                    break;
+            } catch (HttpHostConnectException ex) {
+            }
+        }
+    }
+
+    @Rule
+    public Timeout globalTimeout = new Timeout(10000); // 10 seconds max per method tested
 }
