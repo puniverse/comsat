@@ -1,11 +1,12 @@
 package co.paralleluniverse.fibers.retrofit;
 
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.dropwizard.FiberApplication;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
 import com.sun.jersey.spi.resource.Singleton;
+import io.dropwizard.Application;
 import io.dropwizard.Configuration;
+import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import java.util.List;
 import javax.ws.rs.GET;
@@ -17,9 +18,9 @@ import javax.ws.rs.core.MediaType;
 @Singleton
 @Path("/repos/{owner}/{repo}/contributors")
 @Produces(MediaType.APPLICATION_JSON)
-public class HelloWorldApplication extends FiberApplication<Configuration> {
+public class HelloWorldApplication extends Application<Configuration> {
     @Override
-    public void fiberRun(Configuration configuration,
+    public void run(Configuration configuration,
             final Environment environment) throws ClassNotFoundException {
         environment.jersey().register(this);
     }
@@ -48,6 +49,9 @@ public class HelloWorldApplication extends FiberApplication<Configuration> {
         public int getContributions() {
             return contributions;
         }
-        
+    }
+
+    @Override
+    public void initialize(Bootstrap<Configuration> bootstrap) {
     }
 }
