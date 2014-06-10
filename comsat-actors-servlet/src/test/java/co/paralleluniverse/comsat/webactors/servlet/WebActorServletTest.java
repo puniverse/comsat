@@ -32,12 +32,19 @@ import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.NewCookie;
+import javax.ws.rs.core.Response;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClients;
+import org.glassfish.jersey.media.sse.EventInput;
+import org.glassfish.jersey.media.sse.InboundEvent;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -51,9 +58,8 @@ public class WebActorServletTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-        {JettyServer.class},
-//            {TomcatServer.class},
-//            {UndertowServer.class},
+            {JettyServer.class}, //            {TomcatServer.class},
+        //            {UndertowServer.class},
         });
     }
     private final Class<? extends EmbeddedServer> cls;
@@ -76,13 +82,13 @@ public class WebActorServletTest {
         server.stop();
     }
 
-    @Test
+//    @Test
     public void testHttpMsg() throws IOException, InterruptedException, DeploymentException, ExecutionException {
         assertEquals("httpResponse", HttpClients.createDefault().
                 execute(new HttpGet("http://localhost:8080"), new BasicResponseHandler()));
     }
 
-    @Test
+//    @Test
     public void testWebSocketMsg() throws IOException, InterruptedException, DeploymentException, ExecutionException {
         BasicCookieStore cookieStore = new BasicCookieStore();
         HttpClients.custom().setDefaultCookieStore(cookieStore).build().
@@ -91,8 +97,30 @@ public class WebActorServletTest {
         final SettableFuture<String> res = new SettableFuture<>();
         try (Session s = ContainerProvider.getWebSocketContainer().connectToServer(
                 sendAndGetTextEndPoint("test it", res), EmbedSessionConfig(cookieStore), URI.create("ws://localhost:8080/ws"))) {
-            assertEquals("TEST IT", after(res.get(), "data:"));
+            assertEquals("test it", res.get());
         }
+    }
+
+    @Test
+    public void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
+        final Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
+        Response resp = client.target("http://localhost:8080/ssechannel").request().get();
+        NewCookie session = resp.getCookies().get(JSESSIONID);
+        final EventInput eventInput = resp.readEntity(EventInput.class);
+        final SettableFuture<String> res = new SettableFuture<>();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!eventInput.isClosed() && !res.isDone()) {
+                    final InboundEvent inboundEvent = eventInput.read();
+                    if (inboundEvent == null)
+                        break;
+                    res.set(inboundEvent.readData(String.class));
+                }
+            }
+        }).start();
+        client.target("http://localhost:8080/ssepublish").request().cookie(session).post(Entity.text("test it"));
+        assertEquals("test it", res.get());
     }
 
     private static Endpoint sendAndGetTextEndPoint(final String sendText, final SettableFuture<String> res) {
@@ -102,8 +130,7 @@ public class WebActorServletTest {
                 session.addMessageHandler(new MessageHandler.Whole<String>() {
                     @Override
                     public void onMessage(String text) {
-                        if (text.contains("data:"))
-                            res.set(text);
+                        res.set(text);
                     }
                 });
                 try {
@@ -118,12 +145,16 @@ public class WebActorServletTest {
         return ClientEndpointConfig.Builder.create().configurator(new ClientEndpointConfig.Configurator() {
             @Override
             public void beforeRequest(Map<String, List<String>> headers) {
-                for (Cookie cookie : cookieStore.getCookies())
-                    if (JSESSIONID.equals(cookie.getName()))
-                        headers.put("Cookie", Lists.newArrayList(JSESSIONID + '=' + cookie.getValue()));
-
+                headers.put("Cookie", Lists.newArrayList(JSESSIONID + '=' + getByName(cookieStore, JSESSIONID)));
             }
         }).build();
+    }
+
+    public static String getByName(final CookieStore cookieStore, String name) {
+        for (org.apache.http.cookie.Cookie cookie : cookieStore.getCookies())
+            if (name.equals(cookie.getName()))
+                return cookie.getValue();
+        return null;
     }
 
     private static String after(String str, String substr) {

@@ -80,7 +80,7 @@ class ServletHttpRequest extends HttpRequest {
             byte[] ba = readBody();
             String enc = request.getCharacterEncoding();
             try {
-                this.strBody = new String(ba, enc);
+                this.strBody = enc!=null ?  new String(ba, enc) : new String(ba);
             } catch (UnsupportedEncodingException e) {
                 throw new UnsupportedCharsetException(enc);
             }
