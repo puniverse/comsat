@@ -82,13 +82,13 @@ public class WebActorServletTest {
         server.stop();
     }
 
-//    @Test
+    @Test
     public void testHttpMsg() throws IOException, InterruptedException, DeploymentException, ExecutionException {
         assertEquals("httpResponse", HttpClients.createDefault().
                 execute(new HttpGet("http://localhost:8080"), new BasicResponseHandler()));
     }
 
-//    @Test
+    @Test
     public void testWebSocketMsg() throws IOException, InterruptedException, DeploymentException, ExecutionException {
         BasicCookieStore cookieStore = new BasicCookieStore();
         HttpClients.custom().setDefaultCookieStore(cookieStore).build().

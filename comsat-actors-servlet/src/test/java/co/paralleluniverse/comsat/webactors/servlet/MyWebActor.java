@@ -72,7 +72,6 @@ public class MyWebActor extends BasicActor<Object, Void> {
     }
 
     private void postMessage(final WebDataMessage webDataMessage) throws InterruptedException, SuspendExecution {
-        System.out.println("peer2 " + peer);
         if (peer != null)
             peer.send(webDataMessage);
         if (webDataMessage.getFrom().equals(peer))
@@ -84,14 +83,8 @@ public class MyWebActor extends BasicActor<Object, Void> {
     @Override
     protected Object handleLifecycleMessage(LifecycleMessage m) {
         // while listeners might contain an SSE actor wrapped with Channels.map, the wrapped SendPort maintains the original actors hashCode and equals behavior
-        if (m instanceof ExitMessage) {
-            ActorRef actor = ((ExitMessage) m).getActor();
-            System.out.println("actor " + actor);
-            System.out.println("list ");
-            System.out.println(actors);
-            boolean remove = actors.remove(actor);
-            System.out.println("remove " + remove);
-        }
+        if (m instanceof ExitMessage)
+            actors.remove(((ExitMessage) m).getActor());
         return super.handleLifecycleMessage(m);
     }
 }
