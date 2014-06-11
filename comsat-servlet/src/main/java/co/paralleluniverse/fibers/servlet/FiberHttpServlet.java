@@ -71,7 +71,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
  * <p>Servlets typically run on multithreaded servers,
  * so be aware that a servlet must handle concurrent
  * requests and be careful to synchronize access to shared resources.
- * Shared resources include in-memory data such as
+ * Shared resources include iin-memory data such as
  * instance or class variables and external objects
  * such as files, database connections, and network
  * connections.

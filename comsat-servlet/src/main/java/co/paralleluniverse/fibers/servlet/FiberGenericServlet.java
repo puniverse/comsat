@@ -36,6 +36,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
     private int stackSize = -1;
  
     /**
+     * @inheritDoc
      * 
      * @return Wrapped version of the ServletConfig initiated by {@link #init(javax.servlet.ServletConfig) }
      */

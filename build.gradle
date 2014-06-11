@@ -200,16 +200,6 @@ buildscript {
     }
 }    
 
-project (':comsat-jax-rs-client') {
-    dependencies {
-        srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
-    }
-}
-project (':comsat-actors-servlet') {    
-    dependencies {
-        srcFiles 'javax.servlet:javax.servlet-api:3.1.0:sources' 
-    }
-}
 
 //project(':comsat-actors-netty') {
 //    dependencies {
@@ -224,18 +214,24 @@ project (':comsat-actors-servlet') {
 //        compile project (':comsat-actors-api')
 //    }
 //}
+ 
+// Needed for @inheritDoc annotations
+project (':comsat-actors-api') {    
+    dependencies {
+        srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
+        srcFiles 'javax.servlet:javax.servlet-api:3.0.1:sources' 
+        srcFiles 'org.apache.httpcomponents:httpasyncclient:4.0.1:sources'
+        srcFiles 'org.apache.httpcomponents:httpclient:4.3.2:sources'
+        srcFiles 'org.apache.httpcomponents:httpcore:4.3.2:sources'
+    }
+}
 
 task javadoc(type: Javadoc) {
     title = "Comsat ${project(':comsat-actors-api').version}"
     destinationDir = file("docs/javadoc")
-    source = 
-    project(':comsat-actors-api').sourceSets.main.allJava +
-    project(':comsat-actors-servlet').sourceSets.main.allJava +
-    project(':comsat-servlet').sourceSets.main.allJava +
-    project(':comsat-jdbc').sourceSets.main.allJava + 
-    project(':comsat-jersey-server').sourceSets.main.allJava +
-    project(':comsat-jax-rs-client').sourceSets.main.allJava
-    
+//    project(':comsat-jax-rs-client').sourceSets.main.allJava
+//    println subprojects.configurations.srcFiles.files.flatten().join(':')
+    source = files(subprojects.collect { project -> project.sourceSets.main.allJava })
     classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
     options {
         addStringOption('sourcepath', subprojects.configurations.srcFiles.files.flatten().join(':'))
@@ -243,7 +239,11 @@ task javadoc(type: Javadoc) {
         doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
         addStringOption("parse-timeout", "10")
         // stylesheetFile = rootProject.file('./baselib/javadoc.css')
+        // links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
         links = ['http://docs.oracle.com/javaee/7/api/',
+                'http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/',
+                'http://hc.apache.org/httpcomponents-asyncclient-4.0.x/httpasyncclient/apidocs/',
+                'http://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/',
                 'http://docs.oracle.com/javase/7/docs/api/',
                 'http://puniverse.github.io/quasar/javadoc/',
                 'http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/',
