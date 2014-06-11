@@ -273,12 +273,12 @@ class FiberBuilder implements Invocation.Builder {
     @Suspendable
     public <T> T method(final String name, Class<T> responseType) {
         try {
-            return new AsyncRs<T>() {
+            return new AsyncRs<Response>() {
                 @Override
                 protected void requestAsync() {
                     builder.async().method(name, this);
                 }
-            }.run();
+            }.run().readEntity(responseType);
         } catch (SuspendExecution ex) {
             throw new AssertionError(ex);
         }
