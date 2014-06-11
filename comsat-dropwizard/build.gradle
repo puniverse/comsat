@@ -1,0 +1,14 @@
+ext.dropwizardVer = "0.7.0"
+
+dependencies {
+    testRuntime 'com.h2database:h2:1.4.178'
+    compile "io.dropwizard:dropwizard-core:$dropwizardVer"
+    compile "io.dropwizard:dropwizard-client:$dropwizardVer"
+    compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
+    compile project(":comsat-servlet")
+    compile project(":comsat-httpclient")
+    compile project(":comsat-jdbi")
+    compile ("co.paralleluniverse:quasar-core:$quasarVer")  {
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl' 
+    }
+}    

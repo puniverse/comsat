@@ -211,19 +211,12 @@ project (':comsat-actors-servlet') {
     }
 }
 
-project (':comsat-actors-api') {    
-    dependencies {
-        compile "co.paralleluniverse:quasar-actors:$quasarVer"
-        compile 'com.google.guava:guava:17.0'
-    }
-}
-
-project(':comsat-actors-netty') {
-    dependencies {
-        compile 'org.webbitserver:webbit:0.4.15'
-        compile project (':comsat-actors-api')
-    }
-}
+//project(':comsat-actors-netty') {
+//    dependencies {
+//        compile 'org.webbitserver:webbit:0.4.15'
+//        compile project (':comsat-actors-api')
+//    }
+//}
 
 //project(':comsat-actors-undertow') {
 //    dependencies {
@@ -231,53 +224,6 @@ project(':comsat-actors-netty') {
 //        compile project (':comsat-actors-api')
 //    }
 //}
-
-
-project(':comsat-jetty-loader') {
-    dependencies {
-        compile 'org.eclipse.jetty:jetty-webapp:9.1.0.RC0'
-    }
-    jar {
-        from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
-    } 
-}
-
-project(':comsat-jooq') {
-}
-
-project(':comsat-retrofit') {
-   }
-
-project(':comsat-dropwizard') {
-    ext.dropwizardVer = "0.7.0"
-
-    //    configurations.all {
-    //        resolutionStrategy {
-    //            force 'org.jboss.logging:jboss-logging:3.1.1.GA'
-    //            force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
-    //            force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
-    //        }
-    //    }
-
-    dependencies {
-        testRuntime 'com.h2database:h2:1.4.178'
-        compile "io.dropwizard:dropwizard-core:$dropwizardVer"
-        compile "io.dropwizard:dropwizard-client:$dropwizardVer"
-        compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
-        compile project(":comsat-servlet")
-        compile project(":comsat-httpclient")
-        compile project(":comsat-jdbi")
-        compile ("co.paralleluniverse:quasar-core:$quasarVer")  {
-            exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl' 
-        }
-        //        testCompile project(':comsat-test-utils') {
-        //            exclude group: 'org.eclipse.jetty', module: 'jetty-server'             
-        //            exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'             
-        //        compile "org.eclipse.jetty:jetty-server:$jettyVersion"
-        //        compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
-        //        }
-    }    
-}
 
 task javadoc(type: Javadoc) {
     title = "Comsat ${project(':comsat-actors-api').version}"
