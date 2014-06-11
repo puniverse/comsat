@@ -1,0 +1,4 @@
+dependencies {
+    compile 'org.apache.httpcomponents:httpasyncclient:4.0.1'
+    testCompile project(':comsat-test-utils')
+}

@@ -74,16 +74,9 @@ subprojects {
 
     defaultTasks 'install'
 
-    //    task scanSuspendables(type: JavaExec, dependsOn: classes) { // used to run SuspendableScanner
-    //        main = "co.paralleluniverse.fibers.instrument.SuspendablesScanner"
-    //        classpath = sourceSets.main.runtimeClasspath
-    //        args = ["co.paralleluniverse.fibers"]
-    //    }
-    //    tasks.jar.dependsOn scanSuspendables
     classes {
         doFirst{
             println "Excuting scanSuspendables..."
-            //            println configurations.runtime.asPath
             ant.taskdef(name:'scanSuspendables', 
                 classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
                 classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
@@ -92,16 +85,6 @@ subprojects {
             ) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
-            //            
-            //            println("Instrumenting classes...")
-            //            ant.taskdef(name:'instrumentation', 
-            //                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
-            //                classpath: "build/resources/main:"+"build/classes/main:" + configurations.compile.asPath)
-            //            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
-            //                fileset(dir: sourceSets.main.output.classesDir) {
-            //                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
-            //                }
-            //            }       
         }
     }
 
@@ -217,109 +200,14 @@ buildscript {
     }
 }    
 
-project (':comsat-jdbc') {
-    dependencies {
-        compile 'com.google.guava:guava:17.0'
-        testCompile project(':comsat-test-utils')
-    }
-    compileJava {
-        doLast {
-            //            println("Scanning for suspandables...")
-            //            ant.taskdef(name:'scanSuspendables', 
-            //                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
-            //                classpath: "build/classes/main:" + configurations.compile.asPath)
-            //            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers") {
-            //                fileset(dir: sourceSets.main.output.classesDir)
-            //            }
-            //            
-            println("Instrumenting classes...")
-            ant.taskdef(name:'instrumentation', 
-                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
-                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.compile.asPath}")
-            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
-                fileset(dir: sourceSets.main.output.classesDir) {
-                    exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
-                }
-            }       
-        }
-    }
-}
-
 project (':comsat-jax-rs-client') {
     dependencies {
-        compile 'javax.ws.rs:javax.ws.rs-api:2.0'
-        compile 'org.glassfish.jersey.core:jersey-client:2.7'
-
-        compile 'org.glassfish.jersey.connectors:jersey-jetty-connector:2.7'
-        compile "org.eclipse.jetty:jetty-server:9.1.1.v20140108"
-        compile "org.eclipse.jetty:jetty-servlet:9.1.1.v20140108"
-
         srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
-        testCompile (project(':comsat-test-utils')) {
-            exclude group: 'org.eclipse.jetty', module: '*' 
-//            exclude group: 'org.eclipse.jetty', module: 'jetty-io' 
-//            exclude group: 'org.eclipse.jetty', module: 'jetty-util' 
-        }
     }
 }
-
-project (':comsat-test-utils') {
-    ext.jettyVersion    = '9.2.0.M1'
-    ext.undertowVersion = '1.0.12.Final'
-    ext.tomcatVersion   = '8.0.8'
-    ext.jerseyVersion   = '2.7'
-
+project (':comsat-actors-servlet') {    
     dependencies {
-        compile "org.slf4j:slf4j-api:1.7.7"
-        compile 'org.apache.httpcomponents:httpclient:4.3.2'
-        compile 'com.h2database:h2:1.4.178'
-        compile "org.glassfish.jersey.core:jersey-client:$jerseyVersion"
-//        compile "org.glassfish.jersey.connectors:jersey-jetty-connector:$jerseyVersion"
-        compile "org.glassfish.jersey.media:jersey-media-sse:$jerseyVersion"
-        
-        compile "org.eclipse.jetty:jetty-server:$jettyVersion"
-        compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
-        compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:$jettyVersion"
-        compile "org.eclipse.jetty.websocket:javax-websocket-client-impl:$jettyVersion"
-
-        compile "io.undertow:undertow-core:$undertowVersion"
-        compile "io.undertow:undertow-servlet:$undertowVersion"
-
-        compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
-        compile "org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVersion"
-        runtime "org.apache.tomcat.embed:tomcat-embed-logging-log4j:$tomcatVersion"
-    }
-}
-
-project (':comsat-httpclient') {
-    dependencies {
-        //        compile 'org.apache.httpcomponents:httpcore:4.3.3'
-        //        compile 'org.apache.httpcomponents:httpclient:4.3.3'
-        //        compile 'org.apache.httpcomponents:httpasyncclient:4.1'
-        compile 'org.apache.httpcomponents:httpasyncclient:4.0.1'
-        testCompile project(':comsat-test-utils')
-    }
-}
-
-project (':comsat-servlet') {
-    dependencies {
-        compile 'javax.servlet:javax.servlet-api:3.0.1'      
-        testCompile project(':comsat-test-utils')
-    }
-
-}
-
-project (':comsat-jersey-server') {
-    dependencies {
-        compile project(':comsat-servlet')
-        compile 'org.sonatype.sisu.inject:cglib:3.1.1' // instead of old cglib in jersey
-        compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.7' ) {
-            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-        }
-        compile ('org.glassfish.jersey.core:jersey-client:2.7') {
-            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-        }
-        testCompile project(':comsat-test-utils')
+        srcFiles 'javax.servlet:javax.servlet-api:3.1.0:sources' 
     }
 }
 
@@ -327,16 +215,6 @@ project (':comsat-actors-api') {
     dependencies {
         compile "co.paralleluniverse:quasar-actors:$quasarVer"
         compile 'com.google.guava:guava:17.0'
-    }
-}
-
-project (':comsat-actors-servlet') {
-    dependencies {
-        compile project (':comsat-actors-api')
-        provided 'javax.websocket:javax.websocket-api:1.0'
-        provided 'javax.servlet:javax.servlet-api:3.1.0' 
-        testCompile project(':comsat-test-utils')
-        srcFiles 'javax.servlet:javax.servlet-api:3.1.0:sources' 
     }
 }
 
@@ -354,27 +232,6 @@ project(':comsat-actors-netty') {
 //    }
 //}
 
-project(':comsat-tomcat-loader') {
-    dependencies {
-        compile 'co.paralleluniverse:quasar-core:0.6.0-SNAPSHOT'
-        compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.3'
-    }
-    jar {
-        from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
-    } 
-    
-    if (System.properties['java.version'].startsWith('1.8') ) { 
-        artifacts {
-            archives jar
-            archives project(':comsat-tomcat-loader-jdk8').jar
-            archives sourcesJar
-            archives javadocJar
-            //    archives distZip
-        }
-    
-        uploadArchives.dependsOn ':comsat-tomcat-loader-jdk8:jar'
-    }
-}
 
 project(':comsat-jetty-loader') {
     dependencies {
@@ -385,47 +242,22 @@ project(':comsat-jetty-loader') {
     } 
 }
 
-project(':comsat-jdbi') {
-    dependencies {
-        compile "org.jdbi:jdbi:2.53"
-        compile project (':comsat-jdbc')
-        testCompile project(':comsat-test-utils')
-    }    
-}
-
 project(':comsat-jooq') {
-    dependencies {
-        compile 'org.jooq:jooq:3.3.2'
-        compile project (':comsat-jdbc')
-        testCompile project(':comsat-test-utils')
-    }    
 }
 
 project(':comsat-retrofit') {
-    configurations.all {
-        resolutionStrategy {
-            force 'org.jboss.logging:jboss-logging:3.1.1.GA'
-            force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
-            force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
-        }
-    }
-    dependencies {
-        compile 'com.squareup.retrofit:retrofit:1.5.1'
-        compile project (':comsat-httpclient')
-        testCompile project (':comsat-dropwizard')
-    }    
-}
+   }
 
 project(':comsat-dropwizard') {
     ext.dropwizardVer = "0.7.0"
 
-//    configurations.all {
-//        resolutionStrategy {
-//            force 'org.jboss.logging:jboss-logging:3.1.1.GA'
-//            force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
-//            force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
-//        }
-//    }
+    //    configurations.all {
+    //        resolutionStrategy {
+    //            force 'org.jboss.logging:jboss-logging:3.1.1.GA'
+    //            force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
+    //            force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
+    //        }
+    //    }
 
     dependencies {
         testRuntime 'com.h2database:h2:1.4.178'
@@ -438,12 +270,12 @@ project(':comsat-dropwizard') {
         compile ("co.paralleluniverse:quasar-core:$quasarVer")  {
             exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl' 
         }
-//        testCompile project(':comsat-test-utils') {
-//            exclude group: 'org.eclipse.jetty', module: 'jetty-server'             
-//            exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'             
-//        compile "org.eclipse.jetty:jetty-server:$jettyVersion"
-//        compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
-//        }
+        //        testCompile project(':comsat-test-utils') {
+        //            exclude group: 'org.eclipse.jetty', module: 'jetty-server'             
+        //            exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'             
+        //        compile "org.eclipse.jetty:jetty-server:$jettyVersion"
+        //        compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
+        //        }
     }    
 }
 

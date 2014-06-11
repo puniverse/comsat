@@ -45,7 +45,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class FiberHttpAsyncClient {
+public class FiberHttpAsyncClientTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
@@ -55,7 +55,7 @@ public class FiberHttpAsyncClient {
     private final Class<? extends EmbeddedServer> cls;
     private EmbeddedServer server;
 
-    public FiberHttpAsyncClient(Class<? extends EmbeddedServer> cls) {
+    public FiberHttpAsyncClientTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
     }
 
