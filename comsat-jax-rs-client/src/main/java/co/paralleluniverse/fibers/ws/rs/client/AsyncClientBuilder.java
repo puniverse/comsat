@@ -45,7 +45,7 @@ public class AsyncClientBuilder extends ClientBuilder {
      * @return new client builder instance.
      */
     public static ClientBuilder newBuilder() {
-        return new AsyncClientBuilder(ClientBuilder.newBuilder());
+        return new AsyncClientBuilder(ClientBuilder.newBuilder().withConfig(addDefaultConfigurations(null)));
     }
 
     /**
@@ -66,8 +66,14 @@ public class AsyncClientBuilder extends ClientBuilder {
      * @return a new, configured, client instance.
      */
     public static Client newClient(Configuration configuration) {
+        return new FiberClient(ClientBuilder.newClient(addDefaultConfigurations(configuration)));
+    }
+
+    private static ClientConfig addDefaultConfigurations(Configuration configuration) {
+        // currently there is no usage with the singleThreadPool variable due to jersey bug. See below.
         final RequestExecutorProvider singleThreadPool = new RequestExecutorProvider() {
             private ExecutorService tp = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-puniverse-single-worker-%d").build());
+
             @Override
             public ExecutorService getRequestingExecutor() {
                 return tp;
@@ -78,14 +84,15 @@ public class AsyncClientBuilder extends ClientBuilder {
             }
         };
         final ClientConfig config = new ClientConfig().
-                register(singleThreadPool, RequestExecutorProvider.class).
+                // This is commented since, jersey has major problem (since ~2.5) - it blocks the calling thread !!!
+                // When this bug will be fixed we should uncomment this line in order to enable a lot of concurrent open requsets                
+                //                register(singleThreadPool, RequestExecutorProvider.class).
                 property(ClientProperties.ASYNC_THREADPOOL_SIZE, 20);
         if (configuration != null)
             config.loadFrom(configuration);
         if (config.getConnectorProvider() == null)
             config.connectorProvider(new JettyConnectorProvider());
-
-        return new FiberClient(ClientBuilder.newClient(config));
+        return config;
     }
 
     @Override
@@ -95,7 +102,7 @@ public class AsyncClientBuilder extends ClientBuilder {
 
     @Override
     public ClientBuilder withConfig(Configuration config) {
-        clientBuilder.withConfig(config);
+        clientBuilder.withConfig(addDefaultConfigurations(config));
         return this;
     }
 
