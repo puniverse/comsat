@@ -40,23 +40,38 @@ subprojects {
     ext.jerseyVersion   = '2.9.1'
     ext.jerseyJettyVersion = '9.1.1.v20140108'
 
-    ext.retrofitVersion = '1.5.1'
     ext.servletVersion  = '3.0.1'
     ext.jaxrsVersion    = '2.0'
     ext.websocketApiVersion = '1.0'
-    ext.dropwizardVer   = '0.7.0'
-    ext.jooqVersion     = '3.3.2'
-    ext.jdbiVersion     = '2.53'
-    ext.slf4jApiVer     = '1.7.7'
-    ext.guavaVersion    =  '17.0'
 
+    ext.dropwizardVer   = '0.7.0'
+    ext.jdbiVersion     = '2.53'
     ext.apacheAsyncClientVerstion   = '4.0.1'
     ext.apacheClientVersion         = '4.3.2'
+
+    ext.retrofitVersion = '1.6.0'
+    ext.jooqVersion     = '3.3.2'
+    ext.slf4jApiVer     = '1.7.7'
+    ext.guavaVersion    = '17.0'
+
+    configurations.all {
+        resolutionStrategy {
+            failOnVersionConflict()
+            force "org.ow2.asm:asm:5.0.3"
+            force "log4j:log4j:1.2.17"
+            force "junit:junit:4.11"
+            force 'com.codahale.metrics:metrics-core:3.0.2'
+            force "com.google.guava:guava:$guavaVersion"
+            force "org.slf4j:slf4j-api:$slf4jApiVer"
+            force "org.apache.httpcomponents:httpcore:$apacheClientVersion"
+            force "javax.servlet:javax.servlet-api:$servletVersion"
+        }
+    }
     
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
-        println "sonatype username or password not set"
-        sonatypeUsername = ""
-        sonatypePassword = ""
+//        println "sonatype username or password not set"
+        ext.sonatypeUsername = ""
+        ext.sonatypePassword = ""
     }
     if (!project.hasProperty('mainClass')) { // must use project.hasProperty() rather than hasProperty in subprojects (gradle bug)
         ext.mainClass = ''
@@ -77,20 +92,6 @@ subprojects {
         markdownDoclet
     }
     
-    configurations.all {
-        resolutionStrategy {
-            failOnVersionConflict()
-            force "com.google.guava:guava:17.0"
-            force "org.ow2.asm:asm:5.0.3"
-            force "org.slf4j:slf4j-api:1.7.7"
-            force "log4j:log4j:1.2.17"
-            force "junit:junit:4.11"
-            force "org.apache.httpcomponents:httpcore:4.3.2"
-            force 'com.codahale.metrics:metrics-core:3.0.2'
-            force 'javax.servlet:javax.servlet-api:3.0.1' 
-        }
-    }
-
     dependencies {
         quasar "co.paralleluniverse:quasar-core:$quasarVer" 
         testCompile group: 'junit', name: 'junit', version: '4.10'

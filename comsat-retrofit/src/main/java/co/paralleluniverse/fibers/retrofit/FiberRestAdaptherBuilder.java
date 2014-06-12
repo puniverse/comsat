@@ -1,14 +1,15 @@
 package co.paralleluniverse.fibers.retrofit;
 
 import co.paralleluniverse.fibers.httpclient.FiberHttpClientBuilder;
+import java.util.concurrent.Executor;
 import org.apache.http.client.HttpClient;
 import retrofit.Endpoint;
 import retrofit.ErrorHandler;
 import retrofit.Profiler;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
-import retrofit.Server;
 import retrofit.client.ApacheClient;
+import retrofit.client.Client;
 import retrofit.converter.Converter;
 
 public class FiberRestAdaptherBuilder {
@@ -22,20 +23,24 @@ public class FiberRestAdaptherBuilder {
         this.builder = new RestAdapter.Builder().setClient(new ApacheClient(client));
     }
 
-    public RestAdapter.Builder setServer(String server) {
-        return builder.setServer(server);
-    }
-
-    public RestAdapter.Builder setServer(Server server) {
-        return builder.setServer(server);
-    }
-
     public RestAdapter.Builder setEndpoint(String endpoint) {
         return builder.setEndpoint(endpoint);
     }
 
     public RestAdapter.Builder setEndpoint(Endpoint endpoint) {
         return builder.setEndpoint(endpoint);
+    }
+
+    public RestAdapter.Builder setClient(Client client) {
+        return builder.setClient(client);
+    }
+
+    public RestAdapter.Builder setClient(Client.Provider clientProvider) {
+        return builder.setClient(clientProvider);
+    }
+
+    public RestAdapter.Builder setExecutors(Executor httpExecutor, Executor callbackExecutor) {
+        return builder.setExecutors(httpExecutor, callbackExecutor);
     }
 
     public RestAdapter.Builder setRequestInterceptor(RequestInterceptor requestInterceptor) {
@@ -65,5 +70,4 @@ public class FiberRestAdaptherBuilder {
     public RestAdapter build() {
         return builder.build();
     }
-
 }
