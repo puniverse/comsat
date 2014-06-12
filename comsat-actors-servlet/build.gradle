@@ -1,6 +1,6 @@
 dependencies {
     compile project (':comsat-actors-api')
-    provided 'javax.websocket:javax.websocket-api:1.0'
-    provided 'javax.servlet:javax.servlet-api:3.1.0' 
+    provided "javax.websocket:javax.websocket-api:$websocketApiVersion"
+    provided "javax.servlet:javax.servlet-api:$servletVersion" // was 3.1.0
     testCompile project(':comsat-test-utils')
 }

@@ -1,3 +1,16 @@
+// links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
+ext.javadocLinks =  ['http://docs.oracle.com/javaee/7/api/',
+                'http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/',
+                'http://hc.apache.org/httpcomponents-asyncclient-4.0.x/httpasyncclient/apidocs/',
+                'http://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/',
+                'http://square.github.io/retrofit/javadoc/',
+                'http://jdbi.org/apidocs/',
+                'http://www.jooq.org/javadoc/3.3.x/',
+                'http://docs.oracle.com/javase/7/docs/api/',
+                'http://puniverse.github.io/quasar/javadoc/',
+                'http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/',
+                'http://jersey.java.net/apidocs/latest/jersey/']
+
 subprojects {
     apply plugin: 'java'
 
@@ -18,8 +31,28 @@ subprojects {
     ext.scmConnection   = "https://github.com/puniverse/comsat.git"
     ext.distDir         = "$buildDir/dist"
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
-    ext.quasarVer       = "0.6.0-SNAPSHOT"
 
+    ext.quasarVer       = "0.6.0-SNAPSHOT"
+    ext.jettyVersion    = '9.2.0.M1'
+    ext.undertowVersion = '1.0.12.Final'
+    ext.tomcatVersion   = '8.0.8'
+
+    ext.jerseyVersion   = '2.7'
+    ext.jerseyJettyVersion = '9.1.1.v20140108'
+
+    ext.retrofitVersion = '1.5.1'
+    ext.servletVersion  = '3.0.1'
+    ext.jaxrsVersion    = '2.0'
+    ext.websocketApiVersion = '1.0'
+    ext.dropwizardVer   = '0.7.0'
+    ext.jooqVersion     = '3.3.2'
+    ext.jdbiVersion     = '2.53'
+    ext.slf4jApiVer     = '1.7.7'
+    ext.guavaVersion    =  '17.0'
+
+    ext.apacheAsyncClientVerstion   = '4.0.1'
+    ext.apacheClientVersion         = '4.3.2'
+    
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
         println "sonatype username or password not set"
         sonatypeUsername = ""
@@ -98,12 +131,7 @@ subprojects {
             doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
             addStringOption("parse-timeout", "10")
             // stylesheetFile = rootProject.file('./baselib/javadoc.css')
-            links = ['http://docs.oracle.com/javaee/7/api/',
-                'http://docs.oracle.com/javase/7/docs/api/',
-                'http://puniverse.github.io/quasar/javadoc/',
-                'http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/',
-                'http://docs.oracle.com/javaee/7/api/',
-                'http://jersey.java.net/apidocs/latest/jersey/']
+            links = javadocLinks
         }
     }
     task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -187,34 +215,7 @@ subprojects {
     }
    
 }
-defaultTasks 'install'
 
-// needed to the license plugin
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.7.0'
-    }
-}    
-
-
-//project(':comsat-actors-netty') {
-//    dependencies {
-//        compile 'org.webbitserver:webbit:0.4.15'
-//        compile project (':comsat-actors-api')
-//    }
-//}
-
-//project(':comsat-actors-undertow') {
-//    dependencies {
-//        compile 'io.undertow:undertow-core:1.0.6.Final'
-//        compile project (':comsat-actors-api')
-//    }
-//}
- 
 // Needed for @inheritDoc annotations
 project (':comsat-actors-api') {    
     dependencies {
@@ -229,8 +230,6 @@ project (':comsat-actors-api') {
 task javadoc(type: Javadoc) {
     title = "Comsat ${project(':comsat-actors-api').version}"
     destinationDir = file("docs/javadoc")
-//    project(':comsat-jax-rs-client').sourceSets.main.allJava
-//    println subprojects.configurations.srcFiles.files.flatten().join(':')
     source = files(subprojects.collect { project -> project.sourceSets.main.allJava })
     classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
     options {
@@ -239,16 +238,7 @@ task javadoc(type: Javadoc) {
         doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
         addStringOption("parse-timeout", "10")
         // stylesheetFile = rootProject.file('./baselib/javadoc.css')
-        // links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
-        links = ['http://docs.oracle.com/javaee/7/api/',
-                'http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/',
-                'http://hc.apache.org/httpcomponents-asyncclient-4.0.x/httpasyncclient/apidocs/',
-                'http://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/',
-                'http://docs.oracle.com/javase/7/docs/api/',
-                'http://puniverse.github.io/quasar/javadoc/',
-                'http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/',
-                'http://docs.oracle.com/javaee/7/api/',
-                'http://jersey.java.net/apidocs/latest/jersey/']
+        links = javadocLinks
     }
     excludes = [
         "org/glassfish/jersey/server/internal/**",
@@ -262,6 +252,20 @@ task clean(dependsOn: subprojects.clean) << {
     delete 'docs/javadoc'
 }
 
+// needed to the license plugin
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.7.0'
+    }
+}    
+
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
 }
+
+defaultTasks 'install'
+

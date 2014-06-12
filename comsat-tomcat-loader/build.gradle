@@ -1,6 +1,5 @@
 dependencies {
-    compile 'co.paralleluniverse:quasar-core:0.6.0-SNAPSHOT'
-    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.3'
+    compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
 }
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }

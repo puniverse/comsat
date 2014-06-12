@@ -6,7 +6,7 @@
 //    }
 //}
 dependencies {
-    compile 'com.squareup.retrofit:retrofit:1.5.1'
+    compile "com.squareup.retrofit:retrofit:$retrofitVersion"
     compile project (':comsat-httpclient')
     testCompile project (':comsat-dropwizard')
 }    

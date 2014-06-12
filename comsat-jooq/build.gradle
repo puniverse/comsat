@@ -1,5 +1,5 @@
 dependencies {
-    compile 'org.jooq:jooq:3.3.2'
+    compile "org.jooq:jooq:3.3.2"
     compile project (':comsat-jdbc')
     testCompile project(':comsat-test-utils')
 }

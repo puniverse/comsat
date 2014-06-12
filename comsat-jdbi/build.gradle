@@ -1,5 +1,5 @@
 dependencies {
-    compile "org.jdbi:jdbi:2.53"
+    compile "org.jdbi:jdbi:$jdbiVersion"
     compile project (':comsat-jdbc')
     testCompile project(':comsat-test-utils')
 }    

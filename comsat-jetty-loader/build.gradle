@@ -1,5 +1,5 @@
 dependencies {
-    compile 'org.eclipse.jetty:jetty-webapp:9.1.0.RC0'
+    compile "org.eclipse.jetty:jetty-webapp:$jettyVersion" // was 9.1.0.RC0
 }
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }

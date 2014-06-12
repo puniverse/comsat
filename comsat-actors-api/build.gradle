@@ -1,4 +1,4 @@
 dependencies {
     compile "co.paralleluniverse:quasar-actors:$quasarVer"
-    compile 'com.google.guava:guava:17.0'
+    compile "com.google.guava:guava:$guavaVersion"
 }
