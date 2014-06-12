@@ -18,18 +18,14 @@ Where `ARTIFACT` is:
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
 * `comsat-jersey-server` – Jersey server integration for defining REST services.
 * `comsat-dropwizard` – Dropwizard integration including jersey, ApacheHttpClient and jdbi.
-
 * `comsat-jax-rs-client` – JAX-RS client integration for calling HTTP services.
 * `comsat-httpclient` – ApacheHttpClient integration for calling HTTP services.
 * `comsat-retrofit` – Retrofit integration for calling HTTP services through nice interfaces.
-
 * `comsat-jdbi` – JDBI integration for using the JDBI API in fibers.
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
 * `comsat-jooq` – JOOQ integration for using the JOOQ API in fibers.
-
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables WebSocket(JSR-356) usage through Web Actors API
-
 * `comsat-tomcat-loader` – Enables using comsat in tomcat container without thhe need of javaAgent
 * `comsat-jetty-loader` – Enables using comsat in jetty container without thhe need of javaAgent
 Or, build from sources by running:
