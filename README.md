@@ -26,8 +26,8 @@ Where `ARTIFACT` is:
 * `comsat-jooq` – JOOQ integration for using the JOOQ API in fibers.
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables WebSocket(JSR-356) usage through Web Actors API
-* `comsat-tomcat-loader` – Enables using comsat in tomcat container without thhe need of javaAgent
-* `comsat-jetty-loader` – Enables using comsat in jetty container without thhe need of javaAgent
+* `comsat-tomcat-loader` – Enables using comsat in tomcat container without the need of javaAgent
+* `comsat-jetty-loader` – Enables using comsat in jetty container without the need of javaAgent
 Or, build from sources by running:
 
 ```
