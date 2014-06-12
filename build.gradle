@@ -1,16 +1,3 @@
-// links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
-ext.javadocLinks =  ['http://docs.oracle.com/javaee/7/api/',
-                'http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/',
-                'http://hc.apache.org/httpcomponents-asyncclient-4.0.x/httpasyncclient/apidocs/',
-                'http://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/',
-                'http://square.github.io/retrofit/javadoc/',
-                'http://jdbi.org/apidocs/',
-                'http://www.jooq.org/javadoc/3.3.x/',
-                'http://docs.oracle.com/javase/7/docs/api/',
-                'http://puniverse.github.io/quasar/javadoc/',
-                'http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/',
-                'http://jersey.java.net/apidocs/latest/jersey/']
-
 subprojects {
     apply plugin: 'java'
 
@@ -67,7 +54,7 @@ subprojects {
     }
     
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
-//        println "sonatype username or password not set"
+        //        println "sonatype username or password not set"
         ext.sonatypeUsername = ""
         ext.sonatypePassword = ""
     }
@@ -124,8 +111,66 @@ subprojects {
         classifier = 'sources'
         from sourceSets.main.allSource
     }
+    // Adds license header on each java file. gradle licenseMain for check or licenseFormatMain to apply
+    apply plugin: 'license'
+    license {
+        header rootProject.file('LICENSE')
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        strictCheck true
+        skipExistingHeaders true
+        mapping('java','SLASHSTAR_STYLE')
+    }
+    
+    tasks.withType(Test) {
+        jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+    }
+   
+    //rest of the subprojects definition in the block after subproject specific definitions
+}
+
+// Per subproject Defintions
+// Can't be done in separate files since srcFiles configuration is made resolved by the root javadoc task
+project (':comsat-servlet') {    
+    dependencies {
+        srcFiles "javax.servlet:javax.servlet-api:$servletVersion:sources"
+    }
+}
+project (':comsat-httpclient') {    
+    dependencies {
+        srcFiles "org.apache.httpcomponents:httpasyncclient:$apacheAsyncClientVerstion:sources"
+        srcFiles "org.apache.httpcomponents:httpclient:$apacheClientVersion:sources"
+        srcFiles "org.apache.httpcomponents:httpcore:$apacheClientVersion:sources"
+    }
+}
+
+// links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
+ext.javadocLinks =  [
+                "http://docs.oracle.com/javaee/7/api/",
+                "http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/",
+                "http://hc.apache.org/httpcomponents-asyncclient-4.0.x/httpasyncclient/apidocs/",
+                "http://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/",
+                "http://square.github.io/retrofit/javadoc/",
+                "http://jdbi.org/apidocs/",
+                "http://www.jooq.org/javadoc/3.3.x/",
+                "http://docs.oracle.com/javase/7/docs/api/",
+                "http://puniverse.github.io/quasar/javadoc/",
+                "http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/",
+                "http://jersey.java.net/apidocs/latest/jersey/"
+]
+
+ext.javadocExcludes = [
+        "org/glassfish/jersey/server/internal/**",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorEndpoint.java",
+//        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
+        "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
+]
+
+// Rest of the subprojects common definitions 
+subprojects {
     javadoc {
         options {
+            addStringOption('sourcepath', configurations.srcFiles.files.flatten().join(':'))
             docletpath = configurations.markdownDoclet.files.asType(List)
             doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
             addStringOption("parse-timeout", "10")
@@ -137,7 +182,6 @@ subprojects {
         classifier = 'javadoc'
         from javadoc.destinationDir
     } 
-
     ///////// Publish Artifacts 
     apply plugin: 'maven'
     apply plugin: 'signing'
@@ -197,33 +241,6 @@ subprojects {
             }
         }
     }	
-
-    // Adds license header on each java file. gradle licenseMain for check or licenseFormatMain to apply
-    apply plugin: 'license'
-    license {
-        header rootProject.file('LICENSE')
-        ext.year = Calendar.getInstance().get(Calendar.YEAR)
-        strictCheck true
-        skipExistingHeaders true
-        mapping('java','SLASHSTAR_STYLE')
-    }
-    
-    tasks.withType(Test) {
-        jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
-        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
-    }
-   
-}
-
-// Needed for @inheritDoc annotations
-project (':comsat-actors-api') {    
-    dependencies {
-        srcFiles 'javax.ws.rs:javax.ws.rs-api:2.0:sources'
-        srcFiles 'javax.servlet:javax.servlet-api:3.0.1:sources' 
-        srcFiles 'org.apache.httpcomponents:httpasyncclient:4.0.1:sources'
-        srcFiles 'org.apache.httpcomponents:httpclient:4.3.2:sources'
-        srcFiles 'org.apache.httpcomponents:httpcore:4.3.2:sources'
-    }
 }
 
 task javadoc(type: Javadoc) {
@@ -233,18 +250,12 @@ task javadoc(type: Javadoc) {
     classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
     options {
         addStringOption('sourcepath', subprojects.configurations.srcFiles.files.flatten().join(':'))
-        docletpath = project(':comsat-actors-api').configurations.markdownDoclet.files.asType(List)
         doclet = 'ch.raffael.doclets.pegdown.PegdownDoclet'
         addStringOption("parse-timeout", "10")
         // stylesheetFile = rootProject.file('./baselib/javadoc.css')
         links = javadocLinks
     }
-    excludes = [
-        "org/glassfish/jersey/server/internal/**",
-        "co/paralleluniverse/comsat/webactors/servlet/WebActorEndpoint.java",
-        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
-        "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
-    ]
+    excludes = javadocExcludes
 }
 
 task clean(dependsOn: subprojects.clean) << {
