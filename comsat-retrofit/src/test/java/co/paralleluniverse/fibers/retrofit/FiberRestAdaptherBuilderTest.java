@@ -31,7 +31,7 @@ import org.junit.rules.Timeout;
 import retrofit.http.GET;
 import retrofit.http.Path;
 
-public class FiberServletContainerTest {
+public class FiberRestAdaptherBuilderTest {
     @BeforeClass
     public static void setUpClass() throws InterruptedException, IOException {
         Thread t = new Thread(new Runnable() {
