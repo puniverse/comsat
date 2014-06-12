@@ -58,8 +58,6 @@ subprojects {
         resolutionStrategy {
             failOnVersionConflict()
             force "org.ow2.asm:asm:5.0.3"
-            force "log4j:log4j:1.2.17"
-            force "junit:junit:4.11"
             force 'com.codahale.metrics:metrics-core:3.0.2'
             force "com.google.guava:guava:$guavaVersion"
             force "org.slf4j:slf4j-api:$slf4jApiVer"
