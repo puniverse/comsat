@@ -34,7 +34,7 @@ subprojects {
 
     ext.quasarVer       = "0.6.0-SNAPSHOT"
     ext.jettyVersion    = '9.2.0.M1'
-    ext.undertowVersion = '1.0.12.Final'
+    ext.undertowVersion = '1.0.15.Final'
     ext.tomcatVersion   = '8.0.8'
 
     ext.jerseyVersion   = '2.9.1'
