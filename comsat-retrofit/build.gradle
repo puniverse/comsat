@@ -1,10 +1,3 @@
-//configurations.all {
-//    resolutionStrategy {
-//        force 'org.jboss.logging:jboss-logging:3.1.1.GA'
-//        force 'org.eclipse.jetty:jetty-server:9.0.7.v20131107'
-//        force 'org.eclipse.jetty:jetty-servlet:9.0.7.v20131107' 
-//    }
-//}
 dependencies {
     compile "com.squareup.retrofit:retrofit:$retrofitVersion"
     compile project (':comsat-httpclient')

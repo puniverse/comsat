@@ -29,6 +29,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.glassfish.jersey.internal.util.collection.Value;
+import org.glassfish.jersey.server.ApplicationHandler;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spi.Container;
 
@@ -188,5 +189,10 @@ public class ServletContainer extends FiberHttpServlet implements Filter, Contai
     @Override
     public String toString() {
         return jerseySC.toString();
+    }
+
+    @Override
+    public ApplicationHandler getApplicationHandler() {
+        return jerseySC.getApplicationHandler();
     }
 }

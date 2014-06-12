@@ -37,7 +37,7 @@ subprojects {
     ext.undertowVersion = '1.0.12.Final'
     ext.tomcatVersion   = '8.0.8'
 
-    ext.jerseyVersion   = '2.7'
+    ext.jerseyVersion   = '2.9.1'
     ext.jerseyJettyVersion = '9.1.1.v20140108'
 
     ext.retrofitVersion = '1.5.1'

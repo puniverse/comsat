@@ -1,6 +1,6 @@
 dependencies {
-    compile "org.slf4j:slf4j-api:1.7.7"
-    compile 'org.apache.httpcomponents:httpclient:4.3.2'
+    compile "org.slf4j:slf4j-api:$slf4jApiVer"
+    compile "org.apache.httpcomponents:httpclient:$apacheClientVersion"
     compile 'com.h2database:h2:1.4.178'
     compile "org.glassfish.jersey.core:jersey-client:$jerseyVersion"
     compile "org.glassfish.jersey.media:jersey-media-sse:$jerseyVersion"
