@@ -13,7 +13,6 @@
  */
 package co.paralleluniverse.fibers.servlet;
 
-import co.paralleluniverse.common.util.Debug;
 import co.paralleluniverse.embedded.containers.EmbeddedServer;
 import co.paralleluniverse.embedded.containers.JettyServer;
 import co.paralleluniverse.embedded.containers.TomcatServer;
@@ -36,19 +35,14 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class FiberHttpServletTest {
 
-    @Parameterized.Parameters(name="{0}")
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
             {JettyServer.class},
@@ -56,7 +50,7 @@ public class FiberHttpServletTest {
             {UndertowServer.class},});
     }
     private final Class<? extends EmbeddedServer> cls;
-    private EmbeddedServer instance;
+    private EmbeddedServer server;
     private CloseableHttpClient client;
 
     public FiberHttpServletTest(Class<? extends EmbeddedServer> cls) {
@@ -65,11 +59,13 @@ public class FiberHttpServletTest {
 
     @Before
     public void setUp() throws Exception {
-        this.instance = cls.newInstance();
-        instance.addServlet("test", FiberTestServlet.class, "/");
-        instance.addServlet("forward", FiberForwardServlet.class, "/forward");
-        instance.addServlet("inline", FiberForwardServlet.class, "/inline");
-        instance.start();
+        this.server = cls.newInstance();
+        // snippet servlet registration
+        server.addServlet("test", FiberTestServlet.class, "/");
+        // end of snippet
+        server.addServlet("forward", FiberForwardServlet.class, "/forward");
+        server.addServlet("inline", FiberForwardServlet.class, "/inline");
+        server.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
                 .build()).build();
@@ -77,7 +73,7 @@ public class FiberHttpServletTest {
 
     @After
     public void tearDown() throws Exception {
-        instance.stop();
+        server.stop();
         client.close();
     }
 
@@ -93,7 +89,7 @@ public class FiberHttpServletTest {
     // Passes on undertow
     public void testForward() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 5000; i++)
-            assertEquals("Faild on iteration "+i,"testGet", client.execute(new HttpGet("http://localhost:8080/forward"), BASIC_RESPONSE_HANDLER));
+            assertEquals("Faild on iteration " + i, "testGet", client.execute(new HttpGet("http://localhost:8080/forward"), BASIC_RESPONSE_HANDLER));
     }
 
 //    @Test
@@ -109,31 +105,33 @@ public class FiberHttpServletTest {
             assertEquals("testPost", client.execute(new HttpPost("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
     }
 
+    // snippet FiberHttpServlet example 
     public static class FiberTestServlet extends FiberHttpServlet {
         @Override
-        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
+        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws SuspendExecution, IOException {
             try (PrintWriter out = resp.getWriter()) {
-                Strand.sleep(1);
+                Strand.sleep(100); // <== Some blocking code
                 out.print("testPost");
             } catch (InterruptedException ex) {
             }
         }
 
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws SuspendExecution, IOException {
             try (PrintWriter out = resp.getWriter()) {
-                Strand.sleep(1);
+                Strand.sleep(100); // <== Some blocking code
                 out.print("testGet");
             } catch (InterruptedException ex) {
             }
         }
     }
+    // end of snippet
 
     public static class FiberForwardServlet extends FiberHttpServlet {
         @Override
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
             try {
-                Strand.sleep(1);
+                Strand.sleep(100);
                 getServletContext().getRequestDispatcher("/").forward(req, resp);
             } catch (InterruptedException ex) {
             }
@@ -152,33 +150,6 @@ public class FiberHttpServletTest {
         }
     }
 
-    @Rule
-    public TestName name = new TestName();
-    @Rule
-    public TestRule watchman = new TestWatcher() {
-        @Override
-        protected void starting(Description desc) {
-            if (Debug.isDebug()) {
-                System.out.println("STARTING TEST " + desc.getMethodName());
-                Debug.record(0, "STARTING TEST " + desc.getMethodName());
-            }
-        }
-
-        @Override
-        public void failed(Throwable e, Description desc) {
-            System.out.println("FAILED TEST " + desc.getMethodName() + ": " + e.getMessage());
-            e.printStackTrace(System.err);
-            if (Debug.isDebug() && !(e instanceof OutOfMemoryError)) {
-                Debug.record(0, "EXCEPTION IN THREAD " + Thread.currentThread().getName() + ": " + e + " - " + Arrays.toString(e.getStackTrace()));
-                Debug.dumpRecorder("~/quasar.dump");
-            }
-        }
-
-        @Override
-        protected void succeeded(Description desc) {
-            Debug.record(0, "DONE TEST " + desc.getMethodName());
-        }
-    };
     private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
 
 }

@@ -8,7 +8,7 @@ description: "Comsat integrates lightweight threads and actors with the JVM web 
 
 COMSAT (or Comsat) is a set of open source libraries that integrate [Quasar](http://puniverse.github.io/quasar/) with various web or enterprise technologies (like HTTP services and database access). With Comsat, you can write web applications that are scalable and performant while, at the same time, are simple to code and maintain.
 
-Comsat is not a web framework. In fact, it does not add new APIs at all (with one exception, Web Actors, mentioned later). It provides implementation to popular (and often, standard) APIs like Servlet, JAX-RS, and JDBC, that can be called within Quasar fibers. 
+Comsat is not a web framework. In fact, it does not add new APIs at all (with one exception, Web Actors, mentioned later). It provides implementation to popular (and often, standard) APIs like Servlet, JAX-RS, and JDBC, that can be called within Quasar fibers.
 
 Comsat does provide one new API that you may choose to use: [Web Actors](manual/webactors.html). Web actors let you define a Quasar actor that receives and respnds to HTTP requests and web socket messages. The Web Actors API is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the client.
 
@@ -24,7 +24,7 @@ COMSAT 0.1.0 has been released.
 
 ### System requirements
 
-Java 7 and is required to use COMSAT.
+Java 7 is required to use COMSAT.
 
 ### Using Maven {#maven}
 
@@ -42,10 +42,17 @@ Where `ARTIFACT` is:
 
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
 * `comsat-jersey-server` – Jersey server integration for defining REST services.
+* `comsat-dropwizard` – Dropwizard integration including jersey, ApacheHttpClient and jdbi.
 * `comsat-jax-rs-client` – JAX-RS client integration for calling HTTP services.
+* `comsat-httpclient` – ApacheHttpClient integration for calling HTTP services.
+* `comsat-retrofit` – Retrofit integration for calling HTTP services through nice interfaces.
+* `comsat-jdbi` – JDBI integration for using the JDBI API in fibers.
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
+* `comsat-jooq` – JOOQ integration for using the JOOQ API in fibers.
 * `comsat-actors-api` – the Web Actors API
-* `comsat-actors-servlet` – contains an implementation of Web Actors on top of Servlet and WebSocket (JSR-356) containers
+* `comsat-actors-servlet` – Enables WebSocket(JSR-356) usage through Web Actors API
+* `comsat-tomcat-loader` – Enables using comsat in tomcat container without the need of javaAgent
+* `comsat-jetty-loader` – Enables using comsat in jetty container without the need of javaAgent
 
 ### Enabling Comsat
 
@@ -71,11 +78,11 @@ Then, include the following in your webapp's `context.xml` (in the `META-INF` di
 <Loader loaderClass="co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader"/>
 ~~~
 
-### Building Quasar {#build}
+### Building Comsat {#build}
 
 Clone the repository:
 
-    git clone git://github.com/puniverse/quasar.git quasar
+    git clone https://github.com/puniverse/comsat.git
 
 and run:
 
@@ -101,11 +108,22 @@ You can deploy your servlet as you normally would, either as a WAR file, or in a
 
 It is recommended that you then configure your servlet container to limit the number of threads in its thread pool to some small number, as all these threads do is create the fiber (which runs in the fiber thread pool) and return.
 
+Example:
+
+~~~ java
+{% include_snippet FiberHttpServlet example ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
+~~~
+Then you can simply add it as a regular servlet to you favorite servlet containter:
+
+~~~ java
+{% include_snippet servlet registration ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
+~~~
+
 To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/7/tutorial/doc/servlets.htm).
 
 ### REST Services
 
-You can easily create Comsat REST services with the [JAX-RS API](https://jax-rs-spec.java.net/nonav/2.0/apidocs/index.html), the standard Java REST service API. Comsat integrates with [Jersey](https://jersey.java.net/), the reference JAX-RS implementation. 
+You can easily create Comsat REST services with the [JAX-RS API](https://jax-rs-spec.java.net/nonav/2.0/apidocs/index.html), the standard Java REST service API. Comsat integrates with [Jersey](https://jersey.java.net/), the reference JAX-RS implementation.
 
 All you need to do in order to enjoy Comsat's scalabilty, is replace the line
 
@@ -154,7 +172,7 @@ All of the JAX-RS API is supported, and blocking calls are fiber- rather than th
 Future response = resourceTarget.request("text/plain").header("Foo", "bar").async().get(String.class);
 ~~~
 
-Calling `Future.get()` would also just block the fiber and not any OS thread. 
+Calling `Future.get()` would also just block the fiber and not any OS thread.
 
 {:.alert .alert-info}
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
@@ -185,7 +203,7 @@ If you're using COMSAT, the following example is a snippet of `context.xml` that
               global="jdbc/gdb"
               type="javax.sql.DataSource" />
 <!--wrap the linked global db resource by fiber wrapper-->
-<Resource name="jdbc/fiberdb" auth="Container" 
+<Resource name="jdbc/fiberdb" auth="Container"
           type="javax.sql.DataSource"
           rawDataSource="jdbc/tdb"
           threadsCount="10"
@@ -230,7 +248,7 @@ A single web actor instance may handle HTTP requests, emit SSE events, and handl
 
 ### HTTP (REST Services)
 
-A web actor is attached to one or more HTTP resources (as specified by `@WebActor`'s `httpUrlPatterns` property), and an actor instance is associated with a single HTTP session. Every HTTP request to the resource, associated with the session, will be received by the actor as an [`HttpRequest`]({{javadoc}}/comsat/webactors/HttpRequest.html) message. The actor can then respond with an [`HttpResponse`]({{javadoc}}/comsat/webactors/HttpResponse.html) message, which it sends to the request's sender. 
+A web actor is attached to one or more HTTP resources (as specified by `@WebActor`'s `httpUrlPatterns` property), and an actor instance is associated with a single HTTP session. Every HTTP request to the resource, associated with the session, will be received by the actor as an [`HttpRequest`]({{javadoc}}/comsat/webactors/HttpRequest.html) message. The actor can then respond with an [`HttpResponse`]({{javadoc}}/comsat/webactors/HttpResponse.html) message, which it sends to the request's sender.
 
 All HTTP request messages to a specific web actor instance will come from the same sender. If you `watch` that sender actor, it will emit an `ExitMessage` (signifying its death), when the session is terminated.
 
@@ -271,7 +289,7 @@ It might be convient (and elegant) to wrap the channel returned by `openStream` 
 
 A web actor may register itself to handle web socket connections by declaring which WebSocket URIs it is interesten in, in the `@WebActor` annotations `webSocketUrlPatterns` property. Such a web actor will handle all web socket sessions at those URIs associated with the actor instance's HTTP session (a web socket is also associated with an HTTP session).
 
-When the client connects to a web socket, the web actor will receive a [`WebSocketOpened`]({{javadoc}}/comsat/webactors/WebSocketOpened.html) message, and each following message will be received as a [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html). The actor can send messages to the client by replying to the sender with `WebDataMessage`s of its own. 
+When the client connects to a web socket, the web actor will receive a [`WebSocketOpened`]({{javadoc}}/comsat/webactors/WebSocketOpened.html) message, and each following message will be received as a [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html). The actor can send messages to the client by replying to the sender with `WebDataMessage`s of its own.
 
 The virtual actor that's the *sender* of the messages received from the client represents the WebSocket session; i.e., each open web socket will have a different actor as the sender of the messages. That virtual actor dies when the web socket connection closes.
 
