@@ -29,8 +29,11 @@ import org.apache.http.nio.conn.NHttpClientConnectionManager;
 import org.apache.http.nio.conn.SchemeIOSessionStrategy;
 import org.apache.http.protocol.HttpProcessor;
 
-
-// TODO: hide async options and implement all non-async options
+/**
+ * Builder for creating fiber blocking httpClient.
+ * The configuration properties are the same as those of HttpAsyncClientBuilder
+ * @see HttpAsyncClientBuilder
+ */
 public class FiberHttpClientBuilder {
     private final HttpAsyncClientBuilder builder;
 
@@ -38,10 +41,18 @@ public class FiberHttpClientBuilder {
         this.builder = builder;
     }
 
+    /**
+     * Creates Builder with 10 io threads.
+     * @return
+     */
     public static FiberHttpClientBuilder create() {
         return create(10);
     }
 
+    /**
+     * @param ioThreadCount
+     * @return
+     */
     public static FiberHttpClientBuilder create(int ioThreadCount) {
         return new FiberHttpClientBuilder(HttpAsyncClientBuilder.create().
                 setThreadFactory(new ThreadFactoryBuilder().setDaemon(true).build()).
@@ -182,7 +193,6 @@ public class FiberHttpClientBuilder {
 //        builder.setDefaultIOReactorConfig(config);
 //        return this;
 //    }
-
     public final FiberHttpClientBuilder setDefaultConnectionConfig(ConnectionConfig config) {
         builder.setDefaultConnectionConfig(config);
         return this;
@@ -197,7 +207,6 @@ public class FiberHttpClientBuilder {
 //        builder.setThreadFactory(threadFactory);
 //        return this;
 //    }
-
     public final FiberHttpClientBuilder disableConnectionState() {
         builder.disableConnectionState();
         return this;
@@ -218,7 +227,7 @@ public class FiberHttpClientBuilder {
         return this;
     }
 
-    public CloseableHttpClient build() {        
+    public CloseableHttpClient build() {
         return new FiberHttpClient(builder.build());
     }
 

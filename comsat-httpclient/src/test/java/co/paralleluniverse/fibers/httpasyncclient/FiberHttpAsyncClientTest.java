@@ -74,23 +74,31 @@ public class FiberHttpAsyncClientTest {
     @Test
     public void testAsync() throws IOException, InterruptedException, ExecutionException, TimeoutException {
         final int concurrencyLevel = 20;
-        try (CloseableHttpAsyncClient client = FiberCloseableHttpAsyncClient.wrap(HttpAsyncClients.custom().setMaxConnPerRoute(concurrencyLevel).setMaxConnTotal(concurrencyLevel).build())) {
-            client.start();
-            new Fiber<Void>(new SuspendableRunnable() {
-                @Override
-                public void run() throws SuspendExecution, InterruptedException {
-                    try {
-                        ArrayList<Future<HttpResponse>> futures = new ArrayList<>();
-                        for (int i = 0; i < concurrencyLevel; i++)
-                            futures.add(client.execute(new HttpGet("http://localhost:8080"), null));
-                        for (Future<HttpResponse> future : futures)
-                            assertEquals("testGet", EntityUtils.toString(future.get().getEntity()));
-                    } catch (ExecutionException | IOException | ParseException ex) {
-                        fail(ex.getMessage());
-                    }
+        // snippet client configuration
+        final CloseableHttpAsyncClient client = FiberCloseableHttpAsyncClient.wrap(HttpAsyncClients.
+                custom().
+                setMaxConnPerRoute(concurrencyLevel).
+                setMaxConnTotal(concurrencyLevel).
+                build());
+        client.start();
+        // end of snippet
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                try {
+                    // snippet future calls
+                    ArrayList<Future<HttpResponse>> futures = new ArrayList<>();
+                    for (int i = 0; i < concurrencyLevel; i++)
+                        futures.add(client.execute(new HttpGet("http://localhost:8080"), null));
+                    for (Future<HttpResponse> future : futures)
+                        assertEquals("testGet", EntityUtils.toString(future.get().getEntity()));
+                    // end of snippet
+                } catch (ExecutionException | IOException | ParseException ex) {
+                    fail(ex.getMessage());
                 }
-            }).start().join(2000, TimeUnit.MILLISECONDS);
-        }
+            }
+        }).start().join(2000, TimeUnit.MILLISECONDS);
+        client.close();
     }
 
     public static class TestServlet extends HttpServlet {

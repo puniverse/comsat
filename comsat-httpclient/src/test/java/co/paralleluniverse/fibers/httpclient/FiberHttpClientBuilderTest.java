@@ -68,24 +68,32 @@ public class FiberHttpClientBuilderTest {
     @Test
     public void testConcurrency() throws IOException, InterruptedException, Exception {
         final int concurrencyLevel = 20;
-        try (CloseableHttpClient client = FiberHttpClientBuilder.create(2).setMaxConnPerRoute(concurrencyLevel).setMaxConnTotal(concurrencyLevel).build()) {
-            final CountDownLatch cdl = new CountDownLatch(concurrencyLevel);
-            for (int i = 0; i < concurrencyLevel; i++)
-                new Fiber<Void>(new SuspendableRunnable() {
-                    @Override
-                    public void run() throws SuspendExecution, InterruptedException {
-                        try {
-                            assertEquals("testGet", client.execute(new HttpGet("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
-                        } catch (IOException ex) {
-                            fail(ex.getMessage());
-                        } finally {
-                            cdl.countDown();
-                        }
+        // snippet client configuration
+        final CloseableHttpClient client = FiberHttpClientBuilder.
+                create(2). // use 2 io threads
+                setMaxConnPerRoute(concurrencyLevel).
+                setMaxConnTotal(concurrencyLevel).build();
+        // end of snippet
+        final CountDownLatch cdl = new CountDownLatch(concurrencyLevel);
+        for (int i = 0; i < concurrencyLevel; i++)
+            new Fiber<Void>(new SuspendableRunnable() {
+                @Override
+                public void run() throws SuspendExecution, InterruptedException {
+                    try {
+                        // snippet http call
+                        String response = client.execute(new HttpGet("http://localhost:8080"), BASIC_RESPONSE_HANDLER);
+                        // end of snippet
+                        assertEquals("testGet", response);
+                    } catch (IOException ex) {
+                        fail(ex.getMessage());
+                    } finally {
+                        cdl.countDown();
                     }
-                }).start();
-            cdl.await(2000, TimeUnit.MILLISECONDS);
-            assertEquals(0, cdl.getCount());
-        }
+                }
+            }).start();
+        cdl.await(2000, TimeUnit.MILLISECONDS);
+        assertEquals(0, cdl.getCount());
+        client.close();
     }
 
     public static class TestServlet extends HttpServlet {

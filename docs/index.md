@@ -155,8 +155,34 @@ To learn about writing REST services with JAX-RS, please refer to the [Jersey Us
 {:.alert .alert-info}
 **Note**: [Web Actors](webactors.html) are a great way to write REST services, as well as web-socket services, for interactive web applications.
 
-### HTTP Client
+### HTTP Clients
 
+#### Apache Http Client
+The fiber blocking version of the Apache Http Client can be used with FiberHttpClientBuilder.
+For example:
+
+~~~ java
+{% include_snippet client configuration ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpclient/FiberHttpClientBuilderTest.java %}
+~~~
+After that you may call the refular API from fiber context:
+
+~~~ java
+{% include_snippet http call ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpclient/FiberHttpClientBuilderTest.java %}
+~~~
+
+If you prefer to use the future API of apacheHttpClient you should build regular HttpAsyncClient and the wrap it with FiberCloseableHttpAsyncClient.wrap, for example
+
+~~~ java
+{% include_snippet client configuration ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpasyncclient/FiberHttpAsyncClientTest.java %}
+~~~
+
+Then you can use it as follows:
+
+~~~ java
+{% include_snippet future calls ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpasyncclient/FiberHttpAsyncClientTest.java %}
+~~~
+
+#### Jersey Http Client
 Comsat's integrated HTTP client is a JAX-RS client (specifically, Jersey client). To create a client instance compatible with Quasar fibers, use the [`AsyncClientBuilder`]({{javadoc}}/fibers/ws/rs/client/AsyncClientBuilder.html) class:
 
 ~~~ java
@@ -174,6 +200,9 @@ or use the builder API
 ~~~ java
 Client client = AsyncClientBuilder.newBuilder()....build();
 ~~~
+
+{:.alert .alert-info}
+**Note**: Jersey client's current implementation has significant disadvantage relative to ApacheClient since it uses thread per each http call. Therefore it is not recommended.
 
 To learn how to use the HTTP client, please refer to the [Jersey documentation](https://jersey.java.net/documentation/latest/user-guide.html#client), or the [JAX-RS client Javadoc](http://docs.oracle.com/javaee/7/api/javax/ws/rs/client/package-summary.html).
 

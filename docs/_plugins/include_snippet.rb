@@ -50,6 +50,7 @@ module Jekyll
         source = ""
         inblock = false;
         exclude = false;
+        spaces = -1;
         code.lines.each_with_index do |line,index|
           if line =~ /end of snippet/
             inblock = false
@@ -58,6 +59,12 @@ module Jekyll
             exclude = true
           end
           if inblock && !exclude
+              if spaces==-1
+                spaces = line.index(/[^ ]/)
+              end
+              if spaces>-1 && spaces <= line.index(/[^ ]/)
+                line = line[spaces..line.length]
+              end
               source  += "#{line}"
           end
           if (line =~ /snippet_exclude_end/)
