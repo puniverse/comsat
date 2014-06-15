@@ -51,23 +51,23 @@ public class FiberServletContainerTest {
         });
     }
     private final Class<? extends EmbeddedServer> cls;
-    private EmbeddedServer instance;
+    private EmbeddedServer server;
     private CloseableHttpClient client;
-    private static final String PARAM_JERSEY_PACKAGES = "jersey.config.server.provider.packages";
-    private static final Class JERSEY_FIBER_SERVLET = co.paralleluniverse.fibers.jersey.ServletContainer.class;
-    private static final String PACKAGE_NAME_PREFIX = FiberServletContainerTest.class.getPackage().getName() + ".";
 
     public FiberServletContainerTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
     }
+    private static final String PACKAGE_NAME_PREFIX = FiberServletContainerTest.class.getPackage().getName() + ".";
 
     @Before
     public void setUp() throws Exception {
-        this.instance = cls.newInstance();
-        instance.addServlet("api", JERSEY_FIBER_SERVLET, "/*")
-                .setInitParameter(PARAM_JERSEY_PACKAGES, PACKAGE_NAME_PREFIX)
+        this.server = cls.newInstance();
+        // snippet jersey registration
+        server.addServlet("api", co.paralleluniverse.fibers.jersey.ServletContainer.class, "/*")
+                .setInitParameter("jersey.config.server.provider.packages", PACKAGE_NAME_PREFIX)
+        // end of snippet
                 .setLoadOnStartup(1);
-        instance.start();
+        server.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
                 .build()).build();
@@ -75,7 +75,7 @@ public class FiberServletContainerTest {
 
     @After
     public void tearDown() throws Exception {
-        instance.stop();
+        server.stop();
         client.close();
     }
 

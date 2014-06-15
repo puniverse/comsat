@@ -107,6 +107,7 @@ public class FiberHttpServletTest {
 
     // snippet FiberHttpServlet example 
     public static class FiberTestServlet extends FiberHttpServlet {
+        // snippet_exclude_begin
         @Override
         protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws SuspendExecution, IOException {
             try (PrintWriter out = resp.getWriter()) {
@@ -115,7 +116,7 @@ public class FiberHttpServletTest {
             } catch (InterruptedException ex) {
             }
         }
-
+        // snippet_exclude_end
         @Override
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws SuspendExecution, IOException {
             try (PrintWriter out = resp.getWriter()) {

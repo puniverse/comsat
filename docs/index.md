@@ -139,6 +139,17 @@ in your `web.xml` file, which is how you would normally use Jersey in a Servlet 
 
 Your resource methods (the ones you annotate with `@GET`, `@PUT`, `@POST` etc.) can now be made suspendable by declaring `throws SuspendExecution`. Comsat would then run each request in a fiber. Your resource methods are free to use Comsat's JDBC implementation, or Comsat's JAX-RS client.
 
+Here is an example of REST resource declaration:
+
+~~~ java
+{% include_snippet REST resource example ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/TestResource.java %}
+~~~
+
+And then initiation of the jersey containter:
+
+~~~ java
+{% include_snippet jersey registration ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/FiberServletContainerTest.java %}
+~~~
 To learn about writing REST services with JAX-RS, please refer to the [Jersey User Guide](https://jersey.java.net/documentation/latest/user-guide.html).
 
 {:.alert .alert-info}
