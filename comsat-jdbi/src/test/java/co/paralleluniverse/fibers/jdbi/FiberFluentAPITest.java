@@ -47,8 +47,10 @@ public class FiberFluentAPITest {
 
     @Before
     public void setUp() throws Exception {
-        this.jdbi = new FiberDBI(cls.newInstance());
-
+        DataSource ds = cls.newInstance();
+        // snippet creation
+        this.jdbi = new FiberDBI(ds);
+        // end of snippet
     }
 
     @Test
@@ -69,6 +71,7 @@ public class FiberFluentAPITest {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
+                // snippet usage
                 try (Handle h = jdbi.open()) {
                     h.execute("create table  if not exists testQueryFirst (id int primary key, name varchar(100))");
                     for (int i = 0; i < 100; i++)
@@ -77,6 +80,7 @@ public class FiberFluentAPITest {
                             .bind("id", 37).map(StringMapper.FIRST).first());
                     h.execute("drop table testQueryFirst");
                 }
+                // end of snippet
             }
         }).start().join();
     }

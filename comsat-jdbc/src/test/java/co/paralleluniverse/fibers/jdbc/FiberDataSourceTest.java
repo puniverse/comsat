@@ -18,6 +18,7 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,8 +59,9 @@ public class FiberDataSourceTest {
             public void run() throws SuspendExecution, InterruptedException {
                 try {
                     // snippet DataSource usage
-                    fiberDs.getConnection().close();
+                    Connection conn = fiberDs.getConnection();
                     // end of snippet
+                    conn.close();
                 } catch (SQLException ex) {
                     fail(ex.getMessage());
                 }

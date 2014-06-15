@@ -54,10 +54,12 @@ public class JooqContextTest {
 
     @Before
     public void setUp() throws Exception {
-        this.conn = FiberDataSource.wrap(dsCls.newInstance()).getConnection();
-        conn.createStatement().execute("create table something (id int primary key, name varchar(100))");
+        DataSource dataSource = dsCls.newInstance();
+        // snippet creation
+        this.conn = FiberDataSource.wrap(dataSource).getConnection();
         this.ctx = using(conn);
-
+        // end of snippet
+        conn.createStatement().execute("create table something (id int primary key, name varchar(100))");
     }
 
     @After
@@ -71,16 +73,19 @@ public class JooqContextTest {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
+                // snippet usage
                 for (int i = 0; i < 100; i++)
                     ctx.insertInto(table("something"), field("id"), field("name")).values(i, "name" + i).execute();
                 for (int i = 0; i < 50; i++) {
                     Something something = ctx.select(field("id"), field("name")).from(table("something")).where(field("id", Integer.class).eq(i)).fetchOne().map(Something.mapper);
                     assertEquals("name" + i, something.name);
                 }
+                // end of snippet
             }
         }).start().join();
     }
 
+    // snippet mapper
     public static class Something {
         public final int id;
         public final String name;
@@ -96,5 +101,5 @@ public class JooqContextTest {
             this.name = name;
         }
     }
-
+    // end of snippet
 }

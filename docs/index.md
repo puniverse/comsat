@@ -201,7 +201,7 @@ or use the builder API
 {% include_snippet client creation ./comsat-jax-rs-client/src/test/java/co/paralleluniverse/fibers/ws/rs/client/AsyncClientBuilderTest.java %}
 ~~~
 
-Then the usage is in the regular API, for example
+Then the usage is in the regular API, for example:
 
 ~~~ java
 {% include_snippet http call ./comsat-jax-rs-client/src/test/java/co/paralleluniverse/fibers/ws/rs/client/AsyncClientBuilderTest.java %}
@@ -223,7 +223,9 @@ Calling `Future.get()` would also just block the fiber and not any OS thread.
 {:.alert .alert-warn}
 **Note**: Jersey client's current implementation (since 2.5) has significant disadvantage relative to ApacheHttpClient since it uses thread per each open http call. Therefore it is not recommended, till it is fixed.
 
-### JDBC
+### DB Access
+
+#### JDBC
 
 The `comsat-jdbc` project integrates the JDBC API with applications employing Quasar fibers (or actors). To use JDBC in Quasar fibers or actors, simply wrap your database driver's `DataSource` with [`FiberDataSource`]({{javadoc}}/fibers/jdbc/FiberDataSource.html), and use it to obtain connections which you may then freely use within fibers. For example:
 
@@ -234,10 +236,10 @@ The `comsat-jdbc` project integrates the JDBC API with applications employing Qu
 Then the DataSource can be used with the regular API from fiber context, For example:
 
 ~~~ java
-{% include_snippet DataSource usage ./comsat-jdbc/src/test/java/co/paralleluniverse/fibers/jdbc/FiberDataSourceTest.java %}
+{% include_snippet DataSource usage ./comsat-jdbc/src/test/java/co/paralleluniverse/fibers/jdbc/FiberDataSourceTest.java %}// ...
+// usage in fiber context
+{% include_snippet connection usage ./comsat-jdbc/src/test/java/co/paralleluniverse/fibers/jdbc/FiberConnectionTest.java %}
 ~~~
-
-
 
 {:.alert .alert-info}
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
@@ -268,6 +270,47 @@ If you're using COMSAT, the following example is a snippet of `context.xml` that
           url="fiber"
           factory="co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory"/>
 ~~~
+
+#### JDBI
+
+To use the powerful API of [JDBI](http://jdbi.org/) to access databases you first have to create IDBI instance using the FiberDBI implementation:
+
+~~~ java
+{% include_snippet creation ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberFluentAPITest.java %}
+~~~
+The created instance can be used both with the Fluent API as well as with the SqlObject API. First the fluent API example:
+
+~~~ java
+{% include_snippet usage ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberFluentAPITest.java %}
+~~~
+
+And now to the SqlObjectAPI. In this API you have to declare first a `Suspendable` interface. Here is an example:
+
+~~~ java
+{% include_snippet interface ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberSqlObjectAPITest.java %}
+~~~
+
+The interface now can be registered and used in the regular manner from fiber context:
+
+~~~ java
+{% include_snippet registration ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberSqlObjectAPITest.java %}//...
+// usage in fiber context
+{% include_snippet usage ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberSqlObjectAPITest.java %}
+~~~
+
+#### JOOQ
+
+Another possibility accessing databases using `comsat` is [JOOQ](http://www.jooq.org/).
+In order to use JOOQ from fiber context, all you have to do is to provide connection originated from `FiberDataSource`, For example:
+
+~~~ java
+{% include_snippet creation ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}// ...
+// mapper definition
+{% include_snippet mapper ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}// ...
+// usage in fiber context
+{% include_snippet usage ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}
+~~~
+
 
 ## Web Actors
 

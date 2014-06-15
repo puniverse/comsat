@@ -47,7 +47,10 @@ public class FiberSqlObjectAPITest {
 
     @Before
     public void setUp() throws Exception {
-        this.dao = new FiberDBI(cls.newInstance()).onDemand(MyDAO.class);
+        DataSource dataSource = cls.newInstance();
+        // snippet registration
+        this.dao = new FiberDBI(dataSource).onDemand(MyDAO.class);
+        // end of snippet
     }
 
     @Test
@@ -55,15 +58,18 @@ public class FiberSqlObjectAPITest {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
+                // snippet usage
                 dao.createSomethingTable();
                 for (int i = 0; i < 100; i++)
                     dao.insert(i, "name" + i);
                 assertEquals("name37", dao.findNameById(37));
                 dao.dropSomethingTable();
+                // end of snippet
             }
         }).start().join();
     }
 
+    // snippet interface
     @Suspendable
     public interface MyDAO {
         @SqlUpdate("create table if not exists something (id int primary key, name varchar(100))")
@@ -78,4 +84,5 @@ public class FiberSqlObjectAPITest {
         @SqlQuery("select name from something where id = :id")
         String findNameById(@Bind("id") int id);
     }
+    // end of snippet
 }

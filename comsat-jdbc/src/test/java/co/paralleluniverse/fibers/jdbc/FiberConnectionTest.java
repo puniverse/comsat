@@ -108,12 +108,15 @@ public class FiberConnectionTest {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    conn.setAutoCommit(false);
                     conn.createStatement().execute("drop table if exists testCommit");
                     conn.createStatement().execute("create table testCommit (id int primary key, name varchar(100))");
+                    // snippet connection usage
+                    conn.setAutoCommit(false);
                     conn.createStatement().execute("insert into testCommit (id, name) values (1, 'name')");
                     conn.commit();
-                    assertTrue(conn.createStatement().executeQuery("select * from testCommit").next());
+                    boolean notEmpty = conn.createStatement().executeQuery("select * from testCommit").next();
+                    // end of snippet
+                    assertTrue(notEmpty);
                     conn.createStatement().execute("drop table testCommit");
                 } catch (SQLException ex) {
                     fail(ex.getMessage());
