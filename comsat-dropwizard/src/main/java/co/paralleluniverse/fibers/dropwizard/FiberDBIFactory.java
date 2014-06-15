@@ -8,7 +8,6 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.setup.Environment;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.IDBI;
 
 public class FiberDBIFactory {
@@ -30,7 +29,7 @@ public class FiberDBIFactory {
 
     public IDBI build(Environment environment, DataSourceFactory dsFactory, ManagedDataSource dataSource, String name) {
         IDBI build = builder.build(environment, new FiberDataSourceFactory(dsFactory),
-                new FiberMangedDataSource(dataSource, es), name);
+                FiberManagedDataSource.wrap(dataSource, es), name);
         return new FiberDBI(build, es);
     }
 

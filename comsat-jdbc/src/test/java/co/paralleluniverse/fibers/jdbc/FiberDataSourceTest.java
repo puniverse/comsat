@@ -36,26 +36,30 @@ public class FiberDataSourceTest {
         return Arrays.asList(new Object[][]{
             {H2JdbcDatasource.class},});
     }
-    private final Class<? extends DataSource> cls;
+    private final Class<? extends DataSource> dsCls;
     private DataSource ds;
 
     public FiberDataSourceTest(Class<? extends DataSource> cls) {
-        this.cls = cls;
+        this.dsCls = cls;
     }
 
     @Before
     public void setUp() throws Exception {
-        this.ds = cls.newInstance();
+        this.ds = dsCls.newInstance();
     }
 
     @Test
     public void testGetConnection() throws IOException, InterruptedException, Exception {
-        final DataSource fiberDs = new FiberDataSource(ds);
+        // snippet DataSource wrapping
+        final DataSource fiberDs = FiberDataSource.wrap(ds);
+        // end of snippet
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
+                    // snippet DataSource usage
                     fiberDs.getConnection().close();
+                    // end of snippet
                 } catch (SQLException ex) {
                     fail(ex.getMessage());
                 }
@@ -65,7 +69,7 @@ public class FiberDataSourceTest {
 
     @Test
     public void testGetConnectionUsername() throws IOException, InterruptedException, Exception {
-        final DataSource fiberDs = new FiberDataSource(ds);
+        final DataSource fiberDs = FiberDataSource.wrap(ds);
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {

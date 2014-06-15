@@ -54,7 +54,7 @@ public class FiberDBI implements IDBI {
      */
     public FiberDBI(DataSource dataSource, ExecutorService es) {
         this(dataSource instanceof FiberDataSource ? new DBI(dataSource)
-                : new DBI(new FiberDataSource(dataSource, es)), es);
+                : new DBI(FiberDataSource.wrap(dataSource, es)), es);
     }
 
     /**

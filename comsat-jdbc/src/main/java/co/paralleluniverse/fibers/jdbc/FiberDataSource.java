@@ -45,30 +45,32 @@ public class FiberDataSource implements DataSource {
      * Wraps a JDBC {@link DataSource}.
      * @param ds The {@link DataSource} to wrap.
      * @param executor The {@link ExecutorService} to use to actually execute JDBC operations.
+     * @return 
      */
-    public FiberDataSource(DataSource ds, ExecutorService executor) {
-        this(ds, MoreExecutors.listeningDecorator(executor));
+    public static DataSource wrap(DataSource ds, ExecutorService executor) {
+        return new FiberDataSource(ds, MoreExecutors.listeningDecorator(executor));
     }
 
     /**
      * Wraps a JDBC {@link DataSource}.
      * @param ds The {@link DataSource} to wrap.
      * @param numThreads The number of threads to create in the thread pool that will be used to execute JDBC operations.
+     * @return 
      */
-    public FiberDataSource(DataSource ds, final int numThreads) {
-        this(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
+    public static DataSource wrap(DataSource ds, final int numThreads) {
+        return wrap(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
     }
 
     /**
      * Wraps a JDBC {@link DataSource} with fixed 10 threads pool executor.
      * @param ds The {@link DataSource} to wrap.
-     * @param numThreads The number of threads to create in the thread pool that will be used to execute JDBC operations.
+     * @return 
      */
-    public FiberDataSource(DataSource ds) {
-        this(ds, 10);
+    public static DataSource wrap(DataSource ds) {
+        return wrap(ds, 10);
     }
 
-    private FiberDataSource(DataSource ds, ListeningExecutorService exec) {
+    protected FiberDataSource(DataSource ds, ListeningExecutorService exec) {
         this.ds = ds;
         this.exec = exec;
     }

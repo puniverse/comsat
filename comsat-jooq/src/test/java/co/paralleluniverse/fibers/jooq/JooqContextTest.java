@@ -44,17 +44,17 @@ public class JooqContextTest {
         return Arrays.asList(new Object[][]{
             {H2JdbcDatasource.class},});
     }
-    private final Class<? extends DataSource> cls;
+    private final Class<? extends DataSource> dsCls;
     private Connection conn;
     private DSLContext ctx;
 
     public JooqContextTest(Class<? extends DataSource> cls) {
-        this.cls = cls;
+        this.dsCls = cls;
     }
 
     @Before
     public void setUp() throws Exception {
-        this.conn = new FiberDataSource(cls.newInstance()).getConnection();
+        this.conn = FiberDataSource.wrap(dsCls.newInstance()).getConnection();
         conn.createStatement().execute("create table something (id int primary key, name varchar(100))");
         this.ctx = using(conn);
 

@@ -41,6 +41,6 @@ public class FiberDataSourceFactory implements ObjectFactory {
         int tc = Integer.parseInt(ra.getContent().toString());
         Context envCtx = (Context) new InitialContext().lookup("java:comp/env");
         DataSource ds = (DataSource) envCtx.lookup(rawDS);
-        return new FiberDataSource(ds, tc);
+        return FiberDataSource.wrap(ds, tc);
     }
 }
