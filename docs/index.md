@@ -145,7 +145,7 @@ Here is an example of REST resource declaration:
 {% include_snippet REST resource example ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/TestResource.java %}
 ~~~
 
-And then initiation of the jersey containter:
+And then initiation of the jersey container:
 
 ~~~ java
 {% include_snippet jersey registration ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/FiberServletContainerTest.java %}
@@ -222,6 +222,22 @@ Calling `Future.get()` would also just block the fiber and not any OS thread.
 
 {:.alert .alert-warn}
 **Note**: Jersey client's current implementation (since 2.5) has significant disadvantage relative to ApacheHttpClient since it uses thread per each open http call. Therefore it is not recommended, till it is fixed.
+
+#### Retrofit
+
+[`Retrofit`](http://square.github.io/retrofit/) lets you access REST api through java interface. In order to use it from fiber context you should first declare `Suspendable` interface:
+
+~~~ java
+{% include_snippet interface ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdaptherBuilderTest.java %}
+~~~
+
+This interface can be registered with `FiberRestAdaptherBuilder` and then used from fiber context.
+
+~~~ java
+{% include_snippet registration ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdaptherBuilderTest.java %}// ...
+// usage from fiber context
+{% include_snippet usage ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdaptherBuilderTest.java %}
+~~~
 
 ### DB Access
 
@@ -311,6 +327,35 @@ In order to use JOOQ from fiber context, all you have to do is to provide connec
 {% include_snippet usage ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}
 ~~~
 
+### Dropwizard
+
+TODO.. introduction
+[`Dropwizard`](http://dropwizard.readthedocs.org/)
+
+You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/HelloWorldApplication.java).
+
+In order to use dropwizaed in comsat environment, only few changes have to be made in the application declartion.
+First the yaml configuration file:
+
+~~~ yaml
+{% include_snippet server ./comsat-dropwizard/src/test/resources/server.yml %}
+~~~
+The number of thread needed for comsat container is not high even if the number of concurrent connection is. You can leave it with 50 or 200 threads, but you should enlarge the queue size configuration in order to handle this amount of connection. You also have to configure apropriate requestLog appender or shut it down. Next is the httpClient configuration:
+
+~~~ yaml
+{% include_snippet httpclient ./comsat-dropwizard/src/test/resources/server.yml %}
+~~~
+Here also you should enlarge `maxConnections` properties to support many connections at the same time. The db configuration should be looked like this:
+
+~~~ yaml
+{% include_snippet db ./comsat-dropwizard/src/test/resources/server.yml %}
+~~~
+
+The `driverClass` has to point to the `co.paralleluniverse.fibers.jdbc.FiberDriver` class. The `url` has to be the url of you real datasource with the addition of 'fiber:' prefix, and of cource that the driver of the real datasource should be included int your runtime classpath.
+
+Now we can move to the code declaratations.
+
+TODO... 
 
 ## Web Actors
 

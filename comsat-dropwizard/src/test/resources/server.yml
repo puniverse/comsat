@@ -1,22 +1,27 @@
 #template: Hello, %s!
 #defaultName: Stranger
+# snippet server
 server:
     maxThreads: 200
     minThreads: 200
     maxQueuedRequests: 9999    
     requestLog:
       appenders: []
+# end of snippet
+# snippet httpclient
 httpClient:
     maxConnectionsPerRoute: 9999
     maxConnections: 9999
+# end of snippet
+# snippet db
 database:
     driverClass: 
         co.paralleluniverse.fibers.jdbc.FiberDriver
-
     url:    
         jdbc:fiber:h2:./build/h2testdb
 # for mysql use url such as this
 #        jdbc:fiber:mysql://localhost:3306/testjdbi?zeroDateTimeBehavior=convertToNull
+# end of snippet
 
     properties:
         charSet: UTF-8

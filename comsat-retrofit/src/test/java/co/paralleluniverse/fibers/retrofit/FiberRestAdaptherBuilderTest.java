@@ -50,22 +50,29 @@ public class FiberRestAdaptherBuilderTest {
 
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
-        final GitHub github = new FiberRestAdaptherBuilder().setEndpoint("http://localhost:8080").build().create(GitHub.class);
+        // snippet registration
+        final MyGitHub github = new FiberRestAdaptherBuilder().setEndpoint("http://localhost:8080").build().create(MyGitHub.class);
+        // end of snippet
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
+                // snippet usage
                 List<Contributor> contributors = github.contributors("puniverse", "comsat");
-                assertEquals("puniverse", contributors.get(1).login);
+                String result = contributors.get(1).login;
+                // end of snippet
+            assertEquals("puniverse", result);
                 assertEquals(4, contributors.size());
             }
         }).start().join();
     }
-
+    
+    // snippet interface
     @Suspendable
-    public static interface GitHub {
+    public static interface MyGitHub {
         @GET(value = "/repos/{owner}/{repo}/contributors")
         List<Contributor> contributors(@Path(value = "owner") String owner, @Path(value = "repo") String repo);
     }
+    // end of snippet
 
     public static void waitUrlAvailable(final String url) throws InterruptedException, IOException {
         for (;;) {
