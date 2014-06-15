@@ -198,11 +198,14 @@ Client client = AsyncClientBuilder.newClient(config);
 or use the builder API
 
 ~~~ java
-Client client = AsyncClientBuilder.newBuilder()....build();
+{% include_snippet client creation ./comsat-jax-rs-client/src/test/java/co/paralleluniverse/fibers/ws/rs/client/AsyncClientBuilderTest.java %}
 ~~~
 
-{:.alert .alert-info}
-**Note**: Jersey client's current implementation has significant disadvantage relative to ApacheClient since it uses thread per each http call. Therefore it is not recommended.
+Then the usage is in the regular API, for example
+
+~~~ java
+{% include_snippet http call ./comsat-jax-rs-client/src/test/java/co/paralleluniverse/fibers/ws/rs/client/AsyncClientBuilderTest.java %}
+~~~
 
 To learn how to use the HTTP client, please refer to the [Jersey documentation](https://jersey.java.net/documentation/latest/user-guide.html#client), or the [JAX-RS client Javadoc](http://docs.oracle.com/javaee/7/api/javax/ws/rs/client/package-summary.html).
 
@@ -216,6 +219,9 @@ Calling `Future.get()` would also just block the fiber and not any OS thread.
 
 {:.alert .alert-info}
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
+
+{:.alert .alert-warn}
+**Note**: Jersey client's current implementation (since 2.5) has significant disadvantage relative to ApacheHttpClient since it uses thread per each open http call. Therefore it is not recommended, till it is fixed.
 
 ### JDBC
 

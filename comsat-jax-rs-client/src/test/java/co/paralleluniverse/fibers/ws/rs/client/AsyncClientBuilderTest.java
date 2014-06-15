@@ -11,7 +11,7 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
-package co.paralleluniverse.fibers.httpclient;
+package co.paralleluniverse.fibers.ws.rs.client;
 
 import co.paralleluniverse.concurrent.util.ThreadUtil;
 import co.paralleluniverse.embedded.containers.EmbeddedServer;
@@ -39,7 +39,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class FiberHttpClientBuilderTest {
+public class AsyncClientBuilderTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
@@ -49,7 +49,7 @@ public class FiberHttpClientBuilderTest {
     private final Class<? extends EmbeddedServer> cls;
     private EmbeddedServer server;
 
-    public FiberHttpClientBuilderTest(Class<? extends EmbeddedServer> cls) {
+    public AsyncClientBuilderTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
     }
 
@@ -68,13 +68,18 @@ public class FiberHttpClientBuilderTest {
     @Test
     public void testConcurrency() throws IOException, InterruptedException, Exception {
         final int concurrencyLevel = 40;
+        // snippet client creation
         final Client client = AsyncClientBuilder.newBuilder().build();
+        // end of snippet
         final CountDownLatch cdl = new CountDownLatch(concurrencyLevel);
         for (int i = 0; i < concurrencyLevel; i++)
             new Fiber<Void>(new SuspendableRunnable() {
                 @Override
                 public void run() throws SuspendExecution, InterruptedException {
-                    assertEquals("testGet", client.target("http://localhost:8080").request().get(String.class));
+                    // snippet http call
+                    String response = client.target("http://localhost:8080").request().get(String.class);
+                    // end of snippet
+                    assertEquals("testGet", response);
                     System.out.println("done "+cdl.getCount());
                     cdl.countDown();
                 }
