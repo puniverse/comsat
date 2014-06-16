@@ -382,8 +382,22 @@ public class ChatActor extends BasicActor<WebMessage, Void> {
 }
 ~~~
 
+
 In this example, all HTTP requests to the `/chat` resource, as well as all websocket messages to `/chat/ws` will be received as messages by the actor. A new `ChatActor` will be spawned for every new HTTP session.
 
+#### Embedded containers
+
+If you use embedded container, you have to register `WebActorInitializer` as a ServletContextListener to your servletContainer. It will scan and register the webactors according to the @Webactor annotations. This registration should be looked somethink like this:
+
+~~~ java
+{% include_snippet WebActorInitializer ./comsat-actors-servlet/src/test/java/co/paralleluniverse/comsat/webactors/servlet/WebActorServletTest.java %}
+~~~
+
+Webactors may use websockets. In order to do that the container has to be configured to support it. Each container has its own way. In Jetty for example you have to include the `javax-websocket-server-impl` jar and call the following method before you start the container:
+
+~~~ java
+WebSocketServerContainerInitializer.configureContext(context);
+~~~
 
 For details, see the [Javadoc]({{javadoc}}/comsat/webactors/WebActor.html).
 

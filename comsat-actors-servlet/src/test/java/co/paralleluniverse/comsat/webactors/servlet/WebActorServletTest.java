@@ -63,7 +63,7 @@ public class WebActorServletTest {
         });
     }
     private final Class<? extends EmbeddedServer> cls;
-    private EmbeddedServer server;
+    private EmbeddedServer embeddedServer;
 
     public WebActorServletTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
@@ -71,15 +71,18 @@ public class WebActorServletTest {
 
     @Before
     public void setUp() throws Exception {
-        this.server = cls.newInstance();
-        server.addServletContextListener(new WebActorInitializer(ClassLoader.getSystemClassLoader()));
-        server.start();
+        this.embeddedServer = cls.newInstance();
+        // snippet WebActorInitializer
+        WebActorInitializer wActorInit = new WebActorInitializer(ClassLoader.getSystemClassLoader());
+        embeddedServer.addServletContextListener(wActorInit);
+        // end of snippet
+        embeddedServer.start();
         AbstractEmbeddedServer.waitUrlAvailable("http://localhost:8080");
     }
 
     @After
     public void tearDown() throws Exception {
-        server.stop();
+        embeddedServer.stop();
     }
 
     @Test
