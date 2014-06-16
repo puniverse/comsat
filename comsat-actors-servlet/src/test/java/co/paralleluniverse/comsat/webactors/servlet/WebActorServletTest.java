@@ -73,8 +73,8 @@ public class WebActorServletTest {
     public void setUp() throws Exception {
         this.embeddedServer = cls.newInstance();
         // snippet WebActorInitializer
-        WebActorInitializer wActorInit = new WebActorInitializer(ClassLoader.getSystemClassLoader());
-        embeddedServer.addServletContextListener(wActorInit);
+        WebActorInitializer wActorsInit = new WebActorInitializer(ClassLoader.getSystemClassLoader());
+        embeddedServer.addServletContextListener(wActorsInit);
         // end of snippet
         embeddedServer.start();
         AbstractEmbeddedServer.waitUrlAvailable("http://localhost:8080");

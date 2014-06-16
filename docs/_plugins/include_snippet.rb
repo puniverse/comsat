@@ -28,6 +28,8 @@ module Jekyll
       if markup.strip =~ /(.*)?(\s+|^)(\/*\S+)/i
         @title = $1 || nil
         @file = $3
+      else
+        fail "no title in '#{markup.strip}'"
       end
       super
     end
@@ -42,15 +44,16 @@ module Jekyll
       end
 
       unless file.file?
-        return "File #{file} could not be found"
+        fail "File #{file} could not be found"
       end
 
       Dir.chdir(code_path) do
         code = file.read
         source = ""
-        inblock = false;
-        exclude = false;
+        inblock = false
+        exclude = false
         spaces = -1;
+        snippet_found = false
         code.lines.each_with_index do |line,index|
           if line =~ /end of snippet/
             inblock = false
@@ -78,7 +81,11 @@ module Jekyll
           end
           if line =~ /snippet #{@title}/
             inblock = true
+            snippet_found = true
           end
+        end
+        if not snippet_found
+          fail "snippet #{@title} not found in #{file}"
         end
         ouput = source
       end
