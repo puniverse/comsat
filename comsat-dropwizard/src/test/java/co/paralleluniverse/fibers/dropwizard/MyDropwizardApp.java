@@ -3,7 +3,7 @@ package co.paralleluniverse.fibers.dropwizard;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.fibers.dropwizard.HelloWorldApplication.HelloWorldConfiguration;
+import co.paralleluniverse.fibers.dropwizard.MyDropwizardApp.MyConfig;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -35,25 +35,23 @@ import org.skife.jdbi.v2.util.StringMapper;
 @Singleton
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
-public class HelloWorldApplication extends FiberApplication<HelloWorldConfiguration> {
+//snippet app
+public class MyDropwizardApp extends FiberApplication<MyConfig> {
     private IDBI jdbi;
     private MyDAO dao;
     private HttpClient httpClient;
 
     @Override
-    public void fiberRun(HelloWorldConfiguration configuration,
-            final Environment environment) throws ClassNotFoundException {
-
-        this.httpClient = new FiberHttpClientBuilder(environment).
-                using(configuration.getHttpClientConfiguration()).
-                build("FiberHttpClient");
-
-        this.jdbi = new FiberDBIFactory().build(environment, configuration.getDatabase(), "postgresql");
+    public void fiberRun(MyConfig config, Environment env) throws Exception {
+        this.httpClient = new FiberHttpClientBuilder(env).
+                using(config.getHttpClientConfiguration()).build("MyClient");
+        this.jdbi = new FiberDBIFactory().build(env, config.getDB(), "MyDB");
         this.dao = jdbi.onDemand(MyDAO.class);
-        environment.jersey().register(this);
+        env.jersey().register(MY_RESOURCE_OBJ);
     }
+    // snippet_exclude_begin
 
-    public static class HelloWorldConfiguration extends Configuration {
+    public static class MyConfig extends Configuration {
         @Valid
         @NotNull
         @JsonProperty
@@ -69,7 +67,7 @@ public class HelloWorldApplication extends FiberApplication<HelloWorldConfigurat
         @JsonProperty
         private final DataSourceFactory database = new DataSourceFactory();
 
-        public DataSourceFactory getDatabase() {
+        public DataSourceFactory getDB() {
             return database;
         }
     }
@@ -157,4 +155,7 @@ public class HelloWorldApplication extends FiberApplication<HelloWorldConfigurat
         dao.dropSomethingTable();
         return res;
     }
+    private Object MY_RESOURCE_OBJ = this;
+    // snippet_exclude_end
 }
+// end of snippet

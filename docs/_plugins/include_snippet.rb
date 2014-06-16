@@ -11,7 +11,7 @@
 # ~~~
 #
 # This will import test.js starting from the line which contains "snippet hello world" till
-# the line which contains "end of snippet". You can use the "snippet_exclude_begin" and "snippet_exclude_end" for
+# the line which contains "end of snippet". You can use the "snippet_exclude_begin" and "snippet_exclude_end // ..." for
 # block exclusion. For code higlight wrap the tag with the appropritate md tag.
 #
 #
@@ -68,6 +68,12 @@ module Jekyll
               source  += "#{line}"
           end
           if (line =~ /snippet_exclude_end/)
+            # add what comes after "snippet_exclude_end" as a block replacement
+            # for example "// ..."
+            index = line.index(/snippet_exclude_end/)
+            if (index) + 20 +1 < line.length
+              source += line[index+20..line.length]
+            end
             exclude = false
           end
           if line =~ /snippet #{@title}/

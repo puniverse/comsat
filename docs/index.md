@@ -332,7 +332,7 @@ In order to use JOOQ from fiber context, all you have to do is to provide connec
 TODO.. introduction
 [`Dropwizard`](http://dropwizard.readthedocs.org/)
 
-You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/HelloWorldApplication.java).
+You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
 
 In order to use dropwizaed in comsat environment, only few changes have to be made in the application declartion.
 First the yaml configuration file:
@@ -351,11 +351,14 @@ Here also you should enlarge `maxConnections` properties to support many connect
 {% include_snippet db ./comsat-dropwizard/src/test/resources/server.yml %}
 ~~~
 
-The `driverClass` has to point to the `co.paralleluniverse.fibers.jdbc.FiberDriver` class. The `url` has to be the url of you real datasource with the addition of 'fiber:' prefix, and of cource that the driver of the real datasource should be included int your runtime classpath.
+The `driverClass` has to point to the `co.paralleluniverse.fibers.jdbc.FiberDriver` class. The `url` has to be the url of your real datasource with the addition of 'fiber:' prefix, and as ussual you should include the driver of the your real datasource in your runtime classpath.
 
-Now we can move to the code declaratations.
+Now we can move to the code declaratations:
 
-TODO... 
+~~~ java
+{% include_snippet app ./comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java %}
+~~~
+Instead of extending the regular `io.dropwizard.Application` class, you should extend the comsat's `FiberApplication`. Your regular `run` function should be slightly changed to be called `fiberRun`. The creation of httpClient should be done using the `FiberHttpClientBuilder` class and the creation of `jdbi` should be done using the `FiberDBIFactory` class.
 
 ## Web Actors
 

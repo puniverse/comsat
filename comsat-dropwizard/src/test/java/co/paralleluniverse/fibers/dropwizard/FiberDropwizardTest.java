@@ -35,7 +35,7 @@ public class FiberDropwizardTest {
             @Override
             public void run() {
                 try {
-                    new HelloWorldApplication().run(new String[]{"server", Resources.getResource("server.yml").getPath()});
+                    new MyDropwizardApp().run(new String[]{"server", Resources.getResource("server.yml").getPath()});
                 } catch (Exception ex) {
                 }
             }
