@@ -170,7 +170,7 @@ After that you may call the refular API from fiber context:
 {% include_snippet http call ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpclient/FiberHttpClientBuilderTest.java %}
 ~~~
 
-If you prefer to use the future API of apacheHttpClient you should build regular HttpAsyncClient and the wrap it with FiberCloseableHttpAsyncClient.wrap, for example
+If you prefer to use the future API of apacheHttpClient you should build regular HttpAsyncClient and then wrap it with FiberCloseableHttpAsyncClient.wrap, for example
 
 ~~~ java
 {% include_snippet client configuration ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpasyncclient/FiberHttpAsyncClientTest.java %}
