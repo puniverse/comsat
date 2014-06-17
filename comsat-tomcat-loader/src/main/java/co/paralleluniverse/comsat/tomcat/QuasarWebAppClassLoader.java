@@ -68,7 +68,9 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
         if (entry != null && path.endsWith(".class") && entry.binaryContent != null) {
             String className = name.substring(0, name.length() - ".class".length());
             try {
-                entry.binaryContent = instrumentor.instrumentClass(className, entry.binaryContent);
+                byte[] res = instrumentor.instrumentClass(className, entry.binaryContent);
+                if (res != null)
+                    entry.binaryContent = res;
             } catch (Exception ex) {
                 if (MethodDatabase.isProblematicClass(className))
                     instrumentor.log(LogLevel.INFO, "Skipping problematic class instrumentation %s - %s %s", className, ex, Arrays.toString(ex.getStackTrace()));
