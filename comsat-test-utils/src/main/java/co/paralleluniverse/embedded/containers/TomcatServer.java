@@ -21,9 +21,7 @@ import org.apache.catalina.Wrapper;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.descriptor.web.ApplicationListener;
-import org.apache.tomcat.websocket.server.Constants;
 import org.apache.tomcat.websocket.server.WsSci;
-import org.apache.tomcat.websocket.server.WsServerContainer;
 
 public class TomcatServer extends AbstractEmbeddedServer {
     private final Tomcat tomcat;
@@ -43,7 +41,6 @@ public class TomcatServer extends AbstractEmbeddedServer {
 
     @Override
     public void start() throws Exception {
-        context.addServletContainerInitializer(new WsSci(), null);
         tomcat.setPort(port);
         tomcat.getConnector().setAttribute("maxThreads", nThreads);
         tomcat.getConnector().setAttribute("acceptCount", maxConn);
@@ -54,11 +51,17 @@ public class TomcatServer extends AbstractEmbeddedServer {
     public void stop() throws Exception {
         tomcat.stop();
         tomcat.getConnector().destroy();
+        tomcat.destroy();
     }
 
     @Override
-    public void addServletContextListener(Class <? extends ServletContextListener> scl) {
-        StandardContext tomcatCtx = (StandardContext) this.context;        
+    public void enableWebsockets() throws Exception {
+        context.addServletContainerInitializer(new WsSci(), null);
+    }
+
+    @Override
+    public void addServletContextListener(Class<? extends ServletContextListener> scl) {
+        StandardContext tomcatCtx = (StandardContext) this.context;
         tomcatCtx.addApplicationListener(new ApplicationListener(scl.getName(), false));
     }
 

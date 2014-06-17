@@ -78,6 +78,7 @@ public class WebActorServletTest {
         WebActorInitializer.setUserClassLoader(ClassLoader.getSystemClassLoader());
         embeddedServer.addServletContextListener(WebActorInitializer.class);
         // end of snippet
+        embeddedServer.enableWebsockets();
         embeddedServer.start();
         AbstractEmbeddedServer.waitUrlAvailable("http://localhost:8080");
     }

@@ -24,6 +24,7 @@ public interface EmbeddedServer {
     ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping);
     void addServletContextListener(Class <? extends ServletContextListener> scl);
     
+    void enableWebsockets() throws Exception;
     void start() throws Exception;
     void stop() throws Exception;
     

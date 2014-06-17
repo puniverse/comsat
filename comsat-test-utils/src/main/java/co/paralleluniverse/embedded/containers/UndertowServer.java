@@ -75,6 +75,11 @@ public class UndertowServer extends AbstractEmbeddedServer {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public void enableWebsockets() throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     private static class UndertowServletDesc implements ServletDesc {
         private final ServletInfo impl;
 

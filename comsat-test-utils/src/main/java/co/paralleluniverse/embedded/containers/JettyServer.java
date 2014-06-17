@@ -29,6 +29,7 @@ public class JettyServer extends AbstractEmbeddedServer {
     private ServerConnector http;
     private ServletContextHandler context;
     private boolean error;
+    private boolean wsEnabled;
 
     private void build() {
         if (server != null)
@@ -43,7 +44,7 @@ public class JettyServer extends AbstractEmbeddedServer {
 
     @Override
     public ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
-        if (context==null)
+        if (context == null)
             build();
         ServletHolder sh = new ServletHolder(servletClass);
         context.addServlet(sh, mapping);
@@ -51,8 +52,8 @@ public class JettyServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void addServletContextListener(Class <? extends ServletContextListener> scl) {
-        if (context==null)
+    public void addServletContextListener(Class<? extends ServletContextListener> scl) {
+        if (context == null)
             build();
         try {
             context.addEventListener(scl.newInstance());
@@ -64,13 +65,19 @@ public class JettyServer extends AbstractEmbeddedServer {
     @Override
     public void start() throws Exception {
         server.setHandler(context);
-        WebSocketServerContainerInitializer.configureContext(context);
+        if (wsEnabled)
+            WebSocketServerContainerInitializer.configureContext(context);
         server.start();
     }
 
     @Override
     public void stop() throws Exception {
         server.stop();
+    }
+
+    @Override
+    public void enableWebsockets() throws Exception {
+        this.wsEnabled = true;
     }
 
     private static class JettyServletDesc implements ServletDesc {

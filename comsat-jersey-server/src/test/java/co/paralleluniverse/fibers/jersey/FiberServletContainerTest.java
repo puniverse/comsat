@@ -42,7 +42,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class FiberServletContainerTest {
 
-    @Parameterized.Parameters(name="{0}")
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
             {JettyServer.class},
@@ -65,7 +65,7 @@ public class FiberServletContainerTest {
         // snippet jersey registration
         server.addServlet("api", co.paralleluniverse.fibers.jersey.ServletContainer.class, "/*")
                 .setInitParameter("jersey.config.server.provider.packages", PACKAGE_NAME_PREFIX)
-        // end of snippet
+                // end of snippet
                 .setLoadOnStartup(1);
         server.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
@@ -90,7 +90,6 @@ public class FiberServletContainerTest {
         for (int i = 0; i < 10; i++)
             assertEquals("sleep was 10", client.execute(new HttpPost("http://localhost:8080/service?sleep=10"), BASIC_RESPONSE_HANDLER));
     }
-
 
     @Rule
     public TestName name = new TestName();
