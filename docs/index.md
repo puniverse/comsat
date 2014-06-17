@@ -393,11 +393,18 @@ If you use embedded container, you have to register `WebActorInitializer` as a S
 {% include_snippet WebActorInitializer ./comsat-actors-servlet/src/test/java/co/paralleluniverse/comsat/webactors/servlet/WebActorServletTest.java %}
 ~~~
 
-Webactors may use websockets. In order to do that the container has to be configured to support it. Each container has its own way. In Jetty for example you have to include the `javax-websocket-server-impl` jar and call the following method before you start the container:
+Webactors may use websockets. In order to do that the container has to be configured to support it. Each container has its own way. In Jetty you have to include the `javax-websocket-server-impl` jar and call the following method before you start the container:
 
 ~~~ java
 WebSocketServerContainerInitializer.configureContext(context);
 ~~~
+
+In tomcat you have to include the `tomcat-embed-websocket` jar and register `ServletContainerInitilizer`:
+
+~~~ java
+context.addServletContainerInitializer(new WsSci(), null);
+~~~
+
 
 For details, see the [Javadoc]({{javadoc}}/comsat/webactors/WebActor.html).
 
