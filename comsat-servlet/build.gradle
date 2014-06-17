@@ -1,4 +1,3 @@
 dependencies {
-    compile "javax.servlet:javax.servlet-api:$servletVersion"      
     testCompile project(':comsat-test-utils')
 }

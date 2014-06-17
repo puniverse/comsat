@@ -81,6 +81,7 @@ subprojects {
         quasar "co.paralleluniverse:quasar-core:$quasarVer" 
         testCompile group: 'junit', name: 'junit', version: '4.11'
         provided "co.paralleluniverse:quasar-core:$quasarVer"
+        provided "javax.servlet:javax.servlet-api:$servletVersion" // was 3.1.0
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
     
