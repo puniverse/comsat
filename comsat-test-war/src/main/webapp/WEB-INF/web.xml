@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                      http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1"
+         metadata-complete="false">
+
+    <display-name>Test Servlet</display-name>
+    <description>
+        A test servlet used to test the COMSAT HTTP client.
+    </description>
+
+    <!-- Define example application events listeners -->
+    <!--    
+    <listener>
+        <listener-class>listeners.ContextListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>listeners.SessionListener</listener-class>
+    </listener>
+    -->
+
+    <!-- Define servlets that are included in the example application -->
+    <!--    
+    <servlet>
+        <servlet-name>rest</servlet-name>
+        <servlet-class> co.paralleluniverse.fibers.jersey.ServletContainer</servlet-class>        
+        <init-param>
+            <param-name>jersey.config.server.provider.packages</param-name> 
+            <param-value>example.tomcat</param-value> 
+        </init-param>      
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>rest</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
+    -->
+</web-app>
