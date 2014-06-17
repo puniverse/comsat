@@ -18,7 +18,12 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletContextListener;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
+import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.tomcat.util.descriptor.web.ApplicationListener;
+import org.apache.tomcat.websocket.server.Constants;
+import org.apache.tomcat.websocket.server.WsSci;
+import org.apache.tomcat.websocket.server.WsServerContainer;
 
 public class TomcatServer extends AbstractEmbeddedServer {
     private final Tomcat tomcat;
@@ -26,17 +31,11 @@ public class TomcatServer extends AbstractEmbeddedServer {
 
     public TomcatServer() {
         this.tomcat = new Tomcat();
+        this.context = tomcat.addContext("/", new File("./build").getAbsolutePath());
     }
 
     @Override
     public ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
-        if (context == null) {
-            context = tomcat.addContext("/", new File("./build").getAbsolutePath());
-            tomcat.setPort(port);
-            tomcat.getConnector().setAttribute("maxThreads", nThreads);
-            tomcat.getConnector().setAttribute("acceptCount", maxConn);
-        }
-
         Wrapper w = Tomcat.addServlet(context, name, servletClass.getName());
         w.addMapping(mapping);
         return new TomcatServletDesc(w);
@@ -44,6 +43,10 @@ public class TomcatServer extends AbstractEmbeddedServer {
 
     @Override
     public void start() throws Exception {
+        context.addServletContainerInitializer(new WsSci(), null);
+        tomcat.setPort(port);
+        tomcat.getConnector().setAttribute("maxThreads", nThreads);
+        tomcat.getConnector().setAttribute("acceptCount", maxConn);
         tomcat.start();
     }
 
@@ -54,8 +57,9 @@ public class TomcatServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void addServletContextListener(ServletContextListener scl) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void addServletContextListener(Class <? extends ServletContextListener> scl) {
+        StandardContext tomcatCtx = (StandardContext) this.context;        
+        tomcatCtx.addApplicationListener(new ApplicationListener(scl.getName(), false));
     }
 
     private static class TomcatServletDesc implements ServletDesc {

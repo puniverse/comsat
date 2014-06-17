@@ -71,7 +71,7 @@ public class UndertowServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void addServletContextListener(ServletContextListener scl) {
+    public void addServletContextListener(Class <? extends ServletContextListener> scl) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

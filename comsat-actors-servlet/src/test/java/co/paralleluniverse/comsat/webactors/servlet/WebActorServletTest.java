@@ -16,6 +16,7 @@ package co.paralleluniverse.comsat.webactors.servlet;
 import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import co.paralleluniverse.embedded.containers.EmbeddedServer;
 import co.paralleluniverse.embedded.containers.JettyServer;
+import co.paralleluniverse.embedded.containers.TomcatServer;
 import co.paralleluniverse.strands.SettableFuture;
 import com.google.common.collect.Lists;
 import java.io.IOException;
@@ -58,7 +59,8 @@ public class WebActorServletTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-            {JettyServer.class}, //            {TomcatServer.class},
+            {JettyServer.class}, 
+            {TomcatServer.class},
         //            {UndertowServer.class},
         });
     }
@@ -73,15 +75,15 @@ public class WebActorServletTest {
     public void setUp() throws Exception {
         this.embeddedServer = cls.newInstance();
         // snippet WebActorInitializer
-        WebActorInitializer wActorsInit = new WebActorInitializer(ClassLoader.getSystemClassLoader());
-        embeddedServer.addServletContextListener(wActorsInit);
+        WebActorInitializer.setUserClassLoader(ClassLoader.getSystemClassLoader());
+        embeddedServer.addServletContextListener(WebActorInitializer.class);
         // end of snippet
         embeddedServer.start();
         AbstractEmbeddedServer.waitUrlAvailable("http://localhost:8080");
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() throws Exception {       
         embeddedServer.stop();
     }
 

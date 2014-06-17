@@ -22,7 +22,7 @@ public interface EmbeddedServer {
     EmbeddedServer setNumThreads(int nThreads);
     EmbeddedServer setMaxConnections(int maxConn);
     ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping);
-    void addServletContextListener(ServletContextListener scl);
+    void addServletContextListener(Class <? extends ServletContextListener> scl);
     
     void start() throws Exception;
     void stop() throws Exception;

@@ -30,24 +30,21 @@ import javax.websocket.server.ServerEndpointConfig;
 
 /**
  * Registers WebActors annotated with the {@link WebActor} annotation.
+ * Scan classes of the servletContext classLoader for WebActor annotated classes
+ * You can set a userClassLoader with 
  */
 @WebListener
 public class WebActorInitializer implements ServletContextListener {
-    ClassLoader userClassLoader;
-
-    /**
-     * Scan classes of the servletContext classLoader for WebActor annotated classes
-     */
-    public WebActorInitializer() {
-        this(null);
-    }
+    private static ClassLoader userClassLoader;
 
     /**
      *
      * @param userClassLoader Scan classes of this classLoader WebActor annotated classes
+     * @return WebActorInitializer.class
      */
-    public WebActorInitializer(ClassLoader userClassLoader) {
-        this.userClassLoader = userClassLoader;
+    public static Class<? extends WebActorInitializer> setUserClassLoader(ClassLoader userClassLoader) {
+        WebActorInitializer.userClassLoader = userClassLoader;
+        return WebActorInitializer.class;
     }
 
     @Override
@@ -95,7 +92,8 @@ public class WebActorInitializer implements ServletContextListener {
         d.addMapping(waAnn.value());
 
         // web socket
-        final ServerContainer scon = (ServerContainer) sc.getAttribute("javax.websocket.server.ServerContainer");
+        ServerContainer scon = (ServerContainer) sc.getAttribute("javax.websocket.server.ServerContainer");
+        assert scon!=null : "Container does not support websockets !!!";
         for (String wsPath : waAnn.webSocketUrlPatterns()) {
             try {
                 scon.addEndpoint(ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath).configurator(new EmbedHttpSessionWsConfigurator()).build());

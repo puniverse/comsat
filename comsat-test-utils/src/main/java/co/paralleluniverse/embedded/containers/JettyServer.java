@@ -13,6 +13,8 @@
  */
 package co.paralleluniverse.embedded.containers;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContextListener;
 import org.eclipse.jetty.server.Server;
@@ -49,10 +51,14 @@ public class JettyServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void addServletContextListener(ServletContextListener scl) {
+    public void addServletContextListener(Class <? extends ServletContextListener> scl) {
         if (context==null)
             build();
-        context.addEventListener(scl);
+        try {
+            context.addEventListener(scl.newInstance());
+        } catch (InstantiationException | IllegalAccessException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
