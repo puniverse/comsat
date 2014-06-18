@@ -4,3 +4,6 @@ dependencies {
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
 } 
+tasks.withType(Test) {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+}

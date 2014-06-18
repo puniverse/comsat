@@ -123,7 +123,6 @@ subprojects {
     }
     
     tasks.withType(Test) {
-        jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
         systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
     }
    

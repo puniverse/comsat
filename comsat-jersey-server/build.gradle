@@ -4,8 +4,9 @@ dependencies {
     compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion" ) {
         exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
     }
-//    compile ("org.glassfish.jersey.core:jersey-client:2.7") {
-//        exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
-//    }
     testCompile project(':comsat-test-utils')
+}
+
+tasks.withType(Test) {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
 }

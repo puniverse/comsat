@@ -1,5 +1,33 @@
 apply plugin: 'war' 
 
 dependencies {
-    compile 'javax.servlet:javax.servlet-api:3.0.1'
+    testCompile (project(':comsat-test-utils') ) {
+        exclude group: 'org.eclipse.jetty.websocket', module: '*'         
+    }
+    testRuntime project(':comsat-tomcat-loader')
+    
+    //    compile 'javax.servlet:javax.servlet-api:3.0.1'
+}
+
+task deployWar(type: Copy) {
+    ext.set("webappDir",new File('build/webapp'))
+    doFirst {
+        ext.set("webappDir",new File('build/webapp'))
+        delete(webappDir)
+        webappDir.mkdirs()     
+        new File("$webappDir/webapps").mkdirs()
+    }    
+    from war
+    
+    from 'src/main/webapp'
+    into webappDir
+}
+
+tasks.withType(Test) {
+        
+    println "TTTTTTTTTTTTTTTTTTTT"
+                dependsOn deployWar
+    // TODO: remove javaagent
+    //        jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+    //        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
 }
