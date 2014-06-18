@@ -1,0 +1,5 @@
+dependencies {
+    compile "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVersion"
+    testCompile "de.flapdoodle.embed:de.flapdoodle.embed.mongo:$embedMongoVersion"
+    testCompile project(':comsat-test-utils')
+}
