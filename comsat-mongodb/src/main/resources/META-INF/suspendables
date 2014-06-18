@@ -1,2 +1,0 @@
-org.apache.http.impl.client.CloseableHttpClient.doExecute
-org.apache.http.impl.client.CloseableHttpClient.execute

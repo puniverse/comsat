@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.mongodb;
 
+import co.paralleluniverse.strands.SettableFuture;
 import com.allanbank.mongodb.Durability;
 import com.allanbank.mongodb.MongoCollection;
 import com.allanbank.mongodb.MongoIterator;
@@ -36,14 +37,6 @@ import java.util.concurrent.Future;
 public class FiberMongoCollectionImpl implements FiberMongoCollection {
     private final MongoCollection coll;
 
-    
-    /**
-     * @return the coll
-     */
-    public MongoCollection getColl() {
-        return coll;
-    }
-
     /**
      * Wrapping constructor
      * @param coll
@@ -51,188 +44,372 @@ public class FiberMongoCollectionImpl implements FiberMongoCollection {
     public FiberMongoCollectionImpl(MongoCollection coll) {
         this.coll = coll;
     }
+    
+    @Override
+    public MongoCollection getMongoCollection() {
+        return coll;
+    }
 
     
     // Fiber-blocking API
     
     @Override
     public List<Document> aggregateFiberBlocking(final Aggregate.Builder command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<List<Document>>() {
+            @Override
+            protected void requestAsync() {
+                coll.aggregateAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public List<Document> aggregateFiberBlocking(final Aggregate command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<List<Document>>() {
+            @Override
+            protected void requestAsync() {
+                coll.aggregateAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public Long countFiberBlocking() throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.countAsync(this);
+            }
+        }.run();
     }
 
     @Override
     public Long countFiberBlocking(final DocumentAssignable query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.countAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public Long countFiberBlocking(final DocumentAssignable query, final ReadPreference readPreference) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.countAsync(this, query, readPreference);
+            }
+        }.run();
     }
 
     @Override
     public Long countFiberBlocking(final ReadPreference readPreference) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.countAsync(this, readPreference);
+            }
+        }.run();
     }
 
     @Override
     public Long deleteFiberBlocking(final DocumentAssignable query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.deleteAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public Long deleteFiberBlocking(final DocumentAssignable query, final boolean singleDelete) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.deleteAsync(this, query, singleDelete);
+            }
+        }.run();
     }
 
     @Override
     public Long deleteFiberBlocking(final DocumentAssignable query, final boolean singleDelete, final Durability durability) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.deleteAsync(this, query, singleDelete, durability);
+            }
+        }.run();
     }
 
     @Override
     public Long deleteFiberBlocking(final DocumentAssignable query, final Durability durability) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.deleteAsync(this, query, durability);
+            }
+        }.run();
     }
 
     @Override
     public ArrayElement distinctFiberBlocking(final Distinct.Builder command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<ArrayElement>() {
+            @Override
+            protected void requestAsync() {
+                coll.distinctAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public ArrayElement distinctFiberBlocking(final Distinct command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<ArrayElement>() {
+            @Override
+            protected void requestAsync() {
+                coll.distinctAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public Document explainFiberBlocking(final Find.Builder query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Document>() {
+            @Override
+            protected void requestAsync() {
+                coll.explainAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public Document explainFiberBlocking(final Find query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Document>() {
+            @Override
+            protected void requestAsync() {
+                coll.explainAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public MongoIterator<Document> findFiberBlocking(final DocumentAssignable query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<MongoIterator<Document>>() {
+            @Override
+            protected void requestAsync() {
+                coll.findAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public MongoIterator<Document> findFiberBlocking(final Find.Builder query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<MongoIterator<Document>>() {
+            @Override
+            protected void requestAsync() {
+                coll.findAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public MongoIterator<Document> findFiberBlocking(final Find query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<MongoIterator<Document>>() {
+            @Override
+            protected void requestAsync() {
+                coll.findAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public Document findOneFiberBlocking(final DocumentAssignable query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Document>() {
+            @Override
+            protected void requestAsync() {
+                coll.findOneAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public Document findOneFiberBlocking(final Find.Builder query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Document>() {
+            @Override
+            protected void requestAsync() {
+                coll.findOneAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public Document findOneFiberBlocking(final Find query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Document>() {
+            @Override
+            protected void requestAsync() {
+                coll.findOneAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public ArrayElement groupByFiberBlocking(final GroupBy.Builder command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<ArrayElement>() {
+            @Override
+            protected void requestAsync() {
+                coll.groupByAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public ArrayElement groupByFiberBlocking(final GroupBy command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<ArrayElement>() {
+            @Override
+            protected void requestAsync() {
+                coll.groupByAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public Integer insertFiberBlocking(final DocumentAssignable... documents) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Integer>() {
+            @Override
+            protected void requestAsync() {
+                coll.insertAsync(this, documents);
+            }
+        }.run();
     }
 
     @Override
     public Integer insertFiberBlocking(final Durability durability, final DocumentAssignable... documents) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+        return new FiberMongoCallback<Integer>() {
+            @Override
+            protected void requestAsync() {
+                coll.insertAsync(this, durability, documents);
+            }
+        }.run();    }
 
     @Override
     public Integer insertFiberBlocking(final boolean continueOnError, final DocumentAssignable... documents) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Integer>() {
+            @Override
+            protected void requestAsync() {
+                coll.insertAsync(this, continueOnError, documents);
+            }
+        }.run();
     }
 
     @Override
     public Integer insertFiberBlocking(final boolean continueOnError, final Durability durability, final DocumentAssignable... documents) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Integer>() {
+            @Override
+            protected void requestAsync() {
+                coll.insertAsync(this, continueOnError, durability, documents);
+            }
+        }.run();
     }
 
     @Override
     public List<Document> mapReduceFiberBlocking(final MapReduce.Builder command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<List<Document>>() {
+            @Override
+            protected void requestAsync() {
+                coll.mapReduceAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public List<Document> mapReduceFiberBlocking(final MapReduce command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<List<Document>>() {
+            @Override
+            protected void requestAsync() {
+                coll.mapReduceAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public Integer saveFiberBlocking(final DocumentAssignable query) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Integer>() {
+            @Override
+            protected void requestAsync() {
+                coll.saveAsync(this, query);
+            }
+        }.run();
     }
 
     @Override
     public Integer saveFiberBlocking(final DocumentAssignable query, final Durability durability) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Integer>() {
+            @Override
+            protected void requestAsync() {
+                coll.saveAsync(this, query, durability);
+            }
+        }.run();
     }
 
     @Override
     public List<TextResult> textSearchFiberBlocking(final Text.Builder command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<List<TextResult>>() {
+            @Override
+            protected void requestAsync() {
+                coll.textSearchAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public List<TextResult> textSearchFiberBlocking(final Text command) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<List<TextResult>>() {
+            @Override
+            protected void requestAsync() {
+                coll.textSearchAsync(this, command);
+            }
+        }.run();
     }
 
     @Override
     public Long updateFiberBlocking(final DocumentAssignable query, final DocumentAssignable update) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.updateAsync(this, query, update);
+            }
+        }.run();
     }
 
     @Override
     public Long updateFiberBlocking(final DocumentAssignable query, final DocumentAssignable update, final boolean multiUpdate, final boolean upsert) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.updateAsync(this, query, update, multiUpdate, upsert);
+            }
+        }.run();
     }
 
     @Override
     public Long updateFiberBlocking(final DocumentAssignable query, final DocumentAssignable update, final boolean multiUpdate, final boolean upsert, final Durability durability) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.updateAsync(this, query, update, multiUpdate, upsert, durability);
+            }
+        }.run();
     }
 
     @Override
     public Long updateFiberBlocking(final DocumentAssignable query, final DocumentAssignable update, final Durability durability) throws Throwable {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new FiberMongoCallback<Long>() {
+            @Override
+            protected void requestAsync() {
+                coll.updateAsync(this, query, update, durability);
+            }
+        }.run();
     }
 
     
@@ -240,181 +417,252 @@ public class FiberMongoCollectionImpl implements FiberMongoCollection {
     
     @Override
     public Future<List<Document>> aggregateFiberBlockingFuture(Aggregate.Builder command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<List<Document>> future = new SettableFuture<>();
+        coll.aggregateAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
-    public Future<List<Document>> aggregateFiberBlockingFuture(String command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public Future<List<Document>> aggregateFiberBlockingFuture(Aggregate command) {
+        final SettableFuture<List<Document>> future = new SettableFuture<>();
+        coll.aggregateAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<Long> countFiberBlockingFuture() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.countAsync(FiberMongoUtils.callbackSettingFuture(future));
+        return future;
     }
 
     @Override
     public Future<Long> countFiberBlockingFuture(DocumentAssignable query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.countAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<Long> countFiberBlockingFuture(DocumentAssignable query, ReadPreference readPreference) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.countAsync(FiberMongoUtils.callbackSettingFuture(future), query, readPreference);
+        return future;
     }
 
     @Override
     public Future<Long> countFiberBlockingFuture(ReadPreference readPreference) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.countAsync(FiberMongoUtils.callbackSettingFuture(future), readPreference);
+        return future;
     }
 
     @Override
     public Future<Long> deleteFiberBlockingFuture(DocumentAssignable query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.deleteAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<Long> deleteFiberBlockingFuture(DocumentAssignable query, boolean singleDelete) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.deleteAsync(FiberMongoUtils.callbackSettingFuture(future), query, singleDelete);
+        return future;    }
 
     @Override
     public Future<Long> deleteFiberBlockingFuture(DocumentAssignable query, boolean singleDelete, Durability durability) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.deleteAsync(FiberMongoUtils.callbackSettingFuture(future), query, singleDelete, durability);
+        return future;
     }
 
     @Override
     public Future<Long> deleteFiberBlockingFuture(DocumentAssignable query, Durability durability) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.deleteAsync(FiberMongoUtils.callbackSettingFuture(future), query, durability);
+        return future;
     }
 
     @Override
     public Future<ArrayElement> distinctFiberBlockingFuture(Distinct.Builder command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<ArrayElement> future = new SettableFuture<>();
+        coll.distinctAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<ArrayElement> distinctFiberBlockingFuture(Distinct command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<ArrayElement> future = new SettableFuture<>();
+        coll.distinctAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<Document> explainFiberBlockingFuture(Find.Builder query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Document> future = new SettableFuture<>();
+        coll.explainAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<Document> explainFiberBlockingFuture(Find query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Document> future = new SettableFuture<>();
+        coll.explainAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<MongoIterator<Document>> findFiberBlockingFuture(DocumentAssignable query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<MongoIterator<Document>> future = new SettableFuture<>();
+        coll.findAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<MongoIterator<Document>> findFiberBlockingFuture(Find.Builder query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<MongoIterator<Document>> future = new SettableFuture<>();
+        coll.findAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<MongoIterator<Document>> findFiberBlockingFuture(Find query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<MongoIterator<Document>> future = new SettableFuture<>();
+        coll.findAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<Document> findOneFiberBlockingFuture(DocumentAssignable query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Document> future = new SettableFuture<>();
+        coll.findOneAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<Document> findOneFiberBlockingFuture(Find.Builder query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Document> future = new SettableFuture<>();
+        coll.findOneAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<Document> findOneFiberBlockingFuture(Find query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Document> future = new SettableFuture<>();
+        coll.findOneAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<ArrayElement> groupByFiberBlockingFuture(GroupBy.Builder command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<ArrayElement> future = new SettableFuture<>();
+        coll.groupByAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<ArrayElement> groupByFiberBlockingFuture(GroupBy command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<ArrayElement> future = new SettableFuture<>();
+        coll.groupByAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<Integer> insertFiberBlockingFuture(DocumentAssignable... documents) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Integer> future = new SettableFuture<>();
+        coll.insertAsync(FiberMongoUtils.callbackSettingFuture(future), documents);
+        return future;
     }
 
     @Override
     public Future<Integer> insertFiberBlockingFuture(Durability durability, DocumentAssignable... documents) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Integer> future = new SettableFuture<>();
+        coll.insertAsync(FiberMongoUtils.callbackSettingFuture(future), durability, documents);
+        return future;
     }
 
     @Override
     public Future<Integer> insertFiberBlockingFuture(boolean continueOnError, DocumentAssignable... documents) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Integer> future = new SettableFuture<>();
+        coll.insertAsync(FiberMongoUtils.callbackSettingFuture(future), continueOnError, documents);
+        return future;
     }
 
     @Override
     public Future<Integer> insertFiberBlockingFuture(boolean continueOnError, Durability durability, DocumentAssignable... documents) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Integer> future = new SettableFuture<>();
+        coll.insertAsync(FiberMongoUtils.callbackSettingFuture(future), continueOnError, durability, documents);
+        return future;
     }
 
     @Override
     public Future<List<Document>> mapReduceFiberBlockingFuture(MapReduce.Builder command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<List<Document>> future = new SettableFuture<>();
+        coll.mapReduceAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<List<Document>> mapReduceFiberBlockingFuture(MapReduce command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<List<Document>> future = new SettableFuture<>();
+        coll.mapReduceAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<Integer> saveFiberBlockingFuture(DocumentAssignable query) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Integer> future = new SettableFuture<>();
+        coll.saveAsync(FiberMongoUtils.callbackSettingFuture(future), query);
+        return future;
     }
 
     @Override
     public Future<Integer> saveFiberBlockingFuture(DocumentAssignable query, Durability durability) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Integer> future = new SettableFuture<>();
+        coll.saveAsync(FiberMongoUtils.callbackSettingFuture(future), query, durability);
+        return future;
     }
 
     @Override
     public Future<List<TextResult>> textSearchFiberBlockingFuture(Text.Builder command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<List<TextResult>> future = new SettableFuture<>();
+        coll.textSearchAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<List<TextResult>> textSearchFiberBlockingFuture(Text command) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<List<TextResult>> future = new SettableFuture<>();
+        coll.textSearchAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        return future;
     }
 
     @Override
     public Future<Long> updateFiberBlockingFuture(DocumentAssignable query, DocumentAssignable update) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.updateAsync(FiberMongoUtils.callbackSettingFuture(future), query, update);
+        return future;
     }
 
     @Override
     public Future<Long> updateFiberBlockingFuture(DocumentAssignable query, DocumentAssignable update, boolean multiUpdate, boolean upsert) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.updateAsync(FiberMongoUtils.callbackSettingFuture(future), query, update, multiUpdate, upsert);
+        return future;
     }
 
     @Override
     public Future<Long> updateFiberBlockingFuture(DocumentAssignable query, DocumentAssignable update, boolean multiUpdate, boolean upsert, Durability durability) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.updateAsync(FiberMongoUtils.callbackSettingFuture(future), query, update, multiUpdate, upsert, durability);
+        return future;
     }
 
     @Override
     public Future<Long> updateFiberBlockingFuture(DocumentAssignable query, DocumentAssignable update, Durability durability) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final SettableFuture<Long> future = new SettableFuture<>();
+        coll.updateAsync(FiberMongoUtils.callbackSettingFuture(future), query, update, durability);
+        return future;
     }
 }

@@ -35,11 +35,9 @@ public class FiberMongoDatabaseImpl implements FiberMongoDatabase {
     public FiberMongoDatabaseImpl(MongoDatabase db) {
         this.db = db;
     }
-    
-     /**
-     * @return the db
-     */
-    public MongoDatabase getDb() {
+
+    @Override
+    public MongoDatabase getMongoDatabase() {
         return db;
     }
 
@@ -51,7 +49,7 @@ public class FiberMongoDatabaseImpl implements FiberMongoDatabase {
         return new FiberMongoCallback<Document>() {
             @Override
             protected void requestAsync() {
-                getDb().runCommandAsync(this, command);
+                db.runCommandAsync(this, command);
             }
         }.run();
     }
@@ -61,7 +59,7 @@ public class FiberMongoDatabaseImpl implements FiberMongoDatabase {
         return new FiberMongoCallback<Document>() {
             @Override
             protected void requestAsync() {
-                getDb().runCommandAsync(this, command);
+                db.runCommandAsync(this, command);
             }
         }.run();
     }
@@ -71,7 +69,7 @@ public class FiberMongoDatabaseImpl implements FiberMongoDatabase {
         return new FiberMongoCallback<Document>() {
             @Override
             protected void requestAsync() {
-                getDb().runCommandAsync(this, command, options);
+                db.runCommandAsync(this, command, options);
             }
         }.run();
     }
@@ -81,7 +79,7 @@ public class FiberMongoDatabaseImpl implements FiberMongoDatabase {
         return new FiberMongoCallback<Document>() {
             @Override
             protected void requestAsync() {
-                getDb().runCommandAsync(this, commandName, commandValue, options);
+                db.runCommandAsync(this, commandName, commandValue, options);
             }
         }.run();
     }
@@ -91,7 +89,7 @@ public class FiberMongoDatabaseImpl implements FiberMongoDatabase {
         return new FiberMongoCallback<Document>() {
             @Override
             protected void requestAsync() {
-                getDb().runCommandAsync(this, commandName, commandValue, options);
+                db.runCommandAsync(this, commandName, commandValue, options);
             }
         }.run();
     }
@@ -102,35 +100,35 @@ public class FiberMongoDatabaseImpl implements FiberMongoDatabase {
     @Override
     public Future<Document> runCommandFiberBlockingFuture(DocumentAssignable command) {
         final SettableFuture<Document> future = new SettableFuture<>();
-        getDb().runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        db.runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), command);
         return future;
     }
 
     @Override
     public Future<Document> runCommandFiberBlockingFuture(String command) {
         final SettableFuture<Document> future = new SettableFuture<>();
-        getDb().runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), command);
+        db.runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), command);
         return future;
     }
 
     @Override
     public Future<Document> runCommandFiberBlockingFuture(String command, DocumentAssignable options) {
         final SettableFuture<Document> future = new SettableFuture<>();
-        getDb().runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), command, options);
+        db.runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), command, options);
         return future;
     }
 
     @Override
     public Future<Document> runCommandFiberBlockingFuture(String commandName, int commandValue, DocumentAssignable options) {
         final SettableFuture<Document> future = new SettableFuture<>();
-        getDb().runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), commandName, commandValue, options);
+        db.runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), commandName, commandValue, options);
         return future;
     }
 
     @Override
     public Future<Document> runCommandFiberBlockingFuture(String commandName, String commandValue, DocumentAssignable options) {
         final SettableFuture<Document> future = new SettableFuture<>();
-        getDb().runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), commandName, commandValue, options);
+        db.runCommandAsync(FiberMongoUtils.callbackSettingFuture(future), commandName, commandValue, options);
         return future;
     }
 }

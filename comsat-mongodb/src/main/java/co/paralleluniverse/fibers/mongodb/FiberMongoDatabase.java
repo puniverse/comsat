@@ -15,6 +15,7 @@ package co.paralleluniverse.fibers.mongodb;
 
 import java.util.concurrent.Future;
 
+import com.allanbank.mongodb.MongoDatabase;
 import com.allanbank.mongodb.bson.Document;
 import com.allanbank.mongodb.bson.DocumentAssignable;
 
@@ -27,6 +28,11 @@ import com.allanbank.mongodb.bson.DocumentAssignable;
  * @author circlespainter
  */
 public interface FiberMongoDatabase {
+
+    /**
+     * @return The wrapped MongoDatabase instance
+     */
+    MongoDatabase getMongoDatabase();
 
     // Fiber-blocking API
     Document runCommandFiberBlocking(DocumentAssignable command) throws Throwable;

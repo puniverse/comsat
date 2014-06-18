@@ -13,10 +13,8 @@
  */
 package co.paralleluniverse.fibers.mongodb;
 
-import java.util.List;
-import java.util.concurrent.Future;
-
 import com.allanbank.mongodb.Durability;
+import com.allanbank.mongodb.MongoCollection;
 import com.allanbank.mongodb.MongoIterator;
 import com.allanbank.mongodb.ReadPreference;
 import com.allanbank.mongodb.bson.Document;
@@ -29,6 +27,8 @@ import com.allanbank.mongodb.builder.GroupBy;
 import com.allanbank.mongodb.builder.MapReduce;
 import com.allanbank.mongodb.builder.Text;
 import com.allanbank.mongodb.builder.TextResult;
+import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * Wrapper adding fiber-blocking and future-based fiber-blocking APIs to 
@@ -39,6 +39,11 @@ import com.allanbank.mongodb.builder.TextResult;
  * @author circlespainter
  */
 public interface FiberMongoCollection {
+    
+    /**
+     * @return The wrapped MongoCollection
+     */
+    MongoCollection getMongoCollection();
 
     // Fiber-blocking API
     List<Document> aggregateFiberBlocking(Aggregate.Builder command) throws Throwable;
@@ -81,7 +86,7 @@ public interface FiberMongoCollection {
 
     // Async w/fiber-blocking future API
     Future<List<Document>> aggregateFiberBlockingFuture(Aggregate.Builder command);
-    Future<List<Document>> aggregateFiberBlockingFuture(String command);
+    Future<List<Document>> aggregateFiberBlockingFuture(Aggregate command);
     Future<Long> countFiberBlockingFuture();
     Future<Long> countFiberBlockingFuture(DocumentAssignable query);
     Future<Long> countFiberBlockingFuture(DocumentAssignable query, ReadPreference readPreference);
