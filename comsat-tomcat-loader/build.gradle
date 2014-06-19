@@ -1,7 +1,11 @@
 dependencies {
     provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
-//    compile "co.paralleluniverse:quasar-core:$quasarVer"
+    testCompile (project(':comsat-test-utils')) {
+        exclude group: 'org.eclipse.jetty.websocket', module: '*'         
+    }
+    testRuntime project(':comsat-tomcat-loader')
 }
+
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
     from { configurations.provided.collect { it.isDirectory() ? it : zipTree(it) } }
@@ -17,4 +21,13 @@ if (System.properties['java.version'].startsWith('1.8') ) {
     }
     
     uploadArchives.dependsOn ':comsat-tomcat-loader-jdk8:jar'
+}
+
+task deployWar(type: Copy) {
+    from project(":comsat-test-war").war
+    into "build/wars"
+}
+
+tasks.withType(Test) {
+    dependsOn deployWar
 }

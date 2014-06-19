@@ -44,14 +44,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class EmbeddedServerTest {
+public class TomcatLoaderTest {
 
-    @Parameterized.Parameters(name="{0}")
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-//            {JettyServer.class},
-            {TomcatServer.class},
-//            {UndertowServer.class},
+            //            {JettyServer.class},
+            {TomcatServer.class}, //            {UndertowServer.class},
         });
     }
     private final Class<? extends EmbeddedServer> cls;
@@ -59,32 +58,35 @@ public class EmbeddedServerTest {
     private CloseableHttpClient client;
     private Tomcat tomcat;
 
-    public EmbeddedServerTest(Class<? extends EmbeddedServer> cls) {
+    public TomcatLoaderTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
     }
 
     @Before
     public void setUp() throws Exception {
-                this.tomcat = new Tomcat();
-        String buildWebAppDir = new File(".").getAbsolutePath() + "/build/webapp";
-        System.out.println("DDDDDDD "+buildWebAppDir);
-        tomcat.setBaseDir(buildWebAppDir);
+        this.tomcat = new Tomcat();
+        String baseDir = "build";
+        String warDir = baseDir + "/wars";
+        String path = "/";
 
-        for (final File fileEntry : new File(buildWebAppDir).listFiles()) {
-            System.out.println("FFFFFF "+fileEntry.getName());
+//        System.out.println("DDDDDDD "+warDir);
+        File webapps = new File(baseDir + "/webapps");
+        webapps.delete();
+        webapps.mkdirs();
+        tomcat.setBaseDir(baseDir);
+
+        // scan for the first war
+        for (final File fileEntry : new File(warDir).listFiles()) {
+            System.out.println("Found: " + fileEntry.getName());
             if (fileEntry.getName().endsWith(".war")) {
                 String war = fileEntry.getName().substring(0, fileEntry.getName().length() - ".war".length());
-                System.out.println("Loading WAR: " + war + " to: http://localhost:8080/"+war);
-                tomcat.addWebapp("/webapp", fileEntry.getAbsolutePath());
+                System.out.println("Loading WAR: " + war + " to: http://localhost:8080" + path);
+                tomcat.addWebapp(path, fileEntry.getAbsolutePath());
                 break;
             }
         }
 
         tomcat.start();
-
-//        this.instance = cls.newInstance();
-//        instance.addServlet("test", TestServlet.class, "/");
-//        instance.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
                 .build()).build();
@@ -99,7 +101,7 @@ public class EmbeddedServerTest {
 
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
-//        Thread.sleep(20000);
+        Thread.sleep(20000);
         for (int i = 0; i < 10; i++)
             assertEquals("testGet", client.execute(new HttpGet("http://localhost:8080/webapp/"), BASIC_RESPONSE_HANDLER));
     }
