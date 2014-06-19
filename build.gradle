@@ -169,6 +169,8 @@ ext.javadocExcludes = [
 // Rest of the subprojects common definitions 
 subprojects {
     javadoc {
+        source = files(subprojects.collect { project -> project.sourceSets.main.allJava })
+        classpath = files(subprojects.collect { project -> project.sourceSets.main.compileClasspath })
         options {
             addStringOption('sourcepath', configurations.srcFiles.files.flatten().join(':'))
             docletpath = configurations.markdownDoclet.files.asType(List)
