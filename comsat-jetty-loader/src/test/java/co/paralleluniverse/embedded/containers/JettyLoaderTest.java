@@ -53,10 +53,10 @@ public class JettyLoaderTest {
     @Before
     public void setUp() throws Exception {
         Server server = new Server(8080);
-        WebAppContext wap = new WebAppContext("/Users/eitan/Projects/comsat-examples/test-servlet/build/libs/test-servlet.war", "/");
-        wap.setConfigurations(new Configuration[]{new AnnotationConfiguration(), new WebInfConfiguration()});
+//        WebAppContext wap = new WebAppContext("/Users/eitan/Projects/comsat-examples/test-servlet/build/libs/test-servlet.war", "/");
+//        wap.setConfigurations(new Configuration[]{new AnnotationConfiguration(), new WebInfConfiguration()});
         //http://www.eclipse.org/jetty/documentation/current/jndi-embedded.html
-        server.setHandler(wap);
+//        server.setHandler(wap);
         server.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
