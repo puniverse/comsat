@@ -9,6 +9,7 @@ dependencies {
     compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
     compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:$jettyVersion"
     compile "org.eclipse.jetty.websocket:javax-websocket-client-impl:$jettyVersion"
+    compile "org.eclipse.jetty:jetty-annotations:$jettyVersion"
 
     compile "io.undertow:undertow-core:$undertowVersion"
     compile "io.undertow:undertow-servlet:$undertowVersion"
