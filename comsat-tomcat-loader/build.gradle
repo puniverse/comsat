@@ -4,6 +4,7 @@ dependencies {
         exclude group: 'org.eclipse.jetty.websocket', module: '*'         
     }
     testRuntime project(':comsat-tomcat-loader')
+    testRuntime project(':comsat-jdbc')
 }
 
 jar {

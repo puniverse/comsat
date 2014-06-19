@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Context path="/websandbox">
+<Context path="/">
     <!--load the webApp with quasar class loader for insturmentation purposes-->
     <Loader loaderClass="co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader" />
     <Manager pathname=""/>    
