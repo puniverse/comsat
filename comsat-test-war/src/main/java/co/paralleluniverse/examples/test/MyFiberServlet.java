@@ -20,7 +20,7 @@ import javax.sql.DataSource;
 
 @WebServlet(urlPatterns = "/")
 public class MyFiberServlet extends FiberHttpServlet {
-    final static DataSource ds = lookupDataSourceJDBC("jdbc/fiberdb");
+    final static DataSource ds = lookupDataSourceJDBC("jdbc/fiberds");
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {

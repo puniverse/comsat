@@ -64,6 +64,8 @@ public class JettyServer extends AbstractEmbeddedServer {
 
     @Override
     public void start() throws Exception {
+        if (context==null)
+            build();
         server.setHandler(context);
         if (wsEnabled)
             WebSocketServerContainerInitializer.configureContext(context);

@@ -14,6 +14,7 @@
 package co.paralleluniverse.embedded.containers;
 
 import co.paralleluniverse.common.util.Debug;
+import io.undertow.util.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -68,8 +69,8 @@ public class TomcatLoaderTest {
     @Before
     public void setUp() throws Exception {
         this.tomcat = new Tomcat();
-        addWebApp(tomcat, "build", "build/wars", "/");
-        registerDB(tomcat, "jdbc/gdb", "org.h2.Driver", "jdbc:h2:./build/h2testdb");
+        loadWars(tomcat, "build", "build/wars", "/");
+        registerDB(tomcat, "jdbc/globalds", "org.h2.Driver", "jdbc:h2:./build/h2testdb");
         tomcat.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
@@ -83,7 +84,7 @@ public class TomcatLoaderTest {
     }
 
     @Test
-    public void testGet() throws IOException, InterruptedException, Exception {
+    public void testGetDeployedWar() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++) {
             String result = client.execute(new HttpGet("http://localhost:8080/"), BASIC_RESPONSE_HANDLER);
             assertTrue(result.contains("h2testdb"));
@@ -108,10 +109,9 @@ public class TomcatLoaderTest {
         tomcat.getServer().getGlobalNamingResources().addResource(dbDsRes);
     }
 
-    public static void addWebApp(final Tomcat tomcat, String baseDir, String warDir, String path) throws ServletException {
-        //        System.out.println("DDDDDDD "+warDir);
+    public static void loadWars(final Tomcat tomcat, String baseDir, String warDir, String path) throws ServletException {
         File webapps = new File(baseDir + "/webapps");
-        webapps.delete();
+        FileUtils.deleteRecursive(webapps);
         webapps.mkdirs();
         tomcat.setBaseDir(baseDir);
 

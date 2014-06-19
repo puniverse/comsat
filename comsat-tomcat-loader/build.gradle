@@ -3,7 +3,6 @@ dependencies {
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.eclipse.jetty.websocket', module: '*'         
     }
-    testRuntime project(':comsat-tomcat-loader')
     testRuntime project(':comsat-jdbc')
 }
 
