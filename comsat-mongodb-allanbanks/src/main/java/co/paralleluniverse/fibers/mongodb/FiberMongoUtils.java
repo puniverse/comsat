@@ -17,7 +17,7 @@ import co.paralleluniverse.strands.SettableFuture;
 import com.allanbank.mongodb.Callback;
 
 /**
- * Utility classes for 
+ * Utility classes for callbacks (async-to-fiberblocking briding)
  * @author dev
  */
 public class FiberMongoUtils {

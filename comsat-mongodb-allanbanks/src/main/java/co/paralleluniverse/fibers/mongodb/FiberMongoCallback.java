@@ -13,9 +13,9 @@
  */
 package co.paralleluniverse.fibers.mongodb;
 
-import com.allanbank.mongodb.Callback;
-
 import co.paralleluniverse.fibers.FiberAsync;
+import com.allanbank.mongodb.Callback;
+import com.allanbank.mongodb.MongoDbException;
 
 /**
  * Base class for async-to-fiber-blocking Async Java Mongo Driver transformations
@@ -23,7 +23,7 @@ import co.paralleluniverse.fibers.FiberAsync;
  * @author circlespainter
  * @param <T>
  */
-public abstract class FiberMongoCallback<T> extends FiberAsync<T, Throwable> implements Callback<T> {
+public abstract class FiberMongoCallback<T> extends FiberAsync<T, MongoDbException> implements Callback<T> {
     @Override
     public void callback(T success) {
         asyncCompleted(success);
