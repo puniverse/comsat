@@ -9,6 +9,7 @@ dependencies {
     compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
     compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:$jettyVersion"
     compile "org.eclipse.jetty.websocket:javax-websocket-client-impl:$jettyVersion"
+    compile "org.eclipse.jetty:jetty-annotations:$jettyVersion"
 
     compile "io.undertow:undertow-core:$undertowVersion"
     compile "io.undertow:undertow-servlet:$undertowVersion"
@@ -17,4 +18,6 @@ dependencies {
     compile "org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVersion"
     compile "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVersion"
     runtime "org.apache.tomcat.embed:tomcat-embed-logging-log4j:$tomcatVersion"
+    runtime "org.apache.tomcat:tomcat-dbcp:$tomcatVersion"
+
 }

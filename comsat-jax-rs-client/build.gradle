@@ -8,3 +8,7 @@ dependencies {
         exclude group: 'org.eclipse.jetty', module: '*' 
     }
 }
+
+tasks.withType(Test) {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+}

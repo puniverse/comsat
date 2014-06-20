@@ -4,3 +4,7 @@ dependencies {
     provided "javax.servlet:javax.servlet-api:$servletVersion" // was 3.1.0
     testCompile project(':comsat-test-utils')
 }
+
+tasks.withType(Test) {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+}

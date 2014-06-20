@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Context path="/websandbox">
+<Context path="/">
     <!--load the webApp with quasar class loader for insturmentation purposes-->
     <Loader loaderClass="co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader" />
     <Manager pathname=""/>    
     <!--link to the global db resource-->
-    <ResourceLink name="jdbc/tdb"
-                  global="jdbc/gdb"
+    <ResourceLink name="jdbc/localds"
+                  global="jdbc/globalds"
                   type="javax.sql.DataSource" />
     <!--wrap the linked global db resource by fiber wrapper-->
-    <Resource name="jdbc/fiberdb" auth="Container" 
+    <Resource name="jdbc/fiberds" auth="Container" 
               type="javax.sql.DataSource"
-              rawDataSource="jdbc/tdb"
+              rawDataSource="jdbc/localds"
               threadsCount="10"
               url="fiber"
               factory="co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory"

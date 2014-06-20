@@ -1,6 +1,13 @@
 dependencies {
     compile "org.eclipse.jetty:jetty-webapp:$jettyVersion" // was 9.1.0.RC0
+    testCompile (project(':comsat-test-utils')) 
+    testRuntime project(':comsat-jdbc')
+    testRuntime "org.slf4j:slf4j-log4j12:$slf4jApiVer"
+    testRuntime 'log4j:log4j:1.2.17'
 }
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
 } 
+tasks.withType(Test) {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+}
