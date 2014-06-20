@@ -28,6 +28,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.webapp.WebInfConfiguration;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -69,9 +70,9 @@ public class JettyLoaderTest {
         client.close();
     }
 
-//    @Test
+    @Test
     public void testGetDeployedWar() throws IOException, InterruptedException, Exception {
-        Thread.sleep(30000);
+//        Thread.sleep(30000);
 //        for (int i = 0; i < 10; i++) {
 //            String result = client.execute(new HttpGet("http://localhost:8080/"), BASIC_RESPONSE_HANDLER);
 //            assertTrue(result.contains("h2testdb"));

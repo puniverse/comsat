@@ -91,7 +91,7 @@ public class FiberHttpClientBuilderTest {
                     }
                 }
             }).start();
-        cdl.await(2000, TimeUnit.MILLISECONDS);
+        cdl.await(5000, TimeUnit.MILLISECONDS);
         assertEquals(0, cdl.getCount());
         client.close();
     }
@@ -100,7 +100,7 @@ public class FiberHttpClientBuilderTest {
         @Override
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             try (PrintWriter out = resp.getWriter()) {
-                Thread.sleep(300);
+                Thread.sleep(500);
                 out.print("testGet");
             } catch (InterruptedException ex) {
             }

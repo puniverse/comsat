@@ -97,7 +97,7 @@ public class FiberHttpAsyncClientTest {
                     fail(ex.getMessage());
                 }
             }
-        }).start().join(2000, TimeUnit.MILLISECONDS);
+        }).start().join(5000, TimeUnit.MILLISECONDS);
         client.close();
     }
 
@@ -105,7 +105,7 @@ public class FiberHttpAsyncClientTest {
         @Override
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             try (PrintWriter out = resp.getWriter()) {
-                Thread.sleep(300);
+                Thread.sleep(500);
                 out.print("testGet");
             } catch (InterruptedException ex) {
             }
