@@ -24,8 +24,9 @@ if (System.properties['java.version'].startsWith('1.8') ) {
 }
 
 task deployWar(type: Copy) {
-    from project(":comsat-test-war").war
+    evaluationDependsOn ":comsat-test-war"
     into "build/wars"
+    from project(":comsat-test-war").war
 }
 
 tasks.withType(Test) {

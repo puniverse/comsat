@@ -8,6 +8,15 @@ dependencies {
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
 } 
+//tasks.withType(Test) {
+//    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+//}
+task deployWar(type: Copy) {
+    evaluationDependsOn ":comsat-test-war"
+    from project(":comsat-test-war").war
+    into "build/wars"
+}
+
 tasks.withType(Test) {
-    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+    dependsOn deployWar
 }
