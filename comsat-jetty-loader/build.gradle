@@ -1,6 +1,8 @@
 dependencies {
     compile "org.eclipse.jetty:jetty-webapp:$jettyVersion" // was 9.1.0.RC0
-    testCompile (project(':comsat-test-utils')) 
+    testCompile (project(':comsat-test-utils')) {
+        exclude group: 'org.apache.tomcat.embed', module: '*'         
+    }
     testRuntime project(':comsat-jdbc')
     testRuntime "org.slf4j:slf4j-log4j12:$slf4jApiVer"
     testRuntime 'log4j:log4j:1.2.17'
@@ -15,6 +17,7 @@ task deployWar(type: Copy) {
     evaluationDependsOn ":comsat-test-war"
     from project(":comsat-test-war").war
     into "build/wars"
+    rename (".*war","dep.war")
 }
 
 tasks.withType(Test) {

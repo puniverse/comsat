@@ -16,7 +16,6 @@ package co.paralleluniverse.embedded.containers;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import org.apache.catalina.startup.Tomcat;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -45,7 +44,6 @@ public class JettyLoaderTest {
     private final Class<? extends EmbeddedServer> cls;
 //    private EmbeddedServer instance;
     private CloseableHttpClient client;
-    private Tomcat tomcat;
 
     public JettyLoaderTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
