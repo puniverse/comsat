@@ -13,11 +13,12 @@
  */
 package co.paralleluniverse.embedded.containers;
 
+import co.paralleluniverse.comsat.jetty.QuasarWebAppClassLoader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import org.apache.catalina.startup.Tomcat;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -27,6 +28,7 @@ import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.webapp.WebInfConfiguration;
 import org.junit.After;
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +47,7 @@ public class JettyLoaderTest {
     private final Class<? extends EmbeddedServer> cls;
 //    private EmbeddedServer instance;
     private CloseableHttpClient client;
-    private Tomcat tomcat;
+    private Server server;
 
     public JettyLoaderTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
@@ -53,11 +55,12 @@ public class JettyLoaderTest {
 
     @Before
     public void setUp() throws Exception {
-        Server server = new Server(8080);
-//        WebAppContext wap = new WebAppContext("/Users/eitan/Projects/comsat-examples/test-servlet/build/libs/test-servlet.war", "/");
-//        wap.setConfigurations(new Configuration[]{new AnnotationConfiguration(), new WebInfConfiguration()});
+        this.server = new Server(8080);
+        WebAppContext wap = new WebAppContext("build/wars/dep.war", "/");
+        wap.setConfigurations(new Configuration[]{new AnnotationConfiguration(), new WebInfConfiguration()});
+        wap.setClassLoader(new QuasarWebAppClassLoader(getClass().getClassLoader(),wap));
         //http://www.eclipse.org/jetty/documentation/current/jndi-embedded.html
-//        server.setHandler(wap);
+        server.setHandler(wap);
         server.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
@@ -66,17 +69,16 @@ public class JettyLoaderTest {
 
     @After
     public void tearDown() throws Exception {
-//        tomcat.stop();
+        server.stop();
         client.close();
     }
 
     @Test
     public void testGetDeployedWar() throws IOException, InterruptedException, Exception {
-//        Thread.sleep(30000);
-//        for (int i = 0; i < 10; i++) {
-//            String result = client.execute(new HttpGet("http://localhost:8080/"), BASIC_RESPONSE_HANDLER);
-//            assertTrue(result.contains("h2testdb"));
-//        }
+        for (int i = 0; i < 10; i++) {
+            String result = client.execute(new HttpGet("http://localhost:8080/test"), BASIC_RESPONSE_HANDLER);
+            assertTrue(result.contains("hello"));
+        }
     }
 
     private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();

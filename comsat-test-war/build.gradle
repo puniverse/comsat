@@ -2,6 +2,4 @@ apply plugin: 'war'
 
 dependencies {    
     compile project(':comsat-servlet')
-//    compile project(':comsat-jax-rs-client') // conflicts jetty 9.2
-//    runtime project(':comsat-jdbc')
 }
