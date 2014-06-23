@@ -36,7 +36,7 @@ public class FiberMongoClientImpl extends MongoClientImpl {
     
     @Override
     public MongoDatabase getDatabase(String name) {
-        return new FiberMongoDatabaseImpl(getClient(), name);
+        return new FiberMongoDatabaseImpl(this, getClient(), name);
     }
     
     @Override

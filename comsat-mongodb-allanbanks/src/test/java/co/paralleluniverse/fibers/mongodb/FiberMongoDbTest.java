@@ -29,17 +29,17 @@ import org.junit.Test;
  */
 public class FiberMongoDbTest extends AbstractTestFiberMongo {
     @Before
-    public void setUpTest() throws Exception {
+    public void setUpTest() throws ExecutionException, InterruptedException {
         super.setUpDbForTest();
     }
     
     @After
-    public void tearDownTest() throws Exception {
+    public void tearDownTest() throws ExecutionException, InterruptedException {
         super.tearDownDbForTest();
     }
     
     @Test
-    public void testRunCommandDocument() throws SuspendExecution, ExecutionException, InterruptedException {
+    public void testRunCommandDocument() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
@@ -47,6 +47,50 @@ public class FiberMongoDbTest extends AbstractTestFiberMongo {
                     BuilderFactory.start()
                         .add("ping", 1)
                 );
+                Assert.assertEquals("OK result", "1.0", res.get("ok").getValueAsString());
+            }
+        }).start().join();
+    }
+    
+    @Test
+    public void testRunCommandString() throws ExecutionException, InterruptedException {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                Document res = mongoDb.runCommand("ping");
+                Assert.assertEquals("OK result", "1.0", res.get("ok").getValueAsString());
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testRunCommandOptions() throws ExecutionException, InterruptedException {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                Document res = mongoDb.runCommand("ping", null);
+                Assert.assertEquals("OK result", "1.0", res.get("ok").getValueAsString());
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testRunCommandNameIntValueOptions() throws ExecutionException, InterruptedException {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                Document res = mongoDb.runCommand("ping", 1, null);
+                Assert.assertEquals("OK result", "1.0", res.get("ok").getValueAsString());
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testRunCommandNameStringValueOptions() throws ExecutionException, InterruptedException {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                Document res = mongoDb.runCommand("ping", "1", null);
                 Assert.assertEquals("OK result", "1.0", res.get("ok").getValueAsString());
             }
         }).start().join();

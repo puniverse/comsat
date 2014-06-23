@@ -27,6 +27,7 @@ import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -40,7 +41,7 @@ public abstract class AbstractTestFiberMongo {
     protected MongoDatabase mongoDb;
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
+    public static void setUpClass() throws IOException {
         MongodStarter starter = MongodStarter.getDefaultInstance();
 
         int port = 12345;
@@ -60,7 +61,7 @@ public abstract class AbstractTestFiberMongo {
     }
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
+    public static void tearDownClass() throws IOException {
         if (mongoClient != null) {
             mongoClient.close();
             mongoClient = null;
@@ -71,7 +72,7 @@ public abstract class AbstractTestFiberMongo {
         }
     }
 
-    protected void setUpDbForTest() throws Exception {
+    protected void setUpDbForTest() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
@@ -80,7 +81,7 @@ public abstract class AbstractTestFiberMongo {
         }).start().join();
     }
     
-    protected void tearDownDbForTest() throws Exception {
+    protected void tearDownDbForTest() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {

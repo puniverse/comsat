@@ -17,6 +17,7 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import com.allanbank.mongodb.MongoCollection;
+import com.allanbank.mongodb.builder.Count;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Assert;
@@ -30,7 +31,7 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     private MongoCollection mongoColl;
 
     @Before
-    public void setUpTest() throws Exception {
+    public void setUpTest() throws ExecutionException, InterruptedException {
         super.setUpDbForTest();
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
@@ -41,7 +42,7 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
     
     @After
-    public void tearDownTest() throws Exception {
+    public void tearDownTest() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
@@ -55,7 +56,40 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
 
     @Test
-    public void testCount() throws SuspendExecution, ExecutionException, InterruptedException {
+    public void testCount() throws ExecutionException, InterruptedException {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                long res = mongoColl.count();
+                Assert.assertEquals("OK result", 0, res);
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testCountBuilder() throws ExecutionException, InterruptedException {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                long res = mongoColl.count(Count.builder());
+                Assert.assertEquals("OK result", 0, res);
+            }
+        }).start().join();
+    }
+
+    @Test
+    public void testCountQuery() throws ExecutionException, InterruptedException {
+        new Fiber<Void>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                long res = mongoColl.count(Count.builder().build());
+                Assert.assertEquals("OK result", 0, res);
+            }
+        }).start().join();
+    }
+    
+    @Test
+    public void testCountQueryDocument() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {

@@ -41,7 +41,7 @@ subprojects {
     ext.slf4jApiVer     = '1.7.7'
     ext.guavaVersion    = '17.0'
     
-    ext.mongodbJavaAsyncDriverVersion   = '1.2.4'
+    ext.mongodbJavaAsyncDriverVersion   = '2.0.0'
     ext.embedMongoVersion               = '1.46.0'
 
     configurations.all {
