@@ -46,6 +46,6 @@ public class QuasarWebAppClassLoader extends WebAppClassLoader {
 
     @Override
     public InputStream getResourceAsStream(String name) {
-        return helper.getResourceAsStream(name);
+        return helper.instrumentResourceStream(name,super.getResourceAsStream(name));
     }
 }
