@@ -14,6 +14,7 @@
 package co.paralleluniverse.embedded.containers;
 
 import co.paralleluniverse.comsat.jetty.QuasarWebAppClassLoader;
+import co.paralleluniverse.fibers.jdbc.FiberDataSource;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,7 +23,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.eclipse.jetty.annotations.AnnotationConfiguration;
+import org.eclipse.jetty.plus.jndi.Resource;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -56,10 +59,17 @@ public class JettyLoaderTest {
     @Before
     public void setUp() throws Exception {
         this.server = new Server(8080);
-        WebAppContext wap = new WebAppContext("build/wars/dep.war", "/");
-        wap.setConfigurations(new Configuration[]{new AnnotationConfiguration(), new WebInfConfiguration()});
-        wap.setClassLoader(new QuasarWebAppClassLoader(getClass().getClassLoader(),wap));
-        //http://www.eclipse.org/jetty/documentation/current/jndi-embedded.html
+        BasicDataSource ds = new BasicDataSource();
+        ds.setDriverClassName("org.h2.Driver");
+        ds.setUrl("jdbc:h2:./build/h2testdb");
+//        new Resource("java:comp/env/jdbc/globalds", ds);
+        Resource resource = new Resource("java:comp/env/jdbc/fiberds", FiberDataSource.wrap(ds));
+        WebAppContext wap = new WebAppContext();
+
+        wap.setWar("build/wars/dep.war");
+        wap.setConfigurations(new Configuration[]{new AnnotationConfiguration(), new WebInfConfiguration()});//, new JettyWebXmlConfiguration()});
+        wap.setClassLoader(new QuasarWebAppClassLoader(wap));
+
         server.setHandler(wap);
         server.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
@@ -75,9 +85,10 @@ public class JettyLoaderTest {
 
     @Test
     public void testGetDeployedWar() throws IOException, InterruptedException, Exception {
+//        Thread.sleep(30000);
         for (int i = 0; i < 10; i++) {
-            String result = client.execute(new HttpGet("http://localhost:8080/test"), BASIC_RESPONSE_HANDLER);
-            assertTrue(result.contains("hello"));
+            String result = client.execute(new HttpGet("http://localhost:8080/"), BASIC_RESPONSE_HANDLER);
+            assertTrue(result.contains("h2testdb"));
         }
     }
 
