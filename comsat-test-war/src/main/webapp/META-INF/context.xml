@@ -5,15 +5,15 @@
     <Loader loaderClass="co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader" />
     <Manager pathname=""/>    
     <!--link to the global db resource-->
-    <ResourceLink name="jdbc/localds"
+    <ResourceLink name="jdbc/linkds"
                   global="jdbc/globalds"
                   type="javax.sql.DataSource" />
     <!--wrap the linked global db resource by fiber wrapper-->
     <Resource name="jdbc/fiberds" auth="Container" 
               type="javax.sql.DataSource"
-              rawDataSource="jdbc/localds"
+              rawDataSource="jdbc/linkds"
               threadsCount="10"
               url="fiber"
               factory="co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory"
-    />
+    />    
 </Context>

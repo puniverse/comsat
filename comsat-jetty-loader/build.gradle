@@ -3,10 +3,9 @@ dependencies {
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.apache.tomcat.embed', module: '*'         
     }
-    testRuntime project(':comsat-jdbc')
     testRuntime "org.slf4j:slf4j-log4j12:$slf4jApiVer"
     testRuntime 'log4j:log4j:1.2.17'
-    testCompile project(':comsat-jdbc')
+    testRuntime project(':comsat-jdbc')
 }
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
