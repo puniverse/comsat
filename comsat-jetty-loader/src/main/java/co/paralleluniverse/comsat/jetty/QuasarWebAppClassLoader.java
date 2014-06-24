@@ -32,11 +32,13 @@ public class QuasarWebAppClassLoader extends WebAppClassLoader {
     public QuasarWebAppClassLoader(Context context) throws IOException {
         super(context);
         this.helper = new QuasarURLClassLoaderHelper(this);
+//        helper.setLog(true, true);
     }
 
     public QuasarWebAppClassLoader(ClassLoader parent, Context context) throws IOException {
         super(parent, context);
         this.helper = new QuasarURLClassLoaderHelper(this);
+//        helper.setLog(true, true);
     }
 
     @Override

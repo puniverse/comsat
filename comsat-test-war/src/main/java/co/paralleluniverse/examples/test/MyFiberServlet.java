@@ -1,7 +1,9 @@
 package co.paralleluniverse.examples.test;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
+import co.paralleluniverse.fibers.servlet.FiberNewHttpServlet;
 import co.paralleluniverse.strands.Strand;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,20 +20,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
-@WebServlet(urlPatterns = "/")
-public class MyFiberServlet extends FiberHttpServlet {
+@WebServlet(urlPatterns = "/", asyncSupported = true)
+public class MyFiberServlet extends FiberNewHttpServlet {
     final static DataSource ds = lookupDataSourceJDBC("jdbc/fiberds");
 
+    @Suspendable
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
-        try (PrintWriter out = resp.getWriter()) {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try (PrintWriter out = resp.getWriter(); Connection connection = ds.getConnection()) {
             Strand.sleep(100);
-            try (Connection connection = ds.getConnection()) {
-                out.print("conn " + connection);
-            }
-        } catch (InterruptedException ex) {
-        } catch (SQLException ex) {
-            Logger.getLogger(MyFiberServlet.class.getName()).log(Level.SEVERE, null, ex);
+            out.print(connection);
+        } catch (InterruptedException | SuspendExecution | SQLException ex) {
         }
     }
 

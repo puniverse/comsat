@@ -1,0 +1,16 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<!DOCTYPE Configure PUBLIC 
+    "-//Mort Bay Consulting//DTD Configure//EN" 
+    "http://www.eclipse.org/jetty/configure_9_0.dtd">
+ 
+<Configure id="ctx" class="org.eclipse.jetty.webapp.WebAppContext">
+<!-- doesn' work this way, probably has to be outside the war
+    <Set name="classLoader">
+        <New class="co.paralleluniverse.comsat.jetty.QuasarWebAppClassLoader">
+            <Arg>
+                <Ref id="ctx"/>
+            </Arg>
+        </New>
+    </Set>
+-->
+</Configure>
