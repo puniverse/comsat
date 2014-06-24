@@ -546,7 +546,7 @@ public class FiberMongoCollectionImpl extends SynchronousMongoCollectionImpl {
 
     @Override
     @Suspendable
-    public int insert(final Durability durability, final DocumentAssignable... documents) throws MongoDbException {
+    public int insert(final Durability durability, final DocumentAssignable[] documents) throws MongoDbException {
         Integer res = null;
         try {
             res = new FiberMongoCallback<Integer>() {
