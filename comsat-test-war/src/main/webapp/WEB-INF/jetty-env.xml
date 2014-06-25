@@ -1,3 +1,4 @@
+<!-- snippet fiber ds -->
 <Configure id='wac' class="org.eclipse.jetty.webapp.WebAppContext">
     <!--jdbc linkds - create link to the global ds-->
     <Call class="org.eclipse.jetty.plus.jndi.NamingEntryUtil" name="bindToENC">
@@ -14,12 +15,15 @@
         <Arg>jdbc/webxmlds</Arg>
         <Arg>
             <Call class="co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory" name="create">
-                <Arg>jdbc/linkds</Arg>
+                <!-- jndi name of the native dataSource -->
+                <Arg>jdbc/linkds</Arg> 
+                <!-- number of threads in the pool -->
                 <Arg type="Integer">10</Arg>
             </Call>
         </Arg>
-        <Call name="bindToENC">
+        <Call name="bindToENC"> <!-- spare web.xml definitions -->
             <Arg>jdbc/fiberds</Arg> 
         </Call>
     </New>
 </Configure>
+<!-- end of snippet -->

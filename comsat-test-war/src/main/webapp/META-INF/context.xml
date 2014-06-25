@@ -2,8 +2,12 @@
 
 <Context path="/">
     <!--load the webApp with quasar class loader for insturmentation purposes-->
+    <!-- snippet loader -->
     <Loader loaderClass="co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader" />
-    <Manager pathname=""/>    
+    <!-- end of snippet -->
+    <Manager pathname=""/>
+
+    <!-- snippet fiber ds -->
     <!--link to the global db resource-->
     <ResourceLink name="jdbc/linkds"
                   global="jdbc/globalds"
@@ -16,4 +20,5 @@
               url="fiber"
               factory="co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory"
     />    
+    <!-- end of snippet -->
 </Context>
