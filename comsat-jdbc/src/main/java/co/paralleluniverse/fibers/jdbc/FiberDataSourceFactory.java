@@ -17,6 +17,7 @@ import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.Name;
+import javax.naming.NamingException;
 import javax.naming.RefAddr;
 import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
@@ -39,6 +40,10 @@ public class FiberDataSourceFactory implements ObjectFactory {
         if (ra == null)
             throw new RuntimeException("mising rawDataSource name");
         int tc = Integer.parseInt(ra.getContent().toString());
+        return create(rawDS, tc);
+    }
+
+    public static DataSource create(String rawDS, int tc) throws NamingException {
         Context envCtx = (Context) new InitialContext().lookup("java:comp/env");
         DataSource ds = (DataSource) envCtx.lookup(rawDS);
         return FiberDataSource.wrap(ds, tc);

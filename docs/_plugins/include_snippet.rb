@@ -73,10 +73,11 @@ module Jekyll
           if (line =~ /snippet_exclude_end/)
             # add what comes after "snippet_exclude_end" as a block replacement
             # for example "// ..."
-            index = line.index(/snippet_exclude_end/)
-            if (index) + 20 +1 < line.length
-              source += line[index+20..line.length]
-            end
+            # update: disabled. causes problems in cases like <!--snippet_exclude_end-->
+            # index = line.index(/snippet_exclude_end/)
+            # if (index) + 20 +1 < line.length
+            #   source += line[index+20..line.length]
+            # end
             exclude = false
           end
           if line =~ /snippet #{@title}/

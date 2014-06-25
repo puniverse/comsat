@@ -1,0 +1,28 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<!DOCTYPE Configure PUBLIC 
+    "-//Mort Bay Consulting//DTD Configure//EN" 
+    "http://www.eclipse.org/jetty/configure_9_0.dtd">
+
+<!-- snippet context xml --> 
+<Configure id="ctx" class="org.eclipse.jetty.webapp.WebAppContext">
+    <Set name="war">./build/wars/dep.war</Set>
+    <!--use custom classloader in order to instrument classes by quasar-->
+    <Set name="classLoader">
+        <New class="co.paralleluniverse.comsat.jetty.QuasarWebAppClassLoader">
+            <Arg>
+                <Ref id="ctx"/>
+            </Arg>
+        </New>
+    </Set>
+    <!-- snippet_exclude_begin -->
+    <Set name="configurationClasses">
+        <Array type="java.lang.String">
+            <Item>org.eclipse.jetty.webapp.WebInfConfiguration</Item>
+            <Item>org.eclipse.jetty.plus.webapp.EnvConfiguration</Item> <!--jetty-env.xml-->
+            <Item>org.eclipse.jetty.plus.webapp.PlusConfiguration</Item> <!--jetty-env.xml-->
+            <Item>org.eclipse.jetty.annotations.AnnotationConfiguration</Item> <!--@WebServlet-->
+        </Array>
+    </Set>
+    <!-- snippet_exclude_end -->
+</Configure>
+<!-- end of snippet -->

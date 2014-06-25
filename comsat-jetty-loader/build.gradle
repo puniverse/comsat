@@ -1,12 +1,11 @@
 dependencies {
-    compile "org.eclipse.jetty:jetty-webapp:$jettyVersion" // was 9.1.0.RC0
+    compile "org.eclipse.jetty:jetty-webapp:$jettyVersion"
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.apache.tomcat.embed', module: '*'         
     }
-    testRuntime project(':comsat-jdbc')
     testRuntime "org.slf4j:slf4j-log4j12:$slf4jApiVer"
     testRuntime 'log4j:log4j:1.2.17'
-    testCompile project(':comsat-jdbc')
+    testRuntime project(':comsat-jdbc')
 }
 jar {
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
@@ -21,4 +20,16 @@ task deployWar(type: Copy) {
 
 tasks.withType(Test) {
     dependsOn deployWar
+}
+
+if (System.properties['java.version'].startsWith('1.8') ) { 
+    artifacts {
+        archives jar
+        archives project(':comsat-jetty-loader-jdk8').jar
+        archives sourcesJar
+        archives javadocJar
+        //    archives distZip
+    }
+    
+    uploadArchives.dependsOn ':comsat-jetty-loader-jdk8:jar'
 }

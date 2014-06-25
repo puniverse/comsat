@@ -56,7 +56,7 @@ Where `ARTIFACT` is:
 
 ### Enabling Comsat
 
-Comsat runs code in [Quasar](http://docs.paralleluniverse.co/quasar/) fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat; or at compilation time.
+Comsat runs code in [Quasar](http://docs.paralleluniverse.co/quasar/) fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat and Jetty; or at compilation time.
 
 AOT instrumentation is eplained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instruemtnation).
 
@@ -72,10 +72,20 @@ To use the Java agent, the following must be added to the java command line (or 
 
 If you're using Tomcat as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-tomcat-loader-{{site.version}}.jar` (or, for JDK8, `comsat-tomcat-loader-{{site.version}}-jdk8.jar`) into Tomcat's `lib` directory.
 
-Then, include the following in your webapp's `context.xml` (in the `META-INF` directory):
+Then, include the following in your webapp's `META-INF/context.xml`:
 
 ~~~ xml
-<Loader loaderClass="co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader"/>
+{% include_snippet loader ./comsat-test-war/src/main/webapp/META-INF/context.xml %}
+~~~
+
+#### In Jetty
+
+If you're using Jetty as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-jetty-loader-{{site.version}}.jar` (or, for JDK8, `comsat-jetty-loader-{{site.version}}-jdk8.jar`) into Jetty's `lib` directory.
+
+Then, include a `<Set name="classLoader">` tag in your webapp's context xml:
+
+~~~ xml
+{% include_snippet context xml ./comsat-jetty-loader/src/test/resources/webapps/dep.xml %}
 ~~~
 
 ### Building Comsat {#build}
@@ -271,20 +281,20 @@ If you want to learn how to use JDBC, the [JDBC tutorial](http://docs.oracle.com
 
 Servlets often make use of JDBC data sources exposed through JNDI. If you do that, you can declare a COMSAT (i.e. a fiber-aware) JDBC data source through JNDI that will wrap your native data source. To do so, you will use the `co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory` DataSource factory, and pass in the number of threads you'd like COMSAT to use in the JDBC worker pool.
 
-If you're using COMSAT, the following example is a snippet of `context.xml` that will declare a DataSource under the `jdbc/fiberdb` name, which wraps a native DB declared under the `jdbc/tdb` name:
+In order to do that first you have to include `comsat-jdbc-{{site.version}}.jar` in your container's runtime classpath, by putting it into the container's `lib` directory.
+
+If you're using `TOMCAT`, the following example is a snippet of `META-INF/context.xml` that will declare a DataSource under the `jdbc/fiberdb` name, which wraps a native DB declared under the `jdbc/globalds` name:
 
 ~~~ xml
-<!--link to the global db resource-->
-<ResourceLink name="jdbc/tdb"
-              global="jdbc/gdb"
-              type="javax.sql.DataSource" />
-<!--wrap the linked global db resource by fiber wrapper-->
-<Resource name="jdbc/fiberdb" auth="Container"
-          type="javax.sql.DataSource"
-          rawDataSource="jdbc/tdb"
-          threadsCount="10"
-          url="fiber"
-          factory="co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory"/>
+<Context path="/">
+...
+{% include_snippet fiber ds ./comsat-test-war/src/main/webapp/META-INF/context.xml %}</Context>
+~~~
+
+In order to do the same thing with `Jetty`, you have to include similar definition in your `WEB-INF/jetty-env.xml`:
+
+~~~ xml
+{% include_snippet fiber ds ./comsat-test-war/src/main/webapp/WEB-INF/jetty-env.xml %}
 ~~~
 
 #### JDBI

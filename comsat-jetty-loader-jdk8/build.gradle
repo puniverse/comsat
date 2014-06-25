@@ -1,0 +1,28 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+dependencies {
+    dependencies {
+        compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
+        compile "org.eclipse.jetty:jetty-webapp:$jettyVersion"
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ["../comsat-jetty-loader/src/main/java"]
+        }
+    }
+}
+
+jar {
+    baseName = 'comsat-jetty-loader'
+    classifier = 'jdk8'
+    
+    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+uploadArchives.enabled = false

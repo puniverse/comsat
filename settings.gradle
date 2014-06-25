@@ -12,4 +12,5 @@ include 'comsat-test-war'
 
 if (System.properties['java.version'].startsWith('1.8') ) { 
     include 'comsat-tomcat-loader-jdk8'
+    include 'comsat-jetty-loader-jdk8'
 }
