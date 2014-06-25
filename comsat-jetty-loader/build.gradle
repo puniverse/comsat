@@ -1,5 +1,5 @@
 dependencies {
-    compile "org.eclipse.jetty:jetty-webapp:$jettyVersion" // was 9.1.0.RC0
+    compile "org.eclipse.jetty:jetty-webapp:$jettyVersion"
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.apache.tomcat.embed', module: '*'         
     }
@@ -20,4 +20,16 @@ task deployWar(type: Copy) {
 
 tasks.withType(Test) {
     dependsOn deployWar
+}
+
+if (System.properties['java.version'].startsWith('1.8') ) { 
+    artifacts {
+        archives jar
+        archives project(':comsat-jetty-loader-jdk8').jar
+        archives sourcesJar
+        archives javadocJar
+        //    archives distZip
+    }
+    
+    uploadArchives.dependsOn ':comsat-jetty-loader-jdk8:jar'
 }
