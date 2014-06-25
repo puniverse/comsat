@@ -31,7 +31,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class JettyLoaderTest {
-
     private CloseableHttpClient client;
     private Server server;
 
@@ -45,7 +44,6 @@ public class JettyLoaderTest {
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
                 .build()).build();
-
     }
 
     @After
