@@ -39,9 +39,10 @@ import com.allanbank.mongodb.client.Client;
 import com.allanbank.mongodb.client.SynchronousMongoCollectionImpl;
 import java.util.Collection;
 
-
 /**
  * @author circlespainter
+ * 
+ * TODO: new fiber-blocking APIs for now async-only operations (when added)
  */
 public class FiberMongoCollectionImpl extends SynchronousMongoCollectionImpl {
 

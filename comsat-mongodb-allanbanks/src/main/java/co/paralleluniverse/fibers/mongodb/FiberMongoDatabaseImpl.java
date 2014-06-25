@@ -26,6 +26,8 @@ import com.allanbank.mongodb.client.MongoDatabaseImpl;
 
 /**
  * @author circlespainter
+ * 
+ * TODO: new fiber-blocking APIs for now async-only operations
  */
 public class FiberMongoDatabaseImpl extends MongoDatabaseImpl {
 

@@ -26,6 +26,12 @@ import org.junit.Test;
 
 /**
  * @author circlespainter
+ * 
+ * TODO Missing tests:
+ * 
+ * 1) Non-async suspendable methods (already declared in "suspendables"); anyway some are already used as part of test setup
+ * 2) ListenableFuture functionality
+ * 3) New fiber-blocking APIs for now async-only operations (when added, @see co.paralleluniverse.fibers.mongodb.FiberMongoDatabaseImpl)
  */
 public class FiberMongoDbTest extends AbstractTestFiberMongo {
     @Before
