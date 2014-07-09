@@ -6,6 +6,7 @@ com.allanbank.mongodb.client.MongoDatabaseImpl.getProfilingStatus
 com.allanbank.mongodb.client.MongoDatabaseImpl.listCollectionNames
 com.allanbank.mongodb.client.MongoDatabaseImpl.listCollections
 com.allanbank.mongodb.client.MongoDatabaseImpl.runAdminCommand
+com.allanbank.mongodb.client.MongoDatabaseImpl.runCommand
 com.allanbank.mongodb.client.MongoDatabaseImpl.setProfilingStatus
 com.allanbank.mongodb.client.MongoDatabaseImpl.stats
 com.allanbank.mongodb.client.SynchronousMongoCollectionImpl.createIndex
