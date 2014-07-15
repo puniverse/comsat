@@ -87,7 +87,7 @@ subprojects {
     
     sourceSets {
         main.compileClasspath = main.compileClasspath + configurations.provided
-//        main.runtimeClasspath = main.runtimeClasspath + configurations.provided
+        //        main.runtimeClasspath = main.runtimeClasspath + configurations.provided
         test.compileClasspath = test.compileClasspath + configurations.provided
         test.runtimeClasspath = test.runtimeClasspath + configurations.provided
     }
@@ -107,7 +107,22 @@ subprojects {
             }
         }
     }
-
+    
+    test {
+        beforeTest { desc ->
+            logger.quiet("Running test: " + desc)
+        }
+        
+        afterTest { desc, result -> 
+            if(result.resultType == TestResult.ResultType.FAILURE) {
+                logger.quiet("Failed test ${desc.name} [${desc.className}] with exception: ${result.exception}")
+                if(result.exception != null) {
+                    result.exception.printStackTrace()
+                }
+            }
+        }
+    }
+    
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -162,7 +177,7 @@ ext.javadocLinks =  [
 ext.javadocExcludes = [
         "org/glassfish/jersey/server/internal/**",
         "co/paralleluniverse/comsat/webactors/servlet/WebActorEndpoint.java",
-//        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
+    //        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
         "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
 ]
 
@@ -184,6 +199,7 @@ subprojects {
         classifier = 'javadoc'
         from javadoc.destinationDir
     } 
+    
     ///////// Publish Artifacts 
     apply plugin: 'maven'
     apply plugin: 'signing'

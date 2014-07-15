@@ -186,7 +186,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
             req.startAsync();
             try {
-                webActor.send(new ServletHttpRequest(this, req, resp));
+                webActor.send(new ServletHttpRequest(ref(), req, resp));
             } catch (SuspendExecution ex) {
                 req.getServletContext().log("Exception: ", ex);
             }
@@ -212,7 +212,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
 
         @Override
-        public void interrupt() {
+        protected void interrupt() {
             die(new InterruptedException());
         }
 
@@ -316,7 +316,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
                 if (message.shouldStartActor()) {
                     try {
-                        message.getFrom().send(new HttpStreamOpened(new HttpStreamActorRef(request, response), message));
+                        message.getFrom().send(new HttpStreamOpened(new HttpStreamActor(request, response).ref(), message));
                     } catch (SuspendExecution e) {
                         throw new AssertionError(e);
                     }
@@ -344,12 +344,12 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
     }
 
-    private static class HttpStreamActorRef extends FakeActor<WebDataMessage> {
+    private static class HttpStreamActor extends FakeActor<WebDataMessage> {
         private final AsyncContext ctx;
         private final HttpServletResponse response;
         private volatile boolean dead;
 
-        public HttpStreamActorRef(final HttpServletRequest request, final HttpServletResponse response) {
+        public HttpStreamActor(final HttpServletRequest request, final HttpServletResponse response) {
             super(request.toString(), new HttpStreamChannel(request.getAsyncContext(), response));
             this.ctx = request.getAsyncContext();
             this.response = response;
@@ -398,7 +398,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
     }
 
     private static class HttpStreamChannel implements SendPort<WebDataMessage> {
-        HttpStreamActorRef actor;
+        HttpStreamActor actor;
         final AsyncContext ctx;
         final HttpServletResponse response;
 
@@ -459,7 +459,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
     }
 
-    static SendPort<WebDataMessage> openChannel(final HttpStreamActorRef actor, final AsyncContext ctx, final HttpServletResponse response) {
+    static SendPort<WebDataMessage> openChannel(final HttpStreamActor actor, final AsyncContext ctx, final HttpServletResponse response) {
         return new SendPort<WebDataMessage>() {
             @Override
             public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {

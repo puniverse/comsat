@@ -50,7 +50,7 @@ public class WebActorEndpoint extends Endpoint {
             this.config = config;
         ActorRef webActor = getHttpSessionActor(config).getWebActor();
         if (webActor != null) {
-            WebSocketActorRef wsa = attachWebActor(session, config, webActor);
+            WebSocketActor wsa = attachWebActor(session, config, webActor);
             wsa.onOpen();
         } else {
             try {
@@ -61,14 +61,14 @@ public class WebActorEndpoint extends Endpoint {
         }
     }
 
-    static WebSocketActorRef attachWebActor(Session session, EndpointConfig config, ActorRef<? super WebMessage> actor) {
+    static WebSocketActor attachWebActor(Session session, EndpointConfig config, ActorRef<? super WebMessage> actor) {
         return attachWebActor(session, getHttpSession(config), actor);
     }
 
-    static WebSocketActorRef attachWebActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> actor) {
+    static WebSocketActor attachWebActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> actor) {
         if (session.getUserProperties().containsKey(ACTOR_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
-        WebSocketActorRef wsa = new WebSocketActorRef(session, httpSession, actor);
+        WebSocketActor wsa = new WebSocketActor(session, httpSession, actor);
         session.getUserProperties().put(ACTOR_KEY, wsa);
         return wsa;
     }
@@ -83,8 +83,8 @@ public class WebActorEndpoint extends Endpoint {
         getSessionActor(session).onClose(closeReason);
     }
 
-    private static WebSocketActorRef getSessionActor(Session session) {
-        return (WebSocketActorRef) session.getUserProperties().get(ACTOR_KEY);
+    private static WebSocketActor getSessionActor(Session session) {
+        return (WebSocketActor) session.getUserProperties().get(ACTOR_KEY);
     }
 
     private static HttpActorRef getHttpSessionActor(EndpointConfig config) {
@@ -98,16 +98,16 @@ public class WebActorEndpoint extends Endpoint {
         return (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
     }
 
-    static class WebSocketActorRef extends FakeActor<WebDataMessage> {
+    static class WebSocketActor extends FakeActor<WebDataMessage> {
         private final Session session;
         private final HttpSession httpSession;
         private final ActorRef<? super WebMessage> webActor;
 
-        public WebSocketActorRef(Session session, EndpointConfig config, ActorRef<? super WebMessage> webActor) {
+        public WebSocketActor(Session session, EndpointConfig config, ActorRef<? super WebMessage> webActor) {
             this(session, getHttpSession(config), webActor);
         }
 
-        public WebSocketActorRef(Session session, HttpSession httpSession, ActorRef<? super WebMessage> webActor) {
+        public WebSocketActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> webActor) {
             super(session.toString(), new WebSocketChannel(session, httpSession));
             this.session = session;
             this.httpSession = httpSession;
@@ -118,7 +118,7 @@ public class WebActorEndpoint extends Endpoint {
                 @Override
                 public void onMessage(final ByteBuffer message) {
                     try {
-                        WebSocketActorRef.this.webActor.send(new WebDataMessage(WebSocketActorRef.this, message));
+                        WebSocketActor.this.webActor.send(new WebDataMessage(WebSocketActor.this.ref(), message));
                     } catch (SuspendExecution ex) {
                         throw new AssertionError(ex);
                     }
@@ -128,7 +128,7 @@ public class WebActorEndpoint extends Endpoint {
                 @Override
                 public void onMessage(final String message) {
                     try {
-                        WebSocketActorRef.this.webActor.send(new WebDataMessage(WebSocketActorRef.this, message));
+                        WebSocketActor.this.webActor.send(new WebDataMessage(WebSocketActor.this.ref(), message));
                     } catch (SuspendExecution ex) {
                         throw new AssertionError(ex);
                     }
@@ -141,7 +141,7 @@ public class WebActorEndpoint extends Endpoint {
                 FiberUtil.runInFiber(new SuspendableRunnable() {
                     @Override
                     public void run() throws SuspendExecution, InterruptedException {
-                        webActor.send(new WebSocketOpened(WebSocketActorRef.this));
+                        webActor.send(new WebSocketOpened(WebSocketActor.this.ref()));
                     }
                 });
             } catch (ExecutionException e) {

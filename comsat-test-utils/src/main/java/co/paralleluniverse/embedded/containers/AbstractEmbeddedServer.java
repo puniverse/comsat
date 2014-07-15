@@ -18,12 +18,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.HttpClients;
 
-
 public abstract class AbstractEmbeddedServer implements EmbeddedServer {
-    protected int port= 8080;
+    protected int port = 8080;
     protected int nThreads = 100;
     protected int maxConn = 1000;
-    
+
     @Override
     public EmbeddedServer setPort(int port) {
         this.port = port;
@@ -46,9 +45,9 @@ public abstract class AbstractEmbeddedServer implements EmbeddedServer {
         for (;;) {
             Thread.sleep(10);
             try {
-                if (HttpClients.createDefault().execute(new HttpGet(url)).getStatusLine().getStatusCode()>-100)
+                if (HttpClients.createDefault().execute(new HttpGet(url)).getStatusLine().getStatusCode() > -100)
                     break;
-            }catch(HttpHostConnectException ex) {          
+            } catch (HttpHostConnectException ex) {
             }
         }
     }
