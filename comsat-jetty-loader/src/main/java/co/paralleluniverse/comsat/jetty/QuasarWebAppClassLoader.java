@@ -18,8 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.eclipse.jetty.webapp.WebAppClassLoader;
 
-
-
 /**
  * See:
  * http://wiki.eclipse.org/Jetty/Reference/Jetty_Classloading
@@ -48,6 +46,6 @@ public class QuasarWebAppClassLoader extends WebAppClassLoader {
 
     @Override
     public InputStream getResourceAsStream(String name) {
-        return helper.instrumentResourceStream(name,super.getResourceAsStream(name));
+        return helper.instrumentResourceStream(name, super.getResourceAsStream(name));
     }
 }

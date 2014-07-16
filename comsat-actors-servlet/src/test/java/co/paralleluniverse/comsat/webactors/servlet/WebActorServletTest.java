@@ -17,6 +17,7 @@ import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import co.paralleluniverse.embedded.containers.EmbeddedServer;
 import co.paralleluniverse.embedded.containers.JettyServer;
 import co.paralleluniverse.embedded.containers.TomcatServer;
+import co.paralleluniverse.embedded.containers.UndertowServer;
 import co.paralleluniverse.strands.SettableFuture;
 import com.google.common.collect.Lists;
 import java.io.IOException;
@@ -49,6 +50,7 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -60,7 +62,7 @@ public class WebActorServletTest {
         return Arrays.asList(new Object[][]{
             {JettyServer.class}, 
             {TomcatServer.class},
-        //            {UndertowServer.class},
+         // {UndertowServer.class},
         });
     }
     private final Class<? extends EmbeddedServer> cls;
@@ -69,6 +71,10 @@ public class WebActorServletTest {
     public WebActorServletTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
     }
+
+//    public WebActorServletTest() {
+//        this.cls = JettyServer.class;
+//    }
 
     @Before
     public void setUp() throws Exception {

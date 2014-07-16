@@ -21,7 +21,7 @@ import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.comsat.webactors.WebSocketOpened;
 import static co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.ACTOR_KEY;
-import co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.HttpActorRef;
+import co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.HttpActor;
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
@@ -87,11 +87,11 @@ public class WebActorEndpoint extends Endpoint {
         return (WebSocketActor) session.getUserProperties().get(ACTOR_KEY);
     }
 
-    private static HttpActorRef getHttpSessionActor(EndpointConfig config) {
+    private static HttpActor getHttpSessionActor(EndpointConfig config) {
         HttpSession httpSession = getHttpSession(config);
         if (httpSession == null)
             throw new RuntimeException("HttpSession hasn't been embedded by the EndPoint Configurator.");
-        return (HttpActorRef) httpSession.getAttribute(ACTOR_KEY);
+        return (HttpActor) httpSession.getAttribute(ACTOR_KEY);
     }
 
     private static HttpSession getHttpSession(EndpointConfig config) {

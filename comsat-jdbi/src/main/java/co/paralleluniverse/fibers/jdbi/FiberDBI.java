@@ -15,6 +15,8 @@ package co.paralleluniverse.fibers.jdbi;
 
 import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.FiberAsync;
+import co.paralleluniverse.fibers.RuntimeSuspendExecution;
+import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.jdbc.FiberDataSource;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -60,8 +62,8 @@ public class FiberDBI implements IDBI {
     /**
      * Constructor for use with a DataSource which will provide using fixed thread pool executor
      *
-     * @param dataSource may or may not be FiberDataSource
-     * @param threadCount 
+     * @param dataSource  may or may not be FiberDataSource
+     * @param threadCount
      */
     public FiberDBI(DataSource dataSource, int threadCount) {
         this(dataSource, Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder().setDaemon(true).build()));
@@ -116,12 +118,16 @@ public class FiberDBI implements IDBI {
             @Suspendable
             @Override
             public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-                return FiberAsync.runBlocking(es, new CheckedCallable<Object, Exception>() {
-                    @Override
-                    public Object call() throws Exception {
-                        return method.invoke(onDemand, args);
-                    }
-                });
+                try {
+                    return FiberAsync.runBlocking(es, new CheckedCallable<Object, Exception>() {
+                        @Override
+                        public Object call() throws Exception {
+                            return method.invoke(onDemand, args);
+                        }
+                    });
+                } catch (SuspendExecution e) {
+                    throw new RuntimeSuspendExecution(e);
+                }
             }
         });
     }

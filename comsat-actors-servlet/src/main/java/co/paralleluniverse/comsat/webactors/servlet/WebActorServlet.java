@@ -99,7 +99,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             Object oldActor;
             if ((oldActor = session.getAttribute(ACTOR_KEY)) != null)
                 return (ActorRef<T>) oldActor;
-            session.setAttribute(ACTOR_KEY, new HttpActorRef(session, (ActorRef<HttpRequest>) actor));
+            session.setAttribute(ACTOR_KEY, new HttpActor(session, (ActorRef<HttpRequest>) actor));
             return actor;
         }
     }
@@ -110,15 +110,15 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
     }
 
-    static HttpActorRef getHttpActorRef(HttpSession session) {
+    static HttpActor getHttpActor(HttpSession session) {
         Object actor = session.getAttribute(ACTOR_KEY);
-        if ((actor != null) && (actor instanceof ActorRef))
-            return (HttpActorRef) actor;
+        if ((actor != null) && (actor instanceof HttpActor))
+            return (HttpActor) actor;
         return null;
     }
 
     static ActorRef<? super HttpRequest> getWebActor(HttpSession session) {
-        HttpActorRef har = getHttpActorRef(session);
+        HttpActor har = getHttpActor(session);
         return har != null ? har.webActor : null;
     }
 
@@ -128,21 +128,21 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
     @Override
     public void sessionDestroyed(HttpSessionEvent se) {
-        HttpActorRef ha = getHttpActorRef(se.getSession());
+        HttpActor ha = getHttpActor(se.getSession());
         if (ha != null)
             ha.die(null);
     }
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpActorRef ha = getHttpActorRef(req.getSession());
+        HttpActor ha = getHttpActor(req.getSession());
 
         if (ha == null) {
             if (actorClassName != null) {
                 try {
                     ActorRef<WebMessage> actor = (ActorRef<WebMessage>) Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
                     attachWebActor(req.getSession(), actor);
-                    ha = getHttpActorRef(req.getSession());
+                    ha = getHttpActor(req.getSession());
                 } catch (ClassNotFoundException ex) {
                     req.getServletContext().log("Unable to load actorClass: ", ex);
                     return;
@@ -159,12 +159,12 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         ha.service(req, resp);
     }
 
-    static class HttpActorRef extends FakeActor<HttpResponse> {
+    static class HttpActor extends FakeActor<HttpResponse> {
         private final HttpSession session;
         private final ActorRef<? super HttpRequest> webActor;
         private volatile boolean dead;
 
-        public HttpActorRef(HttpSession session, ActorRef<? super HttpRequest> webActor) {
+        public HttpActor(HttpSession session, ActorRef<? super HttpRequest> webActor) {
             super(session.toString(), new HttpChannel());
 
             this.session = session;

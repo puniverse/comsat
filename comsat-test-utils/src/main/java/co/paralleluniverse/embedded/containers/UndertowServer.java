@@ -63,7 +63,6 @@ public class UndertowServer extends AbstractEmbeddedServer {
         waitUrlAvailable("http://localhost:" + port);
     }
 
-
     @Override
     public void stop() throws Exception {
         if (server != null)
@@ -71,7 +70,7 @@ public class UndertowServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void addServletContextListener(Class <? extends ServletContextListener> scl) {
+    public void addServletContextListener(Class<? extends ServletContextListener> scl) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
