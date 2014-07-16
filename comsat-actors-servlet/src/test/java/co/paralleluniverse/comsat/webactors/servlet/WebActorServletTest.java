@@ -55,7 +55,6 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class WebActorServletTest {
-
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -81,6 +80,7 @@ public class WebActorServletTest {
         embeddedServer.enableWebsockets();
         embeddedServer.start();
         AbstractEmbeddedServer.waitUrlAvailable("http://localhost:8080");
+        System.out.println("Server is up");
     }
 
     @After
