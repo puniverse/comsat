@@ -38,8 +38,6 @@ import com.allanbank.mongodb.builder.Text;
 import com.allanbank.mongodb.builder.TextResult;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -51,8 +49,7 @@ import org.junit.Test;
  * TODO Missing tests:
  * 
  * 1) Non-async suspendable methods (already declared in "suspendables"); anyway some are already used as part of test setup
- * 2) ListenableFuture functionality
- * 3) New fiber-blocking APIs for now async-only operations (when added, @see co.paralleluniverse.fibers.mongodb.FiberMongoCollectionImpl)
+ * 2) New fiber-blocking APIs for now async-only operations (when added, @see co.paralleluniverse.fibers.mongodb.FiberMongoCollectionImpl)
  */
 public class FiberMongoCollTest extends AbstractTestFiberMongo {
     private static final String COLL_NAME = "test";
@@ -83,7 +80,7 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     
     @Before
     public void setUpTest() throws ExecutionException, InterruptedException {
-        super.setUpDbForTest();
+        super.setUpTestBase();
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
@@ -107,7 +104,7 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
                 }
             }
         }).start().join();
-        super.tearDownDbForTest();
+        super.tearDownTestBase();
     }
 
     private static final String FIELD_COUNT_NAME = "count";
@@ -149,8 +146,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Document> aggregate = mongoColl.aggregateAsync(AGGREGATE_QUERY).get();
+                    MongoIterator<Document> aggregate = addListenerCalledFlagSetter(mongoColl.aggregateAsync(AGGREGATE_QUERY)).get();
                     assertEquals(TEST_SET_SIZE.toString(), getAggregateSizeAsString(aggregate));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -164,8 +162,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Document> aggregate = mongoColl.aggregateAsync(AGGREGATE_QUERY).get();
+                    MongoIterator<Document> aggregate = addListenerCalledFlagSetter(mongoColl.aggregateAsync(AGGREGATE_QUERY)).get();
                     assertEquals(TEST_SET_SIZE.toString(), getAggregateSizeAsString(aggregate));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -223,8 +222,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long res = mongoColl.countAsync().get();
+                    long res = addListenerCalledFlagSetter(mongoColl.countAsync()).get();
                     assertEquals((int) TEST_SET_SIZE, res);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -238,8 +238,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long res = mongoColl.countAsync(Count.builder()).get();
+                    long res = addListenerCalledFlagSetter(mongoColl.countAsync(Count.builder())).get();
                     assertEquals((int) TEST_SET_SIZE, res);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -253,8 +254,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long res = mongoColl.countAsync(Count.builder().build()).get();
+                    long res = addListenerCalledFlagSetter(mongoColl.countAsync(Count.builder().build())).get();
                     assertEquals((int) TEST_SET_SIZE, res);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -268,8 +270,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long res = mongoColl.countAsync().get();
+                    long res = addListenerCalledFlagSetter(mongoColl.countAsync()).get();
                     assertEquals((int) TEST_SET_SIZE, res);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -330,8 +333,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long deleted = mongoColl.deleteAsync(DELETE_DOCUMENT).get();
+                    long deleted = addListenerCalledFlagSetter(mongoColl.deleteAsync(DELETE_DOCUMENT)).get();
                     assertEquals(DELETE_SIZE, deleted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -345,8 +349,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long deleted = mongoColl.deleteAsync(DELETE_DOCUMENT, true).get();
+                    long deleted = addListenerCalledFlagSetter(mongoColl.deleteAsync(DELETE_DOCUMENT, true)).get();
                     assertEquals(DELETE_SIZE, deleted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -360,8 +365,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long deleted = mongoColl.deleteAsync(DELETE_DOCUMENT, true, Durability.ACK).get();
+                    long deleted = addListenerCalledFlagSetter(mongoColl.deleteAsync(DELETE_DOCUMENT, true, Durability.ACK)).get();
                     assertEquals(DELETE_SIZE, deleted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -375,8 +381,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long deleted = mongoColl.deleteAsync(DELETE_DOCUMENT, Durability.ACK).get();
+                    long deleted = addListenerCalledFlagSetter(mongoColl.deleteAsync(DELETE_DOCUMENT, Durability.ACK)).get();
                     assertEquals(DELETE_SIZE, deleted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -420,8 +427,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Element> distinct = mongoColl.distinctAsync(DISTINCT_QUERY.build()).get();
+                    MongoIterator<Element> distinct = addListenerCalledFlagSetter(mongoColl.distinctAsync(DISTINCT_QUERY.build())).get();
                     assertEquals((long) TEST_SET_SIZE, getDistinctSize(distinct));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -435,8 +443,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Element> distinct = mongoColl.distinctAsync(DISTINCT_QUERY).get();
+                    MongoIterator<Element> distinct = addListenerCalledFlagSetter(mongoColl.distinctAsync(DISTINCT_QUERY)).get();
                     assertEquals((long) TEST_SET_SIZE, getDistinctSize(distinct));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -510,8 +519,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document explain = mongoColl.explainAsync(AGGREGATE_QUERY.build()).get();
+                    Document explain = addListenerCalledFlagSetter(mongoColl.explainAsync(AGGREGATE_QUERY.build())).get();
                     assertNotNull(explain.get(FIELD_AGGREGATE_RESULT_STAGES_NAME));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -525,8 +535,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document explain = mongoColl.explainAsync(AGGREGATE_QUERY).get();
+                    Document explain = addListenerCalledFlagSetter(mongoColl.explainAsync(AGGREGATE_QUERY)).get();
                     assertNotNull(explain.get(FIELD_AGGREGATE_RESULT_STAGES_NAME));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -540,8 +551,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document explain = mongoColl.explainAsync(Find.builder().query(FIND_DOCUMENT).build()).get();
+                    Document explain = addListenerCalledFlagSetter(mongoColl.explainAsync(Find.builder().query(FIND_DOCUMENT).build())).get();
                     assertNotNull(explain.get(FIELD_AGGREGATE_RESULT_CURSOR_NAME));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -555,8 +567,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document explain = mongoColl.explainAsync(Find.builder().query(FIND_DOCUMENT)).get();
+                    Document explain = addListenerCalledFlagSetter(mongoColl.explainAsync(Find.builder().query(FIND_DOCUMENT))).get();
                     assertNotNull(explain.get(FIELD_AGGREGATE_RESULT_CURSOR_NAME));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -603,8 +616,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Document> find = mongoColl.findAsync(Find.builder().query(FIND_DOCUMENT).build()).get();
+                    MongoIterator<Document> find = addListenerCalledFlagSetter(mongoColl.findAsync(Find.builder().query(FIND_DOCUMENT).build())).get();
                     assertTrue(find.hasNext());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -618,8 +632,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Document> find = mongoColl.findAsync(FIND_DOCUMENT).get();
+                    MongoIterator<Document> find = addListenerCalledFlagSetter(mongoColl.findAsync(FIND_DOCUMENT)).get();
                     assertTrue(find.hasNext());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -633,8 +648,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Document> find = mongoColl.findAsync(Find.builder().query(FIND_DOCUMENT)).get();
+                    MongoIterator<Document> find = addListenerCalledFlagSetter(mongoColl.findAsync(Find.builder().query(FIND_DOCUMENT))).get();
                     assertTrue(find.hasNext());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -677,8 +693,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document findAndModify = mongoColl.findAndModifyAsync(FIND_AND_MODIFY_BUILDER.build()).get();
+                    Document findAndModify = addListenerCalledFlagSetter(mongoColl.findAndModifyAsync(FIND_AND_MODIFY_BUILDER.build())).get();
                     assertEquals(UPDATE_VALUE.toString(), findAndModify.get(FIELD_INT_NAME).getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -692,8 +709,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document findAndModify = mongoColl.findAndModifyAsync(FIND_AND_MODIFY_BUILDER).get();
+                    Document findAndModify = addListenerCalledFlagSetter(mongoColl.findAndModifyAsync(FIND_AND_MODIFY_BUILDER)).get();
                     assertEquals(UPDATE_VALUE.toString(), findAndModify.get(FIELD_INT_NAME).getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -740,8 +758,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document find = mongoColl.findOneAsync(FIND_DOCUMENT).get();
+                    Document find = addListenerCalledFlagSetter(mongoColl.findOneAsync(FIND_DOCUMENT)).get();
                     assertEquals(FIELD_INT_FIRST_VALUE.toString(), find.get(FIELD_INT_NAME).getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -755,8 +774,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document find = mongoColl.findOneAsync(Find.builder().query(FIND_DOCUMENT).build()).get();
+                    Document find = addListenerCalledFlagSetter(mongoColl.findOneAsync(Find.builder().query(FIND_DOCUMENT).build())).get();
                     assertEquals(FIELD_INT_FIRST_VALUE.toString(), find.get(FIELD_INT_NAME).getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -770,8 +790,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document find = mongoColl.findOneAsync(Find.builder().query(FIND_DOCUMENT)).get();
+                    Document find = addListenerCalledFlagSetter(mongoColl.findOneAsync(Find.builder().query(FIND_DOCUMENT))).get();
                     assertEquals(FIELD_INT_FIRST_VALUE.toString(), find.get(FIELD_INT_NAME).getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -821,8 +842,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Element> groupBy = mongoColl.groupByAsync(GROUP_BY_BUILDER.build()).get();
+                    MongoIterator<Element> groupBy = addListenerCalledFlagSetter(mongoColl.groupByAsync(GROUP_BY_BUILDER.build())).get();
                     assertEquals(FIELD_INT_SUM, getGroupByResultAsString(groupBy.next()));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -836,8 +858,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Element> groupBy = mongoColl.groupByAsync(GROUP_BY_BUILDER).get();
+                    MongoIterator<Element> groupBy = addListenerCalledFlagSetter(mongoColl.groupByAsync(GROUP_BY_BUILDER)).get();
                     assertEquals(FIELD_INT_SUM, getGroupByResultAsString(groupBy.next()));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -900,8 +923,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             public void run() throws SuspendExecution, InterruptedException {
                 try {
                     deleteTestSet();
-                    int inserted = mongoColl.insertAsync(FIRST_TEST_ELEM, SECOND_TEST_ELEM).get();
+                    int inserted = addListenerCalledFlagSetter(mongoColl.insertAsync(FIRST_TEST_ELEM, SECOND_TEST_ELEM)).get();
                     assertEquals((int) TEST_SET_SIZE, inserted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -916,8 +940,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             public void run() throws SuspendExecution, InterruptedException {
                 try {
                     deleteTestSet();
-                    int inserted = mongoColl.insertAsync(true, FIRST_TEST_ELEM, SECOND_TEST_ELEM).get();
+                    int inserted = addListenerCalledFlagSetter(mongoColl.insertAsync(true, FIRST_TEST_ELEM, SECOND_TEST_ELEM)).get();
                     assertEquals((int) TEST_SET_SIZE, inserted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -932,8 +957,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             public void run() throws SuspendExecution, InterruptedException {
                 try {
                     deleteTestSet();
-                    int inserted = mongoColl.insertAsync(true, Durability.ACK, FIRST_TEST_ELEM, SECOND_TEST_ELEM).get();
+                    int inserted = addListenerCalledFlagSetter(mongoColl.insertAsync(true, Durability.ACK, FIRST_TEST_ELEM, SECOND_TEST_ELEM)).get();
                     assertEquals((int) TEST_SET_SIZE, inserted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -947,9 +973,10 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                deleteTestSet();
-                int inserted = mongoColl.insertAsync(Durability.ACK, FIRST_TEST_ELEM, SECOND_TEST_ELEM).get();
-                assertEquals((int) TEST_SET_SIZE, inserted);
+                    deleteTestSet();
+                    int inserted = addListenerCalledFlagSetter(mongoColl.insertAsync(Durability.ACK, FIRST_TEST_ELEM, SECOND_TEST_ELEM)).get();
+                    assertEquals((int) TEST_SET_SIZE, inserted);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1000,8 +1027,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Document> mapReduce = mongoColl.mapReduceAsync(MAP_REDUCE_QUERY).get();
+                    MongoIterator<Document> mapReduce = addListenerCalledFlagSetter(mongoColl.mapReduceAsync(MAP_REDUCE_QUERY)).get();
                     assertEquals(FIELD_INT_SUM, getMapReduceSizeAsString(mapReduce));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1015,8 +1043,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<Document> mapReduce = mongoColl.mapReduceAsync(MAP_REDUCE_QUERY).get();
+                    MongoIterator<Document> mapReduce = addListenerCalledFlagSetter(mongoColl.mapReduceAsync(MAP_REDUCE_QUERY)).get();
                     assertEquals(FIELD_INT_SUM, getMapReduceSizeAsString(mapReduce));
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1055,8 +1084,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Collection<MongoIterator<Document>> parallelScan = mongoColl.parallelScanAsync(PARALLEL_SCAN_QUERY.build()).get();
+                    Collection<MongoIterator<Document>> parallelScan = addListenerCalledFlagSetter(mongoColl.parallelScanAsync(PARALLEL_SCAN_QUERY.build())).get();
                     assertEquals(1, parallelScan.size());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1070,8 +1100,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Collection<MongoIterator<Document>> parallelScan = mongoColl.parallelScanAsync(PARALLEL_SCAN_QUERY).get();
+                    Collection<MongoIterator<Document>> parallelScan = addListenerCalledFlagSetter(mongoColl.parallelScanAsync(PARALLEL_SCAN_QUERY)).get();
                     assertEquals(1, parallelScan.size());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1119,8 +1150,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
                 try {
                     Document docLoaded = mongoColl.findOne(FIND_DOCUMENT);
                     Document docChanged = updatedDocument(docLoaded);
-                    int saved = mongoColl.saveAsync(docChanged).get();
-                    assertEquals(1, saved); // No listenable future
+                    int saved = addListenerCalledFlagSetter(mongoColl.saveAsync(docChanged)).get();
+                    assertEquals(1, saved);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1136,8 +1168,9 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
                 try {
                     Document docLoaded = mongoColl.findOne(FIND_DOCUMENT);
                     Document docChanged = updatedDocument(docLoaded);
-                    int saved = mongoColl.saveAsync(docChanged, Durability.ACK).get();
+                    int saved = addListenerCalledFlagSetter(mongoColl.saveAsync(docChanged, Durability.ACK)).get();
                     assertEquals(1, saved); // TODO return value seems incompatible with API description, to be better understood
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1182,10 +1215,11 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<TextResult> textResult = mongoColl.textSearchAsync(TEXT_SEARCH_QUERY.build()).get();
+                    MongoIterator<TextResult> textResult = addListenerCalledFlagSetter(mongoColl.textSearchAsync(TEXT_SEARCH_QUERY.build())).get();
                     assertNotNull(textResult.hasNext());
                     textResult.next();
                     assertNotNull(textResult.hasNext()); // 2 results
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1200,10 +1234,11 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    MongoIterator<TextResult> textResult = mongoColl.textSearchAsync(TEXT_SEARCH_QUERY).get();
+                    MongoIterator<TextResult> textResult = addListenerCalledFlagSetter(mongoColl.textSearchAsync(TEXT_SEARCH_QUERY)).get();
                     assertNotNull(textResult.hasNext());
                     textResult.next();
                     assertNotNull(textResult.hasNext()); // 2 results
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1258,13 +1293,14 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
 
     @Test
-    public void testUpdateAsync() throws ExecutionException, InterruptedException {
+    public void testUpdateFuture() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long updated = mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT).get();
+                    long updated = addListenerCalledFlagSetter(mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT)).get();
                     assertEquals(UPDATE_SIZE, updated);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1273,13 +1309,14 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
 
     @Test
-    public void testUpdateMultiUpsertAsync() throws ExecutionException, InterruptedException {
+    public void testUpdateMultiUpsertFuture() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long updated = mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT, false, true).get();
+                    long updated = addListenerCalledFlagSetter(mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT, false, true)).get();
                     assertEquals(UPDATE_SIZE, updated);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1288,13 +1325,14 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
 
     @Test
-    public void testUpdateMultiUpsertDurabilityAsync() throws ExecutionException, InterruptedException {
+    public void testUpdateMultiUpsertDurabilityFuture() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long updated = mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT, false, true, Durability.ACK).get();
+                    long updated = addListenerCalledFlagSetter(mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT, false, true, Durability.ACK)).get();
                     assertEquals(UPDATE_SIZE, updated);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1303,13 +1341,14 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
 
     @Test
-    public void testUpdateDurabilityAsync() throws ExecutionException, InterruptedException {
+    public void testUpdateDurabilityFuture() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long updated = mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT, Durability.ACK).get();
+                    long updated = addListenerCalledFlagSetter(mongoColl.updateAsync(FIND_DOCUMENT, UPDATE_DOCUMENT, Durability.ACK)).get();
                     assertEquals(UPDATE_SIZE, updated);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1342,13 +1381,14 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
 
     @Test
-    public void testWriteQueryAsync() throws ExecutionException, InterruptedException {
+    public void testWriteQueryFuture() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long written = mongoColl.writeAsync(BATCHED_WRITE_BUILDER.build()).get();
+                    long written = addListenerCalledFlagSetter(mongoColl.writeAsync(BATCHED_WRITE_BUILDER.build())).get();
                     assertEquals(UPDATE_SIZE, written);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -1357,13 +1397,14 @@ public class FiberMongoCollTest extends AbstractTestFiberMongo {
     }
 
     @Test
-    public void testWriteBuilderAsync() throws ExecutionException, InterruptedException {
+    public void testWriteBuilderFuture() throws ExecutionException, InterruptedException {
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    long written = mongoColl.writeAsync(BATCHED_WRITE_BUILDER).get();
+                    long written = addListenerCalledFlagSetter(mongoColl.writeAsync(BATCHED_WRITE_BUILDER)).get();
                     assertEquals(UPDATE_SIZE, written);
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }

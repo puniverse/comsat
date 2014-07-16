@@ -30,18 +30,17 @@ import org.junit.Test;
  * TODO Missing tests:
  * 
  * 1) Non-async suspendable methods (already declared in "suspendables"); anyway some are already used as part of test setup
- * 2) ListenableFuture functionality
- * 3) New fiber-blocking APIs for now async-only operations (when added, @see co.paralleluniverse.fibers.mongodb.FiberMongoDatabaseImpl)
+ * 2) New fiber-blocking APIs for now async-only operations (when added, @see co.paralleluniverse.fibers.mongodb.FiberMongoDatabaseImpl)
  */
 public class FiberMongoDbTest extends AbstractTestFiberMongo {
     @Before
     public void setUpTest() throws ExecutionException, InterruptedException {
-        super.setUpDbForTest();
+        super.setUpTestBase();
     }
     
     @After
     public void tearDownTest() throws ExecutionException, InterruptedException {
-        super.tearDownDbForTest();
+        super.tearDownTestBase();
     }
     
     @Test
@@ -108,11 +107,9 @@ public class FiberMongoDbTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document res = mongoDb.runCommandAsync (
-                            BuilderFactory.start()
-                                    .add("ping", 1)
-                    ).get();
+                    Document res = addListenerCalledFlagSetter(mongoDb.runCommandAsync(BuilderFactory.start().add("ping", 1))).get();
                     assertEquals("1.0", res.get("ok").getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -126,8 +123,9 @@ public class FiberMongoDbTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document res = mongoDb.runCommandAsync("ping").get();
+                    Document res = addListenerCalledFlagSetter(mongoDb.runCommandAsync("ping")).get();
                     assertEquals("1.0", res.get("ok").getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -141,8 +139,9 @@ public class FiberMongoDbTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document res = mongoDb.runCommandAsync("ping", null).get();
+                    Document res = addListenerCalledFlagSetter(mongoDb.runCommandAsync("ping", null)).get();
                     assertEquals("1.0", res.get("ok").getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -156,8 +155,9 @@ public class FiberMongoDbTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document res = mongoDb.runCommandAsync("ping", 1, null).get();
+                    Document res = addListenerCalledFlagSetter(mongoDb.runCommandAsync("ping", 1, null)).get();
                     assertEquals("1.0", res.get("ok").getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
@@ -171,8 +171,9 @@ public class FiberMongoDbTest extends AbstractTestFiberMongo {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
-                    Document res = mongoDb.runCommandAsync("ping", "1", null).get();
+                    Document res = addListenerCalledFlagSetter(mongoDb.runCommandAsync("ping", "1", null)).get();
                     assertEquals("1.0", res.get("ok").getValueAsString());
+                    assertListenerCalled();
                 } catch (ExecutionException ex) {
                     fail(ex.getLocalizedMessage());
                 }
