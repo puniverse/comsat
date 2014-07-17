@@ -126,7 +126,7 @@ public class FiberDBI implements IDBI {
                         }
                     });
                 } catch (SuspendExecution e) {
-                    throw new RuntimeSuspendExecution(e);
+                    throw RuntimeSuspendExecution.of(e);
                 }
             }
         });
