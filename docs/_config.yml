@@ -1,16 +1,8 @@
 markdown: enhanced_kramdown
-pygments: true
+highlighter: pygments
 lsi: false
 safe: false
 baseurl: /comsat
-
-kramdown:
-  toc_levels: [1,2,3]
-  use_coderay: false
-  coderay:
-    enable_coderay: false
-    coderay_line_numbers: nil
-    coderay_css: class
 
 # Site globals used throughout docs.
 project: Comsat
