@@ -1,0 +1,9 @@
+dependencies {
+    compile "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVersion"
+    testCompile "de.flapdoodle.embed:de.flapdoodle.embed.mongo:$embedMongoVersion"
+    testCompile project(':comsat-test-utils')
+}
+
+tasks.withType(Test) {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
+}

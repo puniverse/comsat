@@ -40,6 +40,9 @@ subprojects {
     ext.jooqVersion     = '3.3.2'
     ext.slf4jApiVer     = '1.7.7'
     ext.guavaVersion    = '17.0'
+    
+    ext.mongodbJavaAsyncDriverVersion   = '2.0.0'
+    ext.embedMongoVersion               = '1.46.0'
 
     configurations.all {
         resolutionStrategy {
@@ -68,6 +71,7 @@ subprojects {
         maven { url "https://oss.sonatype.org/content/repositories/releases" }
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         maven { url 'https://maven.java.net/content/repositories/snapshots' }
+        maven { url 'http://www.allanbank.com/repo/' }
     }
 
     configurations {
@@ -158,6 +162,11 @@ project (':comsat-httpclient') {
         srcFiles "org.apache.httpcomponents:httpcore:$apacheClientVersion:sources"
     }
 }
+/* project (':comsat-mongodb') {    
+    dependencies {
+        srcFiles "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVersion:sources"
+    }
+} */
 
 // links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
 ext.javadocLinks =  [
@@ -171,7 +180,8 @@ ext.javadocLinks =  [
                 "http://docs.oracle.com/javase/7/docs/api/",
                 "http://puniverse.github.io/quasar/javadoc/",
                 "http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/",
-                "http://jersey.java.net/apidocs/latest/jersey/"
+                "http://jersey.java.net/apidocs/latest/jersey/",
+                "http://www.allanbank.com/mongodb-async-driver/apidocs/index.html"
 ]
 
 ext.javadocExcludes = [

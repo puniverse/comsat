@@ -6,6 +6,7 @@ include 'comsat-tomcat-loader','comsat-jetty-loader'
 include 'comsat-jdbc','comsat-jdbi','comsat-jooq'
 include 'comsat-dropwizard'
 include 'comsat-retrofit','comsat-httpclient','comsat-jax-rs-client'
+include 'comsat-mongodb-allanbanks'
 include 'comsat-test-utils'
 include 'comsat-test-war'
 
