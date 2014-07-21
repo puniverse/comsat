@@ -5,6 +5,3 @@ dependencies {
     testCompile project(':comsat-test-utils')
 }
 
-tasks.withType(Test) {
-    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
-}

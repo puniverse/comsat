@@ -82,7 +82,8 @@ subprojects {
     }
     
     dependencies {
-        quasar "co.paralleluniverse:quasar-core:$quasarVer" 
+        compile "com.google.guava:guava:$guavaVersion"
+        quasar "co.paralleluniverse:quasar-core:$quasarVer@jar" 
         testCompile group: 'junit', name: 'junit', version: '4.11'
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         provided "javax.servlet:javax.servlet-api:$servletVersion" // was 3.1.0
@@ -91,7 +92,6 @@ subprojects {
     
     sourceSets {
         main.compileClasspath = main.compileClasspath + configurations.provided
-        //        main.runtimeClasspath = main.runtimeClasspath + configurations.provided
         test.compileClasspath = test.compileClasspath + configurations.provided
         test.runtimeClasspath = test.runtimeClasspath + configurations.provided
     }
@@ -144,8 +144,8 @@ subprojects {
     
     tasks.withType(Test) {
         systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
     }
-   
     //rest of the subprojects definition in the block after subproject specific definitions
 }
 
