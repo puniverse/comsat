@@ -52,7 +52,7 @@ public class WebActorInitializer implements ServletContextListener {
         final ServletContext sc = sce.getServletContext();
         try {
             ClassLoader classLoader = userClassLoader != null ? userClassLoader : sc.getClassLoader();
-            ClassLoaderUtil.accept(classLoader, new ClassLoaderUtil.Visitor() {
+            ClassLoaderUtil.accept((URLClassLoader)classLoader, new ClassLoaderUtil.Visitor() {
                 @Override
                 public void visit(String resource, URL url, ClassLoader cl) {
                     if (!ClassLoaderUtil.isClassFile(resource))
