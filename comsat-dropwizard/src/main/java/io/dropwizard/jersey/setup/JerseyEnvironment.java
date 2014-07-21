@@ -15,7 +15,7 @@ public class JerseyEnvironment {
     private final DropwizardResourceConfig config;
 
     public JerseyEnvironment(JerseyContainerHolder holder,
-                             DropwizardResourceConfig config) {
+            DropwizardResourceConfig config) {
         this.holder = holder;
         this.config = config;
     }

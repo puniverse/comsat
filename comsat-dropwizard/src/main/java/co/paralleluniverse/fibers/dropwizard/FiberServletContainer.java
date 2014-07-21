@@ -17,7 +17,6 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
 import com.sun.jersey.api.core.ResourceConfig;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Enumeration;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;

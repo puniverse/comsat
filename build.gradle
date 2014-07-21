@@ -134,6 +134,7 @@ subprojects {
     // Adds license header on each java file. gradle licenseMain for check or licenseFormatMain to apply
     apply plugin: 'license'
     license {
+        ignoreFailures true
         header rootProject.file('LICENSE')
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
         strictCheck true
@@ -288,9 +289,9 @@ task javadoc(type: Javadoc) {
 
 task clean(dependsOn: subprojects.clean) << {
     delete 'docs/javadoc'
-}
+}   
 
-// needed to the license plugin
+// needed for the license plugin
 buildscript {
     repositories {
         mavenCentral()
@@ -299,7 +300,7 @@ buildscript {
     dependencies {
         classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
     }
-}    
+} 
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
