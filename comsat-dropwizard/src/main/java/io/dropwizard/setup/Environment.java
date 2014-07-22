@@ -3,16 +3,19 @@ package io.dropwizard.setup;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import static com.google.common.base.Preconditions.checkNotNull;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
+import io.dropwizard.errors.EarlyEofExceptionMapper;
 import io.dropwizard.jersey.DropwizardResourceConfig;
 import io.dropwizard.jersey.setup.JerseyContainerHolder;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.jetty.MutableServletContextHandler;
 import io.dropwizard.jetty.setup.ServletEnvironment;
 import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import javax.servlet.Servlet;
+
 import javax.validation.Validator;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import javax.servlet.Servlet;
 
 // TODO: 5/15/13 <coda> -- add tests for Environment
 
@@ -61,11 +64,14 @@ public class Environment {
 
         this.adminContext = new MutableServletContextHandler();
         adminContext.setClassLoader(classLoader);
-        this.adminEnvironment = new AdminEnvironment(adminContext, healthCheckRegistry);
+        this.adminEnvironment = new AdminEnvironment(adminContext, healthCheckRegistry, metricRegistry);
 
         this.lifecycleEnvironment = new LifecycleEnvironment();
 
         final DropwizardResourceConfig jerseyConfig = new DropwizardResourceConfig(metricRegistry);
+
+        jerseyConfig.getSingletons().add(new EarlyEofExceptionMapper());
+
         this.jerseyServletContainer = new JerseyContainerHolder(new ServletContainer(jerseyConfig));
         this.jerseyEnvironment = new JerseyEnvironment(jerseyServletContainer, jerseyConfig);
     }

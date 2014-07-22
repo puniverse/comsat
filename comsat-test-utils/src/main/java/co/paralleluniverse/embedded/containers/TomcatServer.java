@@ -20,7 +20,6 @@ import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.tomcat.util.descriptor.web.ApplicationListener;
 import org.apache.tomcat.websocket.server.WsSci;
 
 public class TomcatServer extends AbstractEmbeddedServer {
@@ -62,7 +61,7 @@ public class TomcatServer extends AbstractEmbeddedServer {
     @Override
     public void addServletContextListener(Class<? extends ServletContextListener> scl) {
         StandardContext tomcatCtx = (StandardContext) this.context;
-        tomcatCtx.addApplicationListener(new ApplicationListener(scl.getName(), false));
+        tomcatCtx.addApplicationListener(scl.getName());
     }
 
     private static class TomcatServletDesc implements ServletDesc {
