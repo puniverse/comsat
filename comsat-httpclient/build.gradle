@@ -1,5 +1,0 @@
-dependencies {
-    compile "org.apache.httpcomponents:httpasyncclient:$apacheAsyncClientVerstion"
-    testCompile project(':comsat-test-utils')
-}
-

@@ -1,3 +1,0 @@
-dependencies {
-    compile "co.paralleluniverse:quasar-actors:$quasarVer"
-}

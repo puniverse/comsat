@@ -1,4 +1,0 @@
- dependencies {
-     compile 'org.webbitserver:webbit:0.4.15'
-     compile project (':comsat-actors-api')
-}

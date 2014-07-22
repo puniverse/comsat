@@ -1,8 +1,0 @@
-dependencies {
-    compile "org.jooq:jooq:$jooqVersion"
-    compile project (':comsat-jdbc')
-    testCompile project(':comsat-test-utils')
-}
-tasks.withType(Test) {
-    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
-}

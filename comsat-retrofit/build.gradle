@@ -1,8 +1,0 @@
-dependencies {
-    compile "com.squareup.retrofit:retrofit:$retrofitVersion"
-    compile project (':comsat-httpclient')
-    testCompile project (':comsat-dropwizard')
-}    
-tasks.withType(Test) {
-    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}" // =v, =d
-}
