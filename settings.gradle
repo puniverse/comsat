@@ -13,7 +13,7 @@ include 'comsat-dropwizard'
 include 'comsat-retrofit'
 include 'comsat-httpclient'
 include 'comsat-jax-rs-client'
-include 'comsat-mongodb-allanbanks'
+include 'comsat-mongodb-allanbank'
 include 'comsat-test-utils'
 include 'comsat-test-war'
 

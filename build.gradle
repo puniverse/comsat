@@ -260,7 +260,7 @@ project (':comsat-jooq') {
     }
 }
 
-project (':comsat-mongodb-allanbanks') {
+project (':comsat-mongodb-allanbank') {
     dependencies {
         compile "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVersion"
         testCompile "de.flapdoodle.embed:de.flapdoodle.embed.mongo:$embedMongoVersion"
