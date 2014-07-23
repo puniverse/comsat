@@ -101,14 +101,25 @@ subprojects {
     classes {
         doFirst{
             println "Excuting scanSuspendables..."
-            ant.taskdef(name:'scanSuspendables', 
-                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
-                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
-            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
-                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables"
-            ) {
+            ant.taskdef(
+                name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
+                classpath: "build/classes/main:build/resources/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
+            ant.scanSuspendables(
+                auto:false,
+                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
+                supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+                append: true) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
+            
+//            ant.taskdef(name:'scanSuspendables', 
+//                classname:'co.paralleluniverse.fibers.instrument.OldSuspendablesScanner', 
+//                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
+//            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+//                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables"
+//            ) {
+//                fileset(dir: sourceSets.main.output.classesDir)
+//            }
         }
     }
     
