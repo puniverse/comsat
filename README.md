@@ -16,18 +16,20 @@ In Maven:
 Where `ARTIFACT` is:
 
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
-* `comsat-jersey-server` – Jersey server integration for defining REST services.
-* `comsat-dropwizard` – Dropwizard integration including jersey, ApacheHttpClient and jdbi.
-* `comsat-jax-rs-client` – JAX-RS client integration for calling HTTP services.
-* `comsat-httpclient` – ApacheHttpClient integration for calling HTTP services.
-* `comsat-retrofit` – Retrofit integration for calling HTTP services through nice interfaces.
-* `comsat-jdbi` – JDBI integration for using the JDBI API in fibers.
+* `comsat-jersey-server` – [Jersey server](https://jersey.java.net/) integration for defining REST services.
+* `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
+* `comsat-jax-rs-client` – [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for calling HTTP services.
+* `comsat-httpclient` – [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for calling HTTP services.
+* `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration.
+* `comsat-jdbi` – [JDBI](http://jdbi.org/) integration for using the JDBI API in fibers.
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
-* `comsat-jooq` – jOOQ integration for using the JOOQ API in fibers.
+* `comsat-jooq` – [jOOQ](http://www.jooq.org/) integration for using the jOOQ API in fibers.
+* `comsat-mongodb-allanbanks` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
 * `comsat-actors-api` – the Web Actors API
-* `comsat-actors-servlet` – Enables WebSocket(JSR-356) usage through Web Actors API
-* `comsat-tomcat-loader` – Enables using comsat in tomcat container without the need of javaAgent
-* `comsat-jetty-loader` – Enables using comsat in jetty container without the need of javaAgent
+* `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
+* `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
+* `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
+
 Or, build from sources by running:
 
 ```
