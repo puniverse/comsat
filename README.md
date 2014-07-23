@@ -9,7 +9,7 @@ In Maven:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>ARTIFACT</artifactId>
-    <version>0.1.1</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -23,7 +23,7 @@ Where `ARTIFACT` is:
 * `comsat-retrofit` – Retrofit integration for calling HTTP services through nice interfaces.
 * `comsat-jdbi` – JDBI integration for using the JDBI API in fibers.
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
-* `comsat-jooq` – JOOQ integration for using the JOOQ API in fibers.
+* `comsat-jooq` – jOOQ integration for using the JOOQ API in fibers.
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables WebSocket(JSR-356) usage through Web Actors API
 * `comsat-tomcat-loader` – Enables using comsat in tomcat container without the need of javaAgent

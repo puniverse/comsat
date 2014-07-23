@@ -5,7 +5,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.2.0-SNAPSHOT"
+    version             = "0.2.0"
     status              = "integration"
     description         = "Fibers services for web"
     ext.url             = "http://puniverse.github.com/comsat"
@@ -19,7 +19,7 @@ subprojects {
     ext.distDir         = "$buildDir/dist"
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-    ext.quasarVer       = "0.6.0-SNAPSHOT"
+    ext.quasarVer       = "0.6.0"
     ext.jettyVersion    = '9.2.1.v20140609'
     ext.undertowVersion = '1.1.0.Beta5'
     ext.tomcatVersion   = '8.0.9'

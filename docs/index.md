@@ -10,15 +10,19 @@ COMSAT (or Comsat) is a set of open source libraries that integrate [Quasar](htt
 
 Comsat is not a web framework. In fact, it does not add new APIs at all (with one exception, Web Actors, mentioned later). It provides implementation to popular (and often, standard) APIs like Servlet, JAX-RS, and JDBC, that can be called within Quasar fibers.
 
-Comsat does provide one new API that you may choose to use: [Web Actors](manual/webactors.html). Web actors let you define a Quasar actor that receives and respnds to HTTP requests and web socket messages. The Web Actors API is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the client.
+Comsat does provide one new API that you may choose to use: [Web Actors](manual/webactors.html). Web actors let you define a Quasar actor that receives and responds to HTTP requests and web socket messages. The Web Actors API is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the client.
 
 [Parallel Universe]: http://paralleluniverse.co
 
 ## News
 
+### July 23, 2014
+
+Comsat [0.2.0](https://github.com/puniverse/comsat/releases/tag/v0.2.0 has been released.
+
 ### January 22, 2014
 
-COMSAT 0.1.0 has been released.
+COMSAT [0.1.0](https://github.com/puniverse/comsat/releases/tag/v0.1.0) has been released.
 
 # Getting Started
 
@@ -69,7 +73,7 @@ where `ARTIFACT` is:
 * `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration for calling HTTP services through nice interfaces.
 * `comsat-jdbi` – [JDBI](http://jdbi.org/) integration for using the JDBI API in fibers.
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
-* `comsat-jooq` – [JOOQ](http://www.jooq.org/) integration for using the JOOQ API in fibers.
+* `comsat-jooq` – [jOOQ](http://www.jooq.org/) integration for using the jOOQ API in fibers.
 * `comsat-mongodb-allanbanks` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
@@ -132,7 +136,7 @@ Or, if you have gradle installed, run:
 
 ### Servlets
 
-Comsat integrates with JavaEE servlets and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each request on a separate [fiber](http://puniverse.github.io/quasar/manual/core.html#fibers). Calls to other web services or to a database are fiber- rather than thread-blocking. As a result, comsat can serve many thousands of concurrent requests with only a handful of OS threads. You, on the other hand, don't need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat implementations.
+Comsat integrates with JavaEE servlets and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each request on a separate [fiber](http://puniverse.github.io/quasar/manual/core.html#fibers). Calls to other web services or to a database are fiber- rather than thread-blocking. As a result, Comsat can serve many thousands of concurrent requests with only a handful of OS threads. You, on the other hand, don't need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat implementations.
 
 To write a Comsat (fiber-per-request) servlet, simply extend [`FiberHttpServlet`]({{javadoc}}/fibers/servlet/FiberHttpServlet.html) rather than the usual `javax.servlet.HttpServlet`, and either annotate it with `@WebServlet` or declare it in `web.xml`. Note how the `service` and all the `doXXX` methods are [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (they all `throw SuspendExecution`).
 
@@ -292,7 +296,7 @@ Then the DataSource can be used with the regular API from fiber context, For exa
 {:.alert .alert-info}
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
 
-Normally, Comsat transforms asynchronous (callback based) API into fiber-blocking operations. JDBC, however, has no asynchronous API. comsat-jdbc simply runs the actual thread-blocking JDBC operations in a thread pool, and blocks the calling fiber until the operation has completed execution in the thread pool. As a result, you will not get any scalability benefits by calling your database in fibers (unlike, say, calling web services), because an OS thread will still block on every JDBC call. In practice, though, it matters little, as your database is likely to be a narrower bottleneck than the OS scheduler anyway.
+Normally, Comsat transforms asynchronous (callback based) API into fiber-blocking operations. JDBC, however, has no asynchronous API. c`omsat-jdbc` simply runs the actual thread-blocking JDBC operations in a thread pool, and blocks the calling fiber until the operation has completed execution in the thread pool. As a result, you will not get any scalability benefits by calling your database in fibers (unlike, say, calling web services), because an OS thread will still block on every JDBC call. In practice, though, it matters little, as your database is likely to be a narrower bottleneck than the OS scheduler anyway.
 
 {:.alert .alert-warn}
 **Note**: Your application may only may direct use of the Comsat JDBC data source, because methods calling the API must be declared suspendable (or run on regular threads). Database access frameworks (like various ORM solutions) that make use of JDBC cannot use this data source and be used in Quasar fibers. In the future, we will provide separate integration module for some popular database access libraries.
@@ -346,10 +350,10 @@ The interface now can be registered and used in the regular manner from fiber co
 {% include_snippet usage ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberSqlObjectAPITest.java %}
 ~~~
 
-#### JOOQ
+#### jOOQ
 
-Another possibility accessing databases using `comsat` is [JOOQ](http://www.jooq.org/).
-In order to use JOOQ from fiber context, all you have to do is to provide connection originated from `FiberDataSource`, For example:
+Another possibility accessing a relational databases is [JOOQ](http://www.jooq.org/).
+In order to use jOOQ from fiber context, all you have to do is to provide connection originated from `FiberDataSource`, For example:
 
 ~~~ java
 {% include_snippet creation ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}// ...
@@ -359,14 +363,22 @@ In order to use JOOQ from fiber context, all you have to do is to provide connec
 {% include_snippet usage ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}
 ~~~
 
+#### MongoDB
+
+Comsat integrates with MongoDB, for a fiber-blocking Mongo access via the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).
+
+This is how you get a fiber-freindly `MongoDatabase` instance:
+
+~~~ java
+MongoClient mongoClient = FiberMongoFactory.createClient( "mongodb://localhost:" + port + "/test?maxConnectionCount=10" ).asSerializedClient();
+MongoDatabase mongoDb = mongoClient.getDatabase("mydb");
+~~~
+
 ### Dropwizard
 
-TODO.. introduction
-[`Dropwizard`](http://dropwizard.readthedocs.org/)
+[Dropwizard](http://dropwizard.io/) is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
 
-You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
-
-In order to use dropwizaed in comsat environment, only few changes have to be made in the application declartion.
+In order to use dropwizaed in a Comsat environment, only few changes have to be made in the application declartion.
 First the yaml configuration file:
 
 ~~~ yaml
@@ -390,7 +402,7 @@ Now we can move to the code declaratations:
 ~~~ java
 {% include_snippet app ./comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java %}
 ~~~
-Instead of extending the regular `io.dropwizard.Application` class, you should extend the comsat's `FiberApplication`. Your regular `run` function should be slightly changed to be called `fiberRun`. The creation of httpClient should be done using the `FiberHttpClientBuilder` class and the creation of `jdbi` should be done using the `FiberDBIFactory` class.
+Instead of extending the regular `io.dropwizard.Application` class, you should extend the Comsat's `FiberApplication`. Your regular `run` function should be slightly changed to be called `fiberRun`. The creation of httpClient should be done using the `FiberHttpClientBuilder` class and the creation of `jdbi` should be done using the `FiberDBIFactory` class.
 
 ## Web Actors
 
