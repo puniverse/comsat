@@ -1,5 +1,7 @@
 apply plugin: 'war' 
 
+uploadArchives.enabled = false
+
 dependencies {    
     compile project(':comsat-servlet')
 }
