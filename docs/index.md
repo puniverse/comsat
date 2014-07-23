@@ -70,11 +70,11 @@ where `ARTIFACT` is:
 * `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
 * `comsat-jax-rs-client` – [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for calling HTTP services.
 * `comsat-httpclient` – [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for calling HTTP services.
-* `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration for calling HTTP services through nice interfaces.
+* `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration.
 * `comsat-jdbi` – [JDBI](http://jdbi.org/) integration for using the JDBI API in fibers.
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
 * `comsat-jooq` – [jOOQ](http://www.jooq.org/) integration for using the jOOQ API in fibers.
-* `comsat-mongodb-allanbanks` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
+* `comsat-mongodb-allanbank` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
