@@ -7,7 +7,7 @@ import retrofit.RestAdapter;
 import retrofit.client.ApacheClient;
 import retrofit.client.Client;
 
-public class FiberRestAdaptherBuilder extends RestAdapter.Builder {
+public class FiberRestAdapterBuilder extends RestAdapter.Builder {
     private HttpClient httpClient;
 
     @Override

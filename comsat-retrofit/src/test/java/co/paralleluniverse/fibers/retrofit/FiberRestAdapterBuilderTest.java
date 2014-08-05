@@ -31,7 +31,7 @@ import org.junit.rules.Timeout;
 import retrofit.http.GET;
 import retrofit.http.Path;
 
-public class FiberRestAdaptherBuilderTest {
+public class FiberRestAdapterBuilderTest {
     @BeforeClass
     public static void setUpClass() throws InterruptedException, IOException {
         Thread t = new Thread(new Runnable() {
@@ -51,7 +51,7 @@ public class FiberRestAdaptherBuilderTest {
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
         // snippet registration
-        final MyGitHub github = new FiberRestAdaptherBuilder().setEndpoint("http://localhost:8080").build().create(MyGitHub.class);
+        final MyGitHub github = new FiberRestAdapterBuilder().setEndpoint("http://localhost:8080").build().create(MyGitHub.class);
         // end of snippet
         new Fiber<Void>(new SuspendableRunnable() {
             @Override
