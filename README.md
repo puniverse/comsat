@@ -1,4 +1,4 @@
-# COMSAT [![Build Status](https://travis-ci.org/puniverse/comsat.svg?branch=master)](https://travis-ci.org/puniverse/comsat) [![Dependency Status](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f/badge.png)](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f)<br/>Scalable, Concurrent Web Apps
+# COMSAT [![Build Status](http://img.shields.io/travis/puniverse/comsat.svg?style=flat)](https://travis-ci.org/puniverse/comsat) [![Dependency Status](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f/badge.png?style=flat)](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f) [![Version](http://img.shields.io/badge/version-0.2.0-blue.svg?style=flat)](https://github.com/puniverse/comsat/releases) [![License](http://img.shields.io/badge/license-ECLIPSE-blue.svg?style=flat)](https://www.eclipse.org/legal/epl-v10.html) [![License](http://img.shields.io/badge/license-LGPL-blue.svg?style=flat)](https://www.gnu.org/licenses/lgpl.html)<br/>Scalable, Concurrent Web Apps
 
 
 ## Getting started
