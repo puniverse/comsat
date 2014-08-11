@@ -1,4 +1,4 @@
-# COMSAT [![Build Status](https://travis-ci.org/puniverse/comsat.png?branch=master)](https://travis-ci.org/puniverse/comsat) [![Dependency Status](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f/badge.png)](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f)<br/>Scalable, Concurrent Web Apps
+# COMSAT [![Build Status](https://travis-ci.org/puniverse/comsat.svg?branch=master)](https://travis-ci.org/puniverse/comsat) [![Dependency Status](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f/badge.png)](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f)<br/>Scalable, Concurrent Web Apps
 
 
 ## Getting started
