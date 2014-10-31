@@ -138,7 +138,7 @@
 
 <h3 id="july-23-2014">July 23,&nbsp;2014</h3>
 
-<p>Comsat [<span class="caps">0.2.0</span>](https://github.com/puniverse/comsat/releases/tag/v<span class="caps">0.2.0</span> has been&nbsp;released.</p>
+<p><span class="caps">COMSAT</span> <a href="https://github.com/puniverse/comsat/releases/tag/v0.2.0"><span class="caps">0.2.0</span></a> has been&nbsp;released.</p>
 
 <h3 id="january-22-2014">January 22,&nbsp;2014</h3>
 
@@ -386,9 +386,9 @@ For&nbsp;example:</p>
 </span><span id="line-4">    <span class="n">List</span><span class="o">&lt;</span><span class="n">Contributor</span><span class="o">&gt;</span> <span class="nf">contributors</span><span class="o">(</span><span class="nd">@Path</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">&quot;owner&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">owner</span><span class="o">,</span> <span class="nd">@Path</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">&quot;repo&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">repo</span><span class="o">);</span>
 </span><span id="line-5"><span class="o">}</span>
 </span></code></pre></div>
-<p>This interface can be registered with <code>FiberRestAdaptherBuilder</code> and then used from fiber&nbsp;context.</p>
+<p>This interface can be registered with <code>FiberRestAdapterBuilder</code> and then used from fiber&nbsp;context.</p>
 
-<div class="highlight"><pre><code><span id="line-1"><span class="kd">final</span> <span class="n">MyGitHub</span> <span class="n">github</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">FiberRestAdaptherBuilder</span><span class="o">().</span><span class="na">setEndpoint</span><span class="o">(</span><span class="s">&quot;http://localhost:8080&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">().</span><span class="na">create</span><span class="o">(</span><span class="n">MyGitHub</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<div class="highlight"><pre><code><span id="line-1"><span class="kd">final</span> <span class="n">MyGitHub</span> <span class="n">github</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">FiberRestAdapterBuilder</span><span class="o">().</span><span class="na">setEndpoint</span><span class="o">(</span><span class="s">&quot;http://localhost:8080&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">().</span><span class="na">create</span><span class="o">(</span><span class="n">MyGitHub</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </span><span id="line-2"><span class="c1">// ...</span>
 </span><span id="line-3"><span class="c1">// usage from fiber context</span>
 </span><span id="line-4"><span class="n">List</span><span class="o">&lt;</span><span class="n">Contributor</span><span class="o">&gt;</span> <span class="n">contributors</span> <span class="o">=</span> <span class="n">github</span><span class="o">.</span><span class="na">contributors</span><span class="o">(</span><span class="s">&quot;puniverse&quot;</span><span class="o">,</span> <span class="s">&quot;comsat&quot;</span><span class="o">);</span>
