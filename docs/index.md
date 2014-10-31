@@ -18,7 +18,7 @@ Comsat does provide one new API that you may choose to use: [Web Actors](manual/
 
 ### July 23, 2014
 
-Comsat [0.2.0](https://github.com/puniverse/comsat/releases/tag/v0.2.0 has been released.
+COMSAT [0.2.0](https://github.com/puniverse/comsat/releases/tag/v0.2.0) has been released.
 
 ### January 22, 2014
 
