@@ -18,7 +18,7 @@ Comsat does provide one new API that you may choose to use: [Web Actors](manual/
 
 ### July 23, 2014
 
-Comsat [0.2.0](https://github.com/puniverse/comsat/releases/tag/v0.2.0 has been released.
+COMSAT [0.2.0](https://github.com/puniverse/comsat/releases/tag/v0.2.0) has been released.
 
 ### January 22, 2014
 
@@ -264,15 +264,15 @@ Calling `Future.get()` would also just block the fiber and not any OS thread.
 [`Retrofit`](http://square.github.io/retrofit/) lets you access REST api through java interface. In order to use it from fiber context you should first declare `Suspendable` interface:
 
 ~~~ java
-{% include_snippet interface ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdaptherBuilderTest.java %}
+{% include_snippet interface ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}
 ~~~
 
-This interface can be registered with `FiberRestAdaptherBuilder` and then used from fiber context.
+This interface can be registered with `FiberRestAdapterBuilder` and then used from fiber context.
 
 ~~~ java
-{% include_snippet registration ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdaptherBuilderTest.java %}// ...
+{% include_snippet registration ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}// ...
 // usage from fiber context
-{% include_snippet usage ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdaptherBuilderTest.java %}
+{% include_snippet usage ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}
 ~~~
 
 ### DB Access
