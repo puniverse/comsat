@@ -305,6 +305,7 @@ project (':comsat-retrofit') {
         compile project (':comsat-httpclient')
         testCompile (project (':comsat-dropwizard')) {
             exclude group: 'org.jboss.logging', module: 'jboss-logging'
+            exclude group: 'org.apache.httpcomponents', module: 'httpclient' 
         }
         testCompile (project(':comsat-test-utils')) {
             exclude group: 'org.eclipse.jetty', module: '*' 
