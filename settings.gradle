@@ -16,6 +16,7 @@ include 'comsat-jax-rs-client'
 include 'comsat-mongodb-allanbank'
 include 'comsat-test-utils'
 include 'comsat-test-war'
+include 'comsat-spring-web'
 
 if (System.properties['java.version'].startsWith('1.8') ) { 
     include 'comsat-tomcat-loader-jdk8'

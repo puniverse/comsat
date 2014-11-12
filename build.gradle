@@ -15,7 +15,9 @@ allprojects {
 subprojects {
     apply plugin: 'java'
 
-    sourceCompatibility = '1.7'
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+    
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
@@ -33,7 +35,7 @@ subprojects {
     ext.distDir         = "$buildDir/dist"
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-    ext.quasarVer       = "0.6.0"
+    ext.quasarVer       = "0.6.2-SNAPSHOT"
     ext.jettyVersion    = '9.2.1.v20140609'
     ext.undertowVersion = '1.1.0.Beta5'
     ext.tomcatVersion   = '8.0.9'
@@ -57,6 +59,8 @@ subprojects {
     
     ext.mongodbJavaAsyncDriverVersion   = '2.0.0'
     ext.embedMongoVersion               = '1.46.0'
+    
+    ext.springWebMVCVersion                = '4.1.2.RELEASE'
 
     configurations.all {
         resolutionStrategy {
@@ -319,6 +323,13 @@ project (':comsat-retrofit') {
 project (':comsat-servlet') {
     dependencies {
         testCompile project(':comsat-test-utils')
+    }
+}
+
+project (':comsat-spring-web') {
+    dependencies {
+        compile "org.springframework:spring-webmvc:$springWebMVCVersion"
+        compile project(':comsat-servlet')
     }
 }
 
