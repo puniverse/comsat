@@ -59,7 +59,7 @@ public class TomcatLoaderTest {
         registerDB(tomcat, "jdbc/globalds", "org.h2.Driver", "jdbc:h2:./build/h2testdb");
         tomcat.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
-                .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
+                .setSocketTimeout(10000).setConnectTimeout(10000).setConnectionRequestTimeout(10000)
                 .build()).build();
     }
 
