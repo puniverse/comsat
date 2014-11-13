@@ -84,7 +84,7 @@ public class AsyncClientBuilderTest {
                     cdl.countDown();
                 }
             }).start();
-        cdl.await(2000, TimeUnit.MILLISECONDS);
+        cdl.await(4000, TimeUnit.MILLISECONDS);
         
         assertEquals(0, cdl.getCount());
         ThreadUtil.dumpThreads();

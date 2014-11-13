@@ -38,6 +38,7 @@ subprojects {
     ext.undertowVersion = '1.1.0.Beta5'
     ext.tomcatVersion   = '8.0.9'
 
+    ext.osgiVersion     = '6.0.0'
     ext.jerseyVersion   = '2.10.1'
     ext.jerseyJettyVersion = '9.1.1.v20140108'
 
@@ -64,6 +65,7 @@ subprojects {
         resolutionStrategy {
             failOnVersionConflict()
             force "org.ow2.asm:asm:5.0.3"
+            force "org.ow2.asm:asm-commons:5.0.3"
             force 'com.codahale.metrics:metrics-core:3.0.2'
             force "com.google.guava:guava:$guavaVersion"
             force "org.slf4j:slf4j-api:$slf4jApiVer"
@@ -281,6 +283,7 @@ project (':comsat-jersey-server') {
         compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion" ) {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
+        provided "org.osgi:org.osgi.core:$osgiVersion"
         testCompile project(':comsat-test-utils')
     }
 }
