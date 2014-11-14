@@ -1,6 +1,0 @@
-* Finish replacing HttpServletBean (and chain reaction)
-* Replace FrameworkServlet (and chain reaction)
-* Replace DispatcherSevlet (and chain reaction)
-* Replace ResourceServlet (and chain reaction)
-* Other servlets to be replaced?
-* Test (trying to reuse existing Spring ones as much as possible
