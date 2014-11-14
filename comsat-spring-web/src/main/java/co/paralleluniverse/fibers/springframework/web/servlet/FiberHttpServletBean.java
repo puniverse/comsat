@@ -43,8 +43,6 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.support.ServletContextResourceLoader;
 
-// TODO circlespainter: finish replacement according to general scheme
-
 /**
  * Rewriting of {@link HttpServletBean} implementing the extended {@link FiberHttpServlet} fiber-blocking servlet interface 
  *
@@ -56,10 +54,9 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     private final FiberHttpServletBeanProtectedWrapper httpServletBeanProtectedWrapper;
 
     /**
-     * Wrapping constructor.
+     * Rule a: wrapping constructor only as this class is abstract and not a full replica
      * 
-     * @param httpServletBean The wrapped instance. Runtime type will need to be a concrete subclass overriding all non-final methods
-     *                         that have been redefined here in order to forward the call.
+     * @param httpServletBean The wrapped instance
      */
     public FiberHttpServletBean(HttpServletBean httpServletBean) {
         this.httpServletBean = httpServletBean;
@@ -71,7 +68,7 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     ////////////////////////////////////////////
 
     /**
-     * See {@link HttpServletBean#getEnvironment()}
+     * Proxy for {@link HttpServletBean#getEnvironment()}
      */
     @Override
     public ConfigurableEnvironment getEnvironment() {
@@ -79,7 +76,7 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     }
 
     /**
-     * See {@link HttpServletBean#setEnvironment(org.springframework.core.env.Environment)}
+     * Proxy for {@link HttpServletBean#setEnvironment(org.springframework.core.env.Environment)}
      */
     @Override
     public void setEnvironment(Environment environment) {
@@ -91,34 +88,30 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     ///////////////////////////////////////////////
 
     /**
-     * See {@link HttpServletBean#createEnvironment()}
+     * Proxy for {@link HttpServletBean#createEnvironment()}
      */
     protected ConfigurableEnvironment createEnvironment() {
         return httpServletBeanProtectedWrapper.createEnvironment();
     }
 
     ///////////////////////////////////////////////////////////
-    // Rewriting public interface below this point;
+    // Rewriting public features below this point;
     // adapted from HttpServletBean, © and Apache License apply
     ///////////////////////////////////////////////////////////
 
     /**
-     * Overridden method that simply returns {@code null} when no ServletConfig set yet.
-     * 
-     * @see #getServletConfig()
+     * Exact replica of {@link HttpServletBean#getServletContext()}
      */
-    // Rewriting in order to mirror logic but add same time letting the Fiber-enabled context be returned (rule 1)
+    // Rule 1: rewriting in order to mirror logic but add same time letting the Fiber-enabled context be returned
     @Override
     public final ServletContext getServletContext() {
         return (getServletConfig() != null ? getServletConfig().getServletContext() : null);
     }
 
     /**
-     * Overridden method that simply returns {@code null} when no ServletConfig set yet.
-     *
-     * @see #getServletConfig()
+     * Exact replica of {@link HttpServletBean#getServletName()}
      */
-    // Rewriting in order to mirror logic but add same time letting this very servlet name from this very fiber-enabled servlet config be returned  (rule 1)
+    // Rule 1: rewriting in order to mirror logic but add same time letting this very servlet name from this very fiber-enabled servlet config be returned
     @Override
     public final String getServletName() {
 	return (getServletConfig() != null ? getServletConfig().getServletName() : null);
@@ -129,16 +122,14 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     // adapted from HttpServletBean, © and Apache License apply
     ///////////////////////////////////////////////////////////
 
-    /** Logger available to subclasses */
-    // Rewriting because logging must cite this class, not the original one (rule 1)
+    /** Exact replica of {@link HttpServletBean#logger} */
+    // Rule 1: rewriting because logging must cite this class, not the original one
     protected final Log logger = LogFactory.getLog(getClass());
 
     /**
-     * Map config parameters onto bean properties of this servlet, and invoke subclass initialization.
-     *
-     * @throws ServletException if bean properties are invalid (or required properties are missing), or if subclass initialization fails.
+     * Exact replica of {@link HttpServletBean#init()}
      */
-    // Rewriting because it depends on reimplemented `logger` (rule 2)
+    // Rule 2: rewriting because it depends on reimplemented `logger`
     @Override
     public final void init() throws ServletException {
 	if (logger.isDebugEnabled()) {
@@ -168,36 +159,23 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     }
 
     /**
-     * Proxying access to protected {@link FiberHttpServletBean#addRequiredPropertyProxy}
+     * Exact replica of {@link HttpServletBean#addRequiredProperty(java.lang.String)}
      */
-    // Rewriting because it depends on rewritten `requiredProperties` (rule 2)
+    // Rule 2: rewriting because it depends on rewritten `requiredProperties`
     protected final void addRequiredProperty(String property) {
         this.requiredProperties.add(property);
     }
 
     /**
-     * Subclasses may override this to perform custom initialization.
-     * All bean properties of this servlet will have been set before this
-     * method is invoked.
-     * <p>
-     * This default implementation is empty.
-     *
-     * @throws ServletException if subclass initialization fails
+     * Exact replica of {@link HttpServletBean#addRequiredProperty(java.lang.String)}
      */
-    // Rewriting just because it's less code than proxying (empty original method, rule 0)
+    // Rule 0: rewriting just because it's less code than proxying (empty original method)
     protected void initServletBean() throws ServletException {}
 
     /**
-     * Initialize the BeanWrapper for this FiberHttpServletBean,
-     * possibly with custom editors.
-     * <p>
-     * This default implementation is empty.
-     *
-     * @param bw the BeanWrapper to initialize
-     * @throws BeansException if thrown by BeanWrapper methods
-     * @see org.springframework.beans.BeanWrapper#registerCustomEditor
+     * Exact replica of {@link HttpServletBean#initBeanWrapper(org.springframework.beans.BeanWrapper)}
      */
-    // Rewriting just because it's less code than proxying (empty original method, rule 0)
+    // Rule 0: rewriting just because it's less code than proxying (empty original method)
     protected void initBeanWrapper(BeanWrapper bw) throws BeansException {}
 
     ///////////////////////////////////////////////////////////
@@ -205,10 +183,16 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     // adapted from HttpServletBean, © and Apache License apply
     ///////////////////////////////////////////////////////////
     
-    // Rewriting because rewritten `init` depends on it (rule 3)
+    /**
+     * Exact replica of {@link HttpServletBean#requiredProperties}
+     */
+    // Rule 3: rewriting because rewritten `init` depends on it
     private final Set<String> requiredProperties = new HashSet<>();
 
-    // Rewriting because rewritten `init` depends on it (rule 3)
+    /**
+     * Exact replica of {@link HttpServletBean.ServletConfigPropertyValues}
+     */
+    // Rule 3: rewriting because rewritten `init` depends on it
     private static class ServletConfigPropertyValues extends MutablePropertyValues {
         public ServletConfigPropertyValues(ServletConfig config, Set<String> requiredProperties)
                 throws ServletException {
