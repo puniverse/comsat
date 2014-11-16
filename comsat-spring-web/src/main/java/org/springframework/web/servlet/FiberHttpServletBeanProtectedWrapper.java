@@ -17,7 +17,6 @@ package org.springframework.web.servlet;
  
 import org.springframework.core.env.ConfigurableEnvironment;
 
-
 /**
  * {@link HttpServletBean} wrapper in the same package, publishing access to its protected members for call proxying by the Comsat integration module
  * 
@@ -36,14 +35,14 @@ public final class FiberHttpServletBeanProtectedWrapper {
     }
     
     /**
-     * Proxying access to protected {@link HttpServletBean#addRequiredPropertyProxy}
+     * Proxy for {@link HttpServletBean#addRequiredProperty(java.lang.String)}
      */
-    public final void addRequiredPropertyProxy(String property) {
+    public final void addRequiredProperty(String property) {
         httpServletBean.addRequiredProperty(property);
     }
     
     /**
-     * Proxying access to protected {@link HttpServletBean#createEnvironment}
+     * Proxy for {@link HttpServletBean#createEnvironment()}
      */
     public final ConfigurableEnvironment createEnvironment() {
         return httpServletBean.createEnvironment();

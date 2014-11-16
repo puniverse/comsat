@@ -1,5 +1,7 @@
-Mimicking Java APIs with best compromise between maximal fidelity and maximal implementation reuse
-==================================================================================================
+The following reasonings are largerly mechanic, so they could be automated and packaged into an assisted integration tool.
+
+Mimicking Java APIs (compromising between maximum fidelity and maximum implementation reuse)
+============================================================================================
 
 In Comsat, the goal of mimicking an API (or hierarchy) is to provide an as-smooth-as-possible API porting path from thread-blocking to fiber-blocking.
 One particular case of API mimicking is when it has to be carried out for a whole class hierarchy because the original API is class-based (as opposed to interface-based) and Java is a
@@ -24,10 +26,12 @@ Need for rewriting
 
 A feature in `O` _needs to be rewritten_ in `R` iff at least one of the following conditions is met:
 
-0. It is better to rewrite it because proxying it requires more code and no additionl rewriting is implied
 1. It must be changed because the old implementation is inadequate
 2. It depends on features of `O` that have been rewritten in `R` and it's not possible to _forward_ its access to them; _forwarding_ is defined later on
 3. Features already rewritten in `R` depend on it and can't _access_ it, not even through an intermediate _proxy_; _access_ is defined later on
+4. It doesn't strictly _needs_ to be rewritten but is better to do so for practical reasons, for example:
+   * Because _proxying_ or _forwarding it_ would require more code and no additional rewriting is implied
+   * Because rewrite is almost full already and completing it would allow fully mimicking construction API as well (see last section)
 
 Forwarding references
 ---------------------
@@ -70,7 +74,7 @@ Here are some constructor APIs facts:
 
 - Public and package constructors of non-`abstract` classes are part of the user APIs and must be mimicked as well
 - Public constructors of `abstract` classes and protected constructors are part of the extension APIs and must be mimicked as well, at least for non-`final` classes intended to be extension points
-(Java doesn't support closed inheritance hiearchies but such classes could be named "non-closed")
+(Java does nost support closed inheritance hiearchies but such classes could be named "non-closed")
 
 But there are conflicting facts as well:
 
@@ -81,15 +85,16 @@ But there are conflicting facts as well:
 
 Thus, perfect constructor APIs mimicking is possible only when either:
 
-- No forwarding and no proxying is done (which means that full API rewriting is being carried out)
+- No forwarding and no proxying is done (which means that full API rewriting is being performed)
 - The delegation target needs not being an existing instance and can be purposedly built
 
 The latter fact is true only when the class-based API being mimicked is not `abstract`. This means that:
 
-a. `abstract` classes are extension-only APIs. For this reason, `abstract` classes are correspondingly mimicked by other `abstract` classes. If the replicas implementations use proxying or forwarding
+1. `abstract` classes are extension-only APIs. For this reason, `abstract` classes are correspondingly mimicked by other `abstract` classes. If the replicas implementations use proxying or forwarding
 they must be constructed on pre-built delegate instances (they cannot build concrete ones as they are `abstract`, being extension-only APIs). This means they cannot perfectly replicate
-(extension-only) contructor APIs unless they avoid proxying not forwarding, which means they are full rewrites
-This might not a best compromise between mimicking fidelity and reuse, so it might more convenient for them to support only a _wrapping_ construction API
-b. "Open" concrete classes should support both the the original constructor APIs (in case they are _used_ and can build the corresponding mimicked class instance themselves) and a wrapping constructor
+(extension-only) contructor APIs unless they avoid proxying and forwarding (in which case they are full rewrites).
+This might not a best compromise between mimicking fidelity and reuse, so it might more convenient for them to support only a _wrapping_ construction API.
+2. "Open" concrete classes should support both the the original constructor APIs (in case they are _used_ and can build the corresponding mimicked class instance themselves) and a wrapping constructor
 API (in case they are _extended_: this use case is same as the `abstract` case so the same reasoning and policies apply)
-c. "Closed" or `final` concrete classes can't be extended and should only mimick original constructor API
+3. "Closed" or `final` concrete classes can't be extended and should only mimick original constructor API
+4. In case of full rewrite the original constructor API can be mimicked

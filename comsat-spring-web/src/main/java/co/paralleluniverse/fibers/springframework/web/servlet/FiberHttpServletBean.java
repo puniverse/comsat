@@ -54,7 +54,7 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     private final FiberHttpServletBeanProtectedWrapper httpServletBeanProtectedWrapper;
 
     /**
-     * Rule a: wrapping constructor only as this class is abstract and not a full replica
+     * Constructor rule 1: wrapping constructor only as this class is abstract and not a full replica
      * 
      * @param httpServletBean The wrapped instance
      */
@@ -169,13 +169,13 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     /**
      * Exact replica of {@link HttpServletBean#addRequiredProperty(java.lang.String)}
      */
-    // Rule 0: rewriting just because it's less code than proxying (empty original method)
+    // Rule 4: rewriting just because it's less code than proxying (empty original method)
     protected void initServletBean() throws ServletException {}
 
     /**
      * Exact replica of {@link HttpServletBean#initBeanWrapper(org.springframework.beans.BeanWrapper)}
      */
-    // Rule 0: rewriting just because it's less code than proxying (empty original method)
+    // Rule 4: rewriting just because it's less code than proxying (empty original method)
     protected void initBeanWrapper(BeanWrapper bw) throws BeansException {}
 
     ///////////////////////////////////////////////////////////
