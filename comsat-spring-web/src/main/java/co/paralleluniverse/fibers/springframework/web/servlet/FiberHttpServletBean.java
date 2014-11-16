@@ -49,7 +49,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.context.support.ServletContextResourceLoader;
 
 /**
- * Rewriting of {@link HttpServletBean} implementing the extended {@link FiberHttpServlet} fiber-blocking servlet interface 
+ * Mirror of {@link HttpServletBean} implementing the extended {@link FiberHttpServlet} fiber-blocking servlet interface 
  *
  * @author circlespainter
  */
