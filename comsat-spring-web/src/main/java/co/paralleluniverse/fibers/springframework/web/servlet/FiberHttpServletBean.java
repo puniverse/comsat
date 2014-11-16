@@ -11,6 +11,11 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
+/*
+ * Based on org.springframework.web.servlet.FrameworkServlet in Spring Framework Web MVC
+ * Copyright the original authors Rod Johnson and Juergen Hoeller
+ * Released under the ASF 2.0 license.
+ */
 package co.paralleluniverse.fibers.springframework.web.servlet;
 
 import javax.servlet.ServletContext;

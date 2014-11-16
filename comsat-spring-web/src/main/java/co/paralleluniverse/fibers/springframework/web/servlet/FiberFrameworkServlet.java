@@ -11,6 +11,12 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
+/*
+ * Based on org.springframework.web.servlet.FrameworkServlet in Spring Framework Web MVC
+ * Copyright the original authors Rod Johnson, Juergen Hoeller, Sam Brannen,
+ * Chris Beams, Rossen Stoyanchev, Phillip Webb.
+ * Released under the ASF 2.0 license.
+ */
 package co.paralleluniverse.fibers.springframework.web.servlet;
 
 import java.io.IOException;
@@ -53,7 +59,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 
 /**
- * Rewriting of {@link FrameworkServlet} implementing the extended {@link FiberHttpServletBean} fiber-blocking servlet interface
+ * Mirror of {@link FrameworkServlet} implementing the extended {@link FiberHttpServletBean} fiber-blocking servlet interface
  * 
  * @author circlespainter
  */
