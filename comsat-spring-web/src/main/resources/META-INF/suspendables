@@ -6,3 +6,5 @@ org.springframework.web.servlet.FrameworkServlet.doDelete
 org.springframework.web.servlet.FrameworkServlet.doOptions
 org.springframework.web.servlet.FrameworkServlet.doTrace
 org.springframework.web.servlet.FrameworkServlet.processRequest
+org.springframework.web.servlet.DispatcherServlet.doService
+org.springframework.web.servlet.DispatcherServlet.doDispatch
