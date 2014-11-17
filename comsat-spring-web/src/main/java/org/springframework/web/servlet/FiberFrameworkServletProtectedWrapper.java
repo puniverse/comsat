@@ -13,10 +13,13 @@
  */
 package org.springframework.web.servlet;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
+import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.logging.Log;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.i18n.LocaleContext;
@@ -86,6 +89,55 @@ public class FiberFrameworkServletProtectedWrapper {
 
     /** @see FrameworkServlet#createWebApplicationContext(org.springframework.context.ApplicationContext) */
     public WebApplicationContext createWebApplicationContext(ApplicationContext parent) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return frameworkServlet.createWebApplicationContext(parent);
+    }
+
+    /** @see FrameworkServlet#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
+        frameworkServlet.service(request, response);
+    }
+
+    /** @see FrameworkServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
+        frameworkServlet.doGet(request, response);
+    }
+
+    /** @see FrameworkServlet#doPost(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
+        frameworkServlet.doPost(request, response);
+    }
+
+    /** @see FrameworkServlet#doPut(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    public void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
+        frameworkServlet.doPut(request, response);
+    }
+
+    /** @see FrameworkServlet#doDelete(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    public void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
+        frameworkServlet.doDelete(request, response);
+    }
+
+    /** @see FrameworkServlet#doOptions(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    public void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
+        frameworkServlet.doOptions(request, response);
+    }
+
+    /** @see FrameworkServlet#doTrace(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    @Suspendable
+    public void doTrace(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        frameworkServlet.doTrace(request, response);
+    }
+
+    /** @see FrameworkServlet#processRequest(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Proxying is fine, the target method has been added to `suspendables`
+    public void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
+        frameworkServlet.processRequest(request, response);
     }
 }
