@@ -395,7 +395,8 @@ ext.javadocLinks =  [
                 "http://puniverse.github.io/quasar/javadoc/",
                 "http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/",
                 "http://jersey.java.net/apidocs/latest/jersey/",
-                "http://www.allanbank.com/mongodb-async-driver/apidocs/index.html"
+                "http://www.allanbank.com/mongodb-async-driver/apidocs/index.html",
+                "http://docs.spring.io/spring/docs/current/javadoc-api/"
 ]
 
 ext.javadocExcludes = [

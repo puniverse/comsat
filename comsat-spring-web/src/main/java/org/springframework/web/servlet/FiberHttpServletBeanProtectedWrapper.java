@@ -15,6 +15,7 @@ package org.springframework.web.servlet;
 
 // TODO circlespainter: I don't like "patching" the original API's packages like this but it's the only way to delegate to protected members in Java. Maybe better generating this class at runtime.
  
+import org.apache.commons.logging.Log;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 /**
@@ -24,7 +25,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
  */
 public final class FiberHttpServletBeanProtectedWrapper {
     private final HttpServletBean httpServletBean;
-    
+
     /**
      * Wrapping constructor
      * 
@@ -32,18 +33,18 @@ public final class FiberHttpServletBeanProtectedWrapper {
      */
     public FiberHttpServletBeanProtectedWrapper(HttpServletBean httpServletBean) {
         this.httpServletBean = httpServletBean;
+        this.logger = httpServletBean.logger;
     }
-    
-    /**
-     * Proxy for {@link HttpServletBean#addRequiredProperty(java.lang.String)}
-     */
+
+    /** @see FrameworkServlet#logger */
+    public final Log logger;
+
+    /** @see HttpServletBean#addRequiredProperty(java.lang.String) */
     public final void addRequiredProperty(String property) {
         httpServletBean.addRequiredProperty(property);
     }
     
-    /**
-     * Proxy for {@link HttpServletBean#createEnvironment()}
-     */
+    /** @see HttpServletBean#createEnvironment()} */
     public final ConfigurableEnvironment createEnvironment() {
         return httpServletBean.createEnvironment();
     }

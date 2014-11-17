@@ -18,20 +18,20 @@ Let `R` mirroring `O` be as follows:
 
 ...where it is safe to assume that `RB` already mirrors `OB` (else the following reasoning can recursively be applied up-hierarchy until a common ancestor is reached).
 
-In order to mirror a class', its body must be mirrored. Mirroring means either _proxying_ or _rewriting_ all non-private _features_ (with preference for proxying when possible, as it's
+In order to mirror a class', its body must be mirrored. Mirroring means either _proxying_ or _re-implementing_ all non-private _features_ (with preference for proxying when possible, as it's
 generally less expensive). Class features are _fields_, _methods_ and _inner classes_.
 
-Need for rewriting
-------------------
+Need for re-implementing
+------------------------
 
-A feature in `O` _needs to be rewritten_ in `R` iff at least one of the following conditions is met:
+A feature in `O` _needs to be re-implemented_ in `R` iff at least one of the following conditions is met:
 
 1. It must be changed because the old implementation is inadequate
-2. It depends on features of `O` that have been rewritten in `R` and it's not possible to _forward_ its access to them; _forwarding_ is defined later on
-3. Features already rewritten in `R` depend on it and can't _access_ it, not even through an intermediate _proxy_; _access_ is defined later on
-4. It doesn't strictly _needs_ to be rewritten but is better to do so for practical reasons, for example:
-   * Because _proxying_ or _forwarding it_ would require more code and no additional rewriting is implied
-   * Because rewrite is almost full already and completing it would allow fully mirroring construction API as well (see last section)
+2. It depends on features of `O` that have been re-implemented in `R` and it's not possible to _forward_ its access to them; _forwarding_ is defined later on
+3. Features already re-implemented in `R` depend on it and can't _access_ it, not even through an intermediate _proxy_; _access_ is defined later on
+4. It doesn't strictly _needs_ to be re-implemented but is better to do so for practical reasons, for example:
+   * Because _proxying_ or _forwarding it_ would require more code and no additional re-implementation is implied
+   * Because re-implementation is almost full already and completing it would allow fully mirroring construction API as well (see last section)
 
 Forwarding references
 ---------------------
@@ -83,16 +83,16 @@ But there are conflicting facts as well:
 
 Thus, perfect constructor APIs mirroring is possible only when either:
 
-- No forwarding and no proxying is done (which means that full API rewriting is being performed)
+- No forwarding and no proxying is done (which means that full API re-implementation is being performed)
 - The delegation target needs not being an existing instance and can be purposedly built
 
 The latter fact is true only when the class-based API being mirored is not `abstract`. This means that:
 
 1. `abstract` classes are extension-only APIs. For this reason, `abstract` classes are correspondingly mirrored by other `abstract` classes. If the replicas implementations use proxying or forwarding
 they must be constructed on pre-built delegate instances (they cannot build concrete ones as they are `abstract`, being extension-only APIs). This means they cannot perfectly replicate
-(extension-only) contructor APIs unless they avoid proxying and forwarding (in which case they are full rewrites).
+(extension-only) contructor APIs unless they avoid proxying and forwarding (in which case they are full re-implementations).
 This might not a best compromise between mirroring fidelity and reuse, so it might more convenient for them to support only a _wrapping_ construction API.
 2. "Open" concrete classes should support both the the original constructor APIs (in case they are _used_ and can build the corresponding mirrored class instance themselves) and a wrapping constructor
 API (in case they are _extended_: this use case is same as the `abstract` case so the same reasoning and policies apply)
 3. "Closed" or `final` concrete classes can't be extended and should only mirror original constructor API
-4. In case of full rewrite the original constructor API can be mirrored
+4. In case of full re-implementation the original constructor API can be mirrored
