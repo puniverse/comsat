@@ -8,3 +8,16 @@ org.springframework.web.servlet.FrameworkServlet.doTrace
 org.springframework.web.servlet.FrameworkServlet.processRequest
 org.springframework.web.servlet.DispatcherServlet.doService
 org.springframework.web.servlet.DispatcherServlet.doDispatch
+org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter.handle
+org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter.invokeHandlerMethod
+org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter.ServletHandlerMethodInvoker.invokeHandlerMethod
+org.springframework.web.bind.annotation.support.HandlerMethodInvoker.invokeHandlerMethod
+org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter.handle
+org.springframework.web.servlet.AbstractHandlerMethodAdapter.handle
+org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal
+org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandleMethod
+org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle
+org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest
+org.springframework.web.method.support.InvocableHandlerMethod.invoke
+org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.handle
+org.springframework.web.servlet.handler.SimpleServletHandlerAdapter.handle

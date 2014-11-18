@@ -1,1 +1,2 @@
 org.springframework.web.servlet.HandlerAdapter.handle
+org.springframework.web.servlet.AbstractHandlerMethodAdapter.handleInternal
