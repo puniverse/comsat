@@ -10,13 +10,21 @@ Goals
 TODO
 ----
 
+- Currently not working because (at least) of:
+  - Recycled class impls. using super-impls., provide forwarding subclasses (or perhaps better cglib-based subclass-generating facilities)
+  - Spring controller instrumentation call path blocker:
+```
+[quasar] ERROR: while transforming org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter: Unable to instrument org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter#handleInternal(Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;Lorg/springframework/web/method/HandlerMethod;)Lorg/springframework/web/servlet/ModelAndView; because of synchronization
+```
 - Autoconfigure Quasar-classloader-empowered Tomcat and Jetty containers (i.e. write FiberEmbeddedServletContainerAutoConfiguration,
   FiberTomcatEmbeddedServletContainerFactory, FiberJettyEmbeddedServletContainerFactory reusing as much as possible existing ones)
   - Support both JDK7 and JDK8
-- Test (trying to reuse existing Spring & Spring Boot ones as much as possible)
-- Mirrored protected API can be useful to use in subclasses but can be tricky to override as it could require forwarding (when it's referenced in the original
-  class) and it's not apparent when there's such a need; it could be better to hide the parts requiring forwarding, to implement it in advance or at least
-  document such a need in the JavaDocs, especially if subclassing is not going to be common. Think about it.
+- Automatic testsuite (try to reuse existing Spring & Spring Boot ones as much as possible)
+
+SIDE TODO
+---------
+
+- [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
 
 Maybe first release
 ===================
