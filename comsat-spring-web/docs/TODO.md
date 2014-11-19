@@ -5,14 +5,18 @@ Goals
 -----
 
 - Fiber-blocking Spring controllers support
+- Spring Boot integration: auto-configuring Comsat's fiber-enabled Spring Web MVC integration (instead of standard Spring Web MVC)
 
 TODO
 ----
 
-- Test (trying to reuse existing Spring ones as much as possible)
-- Mirrored protected API can be useful to use in subclasses but can be tricky to override as it could require forwarding (when it's referenced in the original class) and it's not apparent when there's
-  such a need; it could be better to hide the parts requiring forwarding, to implement it in advance or at least document such a need in the JavaDocs, especially if subclassing is not going to be
-  common. Think about it.
+- Autoconfigure Quasar-classloader-empowered Tomcat and Jetty containers (i.e. write FiberEmbeddedServletContainerAutoConfiguration,
+  FiberTomcatEmbeddedServletContainerFactory, FiberJettyEmbeddedServletContainerFactory reusing as much as possible existing ones)
+  - Support both JDK7 and JDK8
+- Test (trying to reuse existing Spring & Spring Boot ones as much as possible)
+- Mirrored protected API can be useful to use in subclasses but can be tricky to override as it could require forwarding (when it's referenced in the original
+  class) and it's not apparent when there's such a need; it could be better to hide the parts requiring forwarding, to implement it in advance or at least
+  document such a need in the JavaDocs, especially if subclassing is not going to be common. Think about it.
 
 Maybe first release
 ===================
@@ -23,7 +27,8 @@ TODO
 - Fiber-blocking Spring standalone (Tomcat-based) web app
 
 - Evaluate dynamic code generation strategies
-  - Doesn't seem very useful for the main servlets hierarchy as those are container-called classes (so there must be static, named ones for the "configuration file" use case)
+  - Doesn't seem very useful for the main servlets hierarchy as those are container-called classes (so there must be static, named ones for the "configuration
+    file" use case)
   - Protected proxies are currently static classes in Spring packages: 4.1.2 jars are not sealed but in future...
   - Impls
     - Java provides interface-based proxies to a provided instance and can only proxy public methods
@@ -32,7 +37,8 @@ TODO
       - Very used, github but little docs, runs on ASM
       - Useful for forwarding
       - Less useful for protected methods proxying
-        - But ideal would by "mirroring" wrapping proxy generation in the same package (runtime class generation doesn't even need to cope with jar sealing, unlike static classes)
+        - But ideal would by "mirroring" wrapping proxy generation in the same package (runtime class generation doesn't even need to cope with jar sealing,
+          unlike static classes)
     - Javassist provides source- and bytecode-level APIs for class generation and modification
       - Homey website, Japanese author, seems maintained on github by JBoss
       - Source-level API has limitations (the library seems to include some partial compiler in order to support it)
@@ -50,7 +56,8 @@ Possible Goals
 --------------
 
 - Fiber-blocking multipart support (could be as easy as adding few suspendables)
-- Fiber-blocking support for other (related) frameworks (like Spring Web Flow? Could be as easy as adding few suspendables)
+- Fiber-blocking support for other (related) frameworks (like Spring Web Flow? Could be as easy as adding few suspendables; Spring-WS requires some work for
+  MessageDispatcherServlet and other machinery)
 - Fiber-blocking resource serving (by adapting `ResourceServlet`)
 - Fiber-blocking view rendering (adapting `View` impls., including tiles?)
 - Fiber-blocking support for non-servlet APIs? (portlet, ...)

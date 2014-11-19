@@ -140,9 +140,6 @@ public class FiberDispatcherServlet extends FiberFrameworkServlet {
     /** @see DispatcherServlet#FLASH_MAP_MANAGER_ATTRIBUTE */
     public static final String FLASH_MAP_MANAGER_ATTRIBUTE = DispatcherServlet.FLASH_MAP_MANAGER_ATTRIBUTE;
 
-    /** @see DispatcherServlet#EXCEPTION_ATTRIBUTE */
-    public static final String EXCEPTION_ATTRIBUTE = DispatcherServlet.EXCEPTION_ATTRIBUTE;
-
     /** @see DispatcherServlet#PAGE_NOT_FOUND_LOG_CATEGORY */
     public static final String PAGE_NOT_FOUND_LOG_CATEGORY = DispatcherServlet.PAGE_NOT_FOUND_LOG_CATEGORY;
 
