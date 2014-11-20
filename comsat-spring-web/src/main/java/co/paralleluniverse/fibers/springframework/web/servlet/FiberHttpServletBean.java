@@ -18,6 +18,7 @@
  */
 package co.paralleluniverse.fibers.springframework.web.servlet;
 
+import co.paralleluniverse.fibers.SuspendExecution;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
@@ -31,6 +32,9 @@ import org.springframework.web.servlet.HttpServletBean;
 import org.springframework.web.servlet.FiberHttpServletBeanProtectedWrapper;
 
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
+import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 
@@ -114,11 +118,23 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     // derived from HttpServletBean, relevant copyright and licences apply
     //////////////////////////////////////////////////////////////////////
 
-    /** @see HttpServletBean#addRequiredProperty(java.lang.String) */
+    /** @see HttpServletBean#initServletBean(java.lang.String) */
     // Rule 4: re-implementing just because it's less code than proxying (empty original method)
     protected void initServletBean() throws ServletException {}
 
     /** @see HttpServletBean#initBeanWrapper(org.springframework.beans.BeanWrapper)} */
     // Rule 4: re-implementing just because it's less code than proxying (empty original method)
     protected void initBeanWrapper(BeanWrapper bw) throws BeansException {}
+    
+    // TODO circlespainter: comment & JavaDocs (opening access to `DispatcherServletForwarder`)
+    @Override
+    public void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
+        super.doHead(req, resp); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    // TODO circlespainter: comment & JavaDocs (opening access to `DispatcherServletForwarder`)
+    @Override
+    public long getLastModified(HttpServletRequest req) {
+        return super.getLastModified(req); //To change body of generated methods, choose Tools | Templates.
+    }
 }

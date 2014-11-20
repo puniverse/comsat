@@ -39,7 +39,7 @@ import org.springframework.context.annotation.Bean;
 
 
 /**
- * Spring Web MVC FiberDispatcherServlet auto-configuration (whichenables fiber-blocking controllers);
+ * Spring Web MVC FiberDispatcherServlet auto-configuration (which enables fiber-blocking controllers);
  * higher priority than normal Spring Web MVC {@link org.springframework.web.servlet.DispatcherServlet}.
  * 
  * @see WebMvcAutoConfiguration

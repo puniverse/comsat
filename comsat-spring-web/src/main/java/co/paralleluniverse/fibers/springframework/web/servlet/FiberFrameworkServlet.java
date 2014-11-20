@@ -40,6 +40,9 @@ import org.springframework.web.servlet.FrameworkServlet;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
+import javax.servlet.http.HttpServletResponseWrapper;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * Equivalent of {@link FrameworkServlet} extending the fiber-blocking {@link FiberHttpServletBean}
@@ -89,16 +92,6 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
     /** @see FiberFrameworkServlet#setPublishEvents(boolean) */
     public void setPublishEvents(boolean publishEvents) {
         frameworkServlet.setPublishEvents(publishEvents);
-    }
-
-    /** @see FiberFrameworkServlet#dispatchOptionsRequest(boolean) */
-    public void setDispatchOptionsRequest(boolean dispatchOptionsRequest) {
-        frameworkServlet.setDispatchOptionsRequest(dispatchOptionsRequest);
-    }
-
-    /** @see FiberFrameworkServlet#dispatchTraceRequest(boolean) */
-    public void setDispatchTraceRequest(boolean dispatchTraceRequest) {
-        frameworkServlet.setDispatchOptionsRequest(dispatchTraceRequest);
     }
 
     /** @see FrameworkServlet#setContextAttribute(java.lang.String) */
@@ -243,12 +236,6 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
         return fiberFrameworkServletProtectedWrapper.createWebApplicationContext(parent);
     }
 
-    /** @see FiberFrameworkServletProtectedWrapper#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
-    @Override
-    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
-        fiberFrameworkServletProtectedWrapper.service(request, response);
-    }
-
     /** @see FiberFrameworkServletProtectedWrapper#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
     @Override
     protected final void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
@@ -273,24 +260,24 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
         fiberFrameworkServletProtectedWrapper.doDelete(request, response);
     }
 
-    /** @see FiberFrameworkServletProtectedWrapper#doOptions(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
-    @Override
-    protected void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
-        fiberFrameworkServletProtectedWrapper.doOptions(request, response);
-    }
-
-    /** @see FiberFrameworkServletProtectedWrapper#doTrace(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
-    @Override
-    @Suspendable
-    protected void doTrace(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        fiberFrameworkServletProtectedWrapper.doTrace(request, response);
-    }
-
     /** @see FiberFrameworkServletProtectedWrapper#processRequest(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SuspendExecution {
         fiberFrameworkServletProtectedWrapper.processRequest(request, response);
     }
 
+    ///////////////////////////////////////////////////////////////////////
+    // Re-implementing protected features below this point;
+    // derived from FrameworkServlet, relevant copyright and licences apply
+    ///////////////////////////////////////////////////////////////////////
+
+    public void setDispatchOptionsRequest(boolean dispatchOptionsRequest) {
+        this.dispatchOptionsRequest = dispatchOptionsRequest;
+    }
+
+    public void setDispatchTraceRequest(boolean dispatchTraceRequest) {
+        this.dispatchTraceRequest = dispatchTraceRequest;
+    }
+    
     ///////////////////////////////////////////////////////////////////////
     // Re-implementing protected features below this point;
     // derived from FrameworkServlet, relevant copyright and licences apply
@@ -317,6 +304,65 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
     protected void onRefresh(ApplicationContext context) {
     }
 
+    // TODO circlespainter: comment & JavaDocs
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, SuspendExecution {
+
+        String method = request.getMethod();
+        if (method.equalsIgnoreCase(RequestMethod.PATCH.name())) {
+            processRequest(request, response);
+        } else {
+            super.service(request, response);
+        }
+    }
+
+    // TODO circlespainter: comment & JavaDocs
+    @Override
+    protected void doOptions(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, SuspendExecution {
+
+        if (this.dispatchOptionsRequest) {
+            processRequest(request, response);
+            if (response.containsHeader("Allow")) {
+                // Proper OPTIONS response coming from a handler - we're done.
+                return;
+            }
+        }
+
+		// Use response wrapper for Servlet 2.5 compatibility where
+        // the getHeader() method does not exist
+        super.doOptions(request, new HttpServletResponseWrapper(response) {
+            @Override
+            public void setHeader(String name, String value) {
+                if ("Allow".equals(name)) {
+                    value = (StringUtils.hasLength(value) ? value + ", " : "") + RequestMethod.PATCH.name();
+                }
+                super.setHeader(name, value);
+            }
+        });
+    }
+
+    // TODO circlespainter: comment & JavaDocs
+    @Override
+    @Suspendable
+    protected void doTrace(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        if (this.dispatchTraceRequest) {
+            try {
+                processRequest(request, response);
+            } catch (SuspendExecution ex) {
+                throw new AssertionError(ex);
+            }
+            if ("message/http".equals(response.getContentType())) {
+                // Proper TRACE response coming from a handler - we're done.
+                return;
+            }
+        }
+        super.doTrace(request, response);
+    }
+   
     /** Adds fiber-blocking support to {@link FiberFrameworkServlet#doService(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)} */
     // Rule 1: re-implementing because it needs to support suspension
     protected abstract void doService(HttpServletRequest request, HttpServletResponse response) throws Exception, SuspendExecution;
@@ -328,8 +374,13 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
     // private static final boolean responseGetStatusAvailable = ClassUtils.hasMethod(HttpServletResponse.class, "getStatus");
     // private boolean threadContextInheritable = false;
     // private boolean publishEvents = true;
-    // private boolean dispatchOptionsRequest = false;
-    // private boolean dispatchTraceRequest = false;
+
+    // TODO circlespainter: comment & JavaDocs
+    private boolean dispatchOptionsRequest = false;
+    
+    // TODO circlespainter: comment & JavaDocs
+    private boolean dispatchTraceRequest = false;
+
     // private static final String INIT_PARAM_DELIMITERS = ",; \t\n";
     // private String contextAttribute;
     // private Class<?> contextClass = DEFAULT_CONTEXT_CLASS;

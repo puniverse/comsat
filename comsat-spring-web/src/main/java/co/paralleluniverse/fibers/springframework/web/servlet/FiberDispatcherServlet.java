@@ -11,12 +11,6 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
-/*
- * Based on org.springframework.web.servlet.FrameworkServlet in Spring Framework Web MVC
- * Copyright the original authors Rod Johnson, Juergen Hoeller, Sam Brannen,
- * Chris Beams, Rossen Stoyanchev, Phillip Webb.
- * Released under the ASF 2.0 license.
- */
 package co.paralleluniverse.fibers.springframework.web.servlet;
 
 import java.util.List;
@@ -52,16 +46,17 @@ import co.paralleluniverse.fibers.SuspendExecution;
  */
 public class FiberDispatcherServlet extends FiberFrameworkServlet {
     // References to original instance and a `protected`-opening proxy of it
-    private final DispatcherServlet dispatcherServlet;
+    private final DispatcherServletForwarder dispatcherServletForwarder;
     private final FiberDispatcherServletProtectedWrapper fiberDispatcherServletProtectedWrapper;
 
     /** Default constructor, see {@link DispatcherServlet#DispatcherServlet()} */
     // Constructor rule number 2, mirroring original constructor API
     public FiberDispatcherServlet() {
-        super(new DispatcherServlet());
-        dispatcherServlet = (DispatcherServlet) super.frameworkServlet;
+        super(new DispatcherServletForwarder());
+        dispatcherServletForwarder = (DispatcherServletForwarder) super.frameworkServlet;
         // Being a final field, it's not possible to factor out this logic into a separate method ;-(
-        fiberDispatcherServletProtectedWrapper = new FiberDispatcherServletProtectedWrapper(dispatcherServlet);
+        dispatcherServletForwarder.setForwardingTarget(this);
+        fiberDispatcherServletProtectedWrapper = new FiberDispatcherServletProtectedWrapper(dispatcherServletForwarder);
     }
 
     /** See {@link DispatcherServlet#DispatcherServlet(org.springframework.web.context.WebApplicationContext)} */
@@ -77,10 +72,11 @@ public class FiberDispatcherServlet extends FiberFrameworkServlet {
      * @param dispatcherServlet The wrapped instance
      */
     // Constructor rule number 2, providing wrapping constructor too
-    public FiberDispatcherServlet(DispatcherServlet dispatcherServlet) {
+    public FiberDispatcherServlet(DispatcherServletForwarder dispatcherServlet) {
         super(dispatcherServlet);
-        this.dispatcherServlet = dispatcherServlet;
+        this.dispatcherServletForwarder = dispatcherServlet;
         // Being a final field, it's not possible to factor out this logic into a separate method ;-(
+        dispatcherServlet.setForwardingTarget(this);
         fiberDispatcherServletProtectedWrapper = new FiberDispatcherServletProtectedWrapper(dispatcherServlet);
     }
 
@@ -145,42 +141,42 @@ public class FiberDispatcherServlet extends FiberFrameworkServlet {
 
     /** @see DispatcherServlet#setDetectAllHandlerMappings(boolean) */
     public void setDetectAllHandlerMappings(boolean detectAllHandlerMappings) {
-        dispatcherServlet.setDetectAllHandlerMappings(detectAllHandlerMappings);
+        dispatcherServletForwarder.setDetectAllHandlerMappings(detectAllHandlerMappings);
     }
 
     /** @see DispatcherServlet#setDetectAllHandlerAdapters(boolean) */
     public void setDetectAllHandlerAdapters(boolean detectAllHandlerAdapters) {
-        dispatcherServlet.setDetectAllHandlerAdapters(detectAllHandlerAdapters);
+        dispatcherServletForwarder.setDetectAllHandlerAdapters(detectAllHandlerAdapters);
     }
 
     /** @see DispatcherServlet#setDetectAllHandlerExceptionResolvers(boolean) */
     public void setDetectAllHandlerExceptionResolvers(boolean detectAllHandlerExceptionResolvers) {
-        dispatcherServlet.setDetectAllHandlerExceptionResolvers(detectAllHandlerExceptionResolvers);
+        dispatcherServletForwarder.setDetectAllHandlerExceptionResolvers(detectAllHandlerExceptionResolvers);
     }
 
     /** @see DispatcherServlet#setDetectAllViewResolvers(boolean) */
     public void setDetectAllViewResolvers(boolean detectAllViewResolvers) {
-        dispatcherServlet.setDetectAllViewResolvers(detectAllViewResolvers);
+        dispatcherServletForwarder.setDetectAllViewResolvers(detectAllViewResolvers);
     }
 
     /** @see DispatcherServlet#setThrowExceptionIfNoHandlerFound(boolean) */
     public void setThrowExceptionIfNoHandlerFound(boolean throwExceptionIfNoHandlerFound) {
-        dispatcherServlet.setThrowExceptionIfNoHandlerFound(throwExceptionIfNoHandlerFound);
+        dispatcherServletForwarder.setThrowExceptionIfNoHandlerFound(throwExceptionIfNoHandlerFound);
     }
 
     /** @see DispatcherServlet#getThemeSource() */
     public final ThemeSource getThemeSource() {
-        return dispatcherServlet.getThemeSource();
+        return dispatcherServletForwarder.getThemeSource();
     }
     
     /** @see DispatcherServlet#getMultipartResolver() */
     public final MultipartResolver getMultipartResolver() {
-        return dispatcherServlet.getMultipartResolver();
+        return dispatcherServletForwarder.getMultipartResolver();
     }
 
     /** @see DispatcherServlet#setCleanupAfterInclude(boolean) */
     public void setCleanupAfterInclude(boolean cleanupAfterInclude) {
-        dispatcherServlet.setCleanupAfterInclude(cleanupAfterInclude);
+        dispatcherServletForwarder.setCleanupAfterInclude(cleanupAfterInclude);
     }
 
     ///////////////////////////////////////////////
@@ -275,21 +271,6 @@ public class FiberDispatcherServlet extends FiberFrameworkServlet {
     protected void cleanupMultipart(HttpServletRequest request) {
         fiberDispatcherServletProtectedWrapper.cleanupMultipart(request);
     }
-
-    ////////////////////////////////////////////////////////////////////////
-    // Re-implementing public features below this point;
-    // derived from DospatcherServlet, relevant copyright and licences apply
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // Re-implementing protected features below this point;
-    // derived from DospatcherServlet, relevant copyright and licences apply
-    ////////////////////////////////////////////////////////////////////////
-    
-    ///////////////////////////////////////////////////////////////////////
-    // Re-implementing private features below this point;
-    // derived from FrameworkServlet, relevant copyright and licences apply
-    ///////////////////////////////////////////////////////////////////////
 
     /////////////////////////////
     // Untouched private features
