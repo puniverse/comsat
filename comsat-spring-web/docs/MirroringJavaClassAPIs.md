@@ -42,6 +42,7 @@ A feature in `O` _needs to be re-implemented_ in `R` iff at least one of the fol
 Forwarding references
 ---------------------
 
+- References through `super` can't be forwarded (they are not polymorphic)
 - Field references can't be forwarded (they are not polymorphic)
 - Class references can't be forwarded
 - A method reference can be forwarded through instrumentation iff:
