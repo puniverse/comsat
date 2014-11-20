@@ -10,15 +10,17 @@ Goals
 TODO
 ----
 
-- Currently not working because (at least) of:
-  - Recycled class impls. using super-impls., provide forwarding subclasses (or perhaps better cglib-based subclass-generating facilities)
-  - Spring controller instrumentation call path blocker:
+- Currently working only with Quasar's synchronized methods instrumentation override because of:
+  - Spring controller instrumentation call path blocker (in practice it only synchronizes if configured to do so):
 ```
 [quasar] ERROR: while transforming org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter: Unable to instrument org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter#handleInternal(Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;Lorg/springframework/web/method/HandlerMethod;)Lorg/springframework/web/servlet/ModelAndView; because of synchronization
 ```
+    Fixing it would require copying and adapting (and then maintaining big code portion from `RequestMappingHandlerAdapter`, maybe better to relate with
+    Spring guys to see if they can open things up a bit
 - Autoconfigure Quasar-classloader-empowered Tomcat and Jetty containers (i.e. write FiberEmbeddedServletContainerAutoConfiguration,
   FiberTomcatEmbeddedServletContainerFactory, FiberJettyEmbeddedServletContainerFactory reusing as much as possible existing ones)
   - Support both JDK7 and JDK8
+  - Does dynamic instrumentation support synchronized methods?
 - Automatic testsuite (try to reuse existing Spring & Spring Boot ones as much as possible)
 
 SIDE TODO

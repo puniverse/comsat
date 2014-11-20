@@ -1,0 +1,32 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = '1.8'
+
+mainClassName = 'comsat.spring.boot.web.Test'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations {
+    quasar
+
+    all*.exclude group: "org.apache.logging.log4j", module: "*"
+}
+
+dependencies {
+    compile "co.paralleluniverse:comsat-spring-web:0.3.0-SNAPSHOT"
+
+    compile "co.paralleluniverse:quasar-core:0.6.0:jdk8"
+
+    quasar "co.paralleluniverse:quasar-core:0.6.0:jdk8"
+}
+
+run {
+    jvmArgs "-XX:+UnlockCommercialFeatures", "-XX:+FlightRecorder", "-javaagent:${configurations.quasar.iterator().next()}=m" // gradle should make this simpler, too
+//    systemProperty "co.paralleluniverse.actors.moduleDir", "${rootProject.projectDir}/modules"
+//    systemProperty "co.paralleluniverse.fibers.verifyInstrumentation", "true"
+//    args "--debug"
+}
