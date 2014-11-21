@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+
 /**
  * Equivalent of {@link FrameworkServlet} extending the fiber-blocking {@link FiberHttpServletBean}
  * 
@@ -304,7 +305,8 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
     protected void onRefresh(ApplicationContext context) {
     }
 
-    // TODO circlespainter: comment & JavaDocs
+    /** @see FiberFrameworkServlet#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Rule 1: re-implementing because it needs to reference `super` in the correct hierarchy
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SuspendExecution {
@@ -317,7 +319,8 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
         }
     }
 
-    // TODO circlespainter: comment & JavaDocs
+    /** @see FiberFrameworkServlet#doOptions(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Rule 1: re-implementing because it needs to reference `super` in the correct hierarchy
     @Override
     protected void doOptions(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SuspendExecution {
@@ -343,7 +346,8 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
         });
     }
 
-    // TODO circlespainter: comment & JavaDocs
+    /** @see FiberFrameworkServlet#doTrace(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Rule 1: re-implementing because it needs to reference `super` in the correct hierarchy
     @Override
     @Suspendable
     protected void doTrace(HttpServletRequest request, HttpServletResponse response)
@@ -367,6 +371,19 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
     // Rule 1: re-implementing because it needs to support suspension
     protected abstract void doService(HttpServletRequest request, HttpServletResponse response) throws Exception, SuspendExecution;
 
+    ///////////////////////////////////////////////////////////////////////
+    // Re-implementing private features below this point;
+    // derived from FrameworkServlet, relevant copyright and licences apply
+    ///////////////////////////////////////////////////////////////////////
+
+    /** @see FiberFrameworkServlet#dispatchOptionsRequest */
+    // Rule 3: re-implementing because it is needed by re-implemented `doOptions`
+    private boolean dispatchOptionsRequest = false;
+    
+    /** @see FiberFrameworkServlet#dispatchTraceRequest */
+    // Rule 3: re-implementing because it is needed by re-implemented `doTrace`
+    private boolean dispatchTraceRequest = false;
+
     /////////////////////////////
     // Untouched private features
     /////////////////////////////
@@ -375,11 +392,6 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
     // private boolean threadContextInheritable = false;
     // private boolean publishEvents = true;
 
-    // TODO circlespainter: comment & JavaDocs
-    private boolean dispatchOptionsRequest = false;
-    
-    // TODO circlespainter: comment & JavaDocs
-    private boolean dispatchTraceRequest = false;
 
     // private static final String INIT_PARAM_DELIMITERS = ",; \t\n";
     // private String contextAttribute;

@@ -126,13 +126,15 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     // Rule 4: re-implementing just because it's less code than proxying (empty original method)
     protected void initBeanWrapper(BeanWrapper bw) throws BeansException {}
     
-    // TODO circlespainter: comment & JavaDocs (opening access to `DispatcherServletForwarder`)
+    /** @see HttpServletBean#doHead(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) */
+    // Rule 1: re-implementing because it needs to reference `super` in the correct hierarchy
     @Override
     public void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
         super.doHead(req, resp); //To change body of generated methods, choose Tools | Templates.
     }
 
-    // TODO circlespainter: comment & JavaDocs (opening access to `DispatcherServletForwarder`)
+    /** @see HttpServletBean#getLastModified(javax.servlet.http.HttpServletRequest)  */
+    // Rule 1: re-implementing because it needs to reference `super` in the correct hierarchy
     @Override
     public long getLastModified(HttpServletRequest req) {
         return super.getLastModified(req); //To change body of generated methods, choose Tools | Templates.

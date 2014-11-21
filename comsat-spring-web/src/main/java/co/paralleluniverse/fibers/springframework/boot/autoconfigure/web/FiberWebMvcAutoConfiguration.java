@@ -18,8 +18,8 @@
  */
 package co.paralleluniverse.fibers.springframework.boot.autoconfigure.web;
 
-import co.paralleluniverse.fibers.springframework.web.servlet.FiberDispatcherServlet;
 import javax.servlet.Servlet;
+
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -31,6 +31,9 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+import co.paralleluniverse.fibers.springframework.web.servlet.FiberDispatcherServlet;
+
 
 /**
  * Spring Web MVC auto-configuration enabling fiber-blocking controllers; higher priority than normal Spring one
@@ -46,46 +49,4 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 @AutoConfigureAfter(FiberDispatcherServletAutoConfiguration.class)
-public class FiberWebMvcAutoConfiguration {
-    // TODO circlespainter: finish, comment and JavaDocs
-    
-    /*
-    
-    @Autowired
-    private WebMvcConfigurationSupport webMvcConfigurationSupport;
-    
-    @Bean
-    public FiberRequestMappingHandlerAdapter fiberRequestMappingHandlerAdapter() {
-        WebMvcConfigurationSupportProtectedProxy webMvcConfigurationSupportProtectedProxy = new WebMvcConfigurationSupportProtectedProxy(webMvcConfigurationSupport);
-        
-        List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<HandlerMethodArgumentResolver>();
-        webMvcConfigurationSupportProtectedProxy.addArgumentResolvers(argumentResolvers);
-
-        List<HandlerMethodReturnValueHandler> returnValueHandlers = new ArrayList<HandlerMethodReturnValueHandler>();
-        webMvcConfigurationSupportProtectedProxy.addReturnValueHandlers(returnValueHandlers);
-
-        FiberRequestMappingHandlerAdapter adapter = new FiberRequestMappingHandlerAdapter();
-        adapter.setContentNegotiationManager(webMvcConfigurationSupport.mvcContentNegotiationManager());
-        adapter.setMessageConverters(webMvcConfigurationSupportProtectedProxy.getMessageConverters());
-        adapter.setWebBindingInitializer(webMvcConfigurationSupportProtectedProxy.getConfigurableWebBindingInitializer());
-        adapter.setCustomArgumentResolvers(argumentResolvers);
-        adapter.setCustomReturnValueHandlers(returnValueHandlers);
-
-        AsyncSupportConfigurer configurer = new AsyncSupportConfigurer();
-        AsyncSupportConfigurerProtectedProxy configurerProtectedProxy = new AsyncSupportConfigurerProtectedProxy(configurer);
-        webMvcConfigurationSupport.configureAsyncSupport(configurer);
-
-        if (configurerProtectedProxy.getTaskExecutor() != null) {
-            adapter.setTaskExecutor(configurerProtectedProxy.getTaskExecutor());
-        }
-        if (configurerProtectedProxy.getTimeout() != null) {
-            adapter.setAsyncRequestTimeout(configurerProtectedProxy.getTimeout());
-        }
-        adapter.setCallableInterceptors(configurerProtectedProxy.getCallableInterceptors());
-        adapter.setDeferredResultInterceptors(configurerProtectedProxy.getDeferredResultInterceptors());
-
-        return adapter;
-    }
-    
-    */
-}
+public class FiberWebMvcAutoConfiguration {}

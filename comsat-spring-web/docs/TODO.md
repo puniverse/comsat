@@ -16,7 +16,7 @@ TODO
 [quasar] ERROR: while transforming org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter: Unable to instrument org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter#handleInternal(Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;Lorg/springframework/web/method/HandlerMethod;)Lorg/springframework/web/servlet/ModelAndView; because of synchronization
 ```
     Fixing it would require copying and adapting (and then maintaining big code portion from `RequestMappingHandlerAdapter`, maybe better to relate with
-    Spring guys to see if they can open things up a bit
+    Spring guys to see if they can open things up a bit. Plus synchronization actually happens only when configured to to so (and default is false).
 - Autoconfigure Quasar-classloader-empowered Tomcat and Jetty containers (i.e. write FiberEmbeddedServletContainerAutoConfiguration,
   FiberTomcatEmbeddedServletContainerFactory, FiberJettyEmbeddedServletContainerFactory reusing as much as possible existing ones)
   - Support both JDK7 and JDK8
@@ -27,6 +27,8 @@ SIDE TODO
 ---------
 
 - [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
+- [COMSAT] Annotation-based framework to generate dynamically forwarders (through cglib) and protected proxies (through ASM or Javassist);
+  idea: `@Mirrors(Class)` on class, `@Proxy` and `@Rewrite` on features
 
 Maybe first release
 ===================

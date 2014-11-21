@@ -13,10 +13,11 @@
  */
 package org.springframework.web.servlet;
 
-// TODO circlespainter: I don't like "patching" the original API's packages like this but it's the only way to delegate to protected members in Java. Maybe better generating this class at runtime.
- 
 import org.apache.commons.logging.Log;
 import org.springframework.core.env.ConfigurableEnvironment;
+
+
+// TODO circlespainter: generate dynamically
 
 /**
  * {@link HttpServletBean} wrapper in the same package, publishing access to its protected members for call proxying by the Comsat integration module

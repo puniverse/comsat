@@ -28,7 +28,8 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-// TODO circlespainter: I don't like "patching" the original API's packages like this but it's the only way to delegate to protected members in Java. Maybe better generating this class at runtime.
+
+// TODO circlespainter: generate dynamically
 
 /**
  * {@link FrameworkServlet} wrapper in the same package, publishing access to its protected members for call proxying by the Comsat integration module

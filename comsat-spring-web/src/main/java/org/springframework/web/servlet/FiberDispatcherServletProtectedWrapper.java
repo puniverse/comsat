@@ -13,8 +13,6 @@
  */
 package org.springframework.web.servlet;
 
-// TODO circlespainter: I don't like "patching" the original API's packages like this but it's the only way to delegate to protected members in Java. Maybe better generating this class at runtime.
-
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +25,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.i18n.LocaleContext;
 import org.springframework.web.multipart.MultipartException;
  
+
+// TODO circlespainter: generate dynamically
+
 /**
  * {@link DispatcherServlet} wrapper in the same package, publishing access to its protected members for call proxying by the Comsat integration module
  * 
