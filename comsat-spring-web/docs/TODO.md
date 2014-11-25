@@ -14,7 +14,14 @@ TODO
   - Spring Boot samples (used as Spring Boot integration testsuite) are perfect, too bad they aren't releasing them in any artifact form:
     https://github.com/spring-projects/spring-boot/issues/1973 ; better to initially include them
   - More than 2/3 tests of Actuator Sample work, the ones failing all seem related to post-filtering not working, which seems somewhat
-    related to the async servlet mode 
+    related to the async servlet mode
+  - Actually Spring has got its own Servlet 3.0 Async wrappers and listeners system (`AsyncWebRequest`, `StandardServletAsyncWebRequest`,
+    `WebAsyncUtils`) that supposedly would make filters and servlet work generally in async mode, except parts of it (`DispatchServlet`,
+    `RequestMappingHandlerAdapter` but possibly others too) assume it to be used not to generally manage async requests, but only to
+    implement its own async controller method support (`WebAsyncManager`).
+    - Rescoping to adapt the latter only, without starting async in the servlet. The baseline goal (fiber-blocking controller
+      methods) would still be reached and this adaptation would need to be done anyway. Plus the request should be put async in the
+      first filter in order to cover the entire processing and not so much in the `DispatchetServlet` alone.
 - Currently working only with Quasar's synchronized methods instrumentation override because of:
   - Spring controller instrumentation call path blocker (in practice it only synchronizes if configured to do so):
 ```
@@ -31,6 +38,13 @@ TODO
 SIDE TODO
 ---------
 
+- [QUASAR] Quasar-core agent-based instrumentation on servlet container Jetty (runner) doesn't work as ASM is missing (presumably because runtime dependency
+  are in webapp classpath, not container classpath)
+- [QUASAR] Quasar-core agent-based instrumentation on servlet container Jetty (runner) warns that the agent has not been loaded (presumably because runtime
+  dependency are in webapp classpath, not container classpath)
+- [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
+
+- [COMSAT] Tomcat loader JDK 8 seem not to work because of classpath linking problems (missing methods)
 - [COMSAT] Docs Jersey Server: both in `web.xml` and programmatic configuration, async must be set to true
 - [COMSAT] Instrumentation for servlet containers: quasar jar alone doesn't work as it misses dependencies. Comsat loader jars seem perfect instead,
   only they need quasar's manifest.
@@ -39,8 +53,6 @@ SIDE TODO
 - [COMSAT] Publish the servlet-container-based template as an example
 - [COMSAT] Annotation-based framework to generate dynamically forwarders (through cglib) and protected proxies (through ASM or Javassist);
   idea: `@Mirrors(Class)` on class, `@Proxy` and `@Rewrite` on features
-
-- [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
 
 Maybe first release
 ===================
