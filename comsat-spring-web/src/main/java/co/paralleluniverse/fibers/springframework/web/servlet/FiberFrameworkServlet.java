@@ -223,6 +223,7 @@ public abstract class FiberFrameworkServlet extends FiberHttpServletBean impleme
     }
 
     /** @see FiberFrameworkServletProtectedWrapper#initServletBean() */
+    @Override
     protected final void initServletBean() throws ServletException {
         fiberFrameworkServletProtectedWrapper.initServletBean();
     }

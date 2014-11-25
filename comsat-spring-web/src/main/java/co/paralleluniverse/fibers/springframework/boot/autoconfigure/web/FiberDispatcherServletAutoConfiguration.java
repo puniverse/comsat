@@ -79,6 +79,7 @@ public class FiberDispatcherServletAutoConfiguration extends DispatcherServletAu
         public ServletRegistrationBean dispatcherServletRegistration() {
             ServletRegistrationBean registration = new ServletRegistrationBean(
                     dispatcherServlet(), this.server.getServletMapping());
+            registration.setAsyncSupported(true);
             registration.setName(DEFAULT_DISPATCHER_SERVLET_BEAN_NAME);
             if (this.multipartConfig != null) {
                 registration.setMultipartConfig(this.multipartConfig);

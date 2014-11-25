@@ -47,6 +47,6 @@ import co.paralleluniverse.fibers.springframework.web.servlet.FiberDispatcherSer
 @ConditionalOnWebApplication
 @ConditionalOnClass({ Servlet.class, FiberDispatcherServlet.class, WebMvcConfigurerAdapter.class })
 @ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
-@Order(Ordered.HIGHEST_PRECEDENCE + 20)
+@Order(Ordered.LOWEST_PRECEDENCE + 1)
 @AutoConfigureAfter(FiberDispatcherServletAutoConfiguration.class)
-public class FiberWebMvcAutoConfiguration {}
+public class FiberWebMvcAutoConfiguration extends WebMvcAutoConfiguration {}

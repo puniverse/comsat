@@ -59,8 +59,7 @@ subprojects {
     ext.mongodbJavaAsyncDriverVersion   = '2.0.0'
     ext.embedMongoVersion               = '1.46.0'
     
-    ext.springWebMVCVersion                = '4.0.8.RELEASE'
-    ext.springBootWebVersion                = '1.1.9.RELEASE'
+    ext.springBootWebVersion                = '1.2.0.RC2'
 
     configurations.all {
         resolutionStrategy {
@@ -91,6 +90,7 @@ subprojects {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         maven { url 'https://maven.java.net/content/repositories/snapshots' }
         maven { url 'http://www.allanbank.com/repo/' }
+        maven { url 'http://repo.springsource.org/libs-milestone' }
     }
 
     configurations {
@@ -330,7 +330,6 @@ project (':comsat-servlet') {
 
 project (':comsat-spring-web') {
     dependencies {
-        compile "org.springframework:spring-webmvc:$springWebMVCVersion"
         compile "org.springframework.boot:spring-boot-starter-web:$springBootWebVersion"
         compile project(':comsat-servlet')
     }

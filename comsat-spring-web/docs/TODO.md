@@ -10,6 +10,11 @@ Goals
 TODO
 ----
 
+- Automatic testsuite (try to reuse existing Spring & Spring Boot ones as much as possible)
+  - Spring Boot samples (used as Spring Boot integration testsuite) are perfect, too bad they aren't releasing them in any artifact form:
+    https://github.com/spring-projects/spring-boot/issues/1973 ; better to initially include them
+  - More than 2/3 tests of Actuator Sample work, the ones failing all seem related to post-filtering not working, which seems somewhat
+    related to the async servlet mode 
 - Currently working only with Quasar's synchronized methods instrumentation override because of:
   - Spring controller instrumentation call path blocker (in practice it only synchronizes if configured to do so):
 ```
@@ -17,18 +22,25 @@ TODO
 ```
     Fixing it would require copying and adapting (and then maintaining big code portion from `RequestMappingHandlerAdapter`, maybe better to relate with
     Spring guys to see if they can open things up a bit. Plus synchronization actually happens only when configured to to so (and default is false).
+    - Check when https://jira.spring.io/browse/SPR-12460 is released
 - Autoconfigure Quasar-classloader-empowered Tomcat and Jetty containers (i.e. write FiberEmbeddedServletContainerAutoConfiguration,
   FiberTomcatEmbeddedServletContainerFactory, FiberJettyEmbeddedServletContainerFactory reusing as much as possible existing ones)
   - Support both JDK7 and JDK8
   - Does dynamic instrumentation support synchronized methods?
-- Automatic testsuite (try to reuse existing Spring & Spring Boot ones as much as possible)
 
 SIDE TODO
 ---------
 
-- [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
+- [COMSAT] Docs Jersey Server: both in `web.xml` and programmatic configuration, async must be set to true
+- [COMSAT] Instrumentation for servlet containers: quasar jar alone doesn't work as it misses dependencies. Comsat loader jars seem perfect instead,
+  only they need quasar's manifest.
+- [COMSAT] Publish JavaDocs 0.2.0
+- [COMSAT] `gradle install` blocks on installing a war
+- [COMSAT] Publish the servlet-container-based template as an example
 - [COMSAT] Annotation-based framework to generate dynamically forwarders (through cglib) and protected proxies (through ASM or Javassist);
   idea: `@Mirrors(Class)` on class, `@Proxy` and `@Rewrite` on features
+
+- [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
 
 Maybe first release
 ===================
