@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package sample.actuator;
+package comsat.sample.actuator;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.util.Collections;

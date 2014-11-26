@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package sample.actuator;
+package comsat.sample.actuator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

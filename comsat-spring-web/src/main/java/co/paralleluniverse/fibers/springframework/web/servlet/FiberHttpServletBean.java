@@ -19,6 +19,7 @@
 package co.paralleluniverse.fibers.springframework.web.servlet;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
@@ -33,6 +34,8 @@ import org.springframework.web.servlet.FiberHttpServletBeanProtectedWrapper;
 
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
 import java.io.IOException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
@@ -139,4 +142,16 @@ public abstract class FiberHttpServletBean extends FiberHttpServlet implements E
     public long getLastModified(HttpServletRequest req) {
         return super.getLastModified(req); //To change body of generated methods, choose Tools | Templates.
     }
+
+    @Override
+    @Suspendable
+    public void service(ServletRequest req, ServletResponse res) {
+        try {
+            suspendableService(req, res);
+        } catch (Exception ex) {
+            log("Exception in fiber servlet", ex);
+        }
+    }
+    
+    
 }

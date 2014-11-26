@@ -33,6 +33,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import co.paralleluniverse.fibers.springframework.web.servlet.FiberDispatcherServlet;
+import co.paralleluniverse.fibers.springframework.web.servlet.FiberFilter;
+import org.springframework.boot.context.embedded.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 
 
 /**
@@ -49,4 +52,14 @@ import co.paralleluniverse.fibers.springframework.web.servlet.FiberDispatcherSer
 @ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
 @Order(Ordered.LOWEST_PRECEDENCE + 1)
 @AutoConfigureAfter(FiberDispatcherServletAutoConfiguration.class)
-public class FiberWebMvcAutoConfiguration extends WebMvcAutoConfiguration {}
+public class FiberWebMvcAutoConfiguration extends WebMvcAutoConfiguration {
+    @Bean
+    public FilterRegistrationBean filterRegistrationBean() {
+        FilterRegistrationBean registrationBean = new FilterRegistrationBean();
+        FiberFilter fiberFilter = new FiberFilter();
+        registrationBean.setAsyncSupported(true);
+        registrationBean.setFilter(fiberFilter);
+        registrationBean.setOrder(Integer.MIN_VALUE);
+        return registrationBean;
+    }
+}

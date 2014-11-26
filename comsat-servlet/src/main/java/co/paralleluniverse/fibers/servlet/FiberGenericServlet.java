@@ -83,7 +83,7 @@ public abstract class FiberGenericServlet extends GenericServlet {
      * {@link #suspendableService} to service the request.
      */
     @Override
-    public final void service(final ServletRequest req, final ServletResponse res) {
+    public void service(final ServletRequest req, final ServletResponse res) {
         req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         final AsyncContext ac = req.startAsync();
         ac.setTimeout(120000);

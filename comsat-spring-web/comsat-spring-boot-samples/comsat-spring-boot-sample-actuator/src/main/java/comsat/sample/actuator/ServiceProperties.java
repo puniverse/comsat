@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package sample.actuator;
+package comsat.sample.actuator;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

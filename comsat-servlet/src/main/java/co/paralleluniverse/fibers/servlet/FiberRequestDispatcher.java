@@ -25,12 +25,12 @@ import javax.servlet.http.HttpServletRequest;
  *
  * @author eitan
  */
-class FiberRequestDispatcer implements RequestDispatcher {
+class FiberRequestDispatcher implements RequestDispatcher {
     public static final String SLASH = "/";
     private final String path;
     private final AsyncContext ac;
 
-    public FiberRequestDispatcer(String path, AsyncContext ac) {
+    public FiberRequestDispatcher(String path, AsyncContext ac) {
         this.path = path;
         this.ac = ac;
     }
