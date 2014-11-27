@@ -19,21 +19,24 @@ TODO
     `WebAsyncUtils`) that supposedly would make filters and servlet work generally in async mode, except parts of it (`DispatchServlet`,
     `RequestMappingHandlerAdapter` but possibly others too) assume it to be used not to generally manage async requests, but only to
     implement its own async controller method support (`WebAsyncManager`).
-    - Rescoping to adapt the latter only, without starting async in the servlet. The baseline goal (fiber-blocking controller
+    - Trying to split the fiber task allocation between a priority servlet filter and the Dispatcher servlet. Requires support for `filterChain.doFilter()` in seperate thread which should be supported by servlet-3.0 compatible containers but seems to have problems at least under tomcat 8.0.15 (non circumventable) and jetty (maybe circumventable).
+    - If everything else fails, rescoping to adapt the latter only, without starting async in the servlet. The baseline goal (fiber-blocking controller
       methods) would still be reached and this adaptation would need to be done anyway. Plus the request should be put async in the
       first filter in order to cover the entire processing and not so much in the `DispatchetServlet` alone.
 - Currently working only with Quasar's synchronized methods instrumentation override because of:
   - Spring controller instrumentation call path blocker (in practice it only synchronizes if configured to do so):
+
 ```
 [quasar] ERROR: while transforming org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter: Unable to instrument org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter#handleInternal(Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;Lorg/springframework/web/method/HandlerMethod;)Lorg/springframework/web/servlet/ModelAndView; because of synchronization
 ```
-    Fixing it would require copying and adapting (and then maintaining big code portion from `RequestMappingHandlerAdapter`, maybe better to relate with
+
+  - Fixing it would require copying and adapting (and then maintaining big code portion from `RequestMappingHandlerAdapter`, maybe better to relate with
     Spring guys to see if they can open things up a bit. Plus synchronization actually happens only when configured to to so (and default is false).
     - Check when https://jira.spring.io/browse/SPR-12460 is released
 - Autoconfigure Quasar-classloader-empowered Tomcat and Jetty containers (i.e. write FiberEmbeddedServletContainerAutoConfiguration,
   FiberTomcatEmbeddedServletContainerFactory, FiberJettyEmbeddedServletContainerFactory reusing as much as possible existing ones)
-  - Support both JDK7 and JDK8
-  - Does dynamic instrumentation support synchronized methods?
+    - Support both JDK7 and JDK8
+  - Does dynamic instrumentation support flag for synchronized methods?
 
 SIDE TODO
 ---------
@@ -44,7 +47,8 @@ SIDE TODO
   dependency are in webapp classpath, not container classpath)
 - [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
 
-- [COMSAT] Tomcat loader JDK 8 seem not to work because of classpath linking problems (missing methods)
+- [COMSAT] Tomcat 8.0.15 JDK8 loader seems not to work because of classpath linking problems (missing methods)
+- [COMSAT] Tomcat 7.0.57 JDK7 loader seems not to work as some quasar classes and ASM are missing
 - [COMSAT] Docs Jersey Server: both in `web.xml` and programmatic configuration, async must be set to true
 - [COMSAT] Instrumentation for servlet containers: quasar jar alone doesn't work as it misses dependencies. Comsat loader jars seem perfect instead,
   only they need quasar's manifest.
