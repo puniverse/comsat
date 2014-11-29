@@ -11,18 +11,7 @@ TODO
 ----
 
 - Automatic testsuite (try to reuse existing Spring & Spring Boot ones as much as possible)
-  - Spring Boot samples (used as Spring Boot integration testsuite) are perfect, too bad they aren't releasing them in any artifact form:
-    https://github.com/spring-projects/spring-boot/issues/1973 ; better to initially include them
-  - More than 2/3 tests of Actuator Sample work, the ones failing all seem related to post-filtering not working, which seems somewhat
-    related to the async servlet mode
-  - Actually Spring has got its own Servlet 3.0 Async wrappers and listeners system (`AsyncWebRequest`, `StandardServletAsyncWebRequest`,
-    `WebAsyncUtils`) that supposedly would make filters and servlet work generally in async mode, except parts of it (`DispatchServlet`,
-    `RequestMappingHandlerAdapter` but possibly others too) assume it to be used not to generally manage async requests, but only to
-    implement its own async controller method support (`WebAsyncManager`).
-    - Trying to split the fiber task allocation between a priority servlet filter and the Dispatcher servlet. Requires support for `filterChain.doFilter()` in seperate thread which should be supported by servlet-3.0 compatible containers but seems to have problems at least under tomcat 8.0.15 (non circumventable) and jetty (maybe circumventable).
-    - If everything else fails, rescoping to adapt the latter only, without starting async in the servlet. The baseline goal (fiber-blocking controller
-      methods) would still be reached and this adaptation would need to be done anyway. Plus the request should be put async in the
-      first filter in order to cover the entire processing and not so much in the `DispatchetServlet` alone.
+  - Currently failing because of several async issues, experiments and possible approaches here https://github.com/circlespainter/servlet3-filter-async-test
 - Currently working only with Quasar's synchronized methods instrumentation override because of:
   - Spring controller instrumentation call path blocker (in practice it only synchronizes if configured to do so):
 
