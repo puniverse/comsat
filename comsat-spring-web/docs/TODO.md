@@ -7,25 +7,27 @@ Goals
 - Fiber-blocking Spring controllers support
 - Spring Boot integration: auto-configuring Comsat's fiber-enabled Spring Web MVC integration (instead of standard Spring Web MVC)
 
+Analysis
+--------
+
+Approaches and shortcomings are described here: https://github.com/circlespainter/servlet3-filter-async-test#dispatching-requests-for-async-execution-in-spring-boot-with-or-without-actuator.
+
+1. Starting the fiber dispatch in a special outmost (i.e. first) filter: best approach, least expensive, useful in general and covers the whole request but unfortunately both Jetty and Tomcat
+   have bugs that have been reported but are difficult to circumvent.
+2. Starting the fiber dispatch in a DispatcherServlet: requires patching the controller method handling as well, since Spring's bookeeping of the async processing (necessary to process triggers
+   and filters when it is complete as the Servlet 3 spec offers no support for that) is tailor-made for its own async support. This approach limits the fiber execution scope to the servlet and
+   is the most expensive implement.
+3. New `HandlerMethod` implementation dispatching normal blocking controller methods to Deferred that will be completed in fibers. This approach seems to work very similarly (and as ok as) the
+   normal Spring Web async handling (which is not perfect anyway) and is not terribly expensive. Unfortunately Spring's basic implementation is currently difficult to reuse, so some copy&paste
+   is needed (3 improvement issues have been opened on that subject).
+
+The chosen approach is number 3. Some previous tests of the idea (and shortcomings) are available here https://github.com/circlespainter/spring-boot-async-test.
+
 TODO
 ----
 
-- Automatic testsuite (try to reuse existing Spring & Spring Boot ones as much as possible)
-  - Currently failing because of several async issues, experiments and possible approaches here https://github.com/circlespainter/servlet3-filter-async-test
-- Currently working only with Quasar's synchronized methods instrumentation override because of:
-  - Spring controller instrumentation call path blocker (in practice it only synchronizes if configured to do so):
-
-```
-[quasar] ERROR: while transforming org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter: Unable to instrument org/springframework/web/servlet/mvc/method/annotation/RequestMappingHandlerAdapter#handleInternal(Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;Lorg/springframework/web/method/HandlerMethod;)Lorg/springframework/web/servlet/ModelAndView; because of synchronization
-```
-
-  - Fixing it would require copying and adapting (and then maintaining big code portion from `RequestMappingHandlerAdapter`, maybe better to relate with
-    Spring guys to see if they can open things up a bit. Plus synchronization actually happens only when configured to to so (and default is false).
-    - Check when https://jira.spring.io/browse/SPR-12460 is released
-- Autoconfigure Quasar-classloader-empowered Tomcat and Jetty containers (i.e. write FiberEmbeddedServletContainerAutoConfiguration,
-  FiberTomcatEmbeddedServletContainerFactory, FiberJettyEmbeddedServletContainerFactory reusing as much as possible existing ones)
-    - Support both JDK7 and JDK8
-  - Does dynamic instrumentation support flag for synchronized methods?
+- Support for async return types (easy)
+- Automatic testsuite based on Spring Boot integration testing support (medium)
 
 SIDE TODO
 ---------
@@ -52,8 +54,6 @@ Maybe first release
 
 TODO
 ----
-
-- Fiber-blocking Spring standalone (Tomcat-based) web app
 
 - Evaluate dynamic code generation strategies
   - Doesn't seem very useful for the main servlets hierarchy as those are container-called classes (so there must be static, named ones for the "configuration
