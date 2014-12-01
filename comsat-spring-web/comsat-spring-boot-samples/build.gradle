@@ -1,0 +1,4 @@
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-parent:$springBootVersion"
+    compile project(":comsat-spring-web")
+}
