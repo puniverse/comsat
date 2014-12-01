@@ -20,9 +20,7 @@
         <module>comsat-spring-boot-sample-actuator</module>
         <module>comsat-spring-boot-sample-actuator-log4j</module>
         <module>comsat-spring-boot-sample-actuator-ui</module>
-        <!-- module>spring-boot-sample-aop</module>
-        <module>spring-boot-sample-integration</module>
-        <module>spring-boot-sample-jersey</module>
+        <!-- module>spring-boot-sample-jersey</module>
         <module>spring-boot-sample-jersey1</module>
         <module>spring-boot-sample-jetty</module>
         <module>spring-boot-sample-parent-context</module>
