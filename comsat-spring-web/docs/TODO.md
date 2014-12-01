@@ -26,8 +26,10 @@ The chosen approach is number 3. Some previous tests of the idea (and shortcomin
 TODO
 ----
 
-- Support for async return types (easy)
-- Automatic testsuite based on Spring Boot integration testing support (medium)
+- [IN PROGRESS] Adapt Boot Spring Samples testsuite (maven-based)
+  - Verify more thoroughly that async return times (`Future`, `DeferredResult`, `Callable`) are indeed working
+  - Once complete, hook it to automatic testing of `comsat-spring-web`
+- Understand why Spring error dispatches after async don't work if they are async themselves (and allow it if possible)
 
 SIDE TODO
 ---------

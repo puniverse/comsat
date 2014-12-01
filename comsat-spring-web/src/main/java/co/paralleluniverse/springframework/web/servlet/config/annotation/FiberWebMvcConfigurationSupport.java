@@ -27,8 +27,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
+import org.springframework.web.servlet.config.annotation.DelegatingWebMvcConfiguration;
 import org.springframework.web.servlet.config.annotation.ServletConfigAnnotationProtectedProxy;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
 /**
  * @author circlespainter
@@ -38,7 +38,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
  * @see WebMvcConfigurerAdapter
  */
 @Configuration
-public class FiberWebMvcConfigurationSupport extends WebMvcConfigurationSupport {
+public class FiberWebMvcConfigurationSupport extends DelegatingWebMvcConfiguration {
     @Bean
     public FiberRequestMappingHandlerAdapter fiberRequestMappingHandlerAdapter() {
         List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<>();
