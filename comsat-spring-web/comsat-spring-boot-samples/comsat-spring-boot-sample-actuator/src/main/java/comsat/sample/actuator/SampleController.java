@@ -1,27 +1,30 @@
 /*
- * Copyright 2012-2013 the original author or authors.
+ * COMSAT
+ * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   or (per the licensee's choosing)
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
  */
-
+/*
+ * Based on sample.actuator.SampleController
+ * in Spring Boot Samples.
+ * Copyright the original author(s).
+ * Released under the ASF 2.0 license.
+ */
 package comsat.sample.actuator;
 
+import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Description;
@@ -35,45 +38,47 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Description("A controller for handling requests for hello messages")
 public class SampleController {
 
-	@Autowired
-	private HelloWorldService helloWorldService;
+    @Autowired
+    private HelloWorldService helloWorldService;
 
-	@RequestMapping(value = "/", method = RequestMethod.GET)
-	@ResponseBody
-	public Map<String, String> hello() throws SuspendExecution {
-		return Collections.singletonMap("message",
-				this.helloWorldService.getHelloMessage());
-	}
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    @ResponseBody
+    public Map<String, String> hello() throws SuspendExecution, InterruptedException {
+        Fiber.sleep(100);
+        return Collections.singletonMap("message",
+                this.helloWorldService.getHelloMessage());
+    }
 
-	@RequestMapping(value = "/", method = RequestMethod.POST)
-	@ResponseBody
-	public Map<String, Object> olleh(@Validated Message message) throws SuspendExecution {
-		Map<String, Object> model = new LinkedHashMap<String, Object>();
-		model.put("message", message.getValue());
-		model.put("title", "Hello Home");
-		model.put("date", new Date());
-		return model;
-	}
+    @RequestMapping(value = "/", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<String, Object> olleh(@Validated Message message) throws SuspendExecution, InterruptedException {
+        Fiber.sleep(100);
+        Map<String, Object> model = new LinkedHashMap<>();
+        model.put("message", message.getValue());
+        model.put("title", "Hello Home");
+        model.put("date", new Date());
+        return model;
+    }
 
-	@RequestMapping("/foo")
-	@ResponseBody
-	public String foo() throws SuspendExecution {
-    		throw new IllegalArgumentException("Server error");
-                // return "OK";
-	}
+    @RequestMapping("/foo")
+    @ResponseBody
+    public String foo() throws SuspendExecution, InterruptedException {
+        Fiber.sleep(100);
+        throw new IllegalArgumentException("Server error");
+    }
 
-	protected static class Message {
+    protected static class Message {
 
-		@NotBlank(message = "Message value cannot be empty")
-		private String value;
+        @NotBlank(message = "Message value cannot be empty")
+        private String value;
 
-		public String getValue() {
-			return this.value;
-		}
+        public String getValue() {
+            return this.value;
+        }
 
-		public void setValue(String value) {
-			this.value = value;
-		}
-	}
+        public void setValue(String value) {
+            this.value = value;
+        }
+    }
 
 }
