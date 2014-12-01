@@ -28,7 +28,9 @@ TODO
 
 - [IN PROGRESS] Adapt Boot Spring Samples testsuite (maven-based)
   - Verify more thoroughly that async return times (`Future`, `DeferredResult`, `Callable`) are indeed working
-  - Once complete, hook it to automatic testing of `comsat-spring-web`
+- Separate spring-only and spring-boot parts as they have different dependencies (or rename project to make it apparent it
+  is a spring-boot-web integration and not just a spring-web one)
+- Hook samples in the comsat-spring-web test chain (as gradle subprojects?)
 - Understand why Spring error dispatches after async don't work if they are async themselves (and allow it if possible)
 
 SIDE TODO

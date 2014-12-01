@@ -20,10 +20,8 @@
         <module>comsat-spring-boot-sample-actuator</module>
         <module>comsat-spring-boot-sample-actuator-log4j</module>
         <module>comsat-spring-boot-sample-actuator-ui</module>
-        <!-- module>spring-boot-sample-jersey</module>
-        <module>spring-boot-sample-jersey1</module>
-        <module>spring-boot-sample-jetty</module>
-        <module>spring-boot-sample-parent-context</module>
+        <module>comsat-spring-boot-sample-jetty</module>
+        <!-- module>spring-boot-sample-parent-context</module>
         <module>spring-boot-sample-profile</module>
         <module>spring-boot-sample-secure</module>
         <module>spring-boot-sample-servlet</module>
@@ -47,7 +45,13 @@
         <module>spring-boot-sample-web-velocity</module>
         <module>spring-boot-sample-xml</module>-->
     </modules>
-    <!-- No dependencies - otherwise the samples won't work if you change the parent -->
+    <dependencies>
+        <dependency>
+            <groupId>co.paralleluniverse</groupId>
+            <artifactId>quasar-core</artifactId>
+            <version>0.6.1</version>
+        </dependency>
+    </dependencies>    
     <build>
         <plugins>
             <plugin>

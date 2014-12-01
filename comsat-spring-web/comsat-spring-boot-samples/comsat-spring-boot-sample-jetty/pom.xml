@@ -6,9 +6,9 @@
         <artifactId>comsat-spring-boot-samples</artifactId>
         <version>0.3.0-SNAPSHOT</version>
     </parent>
-    <artifactId>comsat-spring-boot-sample-actuator-log4j</artifactId>
-    <name>Comsat Spring Boot Actuator Log4J Sample</name>
-    <description>Comsat Spring Boot Actuator Log4J Sample</description>
+    <artifactId>comsat-spring-boot-sample-jetty</artifactId>
+    <name>Comsat Spring Boot Jetty Sample</name>
+    <description>Comsat Spring Boot Jetty Sample</description>
     <url>https://github.com/puniverse/comsat</url>
     <properties>
         <main.basedir>${basedir}/../..</main.basedir>
@@ -22,28 +22,20 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-log4j</artifactId>
+            <artifactId>spring-boot-starter-jetty</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
     <build>

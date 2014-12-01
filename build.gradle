@@ -333,6 +333,15 @@ project (':comsat-spring-web') {
         compile "org.springframework.boot:spring-boot-starter-web:$springBootWebVersion"
         compile project(':comsat-servlet')
     }
+/*
+    task testSamples(type: Exec) {
+        workingDir 'comsat-spring-boot-samples'
+        executable 'mvn'
+        args 'test'
+    }
+    
+    test.dependsOn testSamples
+*/
 }
 
 project (':comsat-test-utils') {
