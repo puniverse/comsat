@@ -13,4 +13,4 @@ build/
 .nb-gradle-properties
 .bdb/
 tomcat.8080
-/comsat-spring-web/comsat-spring-boot-samples/comsat-spring-boot-sample-actuator/target/
+/**/target/
