@@ -227,31 +227,7 @@ public class FiberServletInvocableHandlerMethod extends FiberInvocableHandlerMet
                 // after completing the (async on fibers) main invocation
                 @Override
                 protected Object invoke(Object... args) throws Exception {
-                        ReflectionUtils.makeAccessible(getBridgedMethod());
-                        try {
-                                return getBridgedMethod().invoke(getBean(), args);
-                        }
-                        catch (IllegalArgumentException ex) {
-                                assertTargetBean(getBridgedMethod(), getBean(), args);
-                                throw new IllegalStateException(getInvocationErrorMessage(ex.getMessage(), args), ex);
-                        }
-                        catch (InvocationTargetException ex) {
-                                // Unwrap for HandlerExceptionResolvers ...
-                                Throwable targetException = ex.getTargetException();
-                                if (targetException instanceof RuntimeException) {
-                                        throw (RuntimeException) targetException;
-                                }
-                                else if (targetException instanceof Error) {
-                                        throw (Error) targetException;
-                                }
-                                else if (targetException instanceof Exception) {
-                                        throw (Exception) targetException;
-                                }
-                                else {
-                                        String msg = getInvocationErrorMessage("Failed to invoke controller method", args);
-                                        throw new IllegalStateException(msg, targetException);
-                                }
-                        }
+                    return blockingInvoke(args);
                 }
 
 		/**

@@ -40,6 +40,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
+import org.springframework.boot.autoconfigure.web.ErrorController;
 
 // TODO subclass instead of this copy&paste horror when https://jira.spring.io/browse/SPR-12484 is released
 
@@ -227,44 +228,14 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
      * Invoke the handler method with the given argument values.
      */
     protected Object invoke(final Object... args) throws Exception {
-        final Method m = getBridgedMethod();
-        ReflectionUtils.makeAccessible(m);
-
-        final Object b = getBean();
-
-        final DeferredResult ret = new DeferredResult();
-
         // TODO support Future, DeferredResult and Callable
 
-        new Fiber(new SuspendableRunnable() {
-            @Override
-            public void run() throws SuspendExecution, InterruptedException {
-                try {
-                    Object originalRet = m.invoke(b, args);
-                    ret.setResult(originalRet);
-                } catch (IllegalArgumentException ex) {
-                    assertTargetBean(m, b, args);
-                    ret.setErrorResult(new IllegalStateException(getInvocationErrorMessage(ex.getMessage(), args), ex));
-                } catch (InvocationTargetException ex) {
-                    // Unwrap for HandlerExceptionResolvers ...
-                    Throwable targetException = ex.getTargetException();
-                    if (targetException instanceof RuntimeException) {
-                        ret.setErrorResult((RuntimeException) targetException);
-                    } else if (targetException instanceof Error) {
-                        ret.setErrorResult((Error) targetException);
-                    } else if (targetException instanceof Exception) {
-                        ret.setErrorResult((Exception) targetException);
-                    } else {
-                        String msg = getInvocationErrorMessage("Failed to invoke controller method", args);
-                        ret.setErrorResult(new IllegalStateException(msg, targetException));
-                    }
-                } catch (IllegalAccessException ex) {
-                    ret.setErrorResult(ex);
-                }
-            }
-        }).start();
-
-        return ret;
+        // TODO undestand why error controllers in fiber-blocking mode seem not to work
+        if (getBean() instanceof ErrorController) {
+            return blockingInvoke(args);
+        } else {
+            return fiberDispatchInvoke(args);
+        }
     }
 
     /**
@@ -301,4 +272,64 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
         return sb.toString();
     }
 
+    protected Object blockingInvoke(Object... args) throws IllegalAccessException, Exception {
+        ReflectionUtils.makeAccessible(getBridgedMethod());
+        try {
+            return getBridgedMethod().invoke(getBean(), args);
+        } catch (IllegalArgumentException ex) {
+            assertTargetBean(getBridgedMethod(), getBean(), args);
+            throw new IllegalStateException(getInvocationErrorMessage(ex.getMessage(), args), ex);
+        } catch (InvocationTargetException ex) {
+            // Unwrap for HandlerExceptionResolvers ...
+            Throwable targetException = ex.getTargetException();
+            if (targetException instanceof RuntimeException) {
+                throw (RuntimeException) targetException;
+            } else if (targetException instanceof Error) {
+                throw (Error) targetException;
+            } else if (targetException instanceof Exception) {
+                throw (Exception) targetException;
+            } else {
+                String msg = getInvocationErrorMessage("Failed to invoke controller method", args);
+                throw new IllegalStateException(msg, targetException);
+            }
+        }
+    }
+
+    protected Object fiberDispatchInvoke(final Object... args) {
+        final Object b = getBean();
+        final Method m = getBridgedMethod();
+        ReflectionUtils.makeAccessible(m);
+
+        final DeferredResult ret = new DeferredResult();
+        
+        new Fiber(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                try {
+                    Object originalRet = m.invoke(b, args);
+                    ret.setResult(originalRet);
+                } catch (IllegalArgumentException ex) {
+                    assertTargetBean(m, b, args);
+                    ret.setErrorResult(new IllegalStateException(getInvocationErrorMessage(ex.getMessage(), args), ex));
+                } catch (InvocationTargetException ex) {
+                    // Unwrap for HandlerExceptionResolvers ...
+                    Throwable targetException = ex.getTargetException();
+                    if (targetException instanceof RuntimeException) {
+                        ret.setErrorResult((RuntimeException) targetException);
+                    } else if (targetException instanceof Error) {
+                        ret.setErrorResult((Error) targetException);
+                    } else if (targetException instanceof Exception) {
+                        ret.setErrorResult((Exception) targetException);
+                    } else {
+                        String msg = getInvocationErrorMessage("Failed to invoke controller method", args);
+                        ret.setErrorResult(new IllegalStateException(msg, targetException));
+                    }
+                } catch (IllegalAccessException ex) {
+                    ret.setErrorResult(ex);
+                }
+            }
+        }).start();
+
+        return ret;
+    }
 }
