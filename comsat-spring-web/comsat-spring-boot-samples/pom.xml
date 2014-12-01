@@ -104,8 +104,8 @@
                         <java.security.egd>file:/dev/./urandom</java.security.egd>
                         <java.awt.headless>true</java.awt.headless>
                     </systemPropertyVariables>
-                    <!-- <argLine>-javaagent:${co.paralleluniverse:quasar-core:jar}</argLine> -->
-                    <argLine>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -javaagent:${co.paralleluniverse:quasar-core:jar}</argLine>
+                    <argLine>-javaagent:${co.paralleluniverse:quasar-core:jar}</argLine>
+                    <!-- argLine>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -javaagent:${co.paralleluniverse:quasar-core:jar}</argLine -->
                 </configuration>
             </plugin>
         </plugins>
