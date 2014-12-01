@@ -19,8 +19,8 @@
     <modules>
         <module>comsat-spring-boot-sample-actuator</module>
         <module>comsat-spring-boot-sample-actuator-log4j</module>
-        <!-- <module>spring-boot-sample-actuator-ui</module>
-        <module>spring-boot-sample-aop</module>
+        <module>comsat-spring-boot-sample-actuator-ui</module>
+        <!-- module>spring-boot-sample-aop</module>
         <module>spring-boot-sample-integration</module>
         <module>spring-boot-sample-jersey</module>
         <module>spring-boot-sample-jersey1</module>
@@ -105,7 +105,7 @@
                         <java.awt.headless>true</java.awt.headless>
                     </systemPropertyVariables>
                     <argLine>-javaagent:${co.paralleluniverse:quasar-core:jar}</argLine>
-                    <!-- argLine>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -javaagent:${co.paralleluniverse:quasar-core:jar}</argLine -->
+                    <!--argLine>-Ddebug -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -javaagent:${co.paralleluniverse:quasar-core:jar}</argLine-->
                 </configuration>
             </plugin>
         </plugins>
