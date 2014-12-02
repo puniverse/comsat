@@ -299,9 +299,9 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
         final Object b = getBean();
         final Method m = getBridgedMethod();
         ReflectionUtils.makeAccessible(m);
-
+        
         // Returning deferred even for normal methods, Spring return handlers will take care dynamically based on the actual returned value
-        final DeferredResult ret = new DeferredResult();
+        final DeferredResult ret = new DeferredResult(3600000);
         
         // The actual method execution and deferred completion is dispatched to a new fiber
         new Fiber(new SuspendableRunnable() {

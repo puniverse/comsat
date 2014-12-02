@@ -20,7 +20,8 @@ package comsat.sample.ui.method;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.springframework.web.servlet.config.annotation.FiberWebMvcConfigurationSupport;
+import co.paralleluniverse.fibers.Suspendable;
+import co.paralleluniverse.springframework.web.servlet.config.annotation.FiberWebMvcAutoConfiguration;
 import java.util.Date;
 import java.util.Map;
 
@@ -39,6 +40,7 @@ import org.springframework.security.config.annotation.authentication.configurers
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,18 +48,31 @@ import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @EnableAutoConfiguration
-@Import(FiberWebMvcConfigurationSupport.class) // This will enable fiber-blocking
+@Import(FiberWebMvcAutoConfiguration.class) // This will enable fiber-blocking
 @ComponentScan
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SampleMethodSecurityApplication extends WebMvcConfigurerAdapter {
+    
+    public SampleMethodSecurityApplication() {
+        // This JVM-wide setting is necessary to let fibers (and async in general) inherit security context from the spawning thread
+        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+    }
 
     @Controller
     protected static class HomeController {
 
+        // Unfortunately Spring method security proxies classes in such a way that declared exceptions
+        // get a generated, specific catch block which, for SuspendExecution prevents Quasar from instrumenting;
+        // this means the exception has to be catched and the method annotated in this special case
         @RequestMapping("/")
         @Secured("ROLE_ADMIN")
-        public String home(Map<String, Object> model) throws InterruptedException, SuspendExecution {
-            Fiber.sleep(100);
+        @Suspendable
+        public String home(Map<String, Object> model) throws InterruptedException {
+            try {
+                Fiber.sleep(100);
+            } catch (SuspendExecution se) {
+                throw new AssertionError(se);
+            }
             model.put("message", "Hello World");
             model.put("title", "Hello Home");
             model.put("date", new Date());

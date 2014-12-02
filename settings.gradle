@@ -32,10 +32,7 @@ include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-freemarker'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-groovy-templates'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-jsp'
-
-// NOT WORKING, reason = TBBD (Access denied)
-// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-method-security'
-
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-method-security'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure-custom'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure-jdbc'
