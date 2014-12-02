@@ -51,27 +51,27 @@ public class MessageController {
 
     @RequestMapping
     public ModelAndView list() throws InterruptedException, SuspendExecution {
-        // Fiber.sleep(100);
+        Fiber.sleep(100);
         Iterable<Message> messages = this.messageRepository.findAll();
         return new ModelAndView("messages/list", "messages", messages);
     }
 
     @RequestMapping("{id}")
     public ModelAndView view(@PathVariable("id") Message message) throws InterruptedException, SuspendExecution {
-        // Fiber.sleep(100);
+        Fiber.sleep(100);
         return new ModelAndView("messages/view", "message", message);
     }
 
     @RequestMapping(params = "form", method = RequestMethod.GET)
     public String createForm(@ModelAttribute Message message) throws InterruptedException, SuspendExecution {
-        // Fiber.sleep(100);
+        Fiber.sleep(100);
         return "messages/form";
     }
 
     @RequestMapping(method = RequestMethod.POST)
     public ModelAndView create(@Valid Message message, BindingResult result,
             RedirectAttributes redirect) throws InterruptedException, SuspendExecution {
-        // Fiber.sleep(100);
+        Fiber.sleep(100);
         if (result.hasErrors()) {
             return new ModelAndView("messages/form", "formErrors", result.getAllErrors());
         }
@@ -82,7 +82,7 @@ public class MessageController {
 
     @RequestMapping("foo")
     public String foo() throws InterruptedException, SuspendExecution {
-        // Fiber.sleep(100);
+        Fiber.sleep(100);
         throw new RuntimeException("Expected exception in controller");
     }
 }
