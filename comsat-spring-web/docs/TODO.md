@@ -27,39 +27,24 @@ The chosen approach is 3. Some previous tests of the idea (and shortcomings) are
 TODO
 ----
 
-- Undestand better problematic tests
-- Understand why MockMvc has problems with async
 - Verify more thoroughly that Spring-supported async return types (`Future`, `DeferredResult`, `Callable`) are indeed working in new fiber method handler
+- Understand why Spring error dispatches after async don't work if they are async themselves (and allow it if possible)
+  - This removes the need for a dependency on `ErrorController`, which eases the task below
 - Separate spring-only and spring-boot parts as they have different dependencies (or rename project to make it apparent it
   is a spring-boot-web integration and not just a spring-web one)
-- Understand why Spring error dispatches after async don't work if they are async themselves (and allow it if possible)
-
-SIDE TODO
----------
-
-- [QUASAR] Quasar-core agent-based instrumentation on servlet container Jetty (runner) doesn't work as ASM is missing (presumably because runtime dependency
-  are in webapp classpath, not container classpath)
-- [QUASAR] Quasar-core agent-based instrumentation on servlet container Jetty (runner) warns that the agent has not been loaded (presumably because runtime
-  dependency are in webapp classpath, not container classpath)
-- [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
-
-- [COMSAT] Tomcat 8.0.15 JDK8 loader seems not to work because of classpath linking problems (missing methods)
-- [COMSAT] Tomcat 7.0.57 JDK7 loader seems not to work as some quasar classes and ASM are missing
-- [COMSAT] Docs Jersey Server: both in `web.xml` and programmatic configuration, async must be set to true
-- [COMSAT] Instrumentation for servlet containers: quasar jar alone doesn't work as it misses dependencies. Comsat loader jars seem perfect instead,
-  only they need quasar's manifest.
-- [COMSAT] Publish JavaDocs 0.2.0
-- [COMSAT] `gradle install` blocks on installing a war
-- [COMSAT] Publish the servlet-container-based template as an example
-- [COMSAT] Annotation-based framework to generate dynamically forwarders (through cglib) and protected proxies (through ASM or Javassist);
-  idea: `@Mirrors(Class)` on class, `@Proxy` and `@Rewrite` on features
+- Understand if there is a way to package spring security support instead of requiring an user to change the JVM-level strategy through
+  `SecurityContextHolder.setStrategyName()`
 
 Maybe first release
 ===================
 
 TODO
 ----
-
+- Understand why MockMvc has problems with async
+- Unfortunately Spring method security proxies classes in such a way that declared exceptions get a generated, specific catch block which, in the
+  SuspendExecution case, it prevents Quasar from instrumenting; this means SuspendExecution has to be catched and not declared and the method annotated
+  in these circumstances.
+  Look at the proxy generation code and see if there's an equivalent logic that doesn't generate specific `catch` blocks for declared exceptions.
 - Evaluate dynamic code generation strategies
   - Doesn't seem very useful for the main servlets hierarchy as those are container-called classes (so there must be static, named ones for the "configuration
     file" use case)
@@ -98,3 +83,24 @@ Possible Goals
 - Fiber-blocking Spring HTTP client
 - Fiber-blocking Websocket
 - Fiber-blocking Spring "Remoting" C/S (e.g. JAX-WS and other HTTP technologies only?)
+
+New cross-topic backlog
+=======================
+
+- [QUASAR] Quasar-core agent-based instrumentation on servlet container Jetty (runner) doesn't work as ASM is missing (presumably because runtime dependency
+  are in webapp classpath, not container classpath)
+- [QUASAR] Quasar-core agent-based instrumentation on servlet container Jetty (runner) warns that the agent has not been loaded (presumably because runtime
+  dependency are in webapp classpath, not container classpath)
+- [QUASAR] Didn't get any meaningful error when park()ing in non-fiber; feasible to improve?
+
+- [COMSAT] Tomcat 8.0.15 JDK8 loader seems not to work because of classpath linking problems (missing methods)
+- [COMSAT] Tomcat 7.0.57 JDK7 loader seems not to work as some quasar classes and ASM are missing
+- [COMSAT] Docs Jersey Server: both in `web.xml` and programmatic configuration, async must be set to true
+- [COMSAT] Instrumentation for servlet containers: quasar jar alone doesn't work as it misses dependencies. Comsat loader jars seem perfect instead,
+  only they need quasar's manifest.
+- [COMSAT] Publish JavaDocs 0.2.0
+- [COMSAT] `gradle install` blocks on installing a war
+- [COMSAT] Publish the servlet-container-based template as an example
+- [COMSAT] Annotation-based framework to generate dynamically forwarders (through cglib) and protected proxies (through ASM or Javassist);
+  idea: `@Mirrors(Class)` on class, `@Proxy` and `@Rewrite` on features
+
