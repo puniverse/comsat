@@ -28,6 +28,7 @@ TODO
 ----
 
 - Undestand better problematic tests
+- Understand why MockMvc has problems with async
 - Verify more thoroughly that Spring-supported async return types (`Future`, `DeferredResult`, `Callable`) are indeed working in new fiber method handler
 - Separate spring-only and spring-boot parts as they have different dependencies (or rename project to make it apparent it
   is a spring-boot-web integration and not just a spring-web one)

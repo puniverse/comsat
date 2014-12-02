@@ -48,9 +48,7 @@ include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-
 // NOT WORKING, reason = ?
 // include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-static'
 
-// NOT WORKING, reason = ?
-// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-ui'
-
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-ui'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-velocity'
 
 if (System.properties['java.version'].startsWith('1.8') ) { 
