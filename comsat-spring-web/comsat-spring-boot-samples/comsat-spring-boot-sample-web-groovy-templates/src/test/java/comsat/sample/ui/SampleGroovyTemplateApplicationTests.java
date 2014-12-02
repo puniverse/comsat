@@ -76,6 +76,18 @@ public class SampleGroovyTemplateApplicationTests {
     }
 
     @Test
+    public void testCreateValidation() throws Exception {
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
+        map.set("text", "");
+        map.set("summary", "");
+        ResponseEntity<String> entity = new TestRestTemplate().postForEntity("http://localhost:"
+                + this.port, map, String.class);
+        assertEquals(HttpStatus.OK, entity.getStatusCode());
+        assertTrue("Wrong body ('required' validation error doesn't match):\n" + entity.getBody(), entity
+                .getBody().contains("is required"));
+    }
+
+    @Test
     public void testCss() throws Exception {
         ResponseEntity<String> entity = new TestRestTemplate().getForEntity(
                 "http://localhost:" + this.port + "/css/bootstrap.min.css", String.class);

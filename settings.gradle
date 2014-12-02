@@ -16,6 +16,7 @@ include 'comsat-jax-rs-client'
 include 'comsat-mongodb-allanbank'
 include 'comsat-test-utils'
 include 'comsat-test-war'
+
 include 'comsat-spring-web'
 include 'comsat-spring-web:comsat-spring-boot-samples'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator'
@@ -32,13 +33,10 @@ include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-tomcat8-jsp'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-traditional'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-freemarker'
-
-// NOT WORKING, reason = TBBD
-// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-groovy-templates'
-
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-groovy-templates'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-jsp'
 
-// NOT WORKING, reason = Spring-instrumented classes via CGLIb catching
+// NOT WORKING, reason = TBBD
 // include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-method-security'
 
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure'
