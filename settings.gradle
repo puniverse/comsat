@@ -22,7 +22,7 @@ include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator-log4j'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator-ui'
 
-// NOT WORKING, reaon = TBBD
+// NOT WORKING, reason = TBBD
 // include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-data-jpa'
 
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-jetty'
@@ -44,10 +44,7 @@ include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure-custom'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure-jdbc'
-
-// NOT WORKING, reason = ?
-// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-static'
-
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-static'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-ui'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-velocity'
 
