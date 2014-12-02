@@ -32,8 +32,10 @@ TODO
   - This removes the need for a dependency on `ErrorController`, which eases the task below
 - Separate spring-only and spring-boot parts as they have different dependencies (or rename project to make it apparent it
   is a spring-boot-web integration and not just a spring-web one)
+- User docs
 - Understand if there is a way to package spring security support instead of requiring an user to change the JVM-level strategy through
   `SecurityContextHolder.setStrategyName()`
+- Check / prepare for Spring 4.1.9 and Boot 1.2.0
 
 Maybe first release
 ===================
