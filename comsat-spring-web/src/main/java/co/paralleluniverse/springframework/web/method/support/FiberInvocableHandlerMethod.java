@@ -228,12 +228,12 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
      * Invoke the handler method with the given argument values.
      */
     protected Object invoke(final Object... args) throws Exception {
-        // TODO support Future, DeferredResult and Callable
-
-        // TODO undestand why error controllers in fiber-blocking mode seem not to work
+        // TODO maybe use class name matching to avoid dependency on Boot
         if (getBean() instanceof ErrorController) {
             return blockingInvoke(args);
         } else {
+            // TODO check more thoroughly support for Future, DeferredResult and Callable
+            // TODO undestand why error controllers in fiber-blocking mode seem not to work
             return fiberDispatchInvoke(args);
         }
     }
@@ -300,8 +300,10 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
         final Method m = getBridgedMethod();
         ReflectionUtils.makeAccessible(m);
 
+        // Returning deferred even for normal methods, Spring return handlers will take care dynamically based on the actual returned value
         final DeferredResult ret = new DeferredResult();
         
+        // The actual method execution and deferred completion is dispatched to a new fiber
         new Fiber(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
@@ -314,12 +316,8 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
                 } catch (InvocationTargetException ex) {
                     // Unwrap for HandlerExceptionResolvers ...
                     Throwable targetException = ex.getTargetException();
-                    if (targetException instanceof RuntimeException) {
-                        ret.setErrorResult((RuntimeException) targetException);
-                    } else if (targetException instanceof Error) {
-                        ret.setErrorResult((Error) targetException);
-                    } else if (targetException instanceof Exception) {
-                        ret.setErrorResult((Exception) targetException);
+                    if (targetException instanceof RuntimeException || targetException instanceof Error || targetException instanceof Exception) {
+                        ret.setErrorResult(targetException);
                     } else {
                         String msg = getInvocationErrorMessage("Failed to invoke controller method", args);
                         ret.setErrorResult(new IllegalStateException(msg, targetException));
