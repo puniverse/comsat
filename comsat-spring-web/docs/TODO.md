@@ -10,27 +10,27 @@ Goals
 Analysis
 --------
 
-Approaches and shortcomings are described here: https://github.com/circlespainter/servlet3-filter-async-test#dispatching-requests-for-async-execution-in-spring-boot-with-or-without-actuator.
+Approaches and shortcomings are described here:
+https://github.com/circlespainter/servlet3-filter-async-test#dispatching-requests-for-async-execution-in-spring-boot-with-or-without-actuator.
 
-1. Starting the fiber dispatch in a special outmost (i.e. first) filter: best approach, least expensive, useful in general and covers the whole request but unfortunately both Jetty and Tomcat
-   have bugs that have been reported but are difficult to circumvent.
-2. Starting the fiber dispatch in a DispatcherServlet: requires patching the controller method handling as well, since Spring's bookeeping of the async processing (necessary to process triggers
-   and filters when it is complete as the Servlet 3 spec offers no support for that) is tailor-made for its own async support. This approach limits the fiber execution scope to the servlet and
-   is the most expensive implement.
-3. New `HandlerMethod` implementation dispatching normal blocking controller methods to Deferred that will be completed in fibers. This approach seems to work very similarly (and as ok as) the
-   normal Spring Web async handling (which is not perfect anyway) and is not terribly expensive. Unfortunately Spring's basic implementation is currently difficult to reuse, so some copy&paste
-   is needed (3 improvement issues have been opened on that subject).
+1. Starting the fiber dispatch in a special outmost (i.e. first) filter: best approach, least expensive, useful in general and covers the whole request but
+   unfortunately both Jetty and Tomcat have bugs that have been reported but are difficult to circumvent.
+2. Starting the fiber dispatch in a DispatcherServlet: requires patching the controller method handling as well, since Spring's bookeeping of the async
+   processing (necessary to process triggers and filters when it is complete as the Servlet 3 spec offers no support for that) is tailor-made for its own
+   async support. This approach limits the fiber execution scope to the servlet and is the most expensive implement.
+3. New `HandlerMethod` implementation dispatching normal blocking controller methods to Deferred that will be completed in fibers. This approach seems to
+   work very similarly (and as ok as) the normal Spring Web async handling (which is not perfect anyway) and is not terribly expensive. Unfortunately
+   Spring's basic implementation is currently difficult to reuse, so some copy&paste is needed (3 improvement issues have been opened on that subject).
 
-The chosen approach is number 3. Some previous tests of the idea (and shortcomings) are available here https://github.com/circlespainter/spring-boot-async-test.
+The chosen approach is 3. Some previous tests of the idea (and shortcomings) are available here https://github.com/circlespainter/spring-boot-async-test.
 
 TODO
 ----
 
-- [IN PROGRESS] Adapt Boot Spring Samples testsuite (maven-based)
-  - Verify more thoroughly that async return times (`Future`, `DeferredResult`, `Callable`) are indeed working
+- Undestand better problematic tests
+- Verify more thoroughly that Spring-supported async return types (`Future`, `DeferredResult`, `Callable`) are indeed working in new fiber method handler
 - Separate spring-only and spring-boot parts as they have different dependencies (or rename project to make it apparent it
   is a spring-boot-web integration and not just a spring-web one)
-- Hook samples in the comsat-spring-web test chain (as gradle subprojects?)
 - Understand why Spring error dispatches after async don't work if they are async themselves (and allow it if possible)
 
 SIDE TODO

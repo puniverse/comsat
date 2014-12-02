@@ -12,12 +12,10 @@
  * as published by the Free Software Foundation.
  */
 /*
- * Copied from sample.actuator.SampleActuatorApplicationTest
- * in Spring Boot Samples.
+ * Based on the corresponding class in Spring Boot Samples.
  * Copyright the original author Dave Syer.
  * Released under the ASF 2.0 license.
  */
-
 package comsat.sample.actuator.log4j;
 
 import java.util.Map;
@@ -59,5 +57,4 @@ public class SampleActuatorApplicationTests {
         Map<String, Object> body = entity.getBody();
         assertEquals("Hello Phil", body.get("message"));
     }
-
 }

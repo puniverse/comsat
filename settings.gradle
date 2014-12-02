@@ -21,7 +21,37 @@ include 'comsat-spring-web:comsat-spring-boot-samples'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator-log4j'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator-ui'
+
+// NOT WORKING, reaon = TBBD
+// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-data-jpa'
+
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-jetty'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-tomcat'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-tomcat-multi-connectors'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-tomcat-ssl'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-tomcat8-jsp'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-traditional'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-freemarker'
+
+// NOT WORKING, reason = TBBD
+// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-groovy-templates'
+
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-jsp'
+
+// NOT WORKING, reason = Spring-instrumented classes via CGLIb catching
+// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-method-security'
+
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure-custom'
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure-jdbc'
+
+// NOT WORKING, reason = ?
+// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-static'
+
+// NOT WORKING, reason = ?
+// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-ui'
+
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-velocity'
 
 if (System.properties['java.version'].startsWith('1.8') ) { 
     include 'comsat-tomcat-loader-jdk8'

@@ -79,8 +79,19 @@ subprojects {
             force "org.springframework:spring-core:$springVersion"
             force "org.springframework:spring-expression:$springVersion"
             force "org.springframework:spring-web:$springVersion"
+            force "org.springframework:spring-orm:$springVersion"
+            force "org.springframework:spring-tx:$springVersion"
+            force "org.jboss.logging:jboss-logging:3.1.3.GA"
+            force "org.aspectj:aspectjrt:1.8.4"
+            force "org.aspectj:aspectjweaver:1.8.4"
             force "org.hamcrest:hamcrest-core:1.3"
             force "org.eclipse.jetty.orbit:javax.servlet.jsp:2.2.0.v201112011158"
+            force "org.yaml:snakeyaml:1.14"
+            force "org.webjars:jquery:2.0.3-1"
+            force "commons-beanutils:commons-beanutils:1.9.2"
+            force "commons-digester:commons-digester:2.1"
+            force "commons-collections:commons-collections:3.2.1"
+            force "org.apache.velocity:velocity:1.7"
         }
     }
     

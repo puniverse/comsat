@@ -12,8 +12,7 @@
  * as published by the Free Software Foundation.
  */
 /*
- * Based on sample.actuator.ServiceProperties
- * in Spring Boot Samples.
+ * Based on the corresponding class in Spring Boot Samples.
  * Copyright the original author(s).
  * Released under the ASF 2.0 license.
  */
@@ -35,5 +34,4 @@ public class ServiceProperties {
     public void setName(String name) {
         this.name = name;
     }
-
 }

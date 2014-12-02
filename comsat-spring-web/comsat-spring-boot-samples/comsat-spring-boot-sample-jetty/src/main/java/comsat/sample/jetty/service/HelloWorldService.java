@@ -12,8 +12,7 @@
  * as published by the Free Software Foundation.
  */
 /*
- * Based on sample.jetty.service.HelloWorldService
- * in Spring Boot Samples.
+ * Based on the corresponding class in Spring Boot Samples.
  * Copyright the original author(s).
  * Released under the ASF 2.0 license.
  */
@@ -31,5 +30,4 @@ public class HelloWorldService {
     public String getHelloMessage() {
         return "Hello " + this.name;
     }
-
 }
