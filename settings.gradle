@@ -22,10 +22,7 @@ include 'comsat-spring-web:comsat-spring-boot-samples'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator-log4j'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-actuator-ui'
-
-// NOT WORKING, reason = TBBD
-// include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-data-jpa'
-
+include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-data-jpa'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-jetty'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-tomcat'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-tomcat-multi-connectors'
@@ -36,7 +33,7 @@ include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-groovy-templates'
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-jsp'
 
-// NOT WORKING, reason = TBBD
+// NOT WORKING, reason = TBBD (Access denied)
 // include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-method-security'
 
 include 'comsat-spring-web:comsat-spring-boot-samples:comsat-spring-boot-sample-web-secure'

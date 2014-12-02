@@ -18,48 +18,45 @@
  */
 package comsat.sample.data.jpa;
 
-import org.junit.Before;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.TestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration test to run the application.
  *
  * @author Oliver Gierke
+ * @author circlespainter
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = SampleDataJpaApplication.class)
 @WebAppConfiguration
+@IntegrationTest("server.port:0")
+@DirtiesContext
 @ActiveProfiles("scratch")
 // Separate profile for web tests to avoid clashing databases
 public class SampleDataJpaApplicationTests {
 
-    @Autowired
-    private WebApplicationContext context;
-
-    private MockMvc mvc;
-
-    @Before
-    public void setUp() {
-        this.mvc = MockMvcBuilders.webAppContextSetup(this.context).build();
-    }
+    @Value("${local.server.port}")
+    private int port;
 
     @Test
     public void testHome() throws Exception {
-
-        this.mvc.perform(get("/")).andExpect(status().isOk())
-                .andExpect(content().string("Bath"));
+        ResponseEntity<String> entity = new TestRestTemplate().getForEntity(
+                "http://localhost:" + this.port, String.class);
+        assertEquals(HttpStatus.OK, entity.getStatusCode());
+        assertTrue("Wrong body (doesn't contain 'Bath'):\n" + entity.getBody(), entity
+                .getBody().contains("Bath"));
     }
 }
