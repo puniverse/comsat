@@ -27,10 +27,6 @@ The chosen approach is 3. Some previous tests of the idea (and shortcomings) are
 TODO
 ----
 
-- Separate spring-only and spring-boot parts as they have different dependencies (or rename project to make it apparent it
-  is a spring-boot-web integration and not just a spring-web one)
-- Understand if there is a way to package spring security support instead of requiring an user to change the JVM-level strategy through
-  `SecurityContextHolder.setStrategyName()`
 - Verify more thoroughly that Spring-supported async return types (`Future`, `DeferredResult`, `Callable`) are indeed working in new fiber method handler
 - User docs
 - Check / prepare for Spring 4.1.9 and Boot 1.2.0
