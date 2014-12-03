@@ -59,8 +59,9 @@ subprojects {
     ext.mongodbJavaAsyncDriverVersion   = '2.0.0'
     ext.embedMongoVersion               = '1.46.0'
     
-    ext.springBootVersion               = '1.1.9.RELEASE'
     ext.springVersion                   = '4.0.8.RELEASE'
+    ext.springSecurityVersion           = '3.2.5.RELEASE'
+    ext.springBootVersion               = '1.1.9.RELEASE'
 
     configurations.all {
         resolutionStrategy {

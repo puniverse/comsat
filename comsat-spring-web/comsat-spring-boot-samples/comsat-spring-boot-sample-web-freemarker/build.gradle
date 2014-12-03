@@ -1,8 +1,0 @@
-dependencies {
-    compile("org.springframework:spring-webmvc:$springVersion")
-    compile("org.springframework.boot:spring-boot-starter:$springBootVersion")
-    compile("org.springframework.boot:spring-boot-starter-freemarker:$springBootVersion")
-    compile project(":comsat-spring-web:comsat-spring-boot-samples")
-
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
-}

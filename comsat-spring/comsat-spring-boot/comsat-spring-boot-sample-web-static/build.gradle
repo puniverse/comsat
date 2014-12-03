@@ -1,0 +1,10 @@
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-actuator:$springBootVersion")
+    compile("org.webjars:bootstrap:3.0.3")
+    compile("org.webjars:jquery:2.0.3-1")
+    compile project(":comsat-spring:comsat-spring-boot")
+
+    provided("org.springframework.boot:spring-boot-starter-tomcat:$springBootVersion")
+
+    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
+}

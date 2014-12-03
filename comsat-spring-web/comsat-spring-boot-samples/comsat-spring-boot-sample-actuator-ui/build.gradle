@@ -1,9 +1,0 @@
-dependencies {
-    compile("org.springframework.boot:spring-boot-starter-actuator:$springBootVersion")
-    compile("org.springframework.boot:spring-boot-starter-freemarker:$springBootVersion")
-    compile("org.springframework.boot:spring-boot-starter-security:$springBootVersion")
-    compile("org.jolokia:jolokia-core:1.2.3")
-    compile project(":comsat-spring-web:comsat-spring-boot-samples")
-
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
-}

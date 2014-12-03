@@ -1,8 +1,0 @@
-dependencies {
-    compile("org.springframework.boot:spring-boot-starter-actuator:$springBootVersion")
-    compile("org.springframework.boot:spring-boot-starter-security:$springBootVersion")
-    compile("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVersion")
-    compile project(":comsat-spring-web:comsat-spring-boot-samples")
-
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
-}

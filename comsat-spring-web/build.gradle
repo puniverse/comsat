@@ -1,4 +1,0 @@
-dependencies {
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    compile project(':comsat-servlet')
-}
