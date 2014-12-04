@@ -40,6 +40,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
+import java.util.concurrent.Callable;
 
 // TODO subclass instead of this copy&paste horror when https://jira.spring.io/browse/SPR-12484 is released
 
@@ -311,11 +312,18 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
         
         // The actual method execution and deferred completion is dispatched to a new fiber
         new Fiber(new SuspendableRunnable() {
+            private Object deAsync(final Object o) throws SuspendExecution, Exception {
+                if (o instanceof Callable)
+                    return deAsync(((Callable) o).call());
+                else
+                    return o;
+            }
+    
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
                     Object originalRet = m.invoke(b, args);
-                    ret.setResult(originalRet);
+                    ret.setResult(deAsync(originalRet));
                 } catch (IllegalArgumentException ex) {
                     assertTargetBean(m, b, args);
                     ret.setErrorResult(new IllegalStateException(getInvocationErrorMessage(ex.getMessage(), args), ex));
@@ -328,7 +336,7 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
                         String msg = getInvocationErrorMessage("Failed to invoke controller method", args);
                         ret.setErrorResult(new IllegalStateException(msg, targetException));
                     }
-                } catch (IllegalAccessException ex) {
+                } catch (Exception ex) {
                     ret.setErrorResult(ex);
                 }
             }

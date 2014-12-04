@@ -31,6 +31,8 @@ import org.springframework.web.servlet.config.annotation.DelegatingWebMvcConfigu
 import org.springframework.web.servlet.config.annotation.ServletConfigAnnotationProtectedProxy;
 
 /**
+ * Provides a fiber-dispatching controller method invoker
+ * 
  * @author circlespainter
  * 
  * @see EnableWebMvc
@@ -38,7 +40,7 @@ import org.springframework.web.servlet.config.annotation.ServletConfigAnnotation
  * @see WebMvcConfigurerAdapter
  */
 @Configuration
-public class FiberWebMvcConfigurationSupport extends DelegatingWebMvcConfiguration {
+public class FiberWebMvcConfigurationSupport extends DelegatingWebMvcConfiguration {    
     @Bean
     public FiberRequestMappingHandlerAdapter fiberRequestMappingHandlerAdapter() {
         List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<>();

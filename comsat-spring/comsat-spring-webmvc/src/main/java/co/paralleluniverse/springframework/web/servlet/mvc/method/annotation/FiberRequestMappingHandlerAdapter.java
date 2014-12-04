@@ -142,7 +142,7 @@ import org.springframework.web.util.WebUtils;
  * @see HandlerMethodReturnValueHandler
  */
 public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
-        implements BeanFactoryAware, InitializingBean, Ordered {
+        implements BeanFactoryAware, InitializingBean, Ordered /* This will give it priority */  {
 
     private List<HandlerMethodArgumentResolver> customArgumentResolvers;
 
