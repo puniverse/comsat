@@ -40,6 +40,13 @@ public class SampleController {
     @Autowired
     private HelloWorldService helloWorldService;
 
+    @RequestMapping(value = "/helloThreadBlocking", method = RequestMethod.GET)
+    @ResponseBody
+    public Map<String, String> helloThreadBlocking() {
+        return Collections.singletonMap("message",
+                this.helloWorldService.getHelloMessage());
+    }
+
     // snippet suspendable
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody

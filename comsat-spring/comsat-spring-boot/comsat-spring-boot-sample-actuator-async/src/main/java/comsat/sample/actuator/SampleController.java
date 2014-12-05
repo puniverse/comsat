@@ -44,7 +44,7 @@ public class SampleController {
     @Autowired
     private HelloWorldService helloWorldService;
 
-    private Callable<Map<String, String>> helloCallable(final DeferredResult<Map<String, String>> optDeferred) {
+    private Callable<Map<String, String>> helloCallable(final DeferredResult<Map<String, String>> optDeferred) throws SuspendExecution {
         return new Callable<Map<String, String>>() {
             @Override
             @Suspendable
@@ -64,7 +64,7 @@ public class SampleController {
     
     @RequestMapping(value = "/callable", method = RequestMethod.GET)
     @ResponseBody
-    public Callable<Map<String, String>> helloCallable() {
+    public Callable<Map<String, String>> helloCallable() throws SuspendExecution {
         return helloCallable(null);
     }
     
@@ -86,7 +86,7 @@ public class SampleController {
         return ret;
     }
     
-    private Callable<Map<String, Object>> ollehCallable(final Message message, final DeferredResult<Map<String, Object>> optDeferred) {
+    private Callable<Map<String, Object>> ollehCallable(final Message message, final DeferredResult<Map<String, Object>> optDeferred) throws SuspendExecution {
         return new Callable<Map<String, Object>>() {
             @Override
             @Suspendable
@@ -109,7 +109,7 @@ public class SampleController {
     
     @RequestMapping(value = "/callable", method = RequestMethod.POST)
     @ResponseBody
-    public Callable<Map<String, Object>> ollehCallable(final Message message) {
+    public Callable<Map<String, Object>> ollehCallable(final Message message) throws SuspendExecution {
         return ollehCallable(message, null);
     }
     
@@ -131,7 +131,7 @@ public class SampleController {
         return ret;
     }
 
-    private Callable<String> fooCallable(final DeferredResult<String> optDeferred) {
+    private Callable<String> fooCallable(final DeferredResult<String> optDeferred) throws SuspendExecution {
         return new Callable<String>() {
             @Override
             @Suspendable
@@ -149,7 +149,7 @@ public class SampleController {
     
     @RequestMapping("/callable/foo")
     @ResponseBody
-    private Callable<String> fooCallable() {
+    public Callable<String> fooCallable() throws SuspendExecution {
         return fooCallable(null);
     }
     

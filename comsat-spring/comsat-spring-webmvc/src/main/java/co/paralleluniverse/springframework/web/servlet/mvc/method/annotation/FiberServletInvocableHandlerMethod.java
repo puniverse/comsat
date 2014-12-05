@@ -223,7 +223,7 @@ public class FiberServletInvocableHandlerMethod extends FiberInvocableHandlerMet
                 // after completing the (async on fibers) main invocation
                 @Override
                 protected Object invoke(Object... args) throws Exception {
-                    return blockingInvoke(args);
+                    return threadBlockingInvoke(args);
                 }
 
 		/**

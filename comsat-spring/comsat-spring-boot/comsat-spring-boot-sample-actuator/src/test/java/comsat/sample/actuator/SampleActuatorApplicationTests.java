@@ -103,6 +103,17 @@ public class SampleActuatorApplicationTests {
 	}
 
 	@Test
+	public void testHomeThreadBlocking() throws Exception {
+		@SuppressWarnings("rawtypes")
+		ResponseEntity<Map> entity = new TestRestTemplate("user", getPassword())
+				.getForEntity("http://localhost:" + this.port + "/helloThreadBlocking", Map.class);
+		assertEquals(HttpStatus.OK, entity.getStatusCode());
+		@SuppressWarnings("unchecked")
+		Map<String, Object> body = entity.getBody();
+		assertEquals("Hello Phil", body.get("message"));
+	}
+
+        @Test
 	public void testMetrics() throws Exception {
 		testHome(); // makes sure some requests have been made
 		@SuppressWarnings("rawtypes")

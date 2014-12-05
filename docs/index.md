@@ -432,6 +432,8 @@ Adding support for fiber-blocking Spring Web MVC controller methods is as easy a
 {% include_snippet suspendable ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-actuator/src/main/java/comsat/sample/actuator/SampleController.java %}
 ~~~
 
+Spring Web MVC controller methods hat have not been annotated (nor otherwise instrumented) to be suspendable in fibers will be still invoked in the execution context of their servlet container thread using traditional thread-blocking mode.
+
 #### Spring Boot auto-configuration support
 
 If you prefer using auto-configuration, it is enough to change the `@Import` to include `co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration` instead:

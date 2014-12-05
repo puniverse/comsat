@@ -39,6 +39,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.instrument.SuspendableHelper;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.util.concurrent.Callable;
 
@@ -234,15 +235,28 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
     }
 
     /**
-     * Invoke the handler method with the given argument values.
+     * @return `true` if the controller is a Spring Boot error controller
+     */
+    private boolean isBootErrorController() {
+        return springBootErrorControllerClass != null && springBootErrorControllerClass.isAssignableFrom(getBean().getClass());
+    }
+
+    /**
+     * @return `true` if the method is not annotated with `@Suspendable` and it doesn't throw `SuspendExecution`
+     */
+    private boolean isThreadBlockingMethod() {
+        return !SuspendableHelper.isInstrumented(getMethod());
+    }
+    
+    /**
+     * Invoke the handler method with the given argument values, either traditional thread-blocking or in a new fiber.
      */
     protected Object invoke(final Object... args) throws Exception {
-        // TODO need avoiding async error handling due to https://bugs.eclipse.org/bugs/show_bug.cgi?id=454022, remove as sson as it's fixed
-        if (springBootErrorControllerClass != null && springBootErrorControllerClass.isAssignableFrom(getBean().getClass())) {
-            return blockingInvoke(args);
-        } else {
+        if (isBootErrorController() // TODO need avoiding async error handling due to https://bugs.eclipse.org/bugs/show_bug.cgi?id=454022, remove as sson as it's fixed
+            || isThreadBlockingMethod())
+            return threadBlockingInvoke(args);
+        else
             return fiberDispatchInvoke(args);
-        }
     }
 
     /**
@@ -279,7 +293,7 @@ public class FiberInvocableHandlerMethod extends HandlerMethod {
         return sb.toString();
     }
 
-    protected Object blockingInvoke(Object... args) throws IllegalAccessException, Exception {
+    protected Object threadBlockingInvoke(Object... args) throws IllegalAccessException, Exception {
         ReflectionUtils.makeAccessible(getBridgedMethod());
         try {
             return getBridgedMethod().invoke(getBean(), args);
