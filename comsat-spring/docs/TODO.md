@@ -26,4 +26,3 @@ TODO
 ----
 
 - User docs
-- Check / prepare for Spring 4.1.9 and Boot 1.2.0 too
