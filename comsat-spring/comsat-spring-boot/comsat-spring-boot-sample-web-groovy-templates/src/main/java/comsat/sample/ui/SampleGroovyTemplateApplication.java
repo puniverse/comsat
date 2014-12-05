@@ -28,7 +28,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.convert.converter.Converter;
 
 @Configuration
+// snippet import
 @Import(FiberWebMvcAutoConfiguration.class) // This will enable fiber-blocking
+// end of snippet
 @EnableAutoConfiguration
 @ComponentScan
 public class SampleGroovyTemplateApplication {

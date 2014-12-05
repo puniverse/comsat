@@ -40,6 +40,7 @@ public class SampleController {
     @Autowired
     private HelloWorldService helloWorldService;
 
+    // snippet suspendable
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public Map<String, String> hello() throws SuspendExecution, InterruptedException {
@@ -47,6 +48,7 @@ public class SampleController {
         return Collections.singletonMap("message",
                 this.helloWorldService.getHelloMessage());
     }
+    // end of snippet
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody

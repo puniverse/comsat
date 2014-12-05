@@ -68,6 +68,9 @@ where `ARTIFACT` is:
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
 * `comsat-jersey-server` – [Jersey server](https://jersey.java.net/) integration for defining REST services.
 * `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
+* `comsat-spring-webmvc` – [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.
+* `comsat-spring-boot` – [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.
+* `comsat-spring-security` – [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.
 * `comsat-jax-rs-client` – [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for calling HTTP services.
 * `comsat-httpclient` – [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for calling HTTP services.
 * `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration.
@@ -84,7 +87,7 @@ where `ARTIFACT` is:
 
 Comsat runs code in [Quasar](http://docs.paralleluniverse.co/quasar/) fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat and Jetty; or at compilation time.
 
-AOT instrumentation is eplained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instruemtnation).
+AOT instrumentation is eplained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instrumentation).
 
 #### The Java Agent
 
@@ -140,7 +143,7 @@ Comsat integrates with JavaEE servlets and enables you to write servlets that ca
 
 To write a Comsat (fiber-per-request) servlet, simply extend [`FiberHttpServlet`]({{javadoc}}/fibers/servlet/FiberHttpServlet.html) rather than the usual `javax.servlet.HttpServlet`, and either annotate it with `@WebServlet` or declare it in `web.xml`. Note how the `service` and all the `doXXX` methods are [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (they all `throw SuspendExecution`).
 
-You can deploy your servlet as you normally would, either as a WAR file, or in an embedded servlet container.
+You can deploy your servlet as you normally would, either as a WAR file (remember to enable async support for it), or in an embedded servlet container.
 
 It is recommended that you then configure your servlet container to limit the number of threads in its thread pool to some small number, as all these threads do is create the fiber (which runs in the fiber thread pool) and return.
 
@@ -149,7 +152,7 @@ Example:
 ~~~ java
 {% include_snippet FiberHttpServlet example ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
 ~~~
-Then you can simply add it as a regular servlet to you favorite servlet containter:
+Then you can simply add it as a regular servlet to you favorite servlet containter, e.g. for embedded Jetty:
 
 ~~~ java
 {% include_snippet servlet registration ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
@@ -171,6 +174,7 @@ in your `web.xml` file, which is how you would normally use Jersey in a Servlet 
 
 ~~~ xml
 <servlet-class>co.paralleluniverse.fibers.jersey.ServletContainer</servlet-class>
+<async-supported>true</async-supported>
 ~~~
 
 Your resource methods (the ones you annotate with `@GET`, `@PUT`, `@POST` etc.) can now be made suspendable by declaring `throws SuspendExecution`. Comsat would then run each request in a fiber. Your resource methods are free to use Comsat's JDBC implementation, or Comsat's JAX-RS client.
@@ -367,7 +371,7 @@ In order to use jOOQ from fiber context, all you have to do is to provide connec
 
 Comsat integrates with MongoDB, for a fiber-blocking Mongo access via the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).
 
-This is how you get a fiber-freindly `MongoDatabase` instance:
+This is how you get a fiber-friendly `MongoDatabase` instance:
 
 ~~~ java
 MongoClient mongoClient = FiberMongoFactory.createClient( "mongodb://localhost:" + port + "/test?maxConnectionCount=10" ).asSerializedClient();
@@ -378,7 +382,7 @@ MongoDatabase mongoDb = mongoClient.getDatabase("mydb");
 
 [Dropwizard](http://dropwizard.io/) is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
 
-In order to use dropwizaed in a Comsat environment, only few changes have to be made in the application declartion.
+In order to use dropwizaed in a Comsat environment, only few changes have to be made in the application declaration.
 First the yaml configuration file:
 
 ~~~ yaml
@@ -404,9 +408,51 @@ Now we can move to the code declaratations:
 ~~~
 Instead of extending the regular `io.dropwizard.Application` class, you should extend the Comsat's `FiberApplication`. Your regular `run` function should be slightly changed to be called `fiberRun`. The creation of httpClient should be done using the `FiberHttpClientBuilder` class and the creation of `jdbi` should be done using the `FiberDBIFactory` class.
 
+### Spring
+
+[Spring Framework](http://projects.spring.io/spring-framework/) is a popular Dependency Injection Java framework; it integrates with many enterprise Java tools and libraries and complements them with new uniform and easy-to-use APIs.
+
+[Spring Boot](http://projects.spring.io/spring-boot/) adds fast project bootstrap facilities, convention over configuration, auto-configuration based on classpath (and other conditions) and embedded Tomcat and Jetty containers integration. It also provides [Actuator](http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready), a set of ready-to-use facilities for production environments like auditing, health-checks, metrics and JMX monitoring/management through its native protocol, HTTP, SSH or telnet.
+
+[Spring Security](http://projects.spring.io/spring-security/) is a comprehensive Java security framework encompassing authentication and authorization for traditional and web applications, and the de-facto standard for securing Spring-based projects.
+
+Comsat provides the ability to write fiber-blocking Spring Web MVC controller methods together with (optional) Spring Boot auto-configuration support and (still optional) Spring Security's context inheritance for fibers.
+
+#### Fiber-blocking Spring Web MVC controller methods
+
+Adding support for fiber-blocking Spring Web MVC controller methods is as easy as adding an `@Import` for the Spring configuration class `FiberWebMvcConfigurationSupport` in the `co.paralleluniverse.springframework.web.servlet.config.annotation` package:
+
+~~~ java
+{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-data-jpa/src/main/java/comsat/sample/data/jpa/SampleDataJpaApplication.java %}
+~~~
+
+...And declaring your controller methods as suspendable, as you would normally do with any fiber-blocking method:
+
+~~~ java
+{% include_snippet suspendable ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-actuator/src/main/java/comsat/sample/actuator/SampleController.java %}
+~~~
+
+#### Spring Boot auto-configuration support
+
+If you prefer using auto-configuration, it is enough to change the `@Import` to include `co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration` instead:
+
+~~~ java
+{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-web-groovy-templates/src/main/java/comsat/sample/ui/SampleGroovyTemplateApplication.java %}
+~~~
+
+#### Spring Security support
+
+By default, Spring Security stores the server-side security context for the current user in a Java `ThreadLocal`. In order to let fibers spawned for suspendable Spring Web MVC controller methods inherit the security context, the strategy Spring uses mut be reconfigured to leverage Java's `InheritableThreadLocal` instead (please be aware that this is JVM-level global setting).
+
+This is as easy as adding an `@Import` for the `co.paralleluniverse.springframework.security.config.FiberSecurityContextHolderConfig` configuration class:
+
+~~~ java
+{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-actuator/src/main/java/comsat/sample/actuator/SampleActuatorApplication.java %}
+~~~
+
 ## Web Actors
 
-Web Acotrs are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, SSE and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
+Web Actors are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, SSE and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
 
 ### Deployment
 

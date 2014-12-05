@@ -29,8 +29,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @Configuration
+// snippet import
 // The following will enable fiber-blocking and will let fibers inherit security context
 @Import({FiberWebMvcConfigurationSupport.class, FiberSecurityContextHolderConfig.class})
+// end of snippet
 @EnableAutoConfiguration
 @EnableConfigurationProperties
 @ComponentScan
