@@ -432,7 +432,7 @@ Adding support for fiber-blocking Spring Web MVC controller methods is as easy a
 {% include_snippet suspendable ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-actuator/src/main/java/comsat/sample/actuator/SampleController.java %}
 ~~~
 
-Spring Web MVC controller methods hat have not been annotated (nor otherwise instrumented) to be suspendable in fibers will be still invoked in the execution context of their servlet container thread using traditional thread-blocking mode.
+Spring Web MVC controller methods that have not been annotated (nor otherwise instrumented) to be suspendable will be invoked in thread-blocking mode rather than fiber-blocking.
 
 #### Spring Boot auto-configuration support
 
@@ -451,6 +451,8 @@ This is as easy as adding an `@Import` for the `co.paralleluniverse.springframew
 ~~~ java
 {% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-actuator/src/main/java/comsat/sample/actuator/SampleActuatorApplication.java %}
 ~~~
+
+At present there is one small caveat to be aware of when using Spring method security: as Spring will proxy secured methods so that all declared exceptions (including `SuspendExecution`) are catched individually, Quasar will refuse to instrument them. In this specific case `SuspendExecution` should not be declared but catched in the method body, and the method signature should be annotated with `@Suspendable` instead.
 
 ## Web Actors
 
