@@ -15,5 +15,10 @@
     [[org.clojure/clojure "1.6.0"]
      [ring/ring-core "1.3.2"]
      [ring/ring-devel "1.3.2"]
-     [ring/ring-jetty-adapter "1.3.2"]
-     [ring/ring-servlet "1.3.2"]])
+     [ring/ring-servlet "1.3.2"]
+     [org.eclipse.jetty/jetty-server "9.2.5.v20141112"]
+     [org.slf4j/slf4j-simple "1.7.7"]
+     [co.paralleluniverse/pulsar "0.6.1"]]
+
+  :profiles
+    {:dev {:dependencies [[clj-http "1.0.1"]]}})
