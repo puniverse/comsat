@@ -1,0 +1,19 @@
+(defproject co.paralleluniverse/comsat-clj-ring-jetty9-adapter "0.3.0-SNAPSHOT"
+  :description "Comsat integration for the Ring Clojure web framework: Jetty 9 fiber-blocking adapter."
+  :url "https://github.com/puniverse/comsat"
+
+  ; TODO Check if it works for POM generation to have two under :licenses, Leiningen's sample doesn't list this case
+  :licenses [{:name "Eclipse Public License" :url "http://www.eclipse.org/legal/epl-v10.html"}
+             {:name "GNU Lesser General Public License - v 3" :url "http://www.gnu.org/licenses/lgpl.html"}]
+
+  ; TODO Check if it works to have it outside of license(s), Leiningen's sample doesn't list this case
+  :distribution :repo
+
+  :min-lein-version "2.4.3"
+
+  :dependencies
+    [[org.clojure/clojure "1.6.0"]
+     [ring/ring-core "1.3.2"]
+     [ring/ring-devel "1.3.2"]
+     [ring/ring-jetty-adapter "1.3.2"]
+     [ring/ring-servlet "1.3.2"]])
