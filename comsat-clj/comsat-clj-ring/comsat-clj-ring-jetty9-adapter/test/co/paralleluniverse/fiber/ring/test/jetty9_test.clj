@@ -24,9 +24,11 @@
   (:require [clj-http.client :as http])
   (:import (org.eclipse.jetty.util.thread QueuedThreadPool)
            (org.eclipse.jetty.server Server Request)
-           (org.eclipse.jetty.server.handler AbstractHandler)))
+           (org.eclipse.jetty.server.handler AbstractHandler)
+           (co.paralleluniverse.fibers Fiber)))
 
 (defn- hello-world [request]
+  (Fiber/sleep 100)
   {:status  200
    :headers {"Content-Type" "text/plain"}
    :body    "Hello World"})
@@ -38,9 +40,13 @@
      :body    ""}))
 
 (defn- echo-handler [request]
+  (Fiber/sleep 100)
   {:status 200
    :headers {"request-map" (str (dissoc request :body))}
    :body (:body request)})
+
+(defn- exception-throwing-handler [_]
+  (throw (RuntimeException. "testExc")))
 
 (defn- all-threads []
   (.keySet (Thread/getAllStackTraces)))
@@ -60,6 +66,14 @@
                                     "text/plain"))
                    (is (= (:body response) "Hello World")))))
 
+  (testing "HTTP server exception"
+    (with-server exception-throwing-handler {:port 4347}
+                 (let [response (http/get "http://localhost:4347" {:throw-exceptions false})]
+                   (is (= (:status response) 500))
+                   (is (.contains
+                         (:body response)
+                         "testExc")))))
+
   (testing "HTTPS server"
     (with-server hello-world {:port 4347
                               :ssl-port 4348
@@ -68,6 +82,17 @@
                  (let [response (http/get "https://localhost:4348" {:insecure? true})]
                    (is (= (:status response) 200))
                    (is (= (:body response) "Hello World")))))
+
+  (testing "HTTPS server exception"
+    (with-server exception-throwing-handler {:port 4347
+                                             :ssl-port 4348
+                                             :keystore "test/keystore.jks"
+                                             :key-password "password"}
+                 (let [response (http/get "https://localhost:4348" {:insecure? true :throw-exceptions false})]
+                   (is (= (:status response) 500))
+                   (is (.contains
+                         (:body response)
+                         "testExc")))))
 
   (testing "configurator set to run last"
     (let [max-threads 10

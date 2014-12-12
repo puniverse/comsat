@@ -20,26 +20,65 @@
 
 (ns ^{:author "circlespainter"} co.paralleluniverse.fiber.ring.jetty9
   "A Ring adapter that uses the Jetty 9 embedded web server in async mode and dispatches to Quasar fibers.
-  Adapters are used to convert Ring handlers into running web servers."
-  (:import (org.eclipse.jetty.server Server Request HttpConnectionFactory HttpConfiguration)
+   Adapters are used to convert Ring handlers into running web servers."
+  (:import (java.security KeyStore)
+           (javax.servlet AsyncContext DispatcherType)
+           (org.eclipse.jetty.server Server Request HttpConnectionFactory HttpConfiguration)
            (org.eclipse.jetty.server.handler AbstractHandler)
            (org.eclipse.jetty.server ServerConnector)
            (org.eclipse.jetty.util.thread QueuedThreadPool)
-           (org.eclipse.jetty.util.ssl SslContextFactory)
-           (java.security KeyStore)
-           (org.eclipse.jetty.util BlockingArrayQueue))
-  (:require [ring.util.servlet :as servlet]))
+           (org.eclipse.jetty.util BlockingArrayQueue)
+           (org.eclipse.jetty.util.ssl SslContextFactory))
+  (:require [ring.util.servlet :as servlet]
+            [co.paralleluniverse.pulsar.core :as pc]))
 
-(defn- proxy-handler
-  "Returns an Jetty Handler implementation for the given Ring handler."
+(def ^:private ^String async-exception-attribute-name "co.paralleluniverse.fiber.ring.jetty9.asyncException")
+(def ^:private ^String writer-mode-stream-exception-message "WRITER")
+
+(defn- fiber-async-proxy-handler
+  "Returns a async fiber-dispatching Jetty Handler implementation for the given Ring handler."
   [handler]
+  ; The handler will always be instrumented, assuming it will fiber-block,
+  ; just like Pulsar does with fns passed to its API
+  (pc/suspendable! handler)
   (proxy [AbstractHandler] []
     (handle [_ ^Request base-request request response]
-      (let [request-map  (servlet/build-request-map request)
-            response-map (handler request-map)]
-        (when response-map
-          (servlet/update-servlet-response response response-map)
-          (.setHandled base-request true))))))
+      (if-let [^Throwable exc
+                (and
+                  (= DispatcherType/ASYNC (.getDispatcherType request))
+                  (.getAttribute request async-exception-attribute-name))]
+        ; CASE: dispatch because of exception in fiber's async processing
+        (do
+          ; 1 - Clean the request from the temporary attribute used to carry the exception across the dispatch
+          (.removeAttribute request async-exception-attribute-name)
+          ; 2 - Throw the exception in the servlet thread
+          (throw exc))
+        ; CASE: normal execution
+        (let [^AsyncContext async-context (.startAsync request)]
+          (pc/spawn-fiber #(try
+                            (let [request-map  (servlet/build-request-map request)
+                                  response-map (handler request-map)]
+                              (when response-map
+                                (servlet/update-servlet-response response response-map)
+                                ; When writing to the stream directly, the output has to be flushed or the fiber could
+                                ; end before it's been completely written (because of buffering).
+                                ; Ignoring IllegalStateException as "flush" is not allowed when the stream has been put
+                                ; in "writer" mode, which happens with strings
+                                (try (.. response getOutputStream flush)
+                                     (catch
+                                       IllegalStateException ise
+                                       (if (not= writer-mode-stream-exception-message (.getMessage ise)) (throw ise)))))
+                              (.complete async-context)
+                              (.setHandled base-request true))
+                            ; Exception handling must be managed through "dispatch" and request attributes
+                            (catch
+                              Throwable t
+                              (do
+                                ; Not sure why I'm getting "wrong rumber of arguments" when calling setAttributes
+                                ; on "request" rather than "base-request"
+                                (.setAttribute base-request async-exception-attribute-name t)
+                                (.dispatch async-context))
+                              ))))))))
 
 (defn- ssl-context-factory
   "Creates a new SslContextFactory instance from a map of options."
@@ -131,7 +170,7 @@
                     :want or :none (defaults to :none)"
   [handler options]
   (let [^Server s (create-server (dissoc options :configurator))]
-    (.setHandler s (proxy-handler handler))
+    (.setHandler s (fiber-async-proxy-handler handler))
     (when-let [configurator (:configurator options)]
       (configurator s))
     (try
