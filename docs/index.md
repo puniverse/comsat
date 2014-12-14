@@ -136,9 +136,9 @@ Or, if you have gradle installed, run:
 
 ### Servlets
 
-Comsat integrates with JavaEE servlets and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each request on a separate [fiber](http://puniverse.github.io/quasar/manual/core.html#fibers). Calls to other web services or to a database are fiber- rather than thread-blocking. As a result, Comsat can serve many thousands of concurrent requests with only a handful of OS threads. You, on the other hand, don't need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat implementations.
+Comsat supports the Servlet 3.x specification (Java EE 6) and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each on a separate [fiber](http://puniverse.github.io/quasar/manual/core.html#fibers). Calls to other web services or to a database are fiber- rather than thread-blocking. As a result, Comsat can serve many thousands of concurrent requests with only a handful of OS threads. You, on the other hand, don't need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat implementations.
 
-To write a Comsat (fiber-per-request) servlet, simply extend [`FiberHttpServlet`]({{javadoc}}/fibers/servlet/FiberHttpServlet.html) rather than the usual `javax.servlet.HttpServlet`, and either annotate it with `@WebServlet` or declare it in `web.xml`. Note how the `service` and all the `doXXX` methods are [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (they all `throw SuspendExecution`).
+To write a Comsat (fiber-per-request) servlet, simply extend [`FiberHttpServlet`]({{javadoc}}/fibers/servlet/FiberHttpServlet.html) rather than the usual `javax.servlet.HttpServlet`, and either annotate it with `@WebServlet`, declare it in `web.xml` or use the programmatic [initializer API](http://docs.oracle.com/javaee/6/api/javax/servlet/ServletContainerInitializer.html). Note how the `service` and all the `doXXX` methods are [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) since they're annotated with `@Suspendable`, although they don't declare throwing `SuspendExecution` in order to retain full servlet API compatibility.
 
 You can deploy your servlet as you normally would, either as a WAR file, or in an embedded servlet container.
 
@@ -155,7 +155,7 @@ Then you can simply add it as a regular servlet to you favorite servlet containt
 {% include_snippet servlet registration ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
 ~~~
 
-To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/7/tutorial/doc/servlets.htm).
+To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html).
 
 ### REST Services
 

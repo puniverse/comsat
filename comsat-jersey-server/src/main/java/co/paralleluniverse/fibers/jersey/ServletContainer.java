@@ -13,7 +13,7 @@
  */
 package co.paralleluniverse.fibers.jersey;
 
-import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
 import java.io.IOException;
 import java.net.URI;
@@ -87,7 +87,8 @@ public class ServletContainer extends FiberHttpServlet implements Filter, Contai
     }
 
     @Override
-    public void suspendableService(ServletRequest req, ServletResponse res) throws ServletException, IOException, SuspendExecution {
+    @Suspendable
+    protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         jerseySC.service(req, res);
     }
 

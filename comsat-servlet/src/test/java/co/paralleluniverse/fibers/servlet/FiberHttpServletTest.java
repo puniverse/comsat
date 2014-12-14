@@ -17,8 +17,9 @@ import co.paralleluniverse.embedded.containers.EmbeddedServer;
 import co.paralleluniverse.embedded.containers.JettyServer;
 import co.paralleluniverse.embedded.containers.TomcatServer;
 import co.paralleluniverse.embedded.containers.UndertowServer;
+import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.strands.Strand;
+import co.paralleluniverse.fibers.Suspendable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
@@ -109,20 +110,22 @@ public class FiberHttpServletTest {
     public static class FiberTestServlet extends FiberHttpServlet {
         // snippet_exclude_begin
         @Override
-        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws SuspendExecution, IOException {
+        @Suspendable
+        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             try (PrintWriter out = resp.getWriter()) {
-                Strand.sleep(100); // <== Some blocking code
+                Fiber.sleep(100); // <== Some blocking code
                 out.print("testPost");
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException | SuspendExecution e) {
             }
         }
         // snippet_exclude_end
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws SuspendExecution, IOException {
+        @Suspendable
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             try (PrintWriter out = resp.getWriter()) {
-                Strand.sleep(100); // <== Some blocking code
+                Fiber.sleep(100); // <== Some blocking code
                 out.print("testGet");
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException | SuspendExecution e) {
             }
         }
     }
@@ -130,23 +133,25 @@ public class FiberHttpServletTest {
 
     public static class FiberForwardServlet extends FiberHttpServlet {
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
+        @Suspendable
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             try {
-                Strand.sleep(100);
+                Fiber.sleep(100);
                 getServletContext().getRequestDispatcher("/").forward(req, resp);
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException | SuspendExecution e) {
             }
         }
     }
 
     public static class FiberInlineServlet extends FiberHttpServlet {
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SuspendExecution {
+        @Suspendable
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             try (PrintWriter out = resp.getWriter()) {
-                Strand.sleep(1);
+                Fiber.sleep(1);
                 out.print("testInline");
                 getServletContext().getRequestDispatcher("/").include(req, resp);
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException | SuspendExecution e) {
             }
         }
     }
