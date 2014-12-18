@@ -16,6 +16,12 @@ This product contains modified source code from Spring Boot:
     * LICENSE: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
     * HOMEPAGE: http://projects.spring.io/spring-boot/
 
+This product contains modified source code from Ring, by the original Authors (https://github.com/ring-clojure/ring/blob/master/CONTRIBUTORS.md)
+
+    Copyright (c) 1999-2014 The original Authors
+    * LICENSE: MIT (http://opensource.org/licenses/MIT)
+    * HOMEPAGE: https://github.com/ring-clojure/ring
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE

@@ -82,6 +82,7 @@ where `ARTIFACT` is:
 * `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
 * `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
+* `comsat-clj-ring` - A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.2
 
 ### Enabling Comsat
 
@@ -278,6 +279,45 @@ This interface can be registered with `FiberRestAdapterBuilder` and then used fr
 // usage from fiber context
 {% include_snippet usage ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}
 ~~~
+
+### Clojure Ring
+
+The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring any handler code change.
+
+Comsat Ring is based on Pulsar, so it is necessary that the handler itself and all middlewares applied around it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
+
+So rather than:
+
+~~~ clojure
+(ns myapp
+  (:use ring.adapter.jetty))
+
+(defn- hello-world [request]
+  (Thread/sleep 100)
+  {:status  200
+   :headers {"Content-Type" "text/plain"}
+   :body    "Hello World"})
+
+(run-jetty hello-world {:port 8080})
+~~~
+
+Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-clj-ring "{{site.version}}"]` dependency, and change your `use`/`require` clauses slightly:
+
+~~~ clojure
+(ns myapp
+  (:use co.paralleluniverse.fiber.ring.jetty9)
+  (:import (co.paralleluniverse.fibers Fiber)))
+
+(defn- hello-world [request]
+  (Fiber/sleep 100)
+  {:status  200
+   :headers {"Content-Type" "text/plain"}
+   :body    "Hello World"})
+
+(run-jetty hello-world {:port 8080})
+~~~
+
+Congratulations! Your handler is now running inside fibers rather than threads.
 
 ### DB Access
 

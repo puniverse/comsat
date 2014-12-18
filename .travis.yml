@@ -14,6 +14,8 @@ env:
     - GEN_APIDOCS="gradle javadoc"
 
 after_success:
+  - chmod a+x travis/build_clj.sh
+  - ./travis/build_clj.sh
   - chmod a+x travis/post_build.sh
   - ./travis/post_build.sh
   

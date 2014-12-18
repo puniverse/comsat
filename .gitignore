@@ -13,4 +13,5 @@ build/
 .nb-gradle-properties
 .bdb/
 tomcat.8080
-/**/target/
+**/.lein*
+**/target
