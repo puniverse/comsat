@@ -13,7 +13,7 @@
  */
 package co.paralleluniverse.fibers.dropwizard;
 
-import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
 import com.sun.jersey.api.core.ResourceConfig;
 import java.io.IOException;
@@ -83,17 +83,9 @@ public class FiberServletContainer extends FiberHttpServlet implements Filter {
     }
 
     @Override
-    public void suspendableService(ServletRequest req, ServletResponse res) throws ServletException, IOException, SuspendExecution {
-        HttpServletRequest request;
-        HttpServletResponse response;
-
-        try {
-            request = (HttpServletRequest) req;
-            response = (HttpServletResponse) res;
-        } catch (ClassCastException e) {
-            throw new ServletException("non-HTTP request or response");
-        }
-        jerseySC.service(request, response);
+    @Suspendable
+    public void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        jerseySC.service(req, res);
     }
 
     // Delegations

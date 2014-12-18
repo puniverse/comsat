@@ -2,7 +2,7 @@ package co.paralleluniverse.examples.test;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.fibers.servlet.FiberNewHttpServlet;
+import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
 import co.paralleluniverse.strands.Strand;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
 @WebServlet(urlPatterns = "/", asyncSupported = true)
-public class MyFiberServlet extends FiberNewHttpServlet {
+public class MyFiberServlet extends FiberHttpServlet {
     final static DataSource ds = lookupDataSourceJDBC("jdbc/fiberds");
 
     @Suspendable
