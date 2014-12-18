@@ -33,7 +33,7 @@ subprojects {
     ext.distDir         = "$buildDir/dist"
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-    ext.quasarVer       = "0.6.0"
+    ext.quasarVer       = "0.6.2-SNAPSHOT"
     ext.jettyVersion    = '9.2.1.v20140609'
     ext.undertowVersion = '1.1.0.Beta5'
     ext.tomcatVersion   = '8.0.9'
@@ -59,6 +59,15 @@ subprojects {
     ext.mongodbJavaAsyncDriverVersion   = '2.0.0'
     ext.embedMongoVersion               = '1.46.0'
 
+    ext.springSecurityVersion           = '3.2.5.RELEASE'
+
+    ext.springVersion                   = '4.0.8.RELEASE'
+    ext.springBootVersion               = '1.1.9.RELEASE'
+
+    // These are for next Spring Boot release, 1.2.0
+    // ext.springVersion                   = '4.1.2.RELEASE'
+    // ext.springBootVersion               = '1.2.0.RC2'
+
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
@@ -69,6 +78,35 @@ subprojects {
             force "org.slf4j:slf4j-api:$slf4jApiVer"
             force "org.apache.httpcomponents:httpcore:$httpcoreVersion"
             force "javax.servlet:javax.servlet-api:$servletVersion"
+
+            force "org.springframework:spring-aop:$springVersion"
+            force "org.springframework:spring-beans:$springVersion"
+            force "org.springframework:spring-context:$springVersion"
+            force "org.springframework:spring-core:$springVersion"
+            force "org.springframework:spring-expression:$springVersion"
+            force "org.springframework:spring-web:$springVersion"
+            force "org.springframework:spring-orm:$springVersion"
+            force "org.springframework:spring-tx:$springVersion"
+            
+            force "org.aspectj:aspectjrt:1.8.4"
+            force "org.aspectj:aspectjweaver:1.8.4"
+            force "org.webjars:jquery:2.0.3-1"
+            force "commons-beanutils:commons-beanutils:1.9.2"
+            force "commons-digester:commons-digester:2.1"
+            force "commons-collections:commons-collections:3.2.1"
+            force "org.apache.velocity:velocity:1.7"
+            force "org.hamcrest:hamcrest-core:1.3"
+            force "org.jboss.logging:jboss-logging:3.1.3.GA"
+            force "org.eclipse.jetty.orbit:javax.servlet.jsp:2.2.0.v201112011158"
+            force "org.yaml:snakeyaml:1.14"
+
+            // These are for next Spring Boot release, 1.2.0
+            /*
+            force "org.glassfish:javax.el:3.0.1-b05"
+            force "org.apache.tomcat.embed:tomcat-embed-core:8.0.15"
+            force "org.apache.tomcat.embed:tomcat-embed-el:8.0.15"
+            force "org.hibernate:hibernate-validator:5.1.3.Final"
+            */
         }
     }
     
@@ -88,6 +126,7 @@ subprojects {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         maven { url 'https://maven.java.net/content/repositories/snapshots' }
         maven { url 'http://www.allanbank.com/repo/' }
+        maven { url 'http://repo.springsource.org/libs-milestone' }
     }
 
     configurations {
@@ -386,7 +425,8 @@ ext.javadocLinks =  [
                 "http://puniverse.github.io/quasar/javadoc/",
                 "http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/",
                 "http://jersey.java.net/apidocs/latest/jersey/",
-                "http://www.allanbank.com/mongodb-async-driver/apidocs/index.html"
+                "http://www.allanbank.com/mongodb-async-driver/apidocs/index.html",
+                "http://docs.spring.io/spring/docs/current/javadoc-api/"
 ]
 
 ext.javadocExcludes = [
@@ -509,7 +549,7 @@ buildscript {
 } 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+    gradleVersion = '1.12'
 }
 
 defaultTasks 'install'

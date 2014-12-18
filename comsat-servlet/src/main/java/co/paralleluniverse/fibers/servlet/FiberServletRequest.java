@@ -30,7 +30,7 @@ import javax.servlet.ServletResponse;
  *
  * @author eitan
  */
-class FiberServletRequest implements ServletRequest {
+public class FiberServletRequest implements ServletRequest {
     private final ServletRequest req;
     private final ServletContext servletContext;
 
@@ -43,8 +43,8 @@ class FiberServletRequest implements ServletRequest {
     }
 
     @Override
-    public FiberRequestDispatcer getRequestDispatcher(String path) {
-        return new FiberRequestDispatcer(path, req.getAsyncContext());
+    public FiberRequestDispatcher getRequestDispatcher(String path) {
+        return new FiberRequestDispatcher(path, req.getAsyncContext());
     }
 
     javax.servlet.ServletRequest getReq() {

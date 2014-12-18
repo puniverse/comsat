@@ -28,7 +28,7 @@ import javax.servlet.http.Part;
  *
  * @author eitan
  */
-class FiberHttpServletRequest extends FiberServletRequest implements HttpServletRequest {
+public class FiberHttpServletRequest extends FiberServletRequest implements HttpServletRequest {
     private final String contextPath;
     private final String servletPath;
     private final String pathInfo;

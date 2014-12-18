@@ -1,0 +1,7 @@
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter:$springBootVersion")
+    compile("org.springframework.boot:spring-boot-starter-freemarker:$springBootVersion")
+    compile project(":comsat-spring:comsat-spring-boot")
+
+    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
+}
