@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.servlet;
 
+import co.paralleluniverse.common.util.Debug;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
@@ -119,9 +120,9 @@ public class FiberHttpServlet extends HttpServlet {
                     service(srad, response);
                     if (req.isAsyncStarted())
                         ac.complete();
-                } catch (Throwable ex) {
-                    // Not using multi-catch above as it seems to break ASM
-                    // during instrumentation in some circumstances
+                } catch (ServletException | IOException ex) {
+                    // Multi-catch above seems to break ASM during instrumentation in some circumstances
+                    // seemingly tied to structured class-loading, as in standalone servlet containers
                     log("Exception in servlet's fiber, dispatching to container", ex);
                     request.setAttribute(FIBER_ASYNC_REQUEST_EXCEPTION, ex);
                     currentAsyncContext.set(null);
