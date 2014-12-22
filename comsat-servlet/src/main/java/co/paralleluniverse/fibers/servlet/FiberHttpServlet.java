@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -38,6 +39,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class FiberHttpServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    
+    private static final String FIBER_ASYNC_REQUEST_EXCEPTION = "co.paralleluniverse.fibers.servlet.exception";
+    
     private transient FiberServletConfig configAD;
     private transient FiberServletContext contextAD;
     private final ThreadLocal<AsyncContext> currentAsyncContext = new ThreadLocal<>();
@@ -86,12 +90,18 @@ public class FiberHttpServlet extends HttpServlet {
     @Override
     @Suspendable
     final public void service(final ServletRequest req, ServletResponse res) throws ServletException, IOException {
+        if (req.getAttribute(FIBER_ASYNC_REQUEST_EXCEPTION) != null && DispatcherType.ASYNC.equals(req.getDispatcherType())) {
+            Throwable ex = (Throwable) req.getAttribute(FIBER_ASYNC_REQUEST_EXCEPTION);
+            log("Being dispatched exception produced in fiber; now in container's thread, wrapping in ServletException and throwing", ex);
+            throw new ServletException(ex);
+        }
+        
         final HttpServletRequest request;
         final HttpServletResponse response;
 
         if (!(req instanceof HttpServletRequest
                 && res instanceof HttpServletResponse)) {
-            throw new ServletException("non-HTTP request or response");
+            throw new ServletException("Only HTTP is supported, but detected non-HTTP request or response");
         }
 
         request = (HttpServletRequest) req;
@@ -107,14 +117,16 @@ public class FiberHttpServlet extends HttpServlet {
                     // TODO: check if ac has expired
                     currentAsyncContext.set(ac);
                     service(srad, response);
+                    if (req.isAsyncStarted())
+                        ac.complete();
                 } catch (Throwable ex) {
                     // Not using multi-catch above as it seems to break ASM
                     // during instrumentation in some circumstances
-                    log("Exception in fiber servlet", ex);
-                } finally {
-                    if (req.isAsyncStarted())
-                        ac.complete();
+                    log("Exception in servlet's fiber, dispatching to container", ex);
+                    request.setAttribute(FIBER_ASYNC_REQUEST_EXCEPTION, ex);
                     currentAsyncContext.set(null);
+                    if (req.isAsyncStarted())
+                        ac.dispatch();
                 }
             }
         }).start();
