@@ -1,9 +1,9 @@
 package co.paralleluniverse.examples.test;
 
+import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
-import co.paralleluniverse.strands.Strand;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -25,7 +25,7 @@ public class MyFiberServlet extends FiberHttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try (PrintWriter out = resp.getWriter(); Connection connection = ds.getConnection()) {
-            Strand.sleep(10);
+            Fiber.sleep(10);
             out.print(connection);
         } catch (InterruptedException | SuspendExecution | SQLException ex) {
             throw new RuntimeException(ex);

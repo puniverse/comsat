@@ -13,9 +13,9 @@
  */
 package co.paralleluniverse.fibers.jersey;
 
+import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.strands.Strand;
 import java.io.IOException;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
@@ -32,7 +32,7 @@ public class TestResource {
     @Produces("text/plain")
     @Suspendable  // <------------- FIBER
     public String get(@QueryParam("sleep") int sleep) throws IOException, SuspendExecution, InterruptedException {
-        Strand.sleep(sleep); // <--- you may use fiber blocking calls here
+        Fiber.sleep(sleep); // <--- you may use fiber blocking calls here
         return "sleep was "+sleep;
     }
     // snippet_exclude_begin

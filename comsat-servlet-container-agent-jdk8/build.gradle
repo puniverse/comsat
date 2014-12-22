@@ -1,0 +1,70 @@
+// TODO: factor-out parts common with the non-JDK8 one
+
+// Enabling shadow plugin
+buildscript {
+  repositories { jcenter() }
+  dependencies {
+    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.0'
+  }
+}
+
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+ext.asmVersion = "5.0.3"
+
+// Shadowed dependencies must be listed
+dependencies {
+    runtime "co.paralleluniverse:quasar-core:$quasarVer:jdk8@jar"
+    runtime "org.ow2.asm:asm:$asmVersion"
+    runtime "org.ow2.asm:asm-analysis:$asmVersion"
+    runtime "org.ow2.asm:asm-commons:$asmVersion"
+    runtime "org.ow2.asm:asm-util:$asmVersion"
+    runtime "org.ow2.asm:asm-tree:$asmVersion"
+}
+
+jar {
+    classifier = 'jdk8'
+    
+    // Quasar manifest
+    manifest { 
+        attributes (
+            "Built-By"                  :   System.getProperty("user.name"),
+	    "Implementation-Title"      :   project.name,
+	    "Implementation-Version"    :   version,
+	    "Implementation-Vendor"     :   vendor,
+	    "Premain-Class"             :   "co.paralleluniverse.fibers.instrument.JavaAgent",
+            "Agent-Class"               :   "co.paralleluniverse.fibers.instrument.JavaAgent",
+	    "Can-Retransform-Classes"   :   "true",
+            "Can-Redefine-Classes"      :   "true",
+        )
+    }
+}
+
+jar.enabled = false
+
+// TODO: this will issue a warning about non-existing archives, find a way to fix by overriding the inherited "subprojects"
+// configuration of "artifacts" so that it only installs/uploads the main jar
+
+sourcesJar.enabled = false
+javadocJar.enabled = false
+
+shadowJar {
+    classifier = 'jdk8'
+
+    // Relocation in order to avoid version conflicts
+    relocate 'org.objectweb.asm', 'reloc.co.paralleluniverse.comsat.agent.shadows.org.ow2.asm'
+
+    // Shadowed dependencies must be listed to enable whitelist mode
+    dependencies {
+        include(dependency("co.paralleluniverse:quasar-core:$quasarVer:jdk8@jar"))
+        include(dependency("org.ow2.asm:asm:$asmVersion"))
+        include(dependency("org.ow2.asm:asm-analysis:$asmVersion"))
+        include(dependency("org.ow2.asm:asm-commons:$asmVersion"))
+        include(dependency("org.ow2.asm:asm-util:$asmVersion"))
+        include(dependency("org.ow2.asm:asm-tree:$asmVersion"))
+    }
+}
+
+// Don't upload, will be uploaded as part of the other task
+uploadArchives.enabled = false
