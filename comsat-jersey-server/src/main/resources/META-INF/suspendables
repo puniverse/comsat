@@ -5,6 +5,7 @@ org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.
 org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher$1.run
 org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$ResponseOutInvoker.doDispatch
 org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$TypeOutInvoker.doDispatch
+org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$VoidOutInvoker.doDispatch
 org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke
 org.glassfish.jersey.server.model.ResourceMethodInvoker.apply
 org.glassfish.jersey.server.ServerRuntime$Responder.process
