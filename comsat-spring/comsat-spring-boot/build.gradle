@@ -1,3 +1,8 @@
+subprojects {
+    install.enabled = false
+    uploadArchives.enabled = false
+}
+
 dependencies {
     compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     compile project(":comsat-spring:comsat-spring-webmvc")
