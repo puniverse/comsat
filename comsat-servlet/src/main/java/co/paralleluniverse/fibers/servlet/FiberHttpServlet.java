@@ -107,7 +107,9 @@ public class FiberHttpServlet extends HttpServlet {
                     // TODO: check if ac has expired
                     currentAsyncContext.set(ac);
                     service(srad, response);
-                } catch (ServletException | IOException ex) {
+                } catch (Throwable ex) {
+                    // Not using multi-catch above as it seems to break ASM
+                    // during instrumentation in some circumstances
                     log("Exception in fiber servlet", ex);
                 } finally {
                     if (req.isAsyncStarted())
