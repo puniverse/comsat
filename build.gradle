@@ -44,7 +44,7 @@ subprojects {
     
     ext.quasarVer       = "0.6.2-SNAPSHOT"
     ext.jettyVer        = '9.2.6.v20141205'
-    ext.undertowVer     = '1.1.0.Final'
+    ext.undertowVer     = '1.1.1.Final'
     ext.tomcatVer       = '8.0.9' // '8.0.15'
 
     ext.osgiVer         = '6.0.0'
@@ -58,7 +58,8 @@ subprojects {
     ext.dropwizardVer   = '0.7.1'
     ext.jdbiVer         = '2.55'
     ext.apacheAsyncClientVer   = '4.0.2'
-    ext.httpcoreVer            = '4.3.2'
+    ext.httpCoreVer            = '4.3.3'
+    ext.httpClientVer          = '4.3.6'
 
     ext.retrofitVer     = '1.8.0'
     ext.jooqVer         = '3.5.0'
@@ -84,6 +85,8 @@ subprojects {
     ext.jspVer                  = '2.2.0.v201112011158'
     ext.snakeYamlVer            = '1.14'
     
+    ext.junitVer                = '4.12'
+    
     // These are for next Spring Boot release, 1.2.0
     // ext.springVer                    = '4.1.2.RELEASE'
     // ext.springBootVer                = '1.2.0.RC2'
@@ -96,7 +99,8 @@ subprojects {
             force "com.codahale.metrics:metrics-core:$metricsVer"
             force "com.google.guava:guava:$guavaVer"
             force "org.slf4j:slf4j-api:$slf4jApiVer"
-            force "org.apache.httpcomponents:httpcore:$httpcoreVer"
+            force "org.apache.httpcomponents:httpcore:$httpCoreVer"
+            force "org.apache.httpcomponents:httpclient:$httpClientVer"
             force "javax.servlet:javax.servlet-api:$servletVer"
             force "javax.ws.rs:javax.ws.rs-api:$jaxrsVer"
 
@@ -120,6 +124,8 @@ subprojects {
             force "org.jboss.logging:jboss-logging:$jbossLoggingVer"
             force "org.eclipse.jetty.orbit:javax.servlet.jsp:$jspVer"
             force "org.yaml:snakeyaml:$snakeYamlVer"
+
+            force "junit:junit:$junitVer"
 
             // These are for next Spring Boot release, 1.2.0
             /*
@@ -159,7 +165,7 @@ subprojects {
     dependencies {
         compile "com.google.guava:guava:$guavaVer"
         quasar "co.paralleluniverse:quasar-core:$quasarVer@jar" 
-        testCompile group: 'junit', name: 'junit', version: '4.11'
+        testCompile "junit:junit:$junitVer"
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         provided "javax.servlet:javax.servlet-api:$servletVer" // was 3.1.0
     }
@@ -269,7 +275,7 @@ project (':comsat-actors-servlet') {
 
 project (':comsat-dropwizard') {
     dependencies {
-        testRuntime 'com.h2database:h2:1.4.180'
+        testRuntime 'com.h2database:h2:1.4.184'
         compile "io.dropwizard:dropwizard-core:$dropwizardVer"
         compile "io.dropwizard:dropwizard-client:$dropwizardVer"
         compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
@@ -284,7 +290,7 @@ project (':comsat-dropwizard') {
 
 project (':comsat-httpclient') {
     dependencies {
-        compile "org.apache.httpcomponents:httpclient:4.3.5"
+        compile "org.apache.httpcomponents:httpclient:$httpClientVer"
         compile ("org.apache.httpcomponents:httpasyncclient:$apacheAsyncClientVer") {
             exclude group: 'org.apache.httpcomponents', module: 'httpclient' 
         }
@@ -422,7 +428,7 @@ project (':comsat-httpclient') {
             exclude group: 'org.apache.httpcomponents', module: 'httpclient'
         }
         srcFiles "org.apache.httpcomponents:httpclient:4.3.5:sources"
-        // srcFiles "org.apache.httpcomponents:httpcore:$httpcoreVer:sources"
+        // srcFiles "org.apache.httpcomponents:httpcore:$httpCoreVer:sources"
     }
 }
 
