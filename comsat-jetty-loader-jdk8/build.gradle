@@ -5,7 +5,7 @@ targetCompatibility = '1.8'
 
 dependencies {
     compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
-    compile "org.eclipse.jetty:jetty-webapp:$jettyVersion"
+    compile "org.eclipse.jetty:jetty-webapp:$jettyVer"
 }
 
 sourceSets {

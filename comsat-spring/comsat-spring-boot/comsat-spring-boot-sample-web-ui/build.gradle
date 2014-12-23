@@ -1,7 +1,7 @@
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVersion")
+    compile("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVer")
     compile("org.hibernate:hibernate-validator:5.0.3.Final")
     compile project(":comsat-spring:comsat-spring-boot")
 
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
+    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
 }

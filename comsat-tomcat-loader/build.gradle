@@ -1,5 +1,5 @@
 dependencies {
-    provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
+    provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.eclipse.jetty.websocket', module: '*'         
     }

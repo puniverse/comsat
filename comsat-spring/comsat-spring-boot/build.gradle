@@ -4,6 +4,6 @@ subprojects {
 }
 
 dependencies {
-    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVer"
     compile project(":comsat-spring:comsat-spring-webmvc")
 }

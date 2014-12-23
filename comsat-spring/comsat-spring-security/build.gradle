@@ -1,5 +1,5 @@
 dependencies {
-    compile "org.springframework.security:spring-security-core:$springSecurityVersion"
-    compile "org.springframework.security:spring-security-config:$springSecurityVersion"
-    compile "org.springframework.security:spring-security-web:$springSecurityVersion"
+    compile "org.springframework.security:spring-security-core:$springSecurityVer"
+    compile "org.springframework.security:spring-security-config:$springSecurityVer"
+    compile "org.springframework.security:spring-security-web:$springSecurityVer"
 }

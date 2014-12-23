@@ -1,5 +1,5 @@
 dependencies {
-    compile "org.eclipse.jetty:jetty-webapp:$jettyVersion"
+    compile "org.eclipse.jetty:jetty-webapp:$jettyVer"
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.apache.tomcat.embed', module: '*'         
     }

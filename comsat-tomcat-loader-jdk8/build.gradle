@@ -7,7 +7,7 @@ dependencies {
     dependencies {
 //        compile 'co.paralleluniverse:quasar-core:0.5.0:jdk8'
         compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
-        compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
+        compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
     }
 }
 
