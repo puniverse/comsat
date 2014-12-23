@@ -1,4 +1,4 @@
-(defproject co.paralleluniverse/comsat-ring-jetty9 "0.3.0-SNAPSHOT"
+(defproject co.paralleluniverse/comsat-ring-jetty9 "0.3.0"
   :description "Comsat integration for the Ring Clojure web framework: Jetty 9 fiber-blocking adapter."
   :url "https://github.com/puniverse/comsat"
 
