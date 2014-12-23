@@ -16,6 +16,12 @@ Comsat does provide one new API that you may choose to use: [Web Actors](manual/
 
 ## News
 
+<!---
+### December 23, 2014
+
+COMSAT [0.3.0](https://github.com/puniverse/comsat/releases/tag/v0.3.0) has been released.
+-->
+
 ### July 23, 2014
 
 COMSAT [0.2.0](https://github.com/puniverse/comsat/releases/tag/v0.2.0) has been released.
@@ -66,6 +72,7 @@ Then add those Comsat modules that you'd like to use:
 where `ARTIFACT` is:
 
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
+* `comsat-ring-jetty9` - A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.2
 * `comsat-jersey-server` – [Jersey server](https://jersey.java.net/) integration for defining REST services.
 * `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
 * `comsat-spring-webmvc` – [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.
@@ -82,25 +89,28 @@ where `ARTIFACT` is:
 * `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
 * `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
-* `comsat-clj-ring` - A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.2
 
 ### Enabling Comsat
 
 Comsat runs code in [Quasar](http://docs.paralleluniverse.co/quasar/) fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat and Jetty; or at compilation time.
 
-AOT instrumentation is eplained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instrumentation).
+AOT instrumentation is an advanced topic eplained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instrumentation).
+
+When using AOT instrumentation alone, all of your fiber-blocking dependencies will need to have been AOT-compiled already. Please note that some Comsat modules, such as `comast-jersey-server`, rely on dynamic instrumentation of third-party libraries and so they cannot be used with AOT instrumentation alone.
 
 #### The Java Agent
 
-To use the Java agent, the following must be added to the java command line (or use your favorite build tool to add this as a JVM argument) when launching the process (Servlet container if you're deploying your app as a WAR file):
+To use the Java agent, the following must be added to the java command line (or use your favorite build tool to add this as a JVM argument) when launching the process:
 
 ~~~ sh
 -javaagent:path-to-quasar-jar.jar
 ~~~
 
+Java agent instrumentation works with standalone Java applications and embedded Servlet containers but at present it cannot be used with standalone Servlet containers.
+
 #### In Tomcat
 
-If you're using Tomcat as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-tomcat-loader-{{site.version}}.jar` (or, for JDK8, `comsat-tomcat-loader-{{site.version}}-jdk8.jar`) into Tomcat's `lib` directory.
+If you're using Tomcat as your embedded or standalone Servlet container, a custom class-loader is available for use instead of the Java Agent. You'll need to put `comsat-tomcat-loader-{{site.version}}.jar` (or, for JDK8, `comsat-tomcat-loader-{{site.version}}-jdk8.jar`) into Tomcat's `common/lib` directory.
 
 Then, include the following in your webapp's `META-INF/context.xml`:
 
@@ -108,9 +118,11 @@ Then, include the following in your webapp's `META-INF/context.xml`:
 {% include_snippet loader ./comsat-test-war/src/main/webapp/META-INF/context.xml %}
 ~~~
 
+The Tomcat instrumenting class-loader has been verified to work with Tomcat 7.0.56 and Tomcat 8.0.15 standalone Servlet containers.
+
 #### In Jetty
 
-If you're using Jetty as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-jetty-loader-{{site.version}}.jar` (or, for JDK8, `comsat-jetty-loader-{{site.version}}-jdk8.jar`) into Jetty's `lib` directory.
+If you're using Jetty as your embedded Servlet container, you have the option to use a custom class-loader instead of the Java agent. You'll need to put `comsat-jetty-loader-{{site.version}}.jar` (or, for JDK8, `comsat-jetty-loader-{{site.version}}-jdk8.jar`) into Jetty's `lib` directory.
 
 Then, include a `<Set name="classLoader">` tag in your webapp's context xml:
 
@@ -160,6 +172,45 @@ Then you can simply add it as a regular servlet to you favorite servlet containt
 ~~~
 
 To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html).
+
+### Clojure Ring
+
+The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring any handler code change.
+
+Comsat Ring is based on Pulsar, so it is necessary that the handler itself and all middlewares applied around it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
+
+So rather than:
+
+~~~ clojure
+(ns myapp
+  (:use ring.adapter.jetty))
+
+(defn- hello-world [request]
+  (Thread/sleep 100)
+  {:status  200
+   :headers {"Content-Type" "text/plain"}
+   :body    "Hello World"})
+
+(run-jetty hello-world {:port 8080})
+~~~
+
+Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-clj-ring "{{site.version}}"]` dependency, and change your `use`/`require` clauses slightly:
+
+~~~ clojure
+(ns myapp
+  (:use co.paralleluniverse.fiber.ring.jetty9)
+  (:import (co.paralleluniverse.fibers Fiber)))
+
+(defn- hello-world [request]
+  (Fiber/sleep 100)
+  {:status  200
+   :headers {"Content-Type" "text/plain"}
+   :body    "Hello World"})
+
+(run-jetty hello-world {:port 8080})
+~~~
+
+Congratulations! Your handler is now running inside fibers rather than threads.
 
 ### REST Services
 
@@ -279,45 +330,6 @@ This interface can be registered with `FiberRestAdapterBuilder` and then used fr
 // usage from fiber context
 {% include_snippet usage ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}
 ~~~
-
-### Clojure Ring
-
-The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring any handler code change.
-
-Comsat Ring is based on Pulsar, so it is necessary that the handler itself and all middlewares applied around it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
-
-So rather than:
-
-~~~ clojure
-(ns myapp
-  (:use ring.adapter.jetty))
-
-(defn- hello-world [request]
-  (Thread/sleep 100)
-  {:status  200
-   :headers {"Content-Type" "text/plain"}
-   :body    "Hello World"})
-
-(run-jetty hello-world {:port 8080})
-~~~
-
-Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-clj-ring "{{site.version}}"]` dependency, and change your `use`/`require` clauses slightly:
-
-~~~ clojure
-(ns myapp
-  (:use co.paralleluniverse.fiber.ring.jetty9)
-  (:import (co.paralleluniverse.fibers Fiber)))
-
-(defn- hello-world [request]
-  (Fiber/sleep 100)
-  {:status  200
-   :headers {"Content-Type" "text/plain"}
-   :body    "Hello World"})
-
-(run-jetty hello-world {:port 8080})
-~~~
-
-Congratulations! Your handler is now running inside fibers rather than threads.
 
 ### DB Access
 
@@ -450,17 +462,17 @@ Instead of extending the regular `io.dropwizard.Application` class, you should e
 
 ### Spring
 
-[Spring Framework](http://projects.spring.io/spring-framework/) is a popular Dependency Injection Java framework; it integrates with many enterprise Java tools and libraries and complements them with new uniform and easy-to-use APIs.
+[Spring Framework](http://projects.spring.io/spring-framework/) is a popular Dependency Injection engine; it integrates with many enterprise Java tools and libraries and complements them with new uniform and easy-to-use APIs.
 
-[Spring Boot](http://projects.spring.io/spring-boot/) adds fast project bootstrap facilities, convention over configuration, auto-configuration based on classpath (and other conditions) and embedded Tomcat and Jetty containers integration. It also provides [Actuator](http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready), a set of ready-to-use facilities for production environments like auditing, health-checks, metrics and JMX monitoring/management through its native protocol, HTTP, SSH or telnet.
+[Spring Boot](http://projects.spring.io/spring-boot/) adds fast project bootstrap facilities, convention over configuration, auto-configuration based on classpath (and other conditions) and embedded Tomcat and Jetty containers integration. It also provides [Actuator](http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready), a set of ready-to-use facilities for production environments like auditing, health-checks, metrics and JMX monitoring/management through JMX's native protocol, HTTP, SSH or telnet.
 
 [Spring Security](http://projects.spring.io/spring-security/) is a comprehensive Java security framework encompassing authentication and authorization for traditional and web applications, and the de-facto standard for securing Spring-based projects.
 
-Comsat provides the ability to write fiber-blocking Spring Web MVC controller methods together with (optional) Spring Boot auto-configuration support and (still optional) Spring Security's context inheritance for fibers.
+Comsat provides the ability to write fiber-blocking Spring Web MVC controllers with (optional) Spring Boot auto-configuration and (still optional) Spring Security context inheritance for fibers.
 
-#### Fiber-blocking Spring Web MVC controller methods
+#### Fiber-blocking Spring Web MVC controllers
 
-Adding support for fiber-blocking Spring Web MVC controller methods is as easy as adding an `@Import` for the Spring configuration class `FiberWebMvcConfigurationSupport` in the `co.paralleluniverse.springframework.web.servlet.config.annotation` package:
+Adding support for fiber-blocking Spring Web MVC controllers is as easy as adding an `@Import` for the Spring configuration class `FiberWebMvcConfigurationSupport` in the `co.paralleluniverse.springframework.web.servlet.config.annotation` package:
 
 ~~~ java
 {% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-data-jpa/src/main/java/comsat/sample/data/jpa/SampleDataJpaApplication.java %}
@@ -484,7 +496,7 @@ If you prefer using auto-configuration, it is enough to change the `@Import` to 
 
 #### Spring Security support
 
-By default, Spring Security stores the server-side security context for the current user in a Java `ThreadLocal`. In order to let fibers spawned for suspendable Spring Web MVC controller methods inherit the security context, the strategy Spring uses mut be reconfigured to leverage Java's `InheritableThreadLocal` instead (please be aware that this is JVM-level global setting).
+By default, Spring Security stores the server-side security context for the current user in a Java `ThreadLocal`. For suspendable Spring Web MVC controllers to inherit the security context, the strategy Spring uses mut be reconfigured to use Java's `InheritableThreadLocal` instead (please be aware that this is JVM-level global setting).
 
 This is as easy as adding an `@Import` for the `co.paralleluniverse.springframework.security.config.FiberSecurityContextHolderConfig` configuration class:
 
@@ -492,7 +504,7 @@ This is as easy as adding an `@Import` for the `co.paralleluniverse.springframew
 {% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-actuator/src/main/java/comsat/sample/actuator/SampleActuatorApplication.java %}
 ~~~
 
-At present there is one small caveat to be aware of when using Spring method security: as Spring will proxy secured methods so that all declared exceptions (including `SuspendExecution`) are catched individually, Quasar will refuse to instrument them. In this specific case `SuspendExecution` should not be declared but catched in the method body, and the method signature should be annotated with `@Suspendable` instead.
+At present there is one small caveat to consider when using Spring method security: as Spring will proxy secured methods so that all declared exceptions (including `SuspendExecution`) are catched individually, Quasar will refuse to instrument them. In this specific case `SuspendExecution` should not be declared but catched in the method body, and the method signature should be annotated with `@Suspendable` instead.
 
 ## Web Actors
 
