@@ -120,7 +120,7 @@
   (let [^Integer min-threads
           (options :min-threads 5)
         ^Integer max-threads
-          (options :max-threads 10)
+          (options :max-threads (+ 5 (.availableProcessors (Runtime/getRuntime))))
         ^BlockingArrayQueue q
          (create-blocking-array-queue min-threads min-threads)
         ^QueuedThreadPool p

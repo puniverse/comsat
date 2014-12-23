@@ -95,14 +95,12 @@
                          "testExc")))))
 
   (testing "configurator set to run last"
-    (let [max-threads 10
-          new-handler  (proxy [AbstractHandler] []
+    (let [new-handler  (proxy [AbstractHandler] []
                          (handle [_ ^Request base-request request response]))
           configurator (fn [server]
                          (.setHandler server new-handler))
           server (run-jetty hello-world
                             {:join? false :port 4347 :configurator configurator})]
-      (is (= (.getMaxThreads (.getThreadPool server)) max-threads))
       (is (identical? new-handler (.getHandler server)))
       (is (= 1 (count (.getHandlers server))))
       (.stop server)))
