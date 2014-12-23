@@ -85,6 +85,7 @@
 <li class="li1">
 <a href="#overview">Overview</a><ul><li>
 <a href="#news" class="cat-link">News</a><ul>
+<li><a href="#december-23-2014">December 23, 2014</a></li>
 <li><a href="#july-23-2014">July 23, 2014</a></li>
 <li><a href="#january-22-2014">January 22, 2014</a></li>
 </ul>
@@ -103,10 +104,12 @@
 <li>
 <a href="#comsat-integration" class="cat-link">Comsat Integration</a><ul>
 <li><a href="#servlets">Servlets</a></li>
+<li><a href="#clojure-ring">Clojure Ring</a></li>
 <li><a href="#rest-services">REST Services</a></li>
 <li><a href="#http-clients">HTTP Clients</a></li>
 <li><a href="#db-access">DB Access</a></li>
 <li><a href="#dropwizard">Dropwizard</a></li>
+<li><a href="#spring">Spring</a></li>
 </ul>
 </li>
 <li>
@@ -136,6 +139,10 @@
 
 <h2 id="news">News</h2>
 
+<h3 id="december-23-2014">December 23,&nbsp;2014</h3>
+
+<p><span class="caps">COMSAT</span> <a href="https://github.com/puniverse/comsat/releases/tag/v0.3.0"><span class="caps">0.3.0</span></a> has been&nbsp;released.</p>
+
 <h3 id="july-23-2014">July 23,&nbsp;2014</h3>
 
 <p><span class="caps">COMSAT</span> <a href="https://github.com/puniverse/comsat/releases/tag/v0.2.0"><span class="caps">0.2.0</span></a> has been&nbsp;released.</p>
@@ -157,7 +164,7 @@
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;dependency&gt;</span>
 </span><span id="line-2">    <span class="nt">&lt;groupId&gt;</span>co.paralleluniverse<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="line-3">    <span class="nt">&lt;artifactId&gt;</span>quasar-core<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.2.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.3.0<span class="nt">&lt;/version&gt;</span>
 </span><span id="line-5"><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
 <p>or, for&nbsp;<span class="caps">JDK8</span>:</p>
@@ -165,7 +172,7 @@
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;dependency&gt;</span>
 </span><span id="line-2">    <span class="nt">&lt;groupId&gt;</span>co.paralleluniverse<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="line-3">    <span class="nt">&lt;artifactId&gt;</span>quasar-core<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.2.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.3.0<span class="nt">&lt;/version&gt;</span>
 </span><span id="line-5">    <span class="nt">&lt;classifier&gt;</span>jdk8<span class="nt">&lt;/classifier&gt;</span>
 </span><span id="line-6"><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
@@ -174,15 +181,19 @@
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;dependency&gt;</span>
 </span><span id="line-2">    <span class="nt">&lt;groupId&gt;</span>co.paralleluniverse<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="line-3">    <span class="nt">&lt;artifactId&gt;</span>ARTIFACT<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.2.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.3.0<span class="nt">&lt;/version&gt;</span>
 </span><span id="line-5"><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
 <p>where <code>ARTIFACT</code>&nbsp;is:</p>
 
 <ul>
   <li><code>comsat-servlet</code> – Servlet integration for defining fiber-per-request&nbsp;servlets.</li>
+  <li><code>comsat-ring-jetty9</code> - A fiber-blocking Clojure <a href="https://github.com/ring-clojure/ring">Ring</a> adapter based on Jetty&nbsp;<span class="caps">9.2.</span></li>
   <li><code>comsat-jersey-server</code> – <a href="https://jersey.java.net/">Jersey server</a> integration for defining <span class="caps">REST</span>&nbsp;services.</li>
   <li><code>comsat-dropwizard</code> – <a href="http://dropwizard.io/">Dropwizard</a> integration including Jersey, ApacheHttpClient and&nbsp;<span class="caps">JDBI.</span></li>
+  <li><code>comsat-spring-webmvc</code> – <a href="http://projects.spring.io/spring-framework/">Spring Framework</a> Web <span class="caps">MVC</span> fiber-blocking controller methods&nbsp;integration.</li>
+  <li><code>comsat-spring-boot</code> – <a href="http://projects.spring.io/spring-boot/">Spring Boot</a> auto-configuration support for Web <span class="caps">MVC</span>&nbsp;controllers.</li>
+  <li><code>comsat-spring-security</code> – <a href="http://projects.spring.io/spring-security/">Spring Security</a> configuration support for&nbsp;fibers.</li>
   <li><code>comsat-jax-rs-client</code> – <a href="https://jersey.java.net/documentation/latest/client.html"><span class="caps">JAX</span>-<span class="caps">RS</span> client</a> integration for calling <span class="caps">HTTP</span>&nbsp;services.</li>
   <li><code>comsat-httpclient</code> – <a href="http://hc.apache.org/httpcomponents-client-ga/">ApacheHttpClient</a> integration for calling <span class="caps">HTTP</span>&nbsp;services.</li>
   <li><code>comsat-retrofit</code> – <a href="http://square.github.io/retrofit/">Retrofit</a>&nbsp;integration.</li>
@@ -200,25 +211,31 @@
 
 <p>Comsat runs code in <a href="http://docs.paralleluniverse.co/quasar/">Quasar</a> fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat and Jetty; or at compilation&nbsp;time.</p>
 
-<p><span class="caps">AOT</span> instrumentation is eplained in the <a href="http://docs.paralleluniverse.co/quasar/index.html#instruemtnation">Quasar documentation</a>.</p>
+<p><span class="caps">AOT</span> instrumentation is an advanced topic eplained in the <a href="http://docs.paralleluniverse.co/quasar/index.html#instrumentation">Quasar documentation</a>.</p>
+
+<p>When using <span class="caps">AOT</span> instrumentation alone, all of your fiber-blocking dependencies will need to have been <span class="caps">AOT</span>-compiled already. Please note that some Comsat modules, such as <code>comast-jersey-server</code>, rely on dynamic instrumentation of third-party libraries and so they cannot be used with <span class="caps">AOT</span> instrumentation&nbsp;alone.</p>
 
 <h4 id="the-java-agent">The Java&nbsp;Agent</h4>
 
-<p>To use the Java agent, the following must be added to the java command line (or use your favorite build tool to add this as a <span class="caps">JVM</span> argument) when launching the process (Servlet container if you’re deploying your app as a <span class="caps">WAR</span>&nbsp;file):</p>
+<p>To use the Java agent, the following must be added to the java command line (or use your favorite build tool to add this as a <span class="caps">JVM</span> argument) when launching the&nbsp;process:</p>
 
 <div class="highlight"><pre><code><span id="line-1">-javaagent:path-to-quasar-jar.jar
 </span></code></pre></div>
+<p>Java agent instrumentation works with standalone Java applications and embedded Servlet containers but at present it cannot be used with standalone Servlet&nbsp;containers.</p>
+
 <h4 id="in-tomcat">In&nbsp;Tomcat</h4>
 
-<p>If you’re using Tomcat as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You’ll need to put <code>comsat-tomcat-loader-0.2.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-tomcat-loader-0.2.0-jdk8.jar</code>) into Tomcat’s <code>lib</code>&nbsp;directory.</p>
+<p>If you’re using Tomcat as your embedded or standalone Servlet container, a custom class-loader is available for use instead of the Java Agent. You’ll need to put <code>comsat-tomcat-loader-0.3.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-tomcat-loader-0.3.0-jdk8.jar</code>) into Tomcat’s <code>common/lib</code>&nbsp;directory.</p>
 
 <p>Then, include the following in your webapp’s&nbsp;<code>META-INF/context.xml</code>:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;Loader</span> <span class="na">loaderClass=</span><span class="s">&quot;co.paralleluniverse.comsat.tomcat.QuasarWebAppClassLoader&quot;</span> <span class="nt">/&gt;</span>
 </span></code></pre></div>
+<p>The Tomcat instrumenting class-loader has been verified to work with Tomcat <span class="caps">7.0.56</span> and Tomcat <span class="caps">8.0.15</span> standalone Servlet&nbsp;containers.</p>
+
 <h4 id="in-jetty">In&nbsp;Jetty</h4>
 
-<p>If you’re using Jetty as your Servlet container, you have the option to use a custom class-loader instead of the Java agent. You’ll need to put <code>comsat-jetty-loader-0.2.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-jetty-loader-0.2.0-jdk8.jar</code>) into Jetty’s <code>lib</code>&nbsp;directory.</p>
+<p>If you’re using Jetty as your embedded Servlet container, you have the option to use a custom class-loader instead of the Java agent. You’ll need to put <code>comsat-jetty-loader-0.3.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-jetty-loader-0.3.0-jdk8.jar</code>) into Jetty’s <code>lib</code>&nbsp;directory.</p>
 
 <p>Then, include a <code>&lt;Set name="classLoader"&gt;</code> tag in your webapp’s context&nbsp;xml:</p>
 
@@ -254,11 +271,11 @@
 
 <h3 id="servlets">Servlets</h3>
 
-<p>Comsat integrates with Java<span class="caps">EE</span> servlets and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each request on a separate <a href="http://puniverse.github.io/quasar/manual/core.html#fibers">fiber</a>. Calls to other web services or to a database are fiber- rather than thread-blocking. As a result, Comsat can serve many thousands of concurrent requests with only a handful of <span class="caps">OS</span> threads. You, on the other hand, don’t need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat&nbsp;implementations.</p>
+<p>Comsat supports the Servlet 3.x specification (Java <span class="caps">EE</span> 6) and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each on a separate <a href="http://puniverse.github.io/quasar/manual/core.html#fibers">fiber</a>. Calls to other web services or to a database are fiber- rather than thread-blocking. As a result, Comsat can serve many thousands of concurrent requests with only a handful of <span class="caps">OS</span> threads. You, on the other hand, don’t need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat&nbsp;implementations.</p>
 
-<p>To write a Comsat (fiber-per-request) servlet, simply extend <a href="/comsat/javadoc/co/paralleluniverse/fibers/servlet/FiberHttpServlet.html"><code>FiberHttpServlet</code></a> rather than the usual <code>javax.servlet.HttpServlet</code>, and either annotate it with <code>@WebServlet</code> or declare it in <code>web.xml</code>. Note how the <code>service</code> and all the <code>doXXX</code> methods are <a href="http://puniverse.github.io/quasar/manual/core.html#fibers">suspendable</a> (they all&nbsp;<code>throw SuspendExecution</code>).</p>
+<p>To write a Comsat (fiber-per-request) servlet, simply extend <a href="/comsat/javadoc/co/paralleluniverse/fibers/servlet/FiberHttpServlet.html"><code>FiberHttpServlet</code></a> rather than the usual <code>javax.servlet.HttpServlet</code>, and either annotate it with <code>@WebServlet</code>, declare it in <code>web.xml</code> or use the programmatic <a href="http://docs.oracle.com/javaee/6/api/javax/servlet/ServletContainerInitializer.html">initializer <span class="caps">API</span></a>. Note how the <code>service</code> and all the <code>doXXX</code> methods are <a href="http://puniverse.github.io/quasar/manual/core.html#fibers">suspendable</a> since they’re annotated with <code>@Suspendable</code>, although they don’t declare throwing <code>SuspendExecution</code> in order to retain full servlet <span class="caps">API</span>&nbsp;compatibility.</p>
 
-<p>You can deploy your servlet as you normally would, either as a <span class="caps">WAR</span> file, or in an embedded servlet&nbsp;container.</p>
+<p>You can deploy your servlet as you normally would, either as a <span class="caps">WAR</span> file (remember to enable async support for it), or in an embedded servlet&nbsp;container.</p>
 
 <p>It is recommended that you then configure your servlet container to limit the number of threads in its thread pool to some small number, as all these threads do is create the fiber (which runs in the fiber thread pool) and&nbsp;return.</p>
 
@@ -266,19 +283,55 @@
 
 <div class="highlight"><pre><code><span id="line-1"><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">FiberTestServlet</span> <span class="kd">extends</span> <span class="n">FiberHttpServlet</span> <span class="o">{</span>
 </span><span id="line-2">    <span class="nd">@Override</span>
-</span><span id="line-3">    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">doGet</span><span class="o">(</span><span class="n">HttpServletRequest</span> <span class="n">req</span><span class="o">,</span> <span class="n">HttpServletResponse</span> <span class="n">resp</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">SuspendExecution</span><span class="o">,</span> <span class="n">IOException</span> <span class="o">{</span>
-</span><span id="line-4">        <span class="k">try</span> <span class="o">(</span><span class="n">PrintWriter</span> <span class="n">out</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="na">getWriter</span><span class="o">())</span> <span class="o">{</span>
-</span><span id="line-5">            <span class="n">Strand</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">100</span><span class="o">);</span> <span class="c1">// &lt;== Some blocking code</span>
-</span><span id="line-6">            <span class="n">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">&quot;testGet&quot;</span><span class="o">);</span>
-</span><span id="line-7">        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
-</span><span id="line-8">        <span class="o">}</span>
-</span><span id="line-9">    <span class="o">}</span>
-</span><span id="line-10"><span class="o">}</span>
-</span></code></pre></div><p>Then you can simply add it as a regular servlet to you favorite servlet&nbsp;containter:</p>
+</span><span id="line-3">    <span class="nd">@Suspendable</span>
+</span><span id="line-4">    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">doGet</span><span class="o">(</span><span class="n">HttpServletRequest</span> <span class="n">req</span><span class="o">,</span> <span class="n">HttpServletResponse</span> <span class="n">resp</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">ServletException</span><span class="o">,</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span id="line-5">        <span class="k">try</span> <span class="o">(</span><span class="n">PrintWriter</span> <span class="n">out</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="na">getWriter</span><span class="o">())</span> <span class="o">{</span>
+</span><span id="line-6">            <span class="n">Fiber</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">100</span><span class="o">);</span> <span class="c1">// &lt;== Some blocking code</span>
+</span><span id="line-7">            <span class="n">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">&quot;testGet&quot;</span><span class="o">);</span>
+</span><span id="line-8">        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="o">|</span> <span class="n">SuspendExecution</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span id="line-9">        <span class="o">}</span>
+</span><span id="line-10">    <span class="o">}</span>
+</span><span id="line-11"><span class="o">}</span>
+</span></code></pre></div><p>Then you can simply add it as a regular servlet to you favorite servlet containter, e.g. for embedded&nbsp;Jetty:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="n">server</span><span class="o">.</span><span class="na">addServlet</span><span class="o">(</span><span class="s">&quot;test&quot;</span><span class="o">,</span> <span class="n">FiberTestServlet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="s">&quot;/&quot;</span><span class="o">);</span>
 </span></code></pre></div>
-<p>To learn about writing servlets, you can refer to the <a href="http://docs.oracle.com/javaee/7/tutorial/doc/servlets.htm">Java Servlets tutorial</a>.</p>
+<p>To learn about writing servlets, you can refer to the <a href="http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html">Java Servlets tutorial</a>.</p>
+
+<h3 id="clojure-ring">Clojure&nbsp;Ring</h3>
+
+<p>The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring any handler code&nbsp;change.</p>
+
+<p>Comsat Ring is based on Pulsar, so it is necessary that the handler itself and all middlewares applied around it are declared suspendable through either the <code>sfn</code> / <code>defsfn</code> macros or the <code>suspendable!</code> call (please refer to <a href="http://docs.paralleluniverse.co/pulsar/#fibers">Pulsar docs</a> for details). You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for&nbsp;you.</p>
+
+<p>So rather&nbsp;than:</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp</span>
+</span><span id="line-2">  <span class="p">(</span><span class="ss">:use</span> <span class="nv">ring.adapter.jetty</span><span class="p">))</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="p">(</span><span class="kd">defn- </span><span class="nv">hello-world</span> <span class="p">[</span><span class="nv">request</span><span class="p">]</span>
+</span><span id="line-5">  <span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">100</span><span class="p">)</span>
+</span><span id="line-6">  <span class="p">{</span><span class="ss">:status</span>  <span class="mi">200</span>
+</span><span id="line-7">   <span class="ss">:headers</span> <span class="p">{</span><span class="s">&quot;Content-Type&quot;</span> <span class="s">&quot;text/plain&quot;</span><span class="p">}</span>
+</span><span id="line-8">   <span class="ss">:body</span>    <span class="s">&quot;Hello World&quot;</span><span class="p">})</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">})</span>
+</span></code></pre></div>
+<p>Just setup Pulsar as described in the <a href="http://docs.paralleluniverse.co/pulsar/#lein">docs</a>, remembering to add the <code>[co.paralleluniverse/comsat-clj-ring "0.3.0"]</code> dependency, and change your <code>use</code>/<code>require</code> clauses&nbsp;slightly:</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp</span>
+</span><span id="line-2">  <span class="p">(</span><span class="ss">:use</span> <span class="nv">co.paralleluniverse.fiber.ring.jetty9</span><span class="p">)</span>
+</span><span id="line-3">  <span class="p">(</span><span class="ss">:import</span> <span class="p">(</span><span class="nf">co.paralleluniverse.fibers</span> <span class="nv">Fiber</span><span class="p">)))</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="p">(</span><span class="kd">defn- </span><span class="nv">hello-world</span> <span class="p">[</span><span class="nv">request</span><span class="p">]</span>
+</span><span id="line-6">  <span class="p">(</span><span class="nf">Fiber/sleep</span> <span class="mi">100</span><span class="p">)</span>
+</span><span id="line-7">  <span class="p">{</span><span class="ss">:status</span>  <span class="mi">200</span>
+</span><span id="line-8">   <span class="ss">:headers</span> <span class="p">{</span><span class="s">&quot;Content-Type&quot;</span> <span class="s">&quot;text/plain&quot;</span><span class="p">}</span>
+</span><span id="line-9">   <span class="ss">:body</span>    <span class="s">&quot;Hello World&quot;</span><span class="p">})</span>
+</span><span id="line-10">
+</span><span id="line-11"><span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">})</span>
+</span></code></pre></div>
+<p>Congratulations! Your handler is now running inside fibers rather than&nbsp;threads.</p>
 
 <h3 id="rest-services"><span class="caps">REST</span>&nbsp;Services</h3>
 
@@ -291,6 +344,7 @@
 <p>in your <code>web.xml</code> file, which is how you would normally use Jersey in a Servlet container,&nbsp;with:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;servlet-class&gt;</span>co.paralleluniverse.fibers.jersey.ServletContainer<span class="nt">&lt;/servlet-class&gt;</span>
+</span><span id="line-2"><span class="nt">&lt;async-supported&gt;</span>true<span class="nt">&lt;/async-supported&gt;</span>
 </span></code></pre></div>
 <p>Your resource methods (the ones you annotate with <code>@GET</code>, <code>@PUT</code>, <code>@POST</code> etc.) can now be made suspendable by declaring <code>throws SuspendExecution</code>. Comsat would then run each request in a fiber. Your resource methods are free to use Comsat’s <span class="caps">JDBC</span> implementation, or Comsat’s <span class="caps">JAX</span>-<span class="caps">RS</span>&nbsp;client.</p>
 
@@ -303,7 +357,7 @@
 </span><span id="line-5">    <span class="nd">@Produces</span><span class="o">(</span><span class="s">&quot;text/plain&quot;</span><span class="o">)</span>
 </span><span id="line-6">    <span class="nd">@Suspendable</span>  <span class="c1">// &lt;------------- FIBER</span>
 </span><span id="line-7">    <span class="kd">public</span> <span class="n">String</span> <span class="nf">get</span><span class="o">(</span><span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;sleep&quot;</span><span class="o">)</span> <span class="kt">int</span> <span class="n">sleep</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">SuspendExecution</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
-</span><span id="line-8">        <span class="n">Strand</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">sleep</span><span class="o">);</span> <span class="c1">// &lt;--- you may use fiber blocking calls here</span>
+</span><span id="line-8">        <span class="n">Fiber</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">sleep</span><span class="o">);</span> <span class="c1">// &lt;--- you may use fiber blocking calls here</span>
 </span><span id="line-9">        <span class="k">return</span> <span class="s">&quot;sleep was &quot;</span><span class="o">+</span><span class="n">sleep</span><span class="o">;</span>
 </span><span id="line-10">    <span class="o">}</span>
 </span><span id="line-11"><span class="o">}</span>
@@ -386,9 +440,9 @@ For&nbsp;example:</p>
 </span><span id="line-4">    <span class="n">List</span><span class="o">&lt;</span><span class="n">Contributor</span><span class="o">&gt;</span> <span class="nf">contributors</span><span class="o">(</span><span class="nd">@Path</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">&quot;owner&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">owner</span><span class="o">,</span> <span class="nd">@Path</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">&quot;repo&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">repo</span><span class="o">);</span>
 </span><span id="line-5"><span class="o">}</span>
 </span></code></pre></div>
-<p>This interface can be registered with <code>FiberRestAdaptherBuilder</code> and then used from fiber&nbsp;context.</p>
+<p>This interface can be registered with <code>FiberRestAdapterBuilder</code> and then used from fiber&nbsp;context.</p>
 
-<div class="highlight"><pre><code><span id="line-1"><span class="kd">final</span> <span class="n">MyGitHub</span> <span class="n">github</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">FiberRestAdaptherBuilder</span><span class="o">().</span><span class="na">setEndpoint</span><span class="o">(</span><span class="s">&quot;http://localhost:8080&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">().</span><span class="na">create</span><span class="o">(</span><span class="n">MyGitHub</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<div class="highlight"><pre><code><span id="line-1"><span class="kd">final</span> <span class="n">MyGitHub</span> <span class="n">github</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">FiberRestAdapterBuilder</span><span class="o">().</span><span class="na">setEndpoint</span><span class="o">(</span><span class="s">&quot;http://localhost:8080&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">().</span><span class="na">create</span><span class="o">(</span><span class="n">MyGitHub</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </span><span id="line-2"><span class="c1">// ...</span>
 </span><span id="line-3"><span class="c1">// usage from fiber context</span>
 </span><span id="line-4"><span class="n">List</span><span class="o">&lt;</span><span class="n">Contributor</span><span class="o">&gt;</span> <span class="n">contributors</span> <span class="o">=</span> <span class="n">github</span><span class="o">.</span><span class="na">contributors</span><span class="o">(</span><span class="s">&quot;puniverse&quot;</span><span class="o">,</span> <span class="s">&quot;comsat&quot;</span><span class="o">);</span>
@@ -424,7 +478,7 @@ For&nbsp;example:</p>
 
 <p>Servlets often make use of <span class="caps">JDBC</span> data sources exposed through <span class="caps">JNDI.</span> If you do that, you can declare a <span class="caps">COMSAT</span> (i.e. a fiber-aware) <span class="caps">JDBC</span> data source through <span class="caps">JNDI</span> that will wrap your native data source. To do so, you will use the <code>co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory</code> DataSource factory, and pass in the number of threads you’d like <span class="caps">COMSAT</span> to use in the <span class="caps">JDBC</span> worker&nbsp;pool.</p>
 
-<p>In order to do that first you have to include <code>comsat-jdbc-0.2.0.jar</code> in your container’s runtime classpath, by putting it into the container’s <code>lib</code>&nbsp;directory.</p>
+<p>In order to do that first you have to include <code>comsat-jdbc-0.3.0.jar</code> in your container’s runtime classpath, by putting it into the container’s <code>lib</code>&nbsp;directory.</p>
 
 <p>If you’re using <code>TOMCAT</code>, the following example is a snippet of <code>META-INF/context.xml</code> that will declare a DataSource under the <code>jdbc/fiberdb</code> name, which wraps a native <span class="caps">DB</span> declared under the <code>jdbc/globalds</code>&nbsp;name:</p>
 
@@ -555,7 +609,7 @@ In order to use j<span class="caps">OOQ</span> from fiber context, all you have 
 
 <p>Comsat integrates with Mongo<span class="caps">DB</span>, for a fiber-blocking Mongo access via the <a href="http://www.allanbank.com/mongodb-async-driver/index.html">allanbank <span class="caps">API</span></a>.</p>
 
-<p>This is how you get a fiber-freindly <code>MongoDatabase</code>&nbsp;instance:</p>
+<p>This is how you get a fiber-friendly <code>MongoDatabase</code>&nbsp;instance:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="n">MongoClient</span> <span class="n">mongoClient</span> <span class="o">=</span> <span class="n">FiberMongoFactory</span><span class="o">.</span><span class="na">createClient</span><span class="o">(</span> <span class="s">&quot;mongodb://localhost:&quot;</span> <span class="o">+</span> <span class="n">port</span> <span class="o">+</span> <span class="s">&quot;/test?maxConnectionCount=10&quot;</span> <span class="o">).</span><span class="na">asSerializedClient</span><span class="o">();</span>
 </span><span id="line-2"><span class="n">MongoDatabase</span> <span class="n">mongoDb</span> <span class="o">=</span> <span class="n">mongoClient</span><span class="o">.</span><span class="na">getDatabase</span><span class="o">(</span><span class="s">&quot;mydb&quot;</span><span class="o">);</span>
@@ -564,7 +618,7 @@ In order to use j<span class="caps">OOQ</span> from fiber context, all you have 
 
 <p><a href="http://dropwizard.io/">Dropwizard</a> is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find sample for dropwizard-comsat application <a href="https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java">here</a>.</p>
 
-<p>In order to use dropwizaed in a Comsat environment, only few changes have to be made in the application&nbsp;declartion.
+<p>In order to use dropwizaed in a Comsat environment, only few changes have to be made in the application&nbsp;declaration.
 First the yaml configuration&nbsp;file:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="l-Scalar-Plain">server</span><span class="p-Indicator">:</span>
@@ -608,9 +662,54 @@ First the yaml configuration&nbsp;file:</p>
 </span><span id="line-14"><span class="o">}</span>
 </span></code></pre></div><p>Instead of extending the regular <code>io.dropwizard.Application</code> class, you should extend the Comsat’s <code>FiberApplication</code>. Your regular <code>run</code> function should be slightly changed to be called <code>fiberRun</code>. The creation of httpClient should be done using the <code>FiberHttpClientBuilder</code> class and the creation of <code>jdbi</code> should be done using the <code>FiberDBIFactory</code>&nbsp;class.</p>
 
+<h3 id="spring">Spring</h3>
+
+<p><a href="http://projects.spring.io/spring-framework/">Spring Framework</a> is a popular Dependency Injection engine; it integrates with many enterprise Java tools and libraries and complements them with new uniform and easy-to-use&nbsp;APIs.</p>
+
+<p><a href="http://projects.spring.io/spring-boot/">Spring Boot</a> adds fast project bootstrap facilities, convention over configuration, auto-configuration based on classpath (and other conditions) and embedded Tomcat and Jetty containers integration. It also provides <a href="http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready">Actuator</a>, a set of ready-to-use facilities for production environments like auditing, health-checks, metrics and <span class="caps">JMX</span> monitoring/management through <span class="caps">JMX</span>’s native protocol, <span class="caps">HTTP</span>, <span class="caps">SSH</span> or&nbsp;telnet.</p>
+
+<p><a href="http://projects.spring.io/spring-security/">Spring Security</a> is a comprehensive Java security framework encompassing authentication and authorization for traditional and web applications, and the de-facto standard for securing Spring-based&nbsp;projects.</p>
+
+<p>Comsat provides the ability to write fiber-blocking Spring Web <span class="caps">MVC</span> controllers with (optional) Spring Boot auto-configuration and (still optional) Spring Security context inheritance for&nbsp;fibers.</p>
+
+<h4 id="fiber-blocking-spring-web-mvc-controllers">Fiber-blocking Spring Web <span class="caps">MVC</span>&nbsp;controllers</h4>
+
+<p>Adding support for fiber-blocking Spring Web <span class="caps">MVC</span> controllers is as easy as adding an <code>@Import</code> for the Spring configuration class <code>FiberWebMvcConfigurationSupport</code> in the <code>co.paralleluniverse.springframework.web.servlet.config.annotation</code>&nbsp;package:</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="nd">@Import</span><span class="o">(</span><span class="n">FiberWebMvcConfigurationSupport</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="c1">// This will enable fiber-blocking</span>
+</span></code></pre></div>
+<p>…And declaring your controller methods as suspendable, as you would normally do with any fiber-blocking&nbsp;method:</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="nd">@RequestMapping</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">&quot;/&quot;</span><span class="o">,</span> <span class="n">method</span> <span class="o">=</span> <span class="n">RequestMethod</span><span class="o">.</span><span class="na">GET</span><span class="o">)</span>
+</span><span id="line-2"><span class="nd">@ResponseBody</span>
+</span><span id="line-3"><span class="kd">public</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="nf">hello</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">SuspendExecution</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span id="line-4">    <span class="n">Fiber</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">100</span><span class="o">);</span>
+</span><span id="line-5">    <span class="k">return</span> <span class="n">Collections</span><span class="o">.</span><span class="na">singletonMap</span><span class="o">(</span><span class="s">&quot;message&quot;</span><span class="o">,</span>
+</span><span id="line-6">            <span class="k">this</span><span class="o">.</span><span class="na">helloWorldService</span><span class="o">.</span><span class="na">getHelloMessage</span><span class="o">());</span>
+</span><span id="line-7"><span class="o">}</span>
+</span></code></pre></div>
+<p>Spring Web <span class="caps">MVC</span> controller methods that have not been annotated (nor otherwise instrumented) to be suspendable will be invoked in thread-blocking mode rather than&nbsp;fiber-blocking.</p>
+
+<h4 id="spring-boot-auto-configuration-support">Spring Boot auto-configuration&nbsp;support</h4>
+
+<p>If you prefer using auto-configuration, it is enough to change the <code>@Import</code> to include <code>co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration</code>&nbsp;instead:</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="nd">@Import</span><span class="o">(</span><span class="n">FiberWebMvcAutoConfiguration</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="c1">// This will enable fiber-blocking</span>
+</span></code></pre></div>
+<h4 id="spring-security-support">Spring Security&nbsp;support</h4>
+
+<p>By default, Spring Security stores the server-side security context for the current user in a Java <code>ThreadLocal</code>. For suspendable Spring Web <span class="caps">MVC</span> controllers to inherit the security context, the strategy Spring uses mut be reconfigured to use Java’s <code>InheritableThreadLocal</code> instead (please be aware that this is <span class="caps">JVM</span>-level global&nbsp;setting).</p>
+
+<p>This is as easy as adding an <code>@Import</code> for the <code>co.paralleluniverse.springframework.security.config.FiberSecurityContextHolderConfig</code> configuration&nbsp;class:</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="c1">// The following will enable fiber-blocking and will let fibers inherit security context</span>
+</span><span id="line-2"><span class="nd">@Import</span><span class="o">({</span><span class="n">FiberWebMvcConfigurationSupport</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FiberSecurityContextHolderConfig</span><span class="o">.</span><span class="na">class</span><span class="o">})</span>
+</span></code></pre></div>
+<p>At present there is one small caveat to consider when using Spring method security: as Spring will proxy secured methods so that all declared exceptions (including <code>SuspendExecution</code>) are catched individually, Quasar will refuse to instrument them. In this specific case <code>SuspendExecution</code> should not be declared but catched in the method body, and the method signature should be annotated with <code>@Suspendable</code>&nbsp;instead.</p>
+
 <h2 id="web-actors">Web&nbsp;Actors</h2>
 
-<p>Web Acotrs are <a href="http://puniverse.github.io/quasar/manual/actors.html">Quasar actors</a> that receive and respond to messages from web clients. Web actors support <span class="caps">HTTP</span>, <span class="caps">SSE</span> and <span class="caps">SSE</span> (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web&nbsp;applications.</p>
+<p>Web Actors are <a href="http://puniverse.github.io/quasar/manual/actors.html">Quasar actors</a> that receive and respond to messages from web clients. Web actors support <span class="caps">HTTP</span>, <span class="caps">SSE</span> and <span class="caps">SSE</span> (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web&nbsp;applications.</p>
 
 <h3 id="deployment">Deployment</h3>
 
