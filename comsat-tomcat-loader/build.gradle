@@ -1,16 +1,42 @@
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+
 dependencies {
+    compile "co.paralleluniverse:quasar-core:$quasarVer"
+
     provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
+
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.eclipse.jetty.websocket', module: '*'         
     }
+
     testRuntime project(':comsat-jdbc')
 }
 
-jar {
-    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
-//    from { configurations.provided.collect { it.isDirectory() ? it : zipTree(it) } }
-} 
+shadowJar {
+    outputs.upToDateWhen { false }
+        
+    // artifactAttached = false
+    classifier = 'shadow'
+    destinationDir = file("$buildDir/libs")
+
+    dependencies {
+        include(dependency('co.paralleluniverse:quasar-core'))
+    }
+
+    doLast {
+        logger.info("$buildDir/libs/${project.name}-${project.version}-${classifier}.jar -> $buildDir/libs/${project.name}-${project.version}.jar")
+        file("$buildDir/libs/${project.name}-${version}-${classifier}.jar").renameTo(file("$buildDir/libs/${project.name}-${project.version}.jar"))
+    }
+}
     
+shadowJar.dependsOn jar
+build.dependsOn shadowJar
+install.dependsOn shadowJar
+signArchives.dependsOn shadowJar
+uploadArchives.dependsOn shadowJar
+
 if (System.properties['java.version'].startsWith('1.8') ) { 
     artifacts {
         archives jar
@@ -19,7 +45,8 @@ if (System.properties['java.version'].startsWith('1.8') ) {
         archives javadocJar
         //    archives distZip
     }
-    
+
+    install.dependsOn ':comsat-tomcat-loader-jdk8:jar'
     uploadArchives.dependsOn ':comsat-tomcat-loader-jdk8:jar'
 }
 

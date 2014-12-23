@@ -1,14 +1,13 @@
 apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 dependencies {
-    dependencies {
-//        compile 'co.paralleluniverse:quasar-core:0.5.0:jdk8'
-        compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
-        compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
-    }
+    compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
+
+    provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
 }
 
 sourceSets {
@@ -22,8 +21,30 @@ sourceSets {
 jar {
     baseName = 'comsat-tomcat-loader'
     classifier = 'jdk8'
-    
-    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
 }
+
+shadowJar {
+    outputs.upToDateWhen { false }
+        
+    // artifactAttached = false
+    baseName = 'comsat-tomcat-loader'
+    classifier = 'jdk8-shadow'
+    destinationDir = file("$buildDir/libs")
+
+    dependencies {
+        include(dependency("co.paralleluniverse:quasar-core:$quasarVer:jdk8"))
+    }
+
+    doLast {
+        logger.info("$buildDir/libs/${baseName}-${project.version}-${classifier}.jar -> $buildDir/libs/${baseName}-${project.version}-${jar.classifier}.jar")
+        file("$buildDir/libs/${baseName}-${version}-${classifier}.jar").renameTo(file("$buildDir/libs/${baseName}-${project.version}-${jar.classifier}.jar"))
+    }
+}
+    
+shadowJar.dependsOn jar
+build.dependsOn shadowJar
+install.dependsOn shadowJar
+signArchives.dependsOn shadowJar
+uploadArchives.dependsOn shadowJar
 
 uploadArchives.enabled = false

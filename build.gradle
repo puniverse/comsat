@@ -17,6 +17,8 @@ subprojects {
     apply plugin: 'java'
 
     sourceCompatibility = '1.7'
+    targetCompatibility = '1.7'
+
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
@@ -564,6 +566,7 @@ buildscript {
     dependencies {
         classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.6'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.0'
     }
 } 
 
