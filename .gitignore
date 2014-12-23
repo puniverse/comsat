@@ -15,3 +15,5 @@ build/
 tomcat.8080
 **/.lein*
 **/target
+/comsat-ring-jetty9/pom.xml
+/comsat-ring-jetty9/pom.xml.asc
