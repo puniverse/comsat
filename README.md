@@ -16,8 +16,12 @@ In Maven:
 Where `ARTIFACT` is:
 
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
+* `comsat-ring-jetty9` - A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.2
 * `comsat-jersey-server` – [Jersey server](https://jersey.java.net/) integration for defining REST services.
 * `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
+* `comsat-spring-webmvc` – [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.
+* `comsat-spring-boot` – [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.
+* `comsat-spring-security` – [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.
 * `comsat-jax-rs-client` – [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for calling HTTP services.
 * `comsat-httpclient` – [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for calling HTTP services.
 * `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration.
@@ -28,7 +32,6 @@ Where `ARTIFACT` is:
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
-* `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
 * `comsat-spring-web` – [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers
 
 Or, build from sources by running:
