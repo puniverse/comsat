@@ -300,13 +300,13 @@
 
 <h3 id="clojure-ring">Clojure&nbsp;Ring</h3>
 
-<p>The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring any handler code&nbsp;change.</p>
+<p>The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring handler logic&nbsp;changes.</p>
 
-<p>Comsat Ring is based on Pulsar, so it is necessary that the handler itself and all middlewares applied around it are declared suspendable through either the <code>sfn</code> / <code>defsfn</code> macros or the <code>suspendable!</code> call (please refer to <a href="http://docs.paralleluniverse.co/pulsar/#fibers">Pulsar docs</a> for details). You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for&nbsp;you.</p>
+<p>Comsat Ring is based on Pulsar, so it is necessary that the handler’s fiber-blocking logic and all functions calling it are declared suspendable through either the <code>sfn</code> / <code>defsfn</code> macros or the <code>suspendable!</code> call (please refer to <a href="http://docs.paralleluniverse.co/pulsar/#fibers">Pulsar docs</a> for details). This often means declaring suspendable the handler itself and middlewares applied to it. You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for&nbsp;you.</p>
 
 <p>So rather&nbsp;than:</p>
 
-<div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp</span>
+<div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp.core</span>
 </span><span id="line-2">  <span class="p">(</span><span class="ss">:use</span> <span class="nv">ring.adapter.jetty</span><span class="p">))</span>
 </span><span id="line-3">
 </span><span id="line-4"><span class="p">(</span><span class="kd">defn- </span><span class="nv">hello-world</span> <span class="p">[</span><span class="nv">request</span><span class="p">]</span>
@@ -315,23 +315,24 @@
 </span><span id="line-7">   <span class="ss">:headers</span> <span class="p">{</span><span class="s">&quot;Content-Type&quot;</span> <span class="s">&quot;text/plain&quot;</span><span class="p">}</span>
 </span><span id="line-8">   <span class="ss">:body</span>    <span class="s">&quot;Hello World&quot;</span><span class="p">})</span>
 </span><span id="line-9">
-</span><span id="line-10"><span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">})</span>
+</span><span id="line-10"><span class="p">(</span><span class="kd">defn </span><span class="nv">run</span> <span class="p">[]</span> <span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">}))</span>
 </span></code></pre></div>
 <p>Just setup Pulsar as described in the <a href="http://docs.paralleluniverse.co/pulsar/#lein">docs</a>, remembering to add the <code>[co.paralleluniverse/comsat-ring-jetty9 "0.3.0"]</code> dependency, and change your <code>use</code>/<code>require</code> clauses&nbsp;slightly:</p>
 
-<div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp</span>
+<div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp.core</span>
 </span><span id="line-2">  <span class="p">(</span><span class="ss">:use</span> <span class="nv">co.paralleluniverse.fiber.ring.jetty9</span><span class="p">)</span>
-</span><span id="line-3">  <span class="p">(</span><span class="ss">:import</span> <span class="p">(</span><span class="nf">co.paralleluniverse.fibers</span> <span class="nv">Fiber</span><span class="p">)))</span>
-</span><span id="line-4">
-</span><span id="line-5"><span class="p">(</span><span class="kd">defn- </span><span class="nv">hello-world</span> <span class="p">[</span><span class="nv">request</span><span class="p">]</span>
-</span><span id="line-6">  <span class="p">(</span><span class="nf">Fiber/sleep</span> <span class="mi">100</span><span class="p">)</span>
-</span><span id="line-7">  <span class="p">{</span><span class="ss">:status</span>  <span class="mi">200</span>
-</span><span id="line-8">   <span class="ss">:headers</span> <span class="p">{</span><span class="s">&quot;Content-Type&quot;</span> <span class="s">&quot;text/plain&quot;</span><span class="p">}</span>
-</span><span id="line-9">   <span class="ss">:body</span>    <span class="s">&quot;Hello World&quot;</span><span class="p">})</span>
-</span><span id="line-10">
-</span><span id="line-11"><span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">})</span>
+</span><span id="line-3">  <span class="p">(</span><span class="ss">:import</span> <span class="p">(</span><span class="nf">co.paralleluniverse.fibers</span> <span class="nv">Fiber</span><span class="p">))</span>
+</span><span id="line-4">  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">co.paralleluniverse.pulsar.core</span> <span class="ss">:as</span> <span class="nv">pc</span><span class="p">]))</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="p">(</span><span class="nf">pc/defsfn</span> <span class="nv">hello-world</span> <span class="p">[</span><span class="nv">request</span><span class="p">]</span>
+</span><span id="line-7">  <span class="p">(</span><span class="nf">Fiber/sleep</span> <span class="mi">100</span><span class="p">)</span>
+</span><span id="line-8">  <span class="p">{</span><span class="ss">:status</span>  <span class="mi">200</span>
+</span><span id="line-9">   <span class="ss">:headers</span> <span class="p">{</span><span class="s">&quot;Content-Type&quot;</span> <span class="s">&quot;text/plain&quot;</span><span class="p">}</span>
+</span><span id="line-10">   <span class="ss">:body</span>    <span class="s">&quot;Hello World&quot;</span><span class="p">})</span>
+</span><span id="line-11">
+</span><span id="line-12"><span class="p">(</span><span class="kd">defn </span><span class="nv">run</span> <span class="p">[]</span> <span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">}))</span>
 </span></code></pre></div>
-<p>Congratulations! Your handler is now running inside fibers rather than&nbsp;threads.</p>
+<p>Your handler is now running inside fibers rather than&nbsp;threads.</p>
 
 <h3 id="rest-services"><span class="caps">REST</span>&nbsp;Services</h3>
 
