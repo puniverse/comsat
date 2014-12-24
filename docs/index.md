@@ -173,14 +173,14 @@ To learn about writing servlets, you can refer to the [Java Servlets tutorial](h
 
 ### Clojure Ring
 
-The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring any handler code change.
+The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring handler logic changes.
 
-Comsat Ring is based on Pulsar, so it is necessary that the handler itself and all middlewares applied around it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
+Comsat Ring is based on Pulsar, so it is necessary that the handler's fiber-blocking logic and all functions calling it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). This often means declaring suspendable the handler itself and middlewares applied to it. You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
 
 So rather than:
 
 ~~~ clojure
-(ns myapp
+(ns myapp.core
   (:use ring.adapter.jetty))
 
 (defn- hello-world [request]
@@ -189,26 +189,27 @@ So rather than:
    :headers {"Content-Type" "text/plain"}
    :body    "Hello World"})
 
-(run-jetty hello-world {:port 8080})
+(defn run [] (run-jetty hello-world {:port 8080}))
 ~~~
 
 Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-ring-jetty9 "{{site.version}}"]` dependency, and change your `use`/`require` clauses slightly:
 
 ~~~ clojure
-(ns myapp
+(ns myapp.core
   (:use co.paralleluniverse.fiber.ring.jetty9)
-  (:import (co.paralleluniverse.fibers Fiber)))
+  (:import (co.paralleluniverse.fibers Fiber))
+  (:require [co.paralleluniverse.pulsar.core :as pc]))
 
-(defn- hello-world [request]
+(pc/defsfn hello-world [request]
   (Fiber/sleep 100)
   {:status  200
    :headers {"Content-Type" "text/plain"}
    :body    "Hello World"})
 
-(run-jetty hello-world {:port 8080})
+(defn run [] (run-jetty hello-world {:port 8080}))
 ~~~
 
-Congratulations! Your handler is now running inside fibers rather than threads.
+Your handler is now running inside fibers rather than threads.
 
 ### REST Services
 
