@@ -1,2 +1,79 @@
+subprojects {
+    ext.springSecurityVer               = '3.2.5.RELEASE'
+    ext.springVer                       = '4.0.8.RELEASE'
+    ext.springBootVer                   = '1.1.9.RELEASE'
+    ext.aspectjVer                      = '1.8.4'
+    ext.jqueryVer                       = '2.0.3-1'
+    ext.commonsBeanUtilsVer             = '1.9.2'
+    ext.commonsDigesterVer              = '2.1'
+    ext.commonsCollectionsVer           = '3.2.1'
+    ext.velocityVer                     = '1.7'
+    ext.hamcrestVer                     = '1.3'
+    ext.jbossLoggingVer                 = '3.1.3.GA'
+    ext.jspVer                          = '2.2.0.v201112011158'
+    ext.snakeYamlVer                    = '1.14'
+    
+    // These are for next Spring Boot release, 1.2.0
+    // ext.springVer                    = '4.1.2.RELEASE'
+    // ext.springBootVer                = '1.2.0.RC2'
+
+    dependencies {
+        testCompile (project(':comsat-test-utils')) {
+            exclude group: 'org.eclipse.jetty', module: '*'
+            exclude group: 'org.eclipse.jetty.websocket', module: '*'
+            exclude group: 'org.glassfish.jersey.core', module: '*'
+            exclude group: 'org.glassfish.jersey.media', module: '*'
+            exclude group: 'io.undertow', module: '*'
+            exclude group: 'com.h2database', module: '*'
+            exclude group: 'org.apache.tomcat', module: '*'
+            exclude group: 'org.apache.tomcat.embed', module: '*'
+            exclude group: 'org.apache.httpcomponents', module: '*'
+        }
+    }
+    
+    configurations.all {
+        resolutionStrategy {
+            force "org.springframework:spring-aop:$springVer"
+            force "org.springframework:spring-beans:$springVer"
+            force "org.springframework:spring-context:$springVer"
+            force "org.springframework:spring-core:$springVer"
+            force "org.springframework:spring-expression:$springVer"
+            force "org.springframework:spring-web:$springVer"
+            force "org.springframework:spring-orm:$springVer"
+            force "org.springframework:spring-tx:$springVer"
+            
+            force "org.aspectj:aspectjrt:$aspectjVer"
+            force "org.aspectj:aspectjweaver:$aspectjVer"
+            force "org.webjars:jquery:$jqueryVer"
+            force "commons-beanutils:commons-beanutils:$commonsBeanUtilsVer"
+            force "commons-digester:commons-digester:$commonsDigesterVer"
+            force "commons-collections:commons-collections:$commonsCollectionsVer"
+            force "org.apache.velocity:velocity:$velocityVer"
+            force "org.hamcrest:hamcrest-core:$hamcrestVer"
+            force "org.jboss.logging:jboss-logging:$jbossLoggingVer"
+            force "org.eclipse.jetty.orbit:javax.servlet.jsp:$jspVer"
+            force "org.yaml:snakeyaml:$snakeYamlVer"
+
+            force "junit:junit:$junitVer"
+
+            // These are for next Spring Boot release, 1.2.0
+            /*
+            force "org.glassfish:javax.el:3.0.1-b05"
+            force "org.apache.tomcat.embed:tomcat-embed-core:8.0.15"
+            force "org.apache.tomcat.embed:tomcat-embed-el:8.0.15"
+            force "org.hibernate:hibernate-validator:5.1.3.Final"
+            */
+        }
+    }
+
+    if ('true' == "$System.env.CI") {
+        test {
+            useJUnit {
+                includeCategories 'co.paralleluniverse.test.categories.CI'
+            }
+        }
+    }
+}
+
 install.enabled = false
 uploadArchives.enabled = false

@@ -1,10 +1,21 @@
+ext.tomcatVer = '7.0.56'
+
 dependencies {
     compile("org.springframework.boot:spring-boot-starter:$springBootVer")
     compile project(":comsat-spring:comsat-spring-boot")
 
     provided("org.springframework.boot:spring-boot-starter-tomcat:$springBootVer")
-    provided("org.apache.tomcat.embed:tomcat-embed-jasper:7.0.56")
+    provided("org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVer")
     provided("javax.servlet:jstl:1.2")
 
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
 }
+/*
+configurations.all {
+    resolutionStrategy {
+        force "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
+        force "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVer"
+        force "org.apache.tomcat.embed:tomcat-embed-el:$tomcatVer"
+    }
+}
+*/

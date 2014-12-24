@@ -18,8 +18,10 @@
  */
 package comsat.sample.jetty;
 
+import co.paralleluniverse.test.categories.CI;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.IntegrationTest;
@@ -36,6 +38,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
  *
  * @author Dave Syer
  */
+@Category(CI.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = SampleJettyApplication.class)
 @WebAppConfiguration
