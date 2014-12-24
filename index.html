@@ -317,7 +317,7 @@
 </span><span id="line-9">
 </span><span id="line-10"><span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">})</span>
 </span></code></pre></div>
-<p>Just setup Pulsar as described in the <a href="http://docs.paralleluniverse.co/pulsar/#lein">docs</a>, remembering to add the <code>[co.paralleluniverse/comsat-clj-ring "0.3.0"]</code> dependency, and change your <code>use</code>/<code>require</code> clauses&nbsp;slightly:</p>
+<p>Just setup Pulsar as described in the <a href="http://docs.paralleluniverse.co/pulsar/#lein">docs</a>, remembering to add the <code>[co.paralleluniverse/comsat-ring-jetty9 "0.3.0"]</code> dependency, and change your <code>use</code>/<code>require</code> clauses&nbsp;slightly:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp</span>
 </span><span id="line-2">  <span class="p">(</span><span class="ss">:use</span> <span class="nv">co.paralleluniverse.fiber.ring.jetty9</span><span class="p">)</span>

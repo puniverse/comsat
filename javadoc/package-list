@@ -20,6 +20,7 @@ co.paralleluniverse.springframework.security.config
 co.paralleluniverse.springframework.web.method.support
 co.paralleluniverse.springframework.web.servlet.config.annotation
 co.paralleluniverse.springframework.web.servlet.mvc.method.annotation
+co.paralleluniverse.test.categories
 comsat.sample.actuator
 comsat.sample.actuator.log4j
 comsat.sample.actuator.ui
