@@ -192,7 +192,7 @@ So rather than:
 (run-jetty hello-world {:port 8080})
 ~~~
 
-Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-clj-ring "{{site.version}}"]` dependency, and change your `use`/`require` clauses slightly:
+Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-ring-jetty9 "{{site.version}}"]` dependency, and change your `use`/`require` clauses slightly:
 
 ~~~ clojure
 (ns myapp
