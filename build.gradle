@@ -22,7 +22,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.3.0"
+    version             = "0.4.0-SNAPSHOT"
     status              = "integration"
     description         = "Fibers services for web"
 
@@ -42,7 +42,7 @@ subprojects {
     ext.metricsVer      = '3.0.2'
     ext.asmVer          = '5.0.3'
     
-    ext.quasarVer       = "0.6.2"
+    ext.quasarVer       = "0.6.3-SNAPSHOT"
     ext.jettyVer        = '9.2.6.v20141205'
     ext.undertowVer     = '1.1.1.Final'
     ext.tomcatVer       = '8.0.9' // '8.0.15'
@@ -68,6 +68,8 @@ subprojects {
     
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
     ext.embedMongoVer                   = '1.46.4'
+    
+    ext.okhttpVer       = '2.2.0'
 
     ext.junitVer                = '4.12'
     
@@ -317,6 +319,13 @@ project (':comsat-mongodb-allanbank') {
     }
 }
 
+project (':comsat-okhttp') {
+    dependencies {
+        compile "com.squareup.okhttp:okhttp:$okhttpVer"
+        testCompile "com.squareup.okhttp:mockwebserver:$okhttpVer"
+    }
+}
+
 project (':comsat-retrofit') {
     dependencies {
         compile "com.squareup.retrofit:retrofit:$retrofitVer"
@@ -526,7 +535,7 @@ buildscript {
 } 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.2.1'
+    gradleVersion = '2.3'
 }
 
 defaultTasks 'install'
