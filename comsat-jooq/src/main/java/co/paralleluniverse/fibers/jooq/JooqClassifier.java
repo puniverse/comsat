@@ -20,7 +20,12 @@ public class JooqClassifier implements SuspendableClassifier {
     };
 
     @Override
-    public MethodDatabase.SuspendableType isSuspendable(MethodDatabase db, String className, String superClassName, String[] interfaces, String methodName, String methodDesc, String methodSignature, String[] methodExceptions) {
+    public MethodDatabase.SuspendableType isSuspendable (
+        MethodDatabase db,
+        String sourceName, String sourceDebugInfo,
+        boolean isInterface, String className, String superClassName, String[] interfaces,
+        String methodName, String methodDesc, String methodSignature, String[] methodExceptions
+    ) {
         // declares given methods as supers
         for (String[] susExtendables : methodsArray) {
             if (className.equals(susExtendables[0]))
