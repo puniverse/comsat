@@ -87,7 +87,7 @@ public final class InterceptorTest {
     assertSame(interceptorResponse, response);
   }
 
-// TODO @Test 
+// TODO @Test https://github.com/square/okhttp/issues/1482
   public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
@@ -117,7 +117,7 @@ public final class InterceptorTest {
     }
   }
 
-// TODO @Test 
+// TODO @Test https://github.com/square/okhttp/issues/1482
   public void networkInterceptorsCannotCallProceedMultipleTimes() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
@@ -143,7 +143,7 @@ public final class InterceptorTest {
     }
   }
 
-// TODO @Test 
+// TODO @Test https://github.com/square/okhttp/issues/1482
   public void networkInterceptorsCannotChangeServerAddress() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
