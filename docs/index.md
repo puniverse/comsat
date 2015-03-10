@@ -83,6 +83,7 @@ where `ARTIFACT` is:
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
 * `comsat-jooq` – [jOOQ](http://www.jooq.org/) integration for using the jOOQ API in fibers.
 * `comsat-mongodb-allanbank` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
+* `comsat-okhttp` – [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
@@ -427,6 +428,18 @@ This is how you get a fiber-friendly `MongoDatabase` instance:
 ~~~ java
 MongoClient mongoClient = FiberMongoFactory.createClient( "mongodb://localhost:" + port + "/test?maxConnectionCount=10" ).asSerializedClient();
 MongoDatabase mongoDb = mongoClient.getDatabase("mydb");
+~~~
+
+#### OkHttp
+
+Comsat integrates with [OkHttp](https://github.com/square/okhttp), a modern HTTP+SPDY client, offeribg a fiber-blocking synchronous call implementation.
+
+Build fiber-friendly, fully OkHttp-compatible `FiberOkHttpClient` and `FiberCall` as follows:
+
+~~~ java
+Request req = ...;
+OkHttpClient client = new FiberOkHttpClient();
+Call call = client.newCall(req);
 ~~~
 
 ### Dropwizard
