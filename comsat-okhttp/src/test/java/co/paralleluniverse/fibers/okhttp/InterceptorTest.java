@@ -161,16 +161,11 @@ public final class InterceptorTest {
         .build();
 
     try {
-      System.out.println("Before");
       executeSynchronously(request);
-      System.out.println("after, failing");
       fail();
     } catch (IllegalStateException expected) {
-      System.out.println("expected");
       assertEquals("network interceptor " + interceptor + " must retain the same host and port",
           expected.getMessage());
-    } catch (Throwable t) {
-      System.out.println("catched " + t);
     }
   }
 
