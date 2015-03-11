@@ -442,6 +442,13 @@ OkHttpClient client = new FiberOkHttpClient();
 Call call = client.newCall(req);
 ~~~
 
+OkHttp's `urlconnection` and `apache` modules are supported as well: just build OkHttp's integration objects by explicitly passing a `FiberOkHttpClient` instance:
+
+~~~ java
+OkUrlFactory factory = new OkUrlFactory(new FiberOkHttpClient());
+OkApacheClient client = new OkApacheClient(new FiberOkHttpClient());
+~~~
+
 ### Dropwizard
 
 [Dropwizard](http://dropwizard.io/) is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
