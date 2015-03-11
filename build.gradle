@@ -322,6 +322,9 @@ project (':comsat-mongodb-allanbank') {
 project (':comsat-okhttp') {
     dependencies {
         compile "com.squareup.okhttp:okhttp:$okhttpVer"
+        compile "com.squareup.okhttp:okhttp-urlconnection:$okhttpVer"
+        compile "com.squareup.okhttp:okhttp-apache:$okhttpVer"
+        compile project (':comsat-httpclient')
         testCompile "com.squareup.okhttp:mockwebserver:$okhttpVer"
     }
 }
@@ -535,7 +538,7 @@ buildscript {
 } 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
+    gradleVersion = '2.2.1'
 }
 
 defaultTasks 'install'
