@@ -22,7 +22,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.3.0"
+    version             = "0.4.0-SNAPSHOT"
     status              = "integration"
     description         = "Fibers services for web"
 
@@ -55,8 +55,8 @@ subprojects {
     ext.jaxrsVer        = '2.0.1'
     ext.websocketApiVer = '1.0'
 
-    ext.dropwizardVer   = '0.7.1'
-    ext.jdbiVer         = '2.55'
+    ext.dropwizardVer   = '0.8.0'
+    ext.jdbiVer         = '2.59'
     ext.apacheAsyncClientVer   = '4.0.2'
     ext.httpCoreVer            = '4.3.3'
     ext.httpClientVer          = '4.3.6'

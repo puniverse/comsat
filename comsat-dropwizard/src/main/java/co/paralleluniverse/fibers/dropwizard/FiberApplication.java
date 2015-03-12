@@ -14,12 +14,13 @@
 package co.paralleluniverse.fibers.dropwizard;
 
 import com.google.common.base.Function;
-import com.sun.jersey.api.core.ResourceConfig;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import javax.servlet.Servlet;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 public abstract class FiberApplication<T extends Configuration> extends Application<T> {
     @Override
@@ -32,7 +33,7 @@ public abstract class FiberApplication<T extends Configuration> extends Applicat
         environment.jersey().replace(new Function<ResourceConfig, Servlet>() {
             @Override
             public Servlet apply(ResourceConfig f) {
-                return new FiberServletContainer(environment.getJerseyServletContainer());
+                return new FiberServletContainer((ServletContainer) environment.getJerseyServletContainer());
             }
         });
     }
