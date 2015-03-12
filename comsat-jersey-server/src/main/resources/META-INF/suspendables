@@ -10,6 +10,7 @@ org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke
 org.glassfish.jersey.server.model.ResourceMethodInvoker.apply
 org.glassfish.jersey.server.ServerRuntime$Responder.process
 org.glassfish.jersey.server.ServerRuntime$1.run
+org.glassfish.jersey.server.ServerRuntime$2.run
 org.glassfish.jersey.internal.Errors$1.call
 org.glassfish.jersey.internal.Errors.process
 org.glassfish.jersey.process.internal.RequestScope.runInScope

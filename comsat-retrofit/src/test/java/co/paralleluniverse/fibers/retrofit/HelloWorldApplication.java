@@ -3,7 +3,7 @@ package co.paralleluniverse.fibers.retrofit;
 import co.paralleluniverse.fibers.SuspendExecution;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
-import com.sun.jersey.spi.resource.Singleton;
+import javax.inject.Singleton;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Bootstrap;
