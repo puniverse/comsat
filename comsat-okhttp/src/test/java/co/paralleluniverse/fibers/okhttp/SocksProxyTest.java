@@ -18,9 +18,6 @@
  */
 package co.paralleluniverse.fibers.okhttp;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
-import com.squareup.okhttp.Call;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -33,7 +30,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,11 +58,11 @@ public final class SocksProxyTest {
         .setProxy(socksProxy.proxy());
 
     Request request1 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = executeSynchronously(client, request1);
+    Response response1 = FiberOkHttpUtils.executeSynchronously((FiberOkHttpClient) client, request1);
     assertEquals("abc", response1.body().string());
 
     Request request2 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response2 = executeSynchronously(client, request2);
+    Response response2 = FiberOkHttpUtils.executeSynchronously((FiberOkHttpClient) client, request2);
     assertEquals("def", response2.body().string());
 
     // The HTTP calls should share a single connection.
@@ -90,41 +86,9 @@ public final class SocksProxyTest {
         .setProxySelector(proxySelector);
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response = executeSynchronously(client, request);
+    Response response = FiberOkHttpUtils.executeSynchronously((FiberOkHttpClient) client, request);
     assertEquals("abc", response.body().string());
 
     assertEquals(1, socksProxy.connectionCount());
-  }
-
-  private Response executeSynchronously(final OkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {
-    return executeSynchronously(client.newCall(request));
-  }
-
-  private Response executeSynchronously(final Call call) throws InterruptedException, IOException, ExecutionException {
-    Response response = null;
-    try {
-        response = new Fiber<Response>() {
-            @Override
-            protected Response run() throws SuspendExecution, InterruptedException {
-                try {
-                    return call.execute();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        }.start().get();
-    } catch (ExecutionException ee) {
-        if (ee.getCause() instanceof RuntimeException) {
-            final RuntimeException re = (RuntimeException) ee.getCause();
-            if (re.getCause() instanceof IOException)
-                throw (IOException) re.getCause();
-            else
-                throw re;
-        } else if (ee.getCause() instanceof IllegalStateException)
-            throw ((IllegalStateException) ee.getCause());
-        else
-            throw ee;
-    }
-    return response;
   }
 }

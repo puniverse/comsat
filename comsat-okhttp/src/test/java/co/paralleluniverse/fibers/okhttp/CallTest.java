@@ -18,8 +18,6 @@
  */
 package co.paralleluniverse.fibers.okhttp;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.okhttp.internal.DoubleInetAddressNetwork;
 import co.paralleluniverse.fibers.okhttp.internal.RecordingHostnameVerifier;
 import co.paralleluniverse.fibers.okhttp.internal.RecordingOkAuthenticator;
@@ -132,7 +130,7 @@ public final class CallTest {
         .header("User-Agent", "SyncApiTest")
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertSuccessful()
         .assertHeader("Content-Type", "text/plain")
@@ -154,7 +152,7 @@ public final class CallTest {
     Request request2 = request1.newBuilder()
         .url(server.getUrl("/"))
         .build();
-    executeSynchronouslyRecorded(request2)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request2)
         .assertCode(200)
         .assertSuccessful()
         .assertBody("abc");
@@ -166,7 +164,7 @@ public final class CallTest {
       Request request = new Request.Builder()
           .url("ftp://hostname/path")
           .build();
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -179,7 +177,7 @@ public final class CallTest {
         .url(server.getUrl("/"))
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(500)
         .assertNotSuccessful();
   }
@@ -213,7 +211,7 @@ public final class CallTest {
         .header("User-Agent", "SyncApiTest")
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertHeader("Content-Type", "text/plain");
 
@@ -242,7 +240,7 @@ public final class CallTest {
         .post(RequestBody.create(MediaType.parse("text/plain"), "def"))
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertBody("abc");
 
@@ -271,7 +269,7 @@ public final class CallTest {
         .method("POST", null)
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertBody("abc");
 
@@ -333,7 +331,7 @@ public final class CallTest {
     String credential = Credentials.basic("jesse", "secret");
     client.setAuthenticator(new RecordingOkAuthenticator(credential));
 
-    Response response = executeSynchronouslyRecorded(request).response;
+    Response response = FiberOkHttpUtils.executeSynchronouslyRecorded(client, request).response;
     assertEquals(200, response.code());
 
     RecordedRequest recordedRequest1 = server.takeRequest();
@@ -357,7 +355,7 @@ public final class CallTest {
     client.setAuthenticator(new RecordingOkAuthenticator(credential));
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertBody("Success!");
   }
@@ -371,7 +369,7 @@ public final class CallTest {
     client.setAuthenticator(new RecordingOkAuthenticator(credential));
 
     try {
-      executeSynchronously(new Request.Builder().url(server.getUrl("/0")).build());
+      FiberOkHttpUtils.executeSynchronously(client, new Request.Builder().url(server.getUrl("/0")).build());
       fail();
     } catch (IOException expected) {
       assertEquals("Too many follow-up requests: 21", expected.getMessage());
@@ -386,7 +384,7 @@ public final class CallTest {
         .delete()
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertBody("abc");
 
@@ -415,7 +413,7 @@ public final class CallTest {
         .put(RequestBody.create(MediaType.parse("text/plain"), "def"))
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertBody("abc");
 
@@ -444,7 +442,7 @@ public final class CallTest {
         .patch(RequestBody.create(MediaType.parse("text/plain"), "def"))
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(200)
         .assertBody("abc");
 
@@ -473,7 +471,7 @@ public final class CallTest {
         .method("POST", RequestBody.create(null, "abc"))
         .build();
 
-    executeSynchronouslyRecorded(request).assertCode(200);
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request).assertCode(200);
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
@@ -492,10 +490,10 @@ public final class CallTest {
         .build();
 
     Call call = client.newCall(request);
-    executeSynchronously(call);
+    FiberOkHttpUtils.executeSynchronously(call);
 
     try {
-      executeSynchronously(call);
+      FiberOkHttpUtils.executeSynchronously(call);
       fail();
     } catch (IllegalStateException e){
       assertEquals("Already Executed", e.getMessage());
@@ -525,14 +523,14 @@ public final class CallTest {
     call.enqueue(callback);
 
     try {
-      executeSynchronously(call);
+      FiberOkHttpUtils.executeSynchronously(call);
       fail();
     } catch (IllegalStateException e){
       assertEquals("Already Executed", e.getMessage());
     }
 
     try {
-      executeSynchronously(call);
+      FiberOkHttpUtils.executeSynchronously(call);
       fail();
     } catch (IllegalStateException e){
       assertEquals("Already Executed", e.getMessage());
@@ -586,13 +584,13 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("def"));
     server.enqueue(new MockResponse().setBody("ghi"));
 
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/a")).build())
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/a")).build())
         .assertBody("abc");
 
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/b")).build())
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/b")).build())
         .assertBody("def");
 
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/c")).build())
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/c")).build())
         .assertBody("ghi");
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
@@ -651,12 +649,12 @@ public final class CallTest {
 
     // First request: time out after 1000ms.
     client.setReadTimeout(1000, TimeUnit.MILLISECONDS);
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/a")).build()).assertBody("abc");
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/a")).build()).assertBody("abc");
 
     // Second request: time out after 250ms.
     client.setReadTimeout(250, TimeUnit.MILLISECONDS);
     Request request = new Request.Builder().url(server.getUrl("/b")).build();
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     BufferedSource bodySource = response.body().source();
     assertEquals('d', bodySource.readByte());
 
@@ -685,7 +683,7 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     try {
       // If this succeeds, too many requests were made.
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (InterruptedIOException expected) {
     }
@@ -700,7 +698,7 @@ public final class CallTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/")).build())
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/")).build())
         .assertHandshake();
   }
 
@@ -729,7 +727,7 @@ public final class CallTest {
     assertTrue(client.getRetryOnConnectionFailure());
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertEquals("retry success", response.body().string());
   }
 
@@ -743,7 +741,7 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     try {
       // If this succeeds, too many requests were made.
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (IOException expected) {
     }
@@ -758,7 +756,7 @@ public final class CallTest {
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
 
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/")).build())
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/")).build())
         .assertBody("abc");
   }
 
@@ -782,7 +780,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (SSLHandshakeException expected) {
     }
@@ -822,7 +820,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (SSLProtocolException expected) {
       // RI response to the FAIL_HANDSHAKE
@@ -840,7 +838,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (SocketException expected) {
       assertTrue(expected.getMessage().contains("exhausted connection specs"));
@@ -858,7 +856,7 @@ public final class CallTest {
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertEquals(301, response.code());
   }
 
@@ -872,7 +870,7 @@ public final class CallTest {
 
     // Make a first request without certificate pinning. Use it to collect certificates to pin.
     Request request1 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = executeSynchronously(request1);
+    Response response1 = FiberOkHttpUtils.executeSynchronously(client, request1);
     CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
     for (Certificate certificate : response1.handshake().peerCertificates()) {
       certificatePinnerBuilder.add(server.get().getHostName(), CertificatePinner.pin(certificate));
@@ -881,7 +879,7 @@ public final class CallTest {
     // Make another request with certificate pinning. It should complete normally.
     client.setCertificatePinner(certificatePinnerBuilder.build());
     Request request2 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response2 = executeSynchronously(request2);
+    Response response2 = FiberOkHttpUtils.executeSynchronously(client, request2);
     assertNotSame(response2.handshake(), response1.handshake());
   }
 
@@ -900,7 +898,7 @@ public final class CallTest {
     // When we pin the wrong certificate, connectivity fails.
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (SSLPeerUnverifiedException expected) {
       assertTrue(expected.getMessage().startsWith("Certificate pinning failure!"));
@@ -933,14 +931,14 @@ public final class CallTest {
 
     // Seed the connection pool so we have something that can fail.
     Request request1 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = executeSynchronously(request1);
+    Response response1 = FiberOkHttpUtils.executeSynchronously(client, request1);
     assertEquals("abc", response1.body().string());
 
     Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
         .post(RequestBody.create(MediaType.parse("text/plain"), "body!"))
         .build();
-    Response response2 = executeSynchronously(request2);
+    Response response2 = FiberOkHttpUtils.executeSynchronously(client, request2);
     assertEquals("def", response2.body().string());
 
     RecordedRequest get = server.takeRequest();
@@ -971,7 +969,7 @@ public final class CallTest {
         .addHeader("Accept-Language", "fr-CA")
         .addHeader("Accept-Charset", "UTF-8")
         .build();
-    executeSynchronouslyRecorded(cacheStoreRequest)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, cacheStoreRequest)
         .assertCode(200)
         .assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
@@ -982,7 +980,7 @@ public final class CallTest {
         .addHeader("Accept-Language", "en-US") // Different, but Vary says it doesn't matter.
         .addHeader("Accept-Charset", "UTF-8")
         .build();
-    RecordedResponse cacheHit = executeSynchronouslyRecorded(cacheHitRequest);
+    RecordedResponse cacheHit = FiberOkHttpUtils.executeSynchronouslyRecorded(client, cacheHitRequest);
 
     // Check the merged response. The request is the application's original request.
     cacheHit.assertCode(200)
@@ -1024,7 +1022,7 @@ public final class CallTest {
         .addHeader("Accept-Language", "fr-CA")
         .addHeader("Accept-Charset", "UTF-8")
         .build();
-    executeSynchronouslyRecorded(cacheStoreRequest)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, cacheStoreRequest)
         .assertCode(200)
         .assertHeader("Donut", "a")
         .assertBody("A");
@@ -1036,7 +1034,7 @@ public final class CallTest {
         .addHeader("Accept-Language", "en-US") // Different, but Vary says it doesn't matter.
         .addHeader("Accept-Charset", "UTF-8")
         .build();
-    RecordedResponse cacheHit = executeSynchronouslyRecorded(cacheHitRequest);
+    RecordedResponse cacheHit = FiberOkHttpUtils.executeSynchronouslyRecorded(client, cacheHitRequest);
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
 
     // Check the merged response. The request is the application's original request.
@@ -1107,7 +1105,7 @@ public final class CallTest {
         .addHeader("Accept-Language", "fr-CA")
         .addHeader("Accept-Charset", "UTF-8")
         .build();
-    executeSynchronouslyRecorded(cacheStoreRequest)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, cacheStoreRequest)
         .assertCode(200)
         .assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
@@ -1117,7 +1115,7 @@ public final class CallTest {
         .addHeader("Accept-Language", "en-US") // Different, but Vary says it doesn't matter.
         .addHeader("Accept-Charset", "UTF-8")
         .build();
-    RecordedResponse cacheHit = executeSynchronouslyRecorded(cacheMissRequest);
+    RecordedResponse cacheHit = FiberOkHttpUtils.executeSynchronouslyRecorded(client, cacheMissRequest);
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
 
     // Check the user response. It has the application's original request.
@@ -1168,7 +1166,7 @@ public final class CallTest {
         .header("Cache-Control", "only-if-cached")
         .build();
 
-    executeSynchronouslyRecorded(request)
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
         .assertCode(504)
         .assertBody("")
         .assertNoNetworkResponse()
@@ -1188,7 +1186,7 @@ public final class CallTest {
         .setBody("/b has moved!"));
     server.enqueue(new MockResponse().setBody("C"));
 
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/a")).build())
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/a")).build())
         .assertCode(200)
         .assertBody("C")
         .priorResponse()
@@ -1210,7 +1208,7 @@ public final class CallTest {
         .setBody("This page has moved!"));
     server.enqueue(new MockResponse().setBody("Page 2"));
 
-    Response response = executeSynchronously(new Request.Builder()
+    Response response = FiberOkHttpUtils.executeSynchronously(client, new Request.Builder()
         .url(server.getUrl("/page1"))
         .post(RequestBody.create(MediaType.parse("text/plain"), "Request Body"))
         .build());
@@ -1239,7 +1237,7 @@ public final class CallTest {
     cookieManager.getCookieStore().add(server.getUrl("/").toURI(), cookie);
     client.setCookieHandler(cookieManager);
 
-    Response response = executeSynchronously(new Request.Builder()
+    Response response = FiberOkHttpUtils.executeSynchronously(client, new Request.Builder()
         .url(server.getUrl("/page1"))
         .build());
     assertEquals("Page 2", response.body().string());
@@ -1264,7 +1262,7 @@ public final class CallTest {
     client.setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest redirectRequest = server2.takeRequest();
@@ -1312,7 +1310,7 @@ public final class CallTest {
     }
     server.enqueue(new MockResponse().setBody("Success!"));
 
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/0")).build())
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/0")).build())
         .assertCode(200)
         .assertBody("Success!");
   }
@@ -1342,7 +1340,7 @@ public final class CallTest {
     }
 
     try {
-      executeSynchronously(new Request.Builder().url(server.getUrl("/0")).build());
+      FiberOkHttpUtils.executeSynchronously(client, new Request.Builder().url(server.getUrl("/0")).build());
       fail();
     } catch (IOException expected) {
       assertEquals("Too many follow-up requests: 21", expected.getMessage());
@@ -1367,7 +1365,7 @@ public final class CallTest {
     call.cancel();
 
     try {
-      executeSynchronously(call);
+      FiberOkHttpUtils.executeSynchronously(call);
       fail();
     } catch (IOException expected) {
     }
@@ -1392,7 +1390,7 @@ public final class CallTest {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Future<Response> result = executor.submit(new Callable<Response>() {
       @Override public Response call() throws Exception {
-        return executeSynchronously(call);
+        return FiberOkHttpUtils.executeSynchronously(call);
       }
     });
 
@@ -1417,7 +1415,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request").build();
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (IOException expected) {
     }
@@ -1560,7 +1558,7 @@ public final class CallTest {
 
     // Confirm that the user request doesn't have Accept-Encoding, and the user
     // response doesn't have a Content-Encoding or Content-Length.
-    RecordedResponse userResponse = executeSynchronouslyRecorded(request);
+    RecordedResponse userResponse = FiberOkHttpUtils.executeSynchronouslyRecorded(client, request);
     userResponse.assertCode(200)
         .assertRequestHeader("Accept-Encoding")
         .assertHeader("Content-Encoding")
@@ -1603,7 +1601,7 @@ public final class CallTest {
     assertEquals("abc", response.body().string());
 
     // Make another request just to confirm that that connection can be reused...
-    executeSynchronouslyRecorded(new Request.Builder().url(server.getUrl("/")).build()).assertBody("def");
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/")).build()).assertBody("def");
     assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection reused.
 
@@ -1614,7 +1612,7 @@ public final class CallTest {
   @Test public void userAgentIsIncludedByDefault() throws Exception {
     server.enqueue(new MockResponse());
 
-    executeSynchronously(new Request.Builder().url(server.getUrl("/")).build());
+    FiberOkHttpUtils.executeSynchronously(client, new Request.Builder().url(server.getUrl("/")).build());
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertTrue(recordedRequest.getHeader("User-Agent")
@@ -1630,49 +1628,11 @@ public final class CallTest {
         .setBody("B"));
 
     client.setFollowRedirects(false);
-    RecordedResponse recordedResponse = executeSynchronouslyRecorded(
-        new Request.Builder().url(server.getUrl("/a")).build());
+    RecordedResponse recordedResponse = FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/a")).build());
 
     recordedResponse
         .assertBody("A")
         .assertCode(302);
-  }
-
-  private RecordedResponse executeSynchronouslyRecorded(final Request request) throws InterruptedException, IOException, ExecutionException {
-    final Response response = executeSynchronously(client.newCall(request));
-    return new RecordedResponse(request, response, response.body().string(), null);
-  }
-
-  private Response executeSynchronously(final Request request) throws InterruptedException, IOException, ExecutionException {
-    return executeSynchronously(client.newCall(request));
-  }
-
-  private Response executeSynchronously(final Call call) throws InterruptedException, IOException, ExecutionException {
-    Response response = null;
-    try {
-        response = new Fiber<Response>() {
-            @Override
-            protected Response run() throws SuspendExecution, InterruptedException {
-                try {
-                    return call.execute();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        }.start().get();
-    } catch (ExecutionException ee) {
-        if (ee.getCause() instanceof RuntimeException) {
-            final RuntimeException re = (RuntimeException) ee.getCause();
-            if (re.getCause() instanceof IOException)
-                throw (IOException) re.getCause();
-            else
-                throw re;
-        } else if (ee.getCause() instanceof IllegalStateException)
-            throw ((IllegalStateException) ee.getCause());
-        else
-            throw ee;
-    }
-    return response;
   }
 
   /**

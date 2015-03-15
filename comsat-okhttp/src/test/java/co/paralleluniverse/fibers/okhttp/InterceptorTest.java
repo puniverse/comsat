@@ -18,10 +18,7 @@
  */
 package co.paralleluniverse.fibers.okhttp;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
 import com.squareup.okhttp.Address;
-import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.MediaType;
@@ -38,7 +35,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -55,6 +51,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
+import org.junit.Ignore;
 
 public final class InterceptorTest {
   @Rule public MockWebServerRule server = new MockWebServerRule();
@@ -83,11 +80,11 @@ public final class InterceptorTest {
       }
     });
 
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertSame(interceptorResponse, response);
   }
 
-// TODO @Test https://github.com/square/okhttp/issues/1482
+  @Test @Ignore // TODO https://github.com/square/okhttp/issues/1482
   public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
@@ -109,7 +106,7 @@ public final class InterceptorTest {
         .build();
 
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
@@ -117,7 +114,7 @@ public final class InterceptorTest {
     }
   }
 
-// TODO @Test https://github.com/square/okhttp/issues/1482
+  @Test @Ignore // TODO https://github.com/square/okhttp/issues/1482
   public void networkInterceptorsCannotCallProceedMultipleTimes() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
@@ -135,7 +132,7 @@ public final class InterceptorTest {
         .build();
 
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
@@ -143,7 +140,7 @@ public final class InterceptorTest {
     }
   }
 
-// TODO @Test https://github.com/square/okhttp/issues/1482
+  @Test @Ignore // TODO https://github.com/square/okhttp/issues/1482
   public void networkInterceptorsCannotChangeServerAddress() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
@@ -164,7 +161,7 @@ public final class InterceptorTest {
         .build();
 
     try {
-      executeSynchronously(request);
+      FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must retain the same host and port",
@@ -186,7 +183,7 @@ public final class InterceptorTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    executeSynchronously(request);
+    FiberOkHttpUtils.executeSynchronously(client, request);
   }
 
   @Test public void networkInterceptorsObserveNetworkHeaders() throws Exception {
@@ -220,7 +217,7 @@ public final class InterceptorTest {
     assertNull(request.header("Accept-Encoding"));
 
     // No extra headers in the application's response.
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertNull(request.header("Content-Encoding"));
     assertEquals("abcabcabc", response.body().string());
   }
@@ -252,7 +249,7 @@ public final class InterceptorTest {
         .method("PUT", RequestBody.create(MediaType.parse("text/plain"), "abc"))
         .build();
 
-    executeSynchronously(request);
+    FiberOkHttpUtils.executeSynchronously(client, request);
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("ABC", recordedRequest.getUtf8Body());
@@ -288,7 +285,7 @@ public final class InterceptorTest {
         .url(server.getUrl("/"))
         .build();
 
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertEquals("ABC", response.body().string());
     assertEquals("yep", response.header("OkHttp-Intercepted"));
     assertEquals("foo", response.header("Original-Header"));
@@ -332,7 +329,7 @@ public final class InterceptorTest {
         .url(server.getUrl("/"))
         .build();
 
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertEquals(Arrays.asList("Cupcake", "Donut"),
         response.headers("Response-Interceptor"));
 
@@ -386,7 +383,7 @@ public final class InterceptorTest {
         .url(server.getUrl("/"))
         .build();
 
-    Response response = executeSynchronously(request);
+    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
     assertEquals(response.body().string(), "b");
   }
 
@@ -439,37 +436,5 @@ public final class InterceptorTest {
     sink.writeUtf8(data);
     sink.close();
     return result;
-  }
-
-  private Response executeSynchronously(final Request request) throws InterruptedException, IOException, ExecutionException {
-    return executeSynchronously(client.newCall(request));
-  }
-
-  private Response executeSynchronously(final Call call) throws InterruptedException, IOException, ExecutionException {
-    Response response = null;
-    try {
-        response = new Fiber<Response>() {
-            @Override
-            protected Response run() throws SuspendExecution, InterruptedException {
-                try {
-                    return call.execute();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        }.start().get();
-    } catch (ExecutionException ee) {
-        if (ee.getCause() instanceof RuntimeException) {
-            final RuntimeException re = (RuntimeException) ee.getCause();
-            if (re.getCause() instanceof IOException)
-                throw (IOException) re.getCause();
-            else
-                throw re;
-        } else if (ee.getCause() instanceof IllegalStateException)
-            throw ((IllegalStateException) ee.getCause());
-        else
-            throw ee;
-    }
-    return response;
   }
 }

@@ -20,6 +20,7 @@ package com.squareup.okhttp.internal.huc;
 
 import co.paralleluniverse.fibers.okhttp.AbstractResponseCache;
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
@@ -100,7 +101,7 @@ public class CacheAdapterTest {
     };
     Internal.instance.setCache(client, new CacheAdapter(responseCache));
 
-    connection = new OkUrlFactory(client).open(serverUrl);
+    connection = FiberOkHttpUtils.open(new OkUrlFactory(client), serverUrl);
     connection.setRequestProperty("key1", "value1");
 
     executeGet(connection);
@@ -125,7 +126,7 @@ public class CacheAdapterTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
-    connection = new OkUrlFactory(client).open(serverUrl);
+    connection = FiberOkHttpUtils.open(new OkUrlFactory(client), serverUrl);
     connection.setRequestProperty("key1", "value1");
 
     executeGet(connection);
@@ -165,7 +166,7 @@ public class CacheAdapterTest {
     };
     Internal.instance.setCache(client, new CacheAdapter(responseCache));
 
-    connection = new OkUrlFactory(client).open(serverUrl);
+    connection = FiberOkHttpUtils.open(new OkUrlFactory(client), serverUrl);
     connection.setRequestProperty("key", "value");
     executeGet(connection);
   }
@@ -204,7 +205,7 @@ public class CacheAdapterTest {
     };
     Internal.instance.setCache(client, new CacheAdapter(responseCache));
 
-    connection = new OkUrlFactory(client).open(serverUrl);
+    connection = FiberOkHttpUtils.open(new OkUrlFactory(client), serverUrl);
 
     executePost(connection);
   }
@@ -238,7 +239,7 @@ public class CacheAdapterTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
-    connection = new OkUrlFactory(client).open(serverUrl);
+    connection = FiberOkHttpUtils.open(new OkUrlFactory(client), serverUrl);
     executeGet(connection);
   }
 

@@ -18,10 +18,9 @@
  */
 package com.squareup.okhttp.internal.huc;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.okhttp.AbstractResponseCache;
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
@@ -46,7 +45,6 @@ import java.net.HttpURLConnection;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.Principal;
@@ -118,7 +116,7 @@ public final class ResponseCacheTest {
   }
 
   private HttpURLConnection openConnection(URL url) throws InterruptedException, IOException, ExecutionException {
-    return open(new OkUrlFactory(client), url);
+    return FiberOkHttpUtils.open(new OkUrlFactory(client), url);
   }
 
   @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws Exception {
@@ -1691,29 +1689,5 @@ public final class ResponseCacheTest {
       Entry entry = new Entry(uri, urlConnection);
       return entry.asCacheRequest();
     }
-  }
-
-  static private HttpURLConnection open(final OkUrlFactory factory, final URL url) throws InterruptedException, IOException, ExecutionException {
-    HttpURLConnection conn = null;
-    try {
-        conn = new Fiber<HttpURLConnection>() {
-            @Override
-            protected HttpURLConnection run() throws SuspendExecution, InterruptedException {
-                return factory.open(url);
-            }
-        }.start().get();
-    } catch (ExecutionException ee) {
-        if (ee.getCause() instanceof RuntimeException) {
-            final RuntimeException re = (RuntimeException) ee.getCause();
-            if (re.getCause() instanceof IOException)
-                throw (IOException) re.getCause();
-            else
-                throw re;
-        } else if (ee.getCause() instanceof IllegalStateException)
-            throw ((IllegalStateException) ee.getCause());
-        else
-            throw ee;
-    }
-    return conn;
   }
 }

@@ -18,9 +18,8 @@
  */
 package com.squareup.okhttp.internal.huc;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
 import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
@@ -57,8 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -716,7 +713,7 @@ public class JavaApiConverterTest {
 
     @Override public HttpURLConnection open(URL serverUrl) throws IOException {
         try {
-            return openConn(new OkUrlFactory(client), serverUrl);
+            return FiberOkHttpUtils.open(new OkUrlFactory(client), serverUrl);
         } catch (InterruptedException ex) {
             throw new AssertionError(ex);
         } catch (ExecutionException ex) {
@@ -796,30 +793,6 @@ public class JavaApiConverterTest {
     }
     in.close();
     return buffer.toString("UTF-8");
-  }
-
-  private static HttpURLConnection openConn(final OkUrlFactory factory, final URL url) throws InterruptedException, IOException, ExecutionException {
-    HttpURLConnection conn = null;
-    try {
-        conn = new Fiber<HttpURLConnection>() {
-            @Override
-            protected HttpURLConnection run() throws SuspendExecution, InterruptedException {
-                return factory.open(url);
-            }
-        }.start().get();
-    } catch (ExecutionException ee) {
-        if (ee.getCause() instanceof RuntimeException) {
-            final RuntimeException re = (RuntimeException) ee.getCause();
-            if (re.getCause() instanceof IOException)
-                throw (IOException) re.getCause();
-            else
-                throw re;
-        } else if (ee.getCause() instanceof IllegalStateException)
-            throw ((IllegalStateException) ee.getCause());
-        else
-            throw ee;
-    }
-    return conn;
   }
 
   static private HttpURLConnection openConn(final HttpURLConnectionFactory factory, final URL url) throws InterruptedException, IOException, ExecutionException {

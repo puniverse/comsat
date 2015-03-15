@@ -18,10 +18,9 @@
  */
 package com.squareup.okhttp.internal.huc;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.okhttp.AbstractResponseCache;
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Internal;
 import java.io.IOException;
@@ -32,7 +31,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -138,7 +136,7 @@ public final class URLEncodingTest {
     }));
 
     try {
-      HttpURLConnection connection = open(new OkUrlFactory(client), url);
+      HttpURLConnection connection = FiberOkHttpUtils.open(new OkUrlFactory(client), url);
       connection.getResponseCode();
     } catch (Exception expected) {
       if (expected.getCause() instanceof URISyntaxException) {
@@ -147,29 +145,5 @@ public final class URLEncodingTest {
     }
 
     return uriReference.get();
-  }
-
-  static private HttpURLConnection open(final OkUrlFactory factory, final URL url) throws InterruptedException, IOException, ExecutionException {
-    HttpURLConnection conn = null;
-    try {
-        conn = new Fiber<HttpURLConnection>() {
-            @Override
-            protected HttpURLConnection run() throws SuspendExecution, InterruptedException {
-                return factory.open(url);
-            }
-        }.start().get();
-    } catch (ExecutionException ee) {
-        if (ee.getCause() instanceof RuntimeException) {
-            final RuntimeException re = (RuntimeException) ee.getCause();
-            if (re.getCause() instanceof IOException)
-                throw (IOException) re.getCause();
-            else
-                throw re;
-        } else if (ee.getCause() instanceof IllegalStateException)
-            throw ((IllegalStateException) ee.getCause());
-        else
-            throw ee;
-    }
-    return conn;
   }
 }

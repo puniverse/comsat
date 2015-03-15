@@ -18,8 +18,6 @@
  */
 package co.paralleluniverse.fibers.okhttp;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Platform;
@@ -28,7 +26,6 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,7 +38,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
-import java.util.concurrent.ExecutionException;
 import static okio.Okio.buffer;
 import static okio.Okio.source;
 import static org.junit.Assert.assertEquals;
@@ -69,7 +65,7 @@ public class OkUrlFactoryTest {
   @Test public void originServerSends407() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(407));
 
-    HttpURLConnection conn = open(server.getUrl("/"));
+    HttpURLConnection conn = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     try {
       conn.getResponseCode();
       fail();
@@ -80,7 +76,7 @@ public class OkUrlFactoryTest {
   @Test public void networkResponseSourceHeader() throws Exception {
     server.enqueue(new MockResponse().setBody("Isla Sorna"));
 
-    HttpURLConnection connection = open(server.getUrl("/"));
+    HttpURLConnection connection = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection, "NETWORK 200");
     assertResponseBody(connection, "Isla Sorna");
   }
@@ -88,7 +84,7 @@ public class OkUrlFactoryTest {
   @Test public void networkFailureResponseSourceHeader() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(404));
 
-    HttpURLConnection connection = open(server.getUrl("/"));
+    HttpURLConnection connection = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection, "NETWORK 404");
   }
 
@@ -99,11 +95,11 @@ public class OkUrlFactoryTest {
         .setBody("Isla Nublar"));
     server.enqueue(new MockResponse().setResponseCode(304));
 
-    HttpURLConnection connection1 = open(server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = open(server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection2, "CONDITIONAL_CACHE 304");
     assertResponseBody(connection2, "Isla Nublar");
   }
@@ -115,11 +111,11 @@ public class OkUrlFactoryTest {
         .setBody("Isla Nublar"));
     server.enqueue(new MockResponse().setBody("Isla Sorna"));
 
-    HttpURLConnection connection1 = open(server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = open(server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection2, "CONDITIONAL_CACHE 200");
     assertResponseBody(connection2, "Isla Sorna");
   }
@@ -129,11 +125,11 @@ public class OkUrlFactoryTest {
         .addHeader("Expires: " + formatDate(2, TimeUnit.HOURS))
         .setBody("Isla Nublar"));
 
-    HttpURLConnection connection1 = open(server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = open(server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection2, "CACHE 200");
     assertResponseBody(connection2, "Isla Nublar");
   }
@@ -141,11 +137,11 @@ public class OkUrlFactoryTest {
   @Test public void noneResponseSourceHeaders() throws Exception {
     server.enqueue(new MockResponse().setBody("Isla Nublar"));
 
-    HttpURLConnection connection1 = open(server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = open(server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
     connection2.setRequestProperty("Cache-Control", "only-if-cached");
     assertResponseHeader(connection2, "NONE");
   }
@@ -159,7 +155,7 @@ public class OkUrlFactoryTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    HttpURLConnection connection = open(server.getUrl("/a"));
+    HttpURLConnection connection = FiberOkHttpUtils.open(factory, server.getUrl("/a"));
     connection.setInstanceFollowRedirects(false);
     assertResponseBody(connection, "A");
     assertResponseCode(connection, 302);
@@ -187,29 +183,5 @@ public class OkUrlFactoryTest {
     DateFormat rfc1123 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
     rfc1123.setTimeZone(TimeZone.getTimeZone("GMT"));
     return rfc1123.format(date);
-  }
-
-  private HttpURLConnection open(final URL url) throws InterruptedException, IOException, ExecutionException {
-    HttpURLConnection conn = null;
-    try {
-        conn = new Fiber<HttpURLConnection>() {
-            @Override
-            protected HttpURLConnection run() throws SuspendExecution, InterruptedException {
-                return factory.open(url);
-            }
-        }.start().get();
-    } catch (ExecutionException ee) {
-        if (ee.getCause() instanceof RuntimeException) {
-            final RuntimeException re = (RuntimeException) ee.getCause();
-            if (re.getCause() instanceof IOException)
-                throw (IOException) re.getCause();
-            else
-                throw re;
-        } else if (ee.getCause() instanceof IllegalStateException)
-            throw ((IllegalStateException) ee.getCause());
-        else
-            throw ee;
-    }
-    return conn;
   }
 }
