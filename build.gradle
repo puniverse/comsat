@@ -42,7 +42,7 @@ subprojects {
     ext.metricsVer      = '3.0.2'
     ext.asmVer          = '5.0.3'
     
-    ext.quasarVer       = "0.6.2"
+    ext.quasarVer       = "0.6.3-SNAPSHOT"
     ext.jettyVer        = '9.2.6.v20141205'
     ext.undertowVer     = '1.1.1.Final'
     ext.tomcatVer       = '8.0.9' // '8.0.15'
@@ -68,6 +68,8 @@ subprojects {
     
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
     ext.embedMongoVer                   = '1.46.4'
+    
+    ext.okhttpVer       = '2.2.0'
 
     ext.junitVer                = '4.12'
     
@@ -314,6 +316,16 @@ project (':comsat-mongodb-allanbank') {
         compile "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVer"
         testCompile "de.flapdoodle.embed:de.flapdoodle.embed.mongo:$embedMongoVer"
         testCompile project(':comsat-test-utils')
+    }
+}
+
+project (':comsat-okhttp') {
+    dependencies {
+        compile "com.squareup.okhttp:okhttp:$okhttpVer"
+        compile "com.squareup.okhttp:okhttp-urlconnection:$okhttpVer"
+        compile "com.squareup.okhttp:okhttp-apache:$okhttpVer"
+        compile project (':comsat-httpclient')
+        testCompile "com.squareup.okhttp:mockwebserver:$okhttpVer"
     }
 }
 
