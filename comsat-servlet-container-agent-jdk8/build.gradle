@@ -11,16 +11,14 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-ext.asmVersion = "5.0.3"
-
 // Shadowed dependencies must be listed
 dependencies {
     runtime "co.paralleluniverse:quasar-core:$quasarVer:jdk8@jar"
-    runtime "org.ow2.asm:asm:$asmVersion"
-    runtime "org.ow2.asm:asm-analysis:$asmVersion"
-    runtime "org.ow2.asm:asm-commons:$asmVersion"
-    runtime "org.ow2.asm:asm-util:$asmVersion"
-    runtime "org.ow2.asm:asm-tree:$asmVersion"
+    runtime "org.ow2.asm:asm:$asmVer"
+    runtime "org.ow2.asm:asm-analysis:$asmVer"
+    runtime "org.ow2.asm:asm-commons:$asmVer"
+    runtime "org.ow2.asm:asm-util:$asmVer"
+    runtime "org.ow2.asm:asm-tree:$asmVer"
 }
 
 jar {

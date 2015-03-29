@@ -1,11 +1,9 @@
-ext.tomcatVer = '7.0.56'
-
 dependencies {
     compile("org.springframework.boot:spring-boot-starter:$springBootVer")
     compile project(":comsat-spring:comsat-spring-boot")
 
     provided("org.springframework.boot:spring-boot-starter-tomcat:$springBootVer")
-    provided("org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVer")
+    provided("org.apache.tomcat.embed:tomcat-embed-jasper:$tomcat7Ver")
     provided("javax.servlet:jstl:1.2")
 
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")

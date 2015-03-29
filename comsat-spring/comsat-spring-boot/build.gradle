@@ -1,4 +1,6 @@
 subprojects {
+    ext.tomcat7Ver = '7.0.59'
+
     install.enabled = false
     uploadArchives.enabled = false
 }

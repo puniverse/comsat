@@ -7,6 +7,7 @@ targetCompatibility = '1.8'
 dependencies {
     compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
 
+    provided "org.apache.tomcat:tomcat-juli:$tomcatVer"
     provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
 }
 

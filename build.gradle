@@ -39,16 +39,17 @@ subprojects {
 
     ext.isRelease       = !version.endsWith("SNAPSHOT")
 
-    ext.metricsVer      = '3.0.2'
+    ext.metricsVer      = '3.1.1'
     ext.asmVer          = '5.0.3'
     
-    ext.quasarVer       = "0.6.3-SNAPSHOT"
-    ext.jettyVer        = '9.2.6.v20141205'
-    ext.undertowVer     = '1.1.1.Final'
-    ext.tomcatVer       = '8.0.9' // '8.0.15'
+    ext.quasarVer       = '0.6.3-SNAPSHOT'
+    ext.jettyVer        = '9.2.10.v20150310'
+    ext.undertowVer     = '1.1.3.Final'
+    ext.tomcatVer       = '8.0.20'
 
     ext.osgiVer         = '6.0.0'
-    ext.jerseyVer       = '2.16'
+    ext.jerseyVer       = '2.17'
+    ext.hk2apiVer       = '2.4.0-b10'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
     ext.servletVer      = '3.0.1'
@@ -57,21 +58,23 @@ subprojects {
 
     ext.dropwizardVer   = '0.8.0'
     ext.jdbiVer         = '2.59'
+
+    ext.retrofitVer     = '1.9.0'
+    ext.jooqVer         = '3.5.3'
+    ext.slf4jApiVer     = '1.7.12'
+    ext.log4jVer        = '1.2.17'
+    ext.guavaVer        = '18.0'
+
+    ext.okhttpVer       = '2.2.0'
+
     ext.apacheAsyncClientVer   = '4.0.2'
     ext.httpCoreVer            = '4.3.3'
     ext.httpClientVer          = '4.3.6'
 
-    ext.retrofitVer     = '1.8.0'
-    ext.jooqVer         = '3.5.0'
-    ext.slf4jApiVer     = '1.7.9'
-    ext.guavaVer        = '18.0'
-    
-    ext.mongodbJavaAsyncDriverVer       = '2.0.1'
-    ext.embedMongoVer                   = '1.46.4'
-    
-    ext.okhttpVer       = '2.2.0'
-
     ext.junitVer                = '4.12'
+
+    ext.mongodbJavaAsyncDriverVer       = '2.0.1'
+    ext.embedMongoVer                   = '1.47.0'
     
     configurations.all {
         resolutionStrategy {
@@ -85,6 +88,12 @@ subprojects {
             force "org.apache.httpcomponents:httpclient:$httpClientVer"
             force "javax.servlet:javax.servlet-api:$servletVer"
             force "javax.ws.rs:javax.ws.rs-api:$jaxrsVer"
+            force "org.glassfish.jersey.core:jersey-server:$jerseyVer"
+            force "org.glassfish.jersey.core:jersey-client:$jerseyVer"
+            force "org.glassfish.jersey.core:jersey-common:$jerseyVer"
+            force "org.glassfish.hk2:hk2-api:$hk2apiVer"
+            force "org.glassfish.hk2:hk2-locator:$hk2apiVer"
+            force "org.glassfish.hk2.external:javax.inject:$hk2apiVer"
         }
     }
     
