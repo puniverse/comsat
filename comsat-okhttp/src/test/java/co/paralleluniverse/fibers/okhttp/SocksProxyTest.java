@@ -13,7 +13,7 @@
  */
 /*
  * Based on the corresponding class in okhttp-tests.
- * Copyright 2014 Square, Inc.
+ * Copyright 2015 Square, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License").
  */
 package co.paralleluniverse.fibers.okhttp;
@@ -41,7 +41,7 @@ public final class SocksProxyTest {
   private final MockWebServer server = new MockWebServer();
 
   @Before public void setUp() throws Exception {
-    server.play();
+    server.start();
     socksProxy.play();
   }
 

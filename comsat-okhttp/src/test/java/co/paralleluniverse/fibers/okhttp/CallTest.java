@@ -13,7 +13,7 @@
  */
 /*
  * Based on the corresponding class in okhttp-tests.
- * Copyright 2014 Square, Inc.
+ * Copyright 2015 Square, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License").
  */
 package co.paralleluniverse.fibers.okhttp;
@@ -40,21 +40,18 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
-import java.net.SocketException;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -81,12 +78,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static com.squareup.okhttp.internal.Internal.logger;
+import com.squareup.okhttp.internal.Version;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
-import java.util.concurrent.ExecutionException;
+import java.net.UnknownServiceException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -97,7 +96,8 @@ import static org.junit.Assert.fail;
 public final class CallTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
-  @Rule public TestRule timeout = new Timeout(30_000);
+  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
+  @Rule public final TestRule timeout = new Timeout(30_000);
 
   @Rule public MockWebServerRule server = new MockWebServerRule();
   @Rule public MockWebServerRule server2 = new MockWebServerRule();
@@ -111,9 +111,7 @@ public final class CallTest {
     callback = new RecordingCallback();
     logHandler = new TestLogHandler();
 
-    String tmp = System.getProperty("java.io.tmpdir");
-    File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
-    cache = new Cache(cacheDir, Integer.MAX_VALUE);
+    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     logger.addHandler(logHandler);
   }
 
@@ -139,7 +137,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("GET", recordedRequest.getMethod());
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
@@ -168,6 +166,15 @@ public final class CallTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test public void invalidPort() throws Exception {
+    Request request = new Request.Builder()
+        .url("http://localhost:65536/")
+        .build();
+    client.newCall(request).enqueue(callback);
+    callback.await(request.url())
+        .assertFailure("No route to localhost:65536; port is out of range");
   }
 
   @Test public void getReturns500() throws Exception {
@@ -218,7 +225,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("HEAD", recordedRequest.getMethod());
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
@@ -246,7 +253,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("POST", recordedRequest.getMethod());
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -275,7 +282,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("POST", recordedRequest.getMethod());
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertEquals("0", recordedRequest.getHeader("Content-Length"));
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
   }
@@ -336,12 +343,12 @@ public final class CallTest {
 
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("POST", recordedRequest1.getMethod());
-    assertEquals(body, recordedRequest1.getUtf8Body());
+    assertEquals(body, recordedRequest1.getBody().readUtf8());
     assertNull(recordedRequest1.getHeader("Authorization"));
 
     RecordedRequest recordedRequest2 = server.takeRequest();
     assertEquals("POST", recordedRequest2.getMethod());
-    assertEquals(body, recordedRequest2.getUtf8Body());
+    assertEquals(body, recordedRequest2.getBody().readUtf8());
     assertEquals(credential, recordedRequest2.getHeader("Authorization"));
   }
 
@@ -390,7 +397,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("DELETE", recordedRequest.getMethod());
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertEquals("0", recordedRequest.getHeader("Content-Length"));
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
   }
@@ -403,6 +410,23 @@ public final class CallTest {
   @Test public void delete_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     delete();
+  }
+
+  @Test public void deleteWithRequestBody() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .method("DELETE", RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .build();
+
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
+        .assertCode(200)
+        .assertBody("abc");
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("DELETE", recordedRequest.getMethod());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
   }
 
   @Test public void put() throws Exception {
@@ -419,7 +443,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("PUT", recordedRequest.getMethod());
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -448,7 +472,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("PATCH", recordedRequest.getMethod());
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -476,7 +500,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
-    assertEquals("abc", recordedRequest.getUtf8Body());
+    assertEquals("abc", recordedRequest.getBody().readUtf8());
   }
 
   @Test public void illegalToExecuteTwice() throws Exception {
@@ -506,7 +530,7 @@ public final class CallTest {
       assertEquals("Already Executed", e.getMessage());
     }
 
-    assertTrue(server.takeRequest().getHeaders().contains("User-Agent: SyncApiTest"));
+    assertEquals("SyncApiTest", server.takeRequest().getHeader("User-Agent"));
   }
 
   @Test public void illegalToExecuteTwice_Async() throws Exception {
@@ -536,7 +560,7 @@ public final class CallTest {
       assertEquals("Already Executed", e.getMessage());
     }
 
-    assertTrue(server.takeRequest().getHeaders().contains("User-Agent: SyncApiTest"));
+    assertEquals("SyncApiTest", server.takeRequest().getHeader("User-Agent"));
   }
 
   @Test public void get_Async() throws Exception {
@@ -555,7 +579,7 @@ public final class CallTest {
         .assertHeader("Content-Type", "text/plain")
         .assertBody("abc");
 
-    assertTrue(server.takeRequest().getHeaders().contains("User-Agent: AsyncApiTest"));
+    assertEquals("AsyncApiTest", server.takeRequest().getHeader("User-Agent"));
   }
 
   @Test public void exceptionThrownByOnResponseIsRedactedAndLogged() throws Exception {
@@ -831,8 +855,8 @@ public final class CallTest {
 
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
     // Configure the client with only TLS configurations. No cleartext!
-    client.setConnectionSpecs(Arrays.asList(
-        ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
+    client.setConnectionSpecs(
+        Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
 
     server.enqueue(new MockResponse());
 
@@ -840,16 +864,14 @@ public final class CallTest {
     try {
       FiberOkHttpUtils.executeSynchronously(client, request);
       fail();
-    } catch (SocketException expected) {
-      assertTrue(expected.getMessage().contains("exhausted connection specs"));
+    } catch (UnknownServiceException expected) {
+      assertTrue(expected.getMessage().contains("no connection specs"));
     }
   }
 
   @Test public void setFollowSslRedirectsFalse() throws Exception {
     server.get().useHttps(sslContext.getSocketFactory(), false);
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: http://square.com"));
+    server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location: http://square.com"));
 
     client.setFollowSslRedirects(false);
     client.setSslSocketFactory(sslContext.getSocketFactory());
@@ -919,7 +941,7 @@ public final class CallTest {
         .assertBody("abc");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -945,11 +967,11 @@ public final class CallTest {
     assertEquals(0, get.getSequenceNumber());
 
     RecordedRequest post1 = server.takeRequest();
-    assertEquals("body!", post1.getUtf8Body());
+    assertEquals("body!", post1.getBody().readUtf8());
     assertEquals(1, post1.getSequenceNumber());
 
     RecordedRequest post2 = server.takeRequest();
-    assertEquals("body!", post2.getUtf8Body());
+    assertEquals("body!", post2.getBody().readUtf8());
     assertEquals(0, post2.getSequenceNumber());
   }
 
@@ -1008,8 +1030,7 @@ public final class CallTest {
         .addHeader("Vary: Accept-Charset")
         .addHeader("Donut: a")
         .setBody("A"));
-    server.enqueue(new MockResponse()
-        .clearHeaders()
+    server.enqueue(new MockResponse().clearHeaders()
         .addHeader("Donut: b")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
@@ -1216,7 +1237,7 @@ public final class CallTest {
 
     RecordedRequest page1 = server.takeRequest();
     assertEquals("POST /page1 HTTP/1.1", page1.getRequestLine());
-    assertEquals("Request Body", page1.getUtf8Body());
+    assertEquals("Request Body", page1.getBody().readUtf8());
 
     RecordedRequest page2 = server.takeRequest();
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
@@ -1243,12 +1264,14 @@ public final class CallTest {
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest request1 = server.takeRequest();
-    assertContains(request1.getHeaders(), "Cookie: $Version=\"1\"; "
-        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.get().getCookieDomain()
-        + "\";$Port=\"" + portList + "\"");
+    assertEquals("$Version=\"1\"; c=\"cookie\";$Path=\"/\";$Domain=\""
+        + server.get().getCookieDomain()
+        + "\";$Port=\""
+        + portList
+        + "\"", request1.getHeader("Cookie"));
 
     RecordedRequest request2 = server2.takeRequest();
-    assertContainsNoneMatching(request2.getHeaders(), "Cookie.*");
+    assertNull(request2.getHeader("Cookie"));
   }
 
   @Test public void redirectsDoNotIncludeTooManyAuthHeaders() throws Exception {
@@ -1266,7 +1289,7 @@ public final class CallTest {
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest redirectRequest = server2.takeRequest();
-    assertContainsNoneMatching(redirectRequest.getHeaders(), "Authorization.*");
+    assertNull(redirectRequest.getHeader("Authorization"));
     assertEquals("/b", redirectRequest.getPath());
   }
 
@@ -1481,8 +1504,8 @@ public final class CallTest {
     call.enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
-    callback.await(requestA.url()).assertFailure(
-        "Canceled", "stream was reset: CANCEL", "Socket closed");
+    callback.await(requestA.url()).assertFailure("Canceled", "stream was reset: CANCEL",
+        "Socket closed");
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {
@@ -1616,7 +1639,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertTrue(recordedRequest.getHeader("User-Agent")
-        .matches("okhttp/\\d\\.\\d\\.\\d(-SNAPSHOT|-RC\\d+)?"));
+        .matches(Version.userAgent()));
   }
 
   @Test public void setFollowRedirectsFalse() throws Exception {
@@ -1624,8 +1647,7 @@ public final class CallTest {
         .setResponseCode(302)
         .addHeader("Location: /b")
         .setBody("A"));
-    server.enqueue(new MockResponse()
-        .setBody("B"));
+    server.enqueue(new MockResponse().setBody("B"));
 
     client.setFollowRedirects(false);
     RecordedResponse recordedResponse = FiberOkHttpUtils.executeSynchronouslyRecorded(client, new Request.Builder().url(server.getUrl("/a")).build());
@@ -1633,6 +1655,41 @@ public final class CallTest {
     recordedResponse
         .assertBody("A")
         .assertCode(302);
+  }
+
+  @Test public void expect100ContinueNonEmptyRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build();
+
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
+        .assertCode(200)
+        .assertSuccessful();
+
+    assertEquals("abc", server.takeRequest().getUtf8Body());
+  }
+
+  @Test public void expect100ContinueEmptyRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .build();
+
+    FiberOkHttpUtils.executeSynchronouslyRecorded(client, request)
+        .assertCode(200)
+        .assertSuccessful();
+  }
+
+  private RecordedResponse executeSynchronously(Request request) throws IOException {
+    Response response = client.newCall(request).execute();
+    return new RecordedResponse(request, response, null, response.body().string(), null);
   }
 
   /**

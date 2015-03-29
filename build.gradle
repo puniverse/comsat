@@ -65,7 +65,7 @@ subprojects {
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '18.0'
 
-    ext.okhttpVer       = '2.2.0'
+    ext.okhttpVer       = '2.3.0'
 
     ext.apacheAsyncClientVer   = '4.0.2'
     ext.httpCoreVer            = '4.3.3'

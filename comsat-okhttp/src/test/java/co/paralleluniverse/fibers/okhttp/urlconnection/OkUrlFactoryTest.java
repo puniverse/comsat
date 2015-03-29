@@ -16,8 +16,10 @@
  * Copyright 2014 Square, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License").
  */
-package co.paralleluniverse.fibers.okhttp;
+package co.paralleluniverse.fibers.okhttp.urlconnection;
 
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Platform;

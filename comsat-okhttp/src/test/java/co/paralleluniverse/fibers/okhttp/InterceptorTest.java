@@ -20,6 +20,7 @@ package co.paralleluniverse.fibers.okhttp;
 
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Dispatcher;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Protocol;
@@ -35,6 +36,14 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -84,8 +93,7 @@ public final class InterceptorTest {
     assertSame(interceptorResponse, response);
   }
 
-  @Test @Ignore // TODO https://github.com/square/okhttp/issues/1482
-  public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
+  @Ignore @Test public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
     Interceptor interceptor = new Interceptor() {
@@ -114,8 +122,7 @@ public final class InterceptorTest {
     }
   }
 
-  @Test @Ignore // TODO https://github.com/square/okhttp/issues/1482
-  public void networkInterceptorsCannotCallProceedMultipleTimes() throws Exception {
+  @Ignore @Test public void networkInterceptorsCannotCallProceedMultipleTimes() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
@@ -140,8 +147,7 @@ public final class InterceptorTest {
     }
   }
 
-  @Test @Ignore // TODO https://github.com/square/okhttp/issues/1482
-  public void networkInterceptorsCannotChangeServerAddress() throws Exception {
+  @Ignore @Test public void networkInterceptorsCannotChangeServerAddress() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
     Interceptor interceptor = new Interceptor() {
@@ -252,7 +258,7 @@ public final class InterceptorTest {
     FiberOkHttpUtils.executeSynchronously(client, request);
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("ABC", recordedRequest.getUtf8Body());
+    assertEquals("ABC", recordedRequest.getBody().readUtf8());
     assertEquals("foo", recordedRequest.getHeader("Original-Header"));
     assertEquals("yep", recordedRequest.getHeader("OkHttp-Intercepted"));
     assertEquals("POST", recordedRequest.getMethod());
@@ -335,7 +341,7 @@ public final class InterceptorTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(Arrays.asList("Android", "Bob"),
-        recordedRequest.getHeaders("Request-Interceptor"));
+        recordedRequest.getHeaders().values("Request-Interceptor"));
   }
 
   @Test public void asyncApplicationInterceptors() throws Exception {
@@ -387,6 +393,137 @@ public final class InterceptorTest {
     assertEquals(response.body().string(), "b");
   }
 
+  /** Make sure interceptors can interact with the OkHttp client. */
+  @Test public void interceptorMakesAnUnrelatedRequest() throws Exception {
+    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
+    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+
+    client.interceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        if (chain.request().url().getPath().equals("/b")) {
+          Request requestA = new Request.Builder()
+              .url(server.getUrl("/a"))
+              .build();
+          Response responseA = null;
+            try {
+                responseA = FiberOkHttpUtils.executeSynchronously(client, requestA);
+            } catch (InterruptedException | ExecutionException ex) {
+                throw new AssertionError(ex);
+            }
+          assertEquals("a", responseA.body().string());
+        }
+
+        return chain.proceed(chain.request());
+      }
+    });
+
+    Request requestB = new Request.Builder()
+        .url(server.getUrl("/b"))
+        .build();
+    Response responseB = FiberOkHttpUtils.executeSynchronously(client, requestB);
+    assertEquals("b", responseB.body().string());
+  }
+
+  /** Make sure interceptors can interact with the OkHttp client asynchronously. */
+  @Test public void interceptorMakesAnUnrelatedAsyncRequest() throws Exception {
+    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
+    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+
+    client.interceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        if (chain.request().url().getPath().equals("/b")) {
+          Request requestA = new Request.Builder()
+              .url(server.getUrl("/a"))
+              .build();
+
+          try {
+            RecordingCallback callbackA = new RecordingCallback();
+            client.newCall(requestA).enqueue(callbackA);
+            callbackA.await(requestA.url()).assertBody("a");
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        return chain.proceed(chain.request());
+      }
+    });
+
+    Request requestB = new Request.Builder()
+        .url(server.getUrl("/b"))
+        .build();
+    RecordingCallback callbackB = new RecordingCallback();
+    client.newCall(requestB).enqueue(callbackB);
+    callbackB.await(requestB.url()).assertBody("b");
+  }
+
+  @Ignore @Test public void applicationkInterceptorThrowsRuntimeExceptionSynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionSynchronous(client.interceptors());
+  }
+
+  @Ignore @Test public void networkInterceptorThrowsRuntimeExceptionSynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionSynchronous(client.networkInterceptors());
+  }
+
+  /**
+   * When an interceptor throws an unexpected exception, synchronous callers can catch it and deal
+   * with it.
+   *
+   * TODO(jwilson): test that resources are not leaked when this happens.
+   */
+  private void interceptorThrowsRuntimeExceptionSynchronous(
+      List<Interceptor> interceptors) throws Exception {
+    interceptors.add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new RuntimeException("boom!");
+      }
+    });
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+
+    try {
+      FiberOkHttpUtils.executeSynchronously(client, request);
+      fail();
+    } catch (RuntimeException expected) {
+      assertEquals("boom!", expected.getMessage());
+    }
+  }
+
+  @Test public void applicationInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.interceptors());
+  }
+
+  @Test public void networkInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
+  }
+
+  /**
+   * When an interceptor throws an unexpected exception, asynchronous callers are left hanging. The
+   * exception goes to the uncaught exception handler.
+   *
+   * TODO(jwilson): test that resources are not leaked when this happens.
+   */
+  private void interceptorThrowsRuntimeExceptionAsynchronous(
+        List<Interceptor> interceptors) throws Exception {
+    interceptors.add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new RuntimeException("boom!");
+      }
+    });
+
+    ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
+    client.setDispatcher(new Dispatcher(executor));
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+    client.newCall(request).enqueue(callback);
+
+    assertEquals("boom!", executor.takeException().getMessage());
+  }
+
   private RequestBody uppercase(final RequestBody original) {
     return new RequestBody() {
       @Override public MediaType contentType() {
@@ -414,7 +551,7 @@ public final class InterceptorTest {
     };
   }
 
-  static ResponseBody uppercase(ResponseBody original) {
+  static ResponseBody uppercase(ResponseBody original) throws IOException {
     return ResponseBody.create(original.contentType(), original.contentLength(),
         Okio.buffer(uppercase(original.source())));
   }
@@ -436,5 +573,30 @@ public final class InterceptorTest {
     sink.writeUtf8(data);
     sink.close();
     return result;
+  }
+
+  /** Catches exceptions that are otherwise headed for the uncaught exception handler. */
+  private static class ExceptionCatchingExecutor extends ThreadPoolExecutor {
+    private final BlockingQueue<Exception> exceptions = new LinkedBlockingQueue<>();
+
+    public ExceptionCatchingExecutor() {
+      super(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+    }
+
+    @Override public void execute(final Runnable runnable) {
+      super.execute(new Runnable() {
+        @Override public void run() {
+          try {
+            runnable.run();
+          } catch (Exception e) {
+            exceptions.add(e);
+          }
+        }
+      });
+    }
+
+    public Exception takeException() throws InterruptedException {
+      return exceptions.take();
+    }
   }
 }

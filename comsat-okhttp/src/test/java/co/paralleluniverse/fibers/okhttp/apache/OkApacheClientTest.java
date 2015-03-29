@@ -13,7 +13,7 @@
  */
 /*
  * Based on the corresponding class in okhttp-apache.
- * Copyright 2014 Square, Inc.
+ * Copyright 2015 Square, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License").
  */
 package co.paralleluniverse.fibers.okhttp.apache;
@@ -60,7 +60,7 @@ public class OkApacheClientTest {
   @Before public void setUp() throws IOException {
     client = new OkApacheClient(new FiberOkHttpClient());
     server = new MockWebServer();
-    server.play();
+    server.start();
   }
 
   @After public void tearDown() throws IOException {
@@ -121,7 +121,7 @@ public class OkApacheClientTest {
     FiberOkHttpUtils.execute(client, post);
 
     RecordedRequest request = server.takeRequest();
-    assertTrue(Arrays.equals(body, request.getBody()));
+    assertEquals("Hello, world!", request.getBody().readUtf8());
     assertEquals(request.getHeader("Content-Length"), "13");
   }
 
@@ -134,7 +134,7 @@ public class OkApacheClientTest {
     FiberOkHttpUtils.execute(client, post);
 
     RecordedRequest request = server.takeRequest();
-    assertTrue(Arrays.equals(body, request.getBody()));
+    assertEquals("Hello, world!", request.getBody().readUtf8());
     assertEquals(request.getHeader("Content-Length"), "13");
   }
 

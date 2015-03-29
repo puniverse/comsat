@@ -35,7 +35,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 public class FiberOkHttpUtils {
   public static RecordedResponse executeSynchronouslyRecorded(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {
     final Response response = executeSynchronously(client.newCall(request));
-    return new RecordedResponse(request, response, response.body().string(), null);
+    return new RecordedResponse(request, response, null, response.body().string(), null);
   }
 
   public static Response executeSynchronously(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {

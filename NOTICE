@@ -22,11 +22,17 @@ This product contains modified source code from Ring, by the original Authors (h
     * LICENSE: MIT (http://opensource.org/licenses/MIT)
     * HOMEPAGE: https://github.com/ring-clojure/ring
 
-This product contains modified source code from OkHttp by Square, Inc.
+This product contains modified source code from OkHttp by Square, Inc.:
 
     Copyright (c) 1999-2014 Square, Inc.
     * LICENSE: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
     * HOMEPAGE: https://github.com/square/okhttp
+
+This product contains modified source code from The Android Open Source Project:
+
+    Copyright (C) 2011 The Android Open Source Project
+    * LICENSE: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
+    * HOMEPAGE: https://source.android.com/
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE

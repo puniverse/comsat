@@ -13,7 +13,7 @@
  */
 /*
  * Based on the corresponding class in okhttp-tests.
- * Copyright 2014 Square, Inc.
+ * Copyright 2015 Square, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License").
  */
 package co.paralleluniverse.fibers.okhttp;
@@ -21,6 +21,7 @@ package co.paralleluniverse.fibers.okhttp;
 import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ws.WebSocket;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -34,15 +35,18 @@ import static org.junit.Assert.assertTrue;
 /**
  * A received response or failure recorded by the response recorder.
  */
-public class RecordedResponse {
+public final class RecordedResponse {
   public final Request request;
   public final Response response;
+  public final WebSocket webSocket;
   public final String body;
   public final IOException failure;
 
-  RecordedResponse(Request request, Response response, String body, IOException failure) {
+  public RecordedResponse(Request request, Response response, WebSocket webSocket, String body,
+      IOException failure) {
     this.request = request;
     this.response = response;
+    this.webSocket = webSocket;
     this.body = body;
     this.failure = failure;
   }
@@ -105,7 +109,7 @@ public class RecordedResponse {
     Response priorResponse = response.priorResponse();
     assertNotNull(priorResponse);
     assertNull(priorResponse.body());
-    return new RecordedResponse(priorResponse.request(), priorResponse, null, null);
+    return new RecordedResponse(priorResponse.request(), priorResponse, null, null, null);
   }
 
   /**
@@ -116,7 +120,7 @@ public class RecordedResponse {
     Response networkResponse = response.networkResponse();
     assertNotNull(networkResponse);
     assertNull(networkResponse.body());
-    return new RecordedResponse(networkResponse.request(), networkResponse, null, null);
+    return new RecordedResponse(networkResponse.request(), networkResponse, null, null, null);
   }
 
   /** Asserts that the current response didn't use the network. */
@@ -139,7 +143,7 @@ public class RecordedResponse {
     Response cacheResponse = response.cacheResponse();
     assertNotNull(cacheResponse);
     assertNull(cacheResponse.body());
-    return new RecordedResponse(cacheResponse.request(), cacheResponse, null, null);
+    return new RecordedResponse(cacheResponse.request(), cacheResponse, null, null, null);
   }
 
   public void assertFailure(String... messages) {
