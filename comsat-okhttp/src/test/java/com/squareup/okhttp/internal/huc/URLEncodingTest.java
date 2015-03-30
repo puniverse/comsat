@@ -13,13 +13,12 @@
  */
 /*
  * Based on the corresponding class in okhttp-urlconnection.
-* Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2009 The Android Open Source Project
  * Licensed under the Apache License, Version 2.0 (the "License").
  */
 package com.squareup.okhttp.internal.huc;
 
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
-import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
