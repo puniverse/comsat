@@ -1,0 +1,13 @@
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-actuator:$springBootVer") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    compile("org.springframework.boot:spring-boot-starter-log4j:$springBootVer") {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+    compile project(":comsat-spring:comsat-spring-boot")
+
+    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging' 
+    }
+}
