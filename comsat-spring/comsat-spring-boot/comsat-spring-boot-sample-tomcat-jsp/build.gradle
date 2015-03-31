@@ -8,12 +8,3 @@ dependencies {
 
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
 }
-/*
-configurations.all {
-    resolutionStrategy {
-        force "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
-        force "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVer"
-        force "org.apache.tomcat.embed:tomcat-embed-el:$tomcatVer"
-    }
-}
-*/

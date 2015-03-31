@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -39,21 +39,18 @@ import static org.junit.Assert.assertTrue;
  * @author Phillip Webb
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = SampleTomcat8JspApplication.class)
+@SpringApplicationConfiguration(classes = SampleTomcatJspApplication.class)
 @WebAppConfiguration
 @IntegrationTest("server.port:0")
 @DirtiesContext
 public class SampleWebJspApplicationTests {
-
     @Value("${local.server.port}")
     private int port;
 
     @Test
     public void testJspWithEl() throws Exception {
-        ResponseEntity<String> entity = new TestRestTemplate().getForEntity(
-                "http://localhost:" + this.port, String.class);
+        ResponseEntity<String> entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port, String.class);
         assertEquals(HttpStatus.OK, entity.getStatusCode());
-        assertTrue("Wrong body:\n" + entity.getBody(),
-                entity.getBody().contains("/resources/text.txt"));
+        assertTrue("Wrong body:\n" + entity.getBody(), entity.getBody().contains("/resources/text.txt"));
     }
 }
