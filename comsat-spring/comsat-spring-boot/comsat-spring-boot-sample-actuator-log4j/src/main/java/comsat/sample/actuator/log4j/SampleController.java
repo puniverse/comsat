@@ -36,7 +36,7 @@ public class SampleController {
     @RequestMapping("/")
     @ResponseBody
     public Map<String, String> helloWorld() throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         return Collections.singletonMap("message",
                 this.helloWorldService.getHelloMessage());
     }
@@ -44,7 +44,7 @@ public class SampleController {
     @RequestMapping("/foo")
     @ResponseBody
     public String foo() throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         throw new IllegalArgumentException("Server error");
     }
 }

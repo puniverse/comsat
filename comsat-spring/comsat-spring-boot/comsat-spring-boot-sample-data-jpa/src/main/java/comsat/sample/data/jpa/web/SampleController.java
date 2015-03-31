@@ -38,7 +38,7 @@ public class SampleController {
     @ResponseBody
     @Transactional(readOnly = true)
     public String helloWorld() throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         return this.cityService.getCity("Bath", "UK").getName();
     }
 }

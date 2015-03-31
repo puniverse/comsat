@@ -51,7 +51,7 @@ public class SampleController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public Map<String, String> hello() throws SuspendExecution, InterruptedException {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         return Collections.singletonMap("message",
                 this.helloWorldService.getHelloMessage());
     }
@@ -60,7 +60,7 @@ public class SampleController {
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, Object> olleh(@Validated Message message) throws SuspendExecution, InterruptedException {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         Map<String, Object> model = new LinkedHashMap<>();
         model.put("message", message.getValue());
         model.put("title", "Hello Home");
@@ -71,7 +71,7 @@ public class SampleController {
     @RequestMapping("/foo")
     @ResponseBody
     public String foo() throws SuspendExecution, InterruptedException {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         throw new IllegalArgumentException("Server error");
     }
 

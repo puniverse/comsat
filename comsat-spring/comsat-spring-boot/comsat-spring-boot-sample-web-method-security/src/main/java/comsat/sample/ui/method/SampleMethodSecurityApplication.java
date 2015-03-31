@@ -65,7 +65,7 @@ public class SampleMethodSecurityApplication extends WebMvcConfigurerAdapter {
         @Suspendable
         public String home(Map<String, Object> model) throws InterruptedException {
             try {
-                Fiber.sleep(100);
+                Fiber.sleep(10);
             } catch (SuspendExecution se) {
                 throw new AssertionError(se);
             }

@@ -50,7 +50,7 @@ public class SampleWebSecureApplication extends WebMvcConfigurerAdapter {
 
     @RequestMapping("/")
     public String home(Map<String, Object> model) throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         model.put("message", "Hello World");
         model.put("title", "Hello Home");
         model.put("date", new Date());
@@ -59,7 +59,7 @@ public class SampleWebSecureApplication extends WebMvcConfigurerAdapter {
 
     @RequestMapping("/foo")
     public String foo() throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         throw new RuntimeException("Expected exception in controller");
     }
 

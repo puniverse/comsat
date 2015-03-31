@@ -35,7 +35,7 @@ public class WelcomeController {
 
     @RequestMapping("/")
     public String welcome(Map<String, Object> model) throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         model.put("time", new Date());
         model.put("message", this.message);
         return "welcome";

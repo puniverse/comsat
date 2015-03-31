@@ -50,7 +50,7 @@ public class SampleController {
             @Suspendable
             public Map<String, String> call() throws Exception {
                 try {
-                    Fiber.sleep(100);
+                    Fiber.sleep(10);
                     Map<String, String> ret = Collections.singletonMap("message", helloWorldService.getHelloMessage());
                     if (optDeferred != null) optDeferred.setResult(ret);
                     return ret;
@@ -92,7 +92,7 @@ public class SampleController {
             @Suspendable
             public Map<String, Object> call() throws Exception {
                 try {
-                    Fiber.sleep(100);
+                    Fiber.sleep(10);
                     Map<String, Object> model = new LinkedHashMap<>();
                     model.put("message", message.getValue());
                     model.put("title", "Hello Home");
@@ -137,7 +137,7 @@ public class SampleController {
             @Suspendable
             public String call() throws Exception {
                 try {
-                    Fiber.sleep(100);
+                    Fiber.sleep(10);
                     throw new IllegalArgumentException("Server error");
                 } catch (Throwable t) {
                     if (optDeferred != null) optDeferred.setErrorResult(t);
