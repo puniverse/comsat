@@ -19,7 +19,6 @@
 package comsat.sample.jsp;
 
 import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration;
-import org.junit.experimental.categories.Category;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -28,7 +27,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-@Category(CI.class)
 @Configuration
 @EnableAutoConfiguration
 @Import(FiberWebMvcAutoConfiguration.class) // This will enable fiber-blocking

@@ -33,12 +33,14 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.experimental.categories.Category;
 
 /**
  * Basic integration tests for JSP application.
  *
  * @author Phillip Webb
  */
+@Category(CI.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = SampleTomcat7JspApplication.class)
 @WebAppConfiguration
