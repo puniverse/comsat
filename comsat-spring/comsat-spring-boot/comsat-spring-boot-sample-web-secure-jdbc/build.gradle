@@ -2,8 +2,8 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-security:$springBootVer")
     compile("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVer")
     compile("org.springframework.boot:spring-boot-starter-jdbc:$springBootVer")
-    compile("org.apache.httpcomponents:httpclient:4.3")
-    compile("com.h2database:h2:1.3.176")
+    compile("org.apache.httpcomponents:httpclient:$httpClientVer")
+    compile("com.h2database:h2:$h2Ver")
     compile project(":comsat-spring:comsat-spring-security")
     compile project(":comsat-spring:comsat-spring-boot")
 

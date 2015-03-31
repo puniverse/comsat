@@ -1,6 +1,6 @@
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-actuator:$springBootVer")
-    compile("org.webjars:bootstrap:3.0.3")
+    compile("org.webjars:bootstrap:$bootstrapVer")
     compile("org.webjars:jquery:$jqueryVer")
     compile project(":comsat-spring:comsat-spring-boot")
 

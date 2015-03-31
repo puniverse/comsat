@@ -1,22 +1,26 @@
 subprojects {
     ext.springSecurityVer               = '3.2.7.RELEASE'
-    ext.springVer                       = '4.0.9.RELEASE'
-    ext.springBootVer                   = '1.1.11.RELEASE'
+    ext.springVer                       = '4.1.6.RELEASE'
+    ext.springBootVer                   = '1.2.2.RELEASE'
     ext.aspectjVer                      = '1.8.5'
-    ext.jqueryVer                       = '2.1.3'
+    ext.commonsLoggingVer               = '1.2'
     ext.commonsBeanUtilsVer             = '1.9.2'
     ext.commonsDigesterVer              = '2.1'
     ext.commonsCollectionsVer           = '3.2.1'
     ext.velocityVer                     = '1.7'
     ext.hamcrestVer                     = '1.3'
-    ext.jbossLoggingVer                 = '3.1.4.GA'
     ext.jspVer                          = '2.2.0.v201112011158'
+    ext.jqueryVer                       = '2.1.3'
     ext.snakeYamlVer                    = '1.15'
+    ext.javaxELVer                      = '3.0.1-b05'
     ext.thymeleafVer                    = '2.1.4.RELEASE'
+    ext.hibernateValidatorVer           = '5.1.3.Final'
 
-    // These are for next Spring Boot release, 1.2.0
-    // ext.springVer                    = '4.1.2.RELEASE'
-    // ext.springBootVer                = '1.2.0.RC2'
+    ext.jstlVer                         = '1.2'
+    ext.h2Ver                           = '1.4.186'
+    ext.jolokiaVer                      = '1.2.3'
+    ext.hsqlVer                         = '2.3.2'
+    ext.bootstrapVer                    = '3.0.3'
 
     dependencies {
         testCompile (project(':comsat-test-utils')) {
@@ -40,32 +44,30 @@ subprojects {
             force "org.springframework:spring-core:$springVer"
             force "org.springframework:spring-expression:$springVer"
             force "org.springframework:spring-web:$springVer"
+            force "org.springframework:spring-webmvc:$springVer"
             force "org.springframework:spring-orm:$springVer"
+            force "org.springframework:spring-jdbc:$springVer"
             force "org.springframework:spring-tx:$springVer"
             force "org.springframework.security:spring-security-config:$springSecurityVer"
             force "org.springframework.security:spring-security-web:$springSecurityVer"
             force "org.aspectj:aspectjrt:$aspectjVer"
-            force "org.aspectj:aspectjweaver:$aspectjVer"
             force "org.webjars:jquery:$jqueryVer"
+            force "commons-logging:commons-logging:$commonsLoggingVer"
             force "commons-beanutils:commons-beanutils:$commonsBeanUtilsVer"
             force "commons-digester:commons-digester:$commonsDigesterVer"
             force "commons-collections:commons-collections:$commonsCollectionsVer"
             force "org.apache.velocity:velocity:$velocityVer"
             force "org.hamcrest:hamcrest-core:$hamcrestVer"
-            force "org.jboss.logging:jboss-logging:$jbossLoggingVer"
             force "org.eclipse.jetty.orbit:javax.servlet.jsp:$jspVer"
             force "org.yaml:snakeyaml:$snakeYamlVer"
             force "org.thymeleaf:thymeleaf:$thymeleafVer"
 
-            force "junit:junit:$junitVer"
+            force "org.glassfish:javax.el:$javaxELVer"
+            force "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
+            force "org.apache.tomcat.embed:tomcat-embed-el:$tomcatVer"
+            force "org.hibernate:hibernate-validator:$hibernateValidatorVer"
 
-            // These are for next Spring Boot release, 1.2.0
-            /*
-            force "org.glassfish:javax.el:3.0.1-b05"
-            force "org.apache.tomcat.embed:tomcat-embed-core:8.0.15"
-            force "org.apache.tomcat.embed:tomcat-embed-el:8.0.15"
-            force "org.hibernate:hibernate-validator:5.1.3.Final"
-            */
+            force "junit:junit:$junitVer"
         }
     }
 
