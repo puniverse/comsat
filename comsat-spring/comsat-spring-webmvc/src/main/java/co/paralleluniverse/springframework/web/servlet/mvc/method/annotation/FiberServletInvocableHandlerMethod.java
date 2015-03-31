@@ -17,7 +17,6 @@
  * Copyright the original author Rossen Stoyanchev.
  * Released under the ASF 2.0 license.
  */
-
 package co.paralleluniverse.springframework.web.servlet.mvc.method.annotation;
 
 import java.io.IOException;
