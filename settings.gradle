@@ -46,7 +46,7 @@ include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-freemark
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-groovy-templates'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-jsp'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-method-security'
-// include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-mustache'
+include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-mustache'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-secure'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-secure-custom'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-secure-jdbc'
