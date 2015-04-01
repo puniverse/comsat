@@ -18,17 +18,10 @@
  */
 package comsat.sample.jetty;
 
-import co.paralleluniverse.springframework.web.servlet.config.annotation.FiberWebMvcConfigurationSupport;
+import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberSpringBootApplication;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
-@ComponentScan
-@Configuration
-@Import(FiberWebMvcConfigurationSupport.class) // This will enable fiber-blocking
-@EnableAutoConfiguration
+@FiberSpringBootApplication // This will enable fiber-blocking
 public class SampleJetty8Application {
     public static void main(String[] args) throws Exception {
         SpringApplication.run(SampleJetty8Application.class, args);

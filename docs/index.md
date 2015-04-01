@@ -78,8 +78,9 @@ where `ARTIFACT` is:
 * `comsat-jersey-server` – [Jersey server](https://jersey.java.net/) integration for defining REST services.
 * `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
 * `comsat-spring-webmvc` – [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.
-* `comsat-spring-boot` – [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.
 * `comsat-spring-security` – [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.
+* `comsat-spring-boot` – [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.
+* `comsat-spring-boot-security` – auto-configuration support with security for Web MVC controllers.
 * `comsat-jax-rs-client` – [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for calling HTTP services.
 * `comsat-httpclient` – [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for calling HTTP services.
 * `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration.
@@ -498,7 +499,7 @@ Comsat provides the ability to write fiber-blocking Spring Web MVC controllers w
 Adding support for fiber-blocking Spring Web MVC controllers is as easy as adding an `@Import` for the Spring configuration class `FiberWebMvcConfigurationSupport` in the `co.paralleluniverse.springframework.web.servlet.config.annotation` package:
 
 ~~~ java
-{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-data-jpa/src/main/java/comsat/sample/data/jpa/SampleDataJpaApplication.java %}
+{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-traditional/src/main/java/comsat/sample/traditional/SampleTraditionalApplication.java %}
 ~~~
 
 ...And declaring your controller methods as suspendable, as you would normally do with any fiber-blocking method:
@@ -508,14 +509,6 @@ Adding support for fiber-blocking Spring Web MVC controllers is as easy as addin
 ~~~
 
 Spring Web MVC controller methods that have not been annotated (nor otherwise instrumented) to be suspendable will be invoked in thread-blocking mode rather than fiber-blocking.
-
-#### Spring Boot auto-configuration support
-
-If you prefer using auto-configuration, it is enough to change the `@Import` to include `co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration` instead:
-
-~~~ java
-{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-web-groovy-templates/src/main/java/comsat/sample/ui/SampleGroovyTemplateApplication.java %}
-~~~
 
 #### Spring Security support
 
@@ -528,6 +521,14 @@ This is as easy as adding an `@Import` for the `co.paralleluniverse.springframew
 ~~~
 
 At present there is one small caveat to consider when using Spring method security: as Spring will proxy secured methods so that all declared exceptions (including `SuspendExecution`) are catched individually, Quasar will refuse to instrument them. In this specific case `SuspendExecution` should not be declared but catched in the method body, and the method signature should be annotated with `@Suspendable` instead.
+
+#### Spring Boot auto-configuration support
+
+If you prefer using auto-configuration, it is enough to use the `FiberSpringBootApplication` or `FiberSecureSpringBootApplication` annotation instead, depending if you want to use Spring Security and its fiber support:
+
+~~~ java
+{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-web-groovy-templates/src/main/java/comsat/sample/ui/SampleGroovyTemplateApplication.java %}
+~~~
 
 ## Web Actors
 

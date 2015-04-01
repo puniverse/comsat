@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -18,20 +18,13 @@
  */
 package comsat.sample.actuator.log4j;
 
-import co.paralleluniverse.springframework.web.servlet.config.annotation.FiberWebMvcConfigurationSupport;
+import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberSpringBootApplication;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@Configuration
-@Import(FiberWebMvcConfigurationSupport.class) // This will enable fiber-blocking
-@EnableAutoConfiguration
+@FiberSpringBootApplication
 @EnableConfigurationProperties
-@ComponentScan
 @EnableAsync
 public class SampleActuatorApplication {
     public static void main(String[] args) throws Exception, InterruptedException {

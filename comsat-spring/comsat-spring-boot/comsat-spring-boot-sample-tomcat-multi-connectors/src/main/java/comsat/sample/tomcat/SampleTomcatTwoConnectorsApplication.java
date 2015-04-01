@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -18,21 +18,17 @@
  */
 package comsat.sample.tomcat;
 
-import co.paralleluniverse.springframework.web.servlet.config.annotation.FiberWebMvcConfigurationSupport;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberSpringBootApplication;
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
 import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.SocketUtils;
@@ -42,12 +38,9 @@ import org.springframework.util.SocketUtils;
  *
  * @author Brock Mills
  */
-@Configuration
-@Import(FiberWebMvcConfigurationSupport.class) // This will enable fiber-blocking
-@EnableAutoConfiguration
-@ComponentScan
-public class SampleTomcatTwoConnectorsApplication {
 
+@FiberSpringBootApplication // This will enable fiber-blocking
+public class SampleTomcatTwoConnectorsApplication {
     @Bean
     public int port() {
         return SocketUtils.findAvailableTcpPort();
@@ -96,5 +89,4 @@ public class SampleTomcatTwoConnectorsApplication {
     public static void main(String[] args) throws Exception {
         SpringApplication.run(SampleTomcatTwoConnectorsApplication.class, args);
     }
-
 }

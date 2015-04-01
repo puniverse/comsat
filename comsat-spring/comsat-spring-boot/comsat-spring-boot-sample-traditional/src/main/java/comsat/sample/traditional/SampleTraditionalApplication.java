@@ -26,7 +26,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import(FiberWebMvcConfigurationSupport.class) // This will enable fiber-blocking
+//snippet import
+@Import(FiberWebMvcConfigurationSupport.class)
+// end of snippet
 @EnableAutoConfiguration
 @ComponentScan
 public class SampleTraditionalApplication {

@@ -2,8 +2,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-actuator:$springBootVer")
     compile("org.springframework.boot:spring-boot-starter-security:$springBootVer")
     compile("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVer")
-    compile project(":comsat-spring:comsat-spring-security")
-    compile project(":comsat-spring:comsat-spring-boot")
+    compile project(":comsat-spring:comsat-spring-boot-security")
 
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
 }

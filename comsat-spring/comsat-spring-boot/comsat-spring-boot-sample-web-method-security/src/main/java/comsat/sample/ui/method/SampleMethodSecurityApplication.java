@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -21,18 +21,13 @@ package comsat.sample.ui.method;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration;
-import co.paralleluniverse.springframework.security.config.FiberSecurityContextHolderConfig;
 import java.util.Date;
 import java.util.Map;
 
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.access.annotation.Secured;
@@ -41,22 +36,18 @@ import org.springframework.security.config.annotation.authentication.configurers
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import co.paralleluniverse.springframework.boot.security.autoconfigure.web.FiberSecureSpringBootApplication;
 
-@EnableAutoConfiguration
-// The following will enable fiber-blocking while still preserving autoconfiguration and will let fibers inherit security context
-@Import({FiberWebMvcAutoConfiguration.class, FiberSecurityContextHolderConfig.class})
-@ComponentScan
+@FiberSecureSpringBootApplication // This will enable fiber-blocking
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SampleMethodSecurityApplication extends WebMvcConfigurerAdapter {
     @Controller
     protected static class HomeController {
-
         // Unfortunately Spring method security proxies classes in such a way that declared exceptions
         // get a generated, specific catch block which, for SuspendExecution prevents Quasar from instrumenting;
         // this means the exception has to be catched and the method annotated in this special case
@@ -93,9 +84,7 @@ public class SampleMethodSecurityApplication extends WebMvcConfigurerAdapter {
 
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @Configuration
-    protected static class AuthenticationSecurity extends
-            GlobalAuthenticationConfigurerAdapter {
-
+    protected static class AuthenticationSecurity extends GlobalAuthenticationConfigurerAdapter {
         @Override
         public void init(AuthenticationManagerBuilder auth) throws Exception {
             // @formatter:off
@@ -108,7 +97,6 @@ public class SampleMethodSecurityApplication extends WebMvcConfigurerAdapter {
 
     @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
     protected static class ApplicationSecurity extends WebSecurityConfigurerAdapter {
-
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             // @formatter:off

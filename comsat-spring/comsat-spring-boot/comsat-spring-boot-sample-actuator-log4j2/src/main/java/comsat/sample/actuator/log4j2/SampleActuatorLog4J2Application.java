@@ -18,20 +18,13 @@
  */
 package comsat.sample.actuator.log4j2;
 
-import co.paralleluniverse.springframework.web.servlet.config.annotation.FiberWebMvcConfigurationSupport;
+import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberSpringBootApplication;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@Configuration
-@Import(FiberWebMvcConfigurationSupport.class) // This will enable fiber-blocking
-@EnableAutoConfiguration
+@FiberSpringBootApplication
 @EnableConfigurationProperties
-@ComponentScan
 @EnableAsync
 public class SampleActuatorLog4J2Application {
     public static void main(String[] args) throws Exception {
