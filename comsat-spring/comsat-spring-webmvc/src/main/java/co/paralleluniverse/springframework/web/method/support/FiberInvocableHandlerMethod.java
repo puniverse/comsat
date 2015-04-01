@@ -28,8 +28,10 @@ import org.springframework.web.method.HandlerMethod;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.instrument.SuspendableHelper;
 import co.paralleluniverse.strands.SuspendableRunnable;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.springframework.web.method.support.InvocableHandlerMethod;
 
@@ -68,10 +70,14 @@ public class FiberInvocableHandlerMethod extends InvocableHandlerMethod {
     }
 
     /**
-     * @return `true` if the method is not annotated with `@Suspendable` and it doesn't throw `SuspendExecution`
+     * @return `true` if the method is not annotated with `@Suspendable` and it doesn't throw `SuspendExecution` nor it is instrumented in any other way.
      */
-    private boolean isThreadBlockingMethod() {
-        return !SuspendableHelper.isInstrumented(getMethod());
+    private boolean isSpringTraditionalThreadBlockingControllerMethod() {
+        final Method m = getMethod();
+        return
+            m.getAnnotation(Suspendable.class) == null &&
+            !Arrays.asList(m.getExceptionTypes()).contains(SuspendExecution.class) &&
+            !SuspendableHelper.isInstrumented(m);
     }
     
     /**
@@ -80,7 +86,7 @@ public class FiberInvocableHandlerMethod extends InvocableHandlerMethod {
     @Override
     protected Object doInvoke(final Object... args) throws Exception {
         if (isBootErrorController() // TODO need avoiding async error handling due to https://bugs.eclipse.org/bugs/show_bug.cgi?id=454022, remove as sson as it's fixed
-            || isThreadBlockingMethod())
+            || isSpringTraditionalThreadBlockingControllerMethod())
             return threadBlockingInvoke(args);
         else
             return fiberDispatchInvoke(args);
