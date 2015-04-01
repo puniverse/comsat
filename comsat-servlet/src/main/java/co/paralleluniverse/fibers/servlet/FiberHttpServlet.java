@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -13,7 +13,6 @@
  */
 package co.paralleluniverse.fibers.servlet;
 
-import co.paralleluniverse.common.util.Debug;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
@@ -146,7 +145,7 @@ public class FiberHttpServlet extends HttpServlet {
 
     private static final String LSTRING_FILE
             = "javax.servlet.http.LocalStrings";
-    private static ResourceBundle lStrings
+    private static final ResourceBundle lStrings
             = ResourceBundle.getBundle(LSTRING_FILE);
 
     @Suspendable
