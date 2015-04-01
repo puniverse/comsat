@@ -1,5 +1,7 @@
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVer")
+    compile("org.springframework:spring-orm:$springVer")
+    compile("org.springframework.boot:spring-boot-starter-freemarker:$springBootVer")
+    compile("org.hibernate:hibernate-entitymanager:$hibernateVer")
     compile project(":comsat-spring:comsat-spring-boot")
 
     runtime("org.hsqldb:hsqldb:$hsqlVer")

@@ -22,7 +22,7 @@ subprojects {
     ext.jolokiaVer                      = '1.2.3'
     ext.hsqlVer                         = '2.3.2'
     ext.bootstrapVer                    = '3.0.3'
-//    ext.hibernateVer                    = '4.3.8.Final'
+    ext.hibernateVer                    = '4.3.8.Final'
 
     dependencies {
         testCompile (project(':comsat-test-utils')) {
