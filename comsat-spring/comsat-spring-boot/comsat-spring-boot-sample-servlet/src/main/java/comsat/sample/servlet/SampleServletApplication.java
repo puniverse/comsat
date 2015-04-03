@@ -18,6 +18,8 @@
  */
 package comsat.sample.servlet;
 
+import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import java.io.IOException;
 
@@ -44,8 +46,13 @@ public class SampleServletApplication extends SpringBootServletInitializer {
             @Override
             @Suspendable
             public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-                res.setContentType("text/plain");
-                res.getWriter().append("Hello World");
+                try {
+                    Fiber.sleep(10);
+                    res.setContentType("text/plain");
+                    res.getWriter().append("Hello World");
+                } catch (InterruptedException | SuspendExecution ex) {
+                    throw new AssertionError(ex);
+                }
             }
         };
     }
