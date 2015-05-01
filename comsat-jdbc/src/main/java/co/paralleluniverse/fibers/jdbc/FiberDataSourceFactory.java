@@ -23,6 +23,9 @@ import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
 import javax.sql.DataSource;
 
+/**
+ * @author eitan
+ */
 public class FiberDataSourceFactory implements ObjectFactory {
     @Override
     public Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable<?, ?> environment) throws Exception {

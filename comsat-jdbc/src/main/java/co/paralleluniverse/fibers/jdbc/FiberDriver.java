@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -14,8 +14,6 @@
 package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.common.util.CheckedCallable;
-import co.paralleluniverse.fibers.FiberAsync;
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -30,29 +28,24 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+/**
+ * @author eitan
+ */
 public class FiberDriver implements Driver {
-
     @Suspendable
     @Override
     public Connection connect(final String url, final Properties info) throws SQLException {
         final String dbURL = url.replaceFirst("fiber:", "");
-        int threadCount = Integer.parseInt(info.getProperty(THREADS_COUNT, "10"));
+        final int threadCount = Integer.parseInt(info.getProperty(THREADS_COUNT, "10"));
         info.remove(THREADS_COUNT);
-        ExecutorService es = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build());
-        try {
-            Connection con = FiberAsync.runBlocking(es, new CheckedCallable<Connection, SQLException>() {
-                @Override
-                public Connection call() throws SQLException {
-                    return DriverManager.getConnection(dbURL, info);
-                }
-            });
-            return new FiberConnection(con, MoreExecutors.listeningDecorator(es));
-
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+        final ExecutorService es = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build());
+        final Connection con = JDBCFiberAsync.exec(es, new CheckedCallable<Connection, SQLException>() {
+            @Override
+            public Connection call() throws SQLException {
+                return DriverManager.getConnection(dbURL, info);
+            }
+        });
+        return new FiberConnection(con, MoreExecutors.listeningDecorator(es));
     }
     private static final String THREADS_COUNT = "threadsCount";
     private static final String RAW_DATA_SOURCE_URL = "rawDataSourceURL";
@@ -90,5 +83,4 @@ public class FiberDriver implements Driver {
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         throw new SQLFeatureNotSupportedException("Not supported yet.");
     }
-
 }

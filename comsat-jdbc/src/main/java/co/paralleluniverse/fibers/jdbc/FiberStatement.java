@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -13,380 +13,504 @@
  */
 package co.paralleluniverse.fibers.jdbc;
 
-import co.paralleluniverse.common.util.Exceptions;
-import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 /**
- *
  * @author eitan
  */
 class FiberStatement implements Statement {
-    private final Statement stmt;
-    final ListeningExecutorService exec;
+    protected final Statement stmt;
+    protected final ListeningExecutorService executor;
 
     public FiberStatement(Statement stmt, ListeningExecutorService exec) {
         this.stmt = stmt;
-        this.exec = exec;
+        this.executor = exec;
     }
 
     @Override
     @Suspendable
     public ResultSet executeQuery(final String sql) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<ResultSet>() {
-                @Override
-                public ResultSet call() throws Exception {
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
+            @Override
+            public ResultSet call() throws SQLException {
 //                    int fetchSize = stmt.getFetchSize();
-                    stmt.setFetchSize(99999);
-                    final ResultSet executeQuery = stmt.executeQuery(sql);
+//                    stmt.setFetchSize(99999);
+                final ResultSet executeQuery = stmt.executeQuery(sql);
 //                    stmt.setFetchSize(fetchSize);
-                    return executeQuery;
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
-    }
-
-    java.sql.Statement stmt() {
-        return stmt;
+                return executeQuery;
+            }
+        });
     }
 
     @Override
     @Suspendable
     public int executeUpdate(final String sql) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Integer>() {
-                @Override
-                public Integer call() throws Exception {
-                    return stmt.executeUpdate(sql);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.executeUpdate(sql);
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void close() throws SQLException {
-        stmt.close();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.close();
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getMaxFieldSize() throws SQLException {
-        return stmt.getMaxFieldSize();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getMaxFieldSize();
+            }
+        });
     }
 
     @Override
-    public void setMaxFieldSize(int max) throws SQLException {
-        stmt.setMaxFieldSize(max);
+    @Suspendable
+    public void setMaxFieldSize(final int max) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setMaxFieldSize(max);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getMaxRows() throws SQLException {
-        return stmt.getMaxRows();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getMaxRows();
+            }
+        });
     }
 
     @Override
-    public void setMaxRows(int max) throws SQLException {
-        stmt.setMaxRows(max);
+    @Suspendable
+    public void setMaxRows(final int max) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setMaxRows(max);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setEscapeProcessing(boolean enable) throws SQLException {
-        stmt.setEscapeProcessing(enable);
+    @Suspendable
+    public void setEscapeProcessing(final boolean enable) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setEscapeProcessing(enable);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getQueryTimeout() throws SQLException {
-        return stmt.getQueryTimeout();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getQueryTimeout();
+            }
+        });
     }
 
     @Override
-    public void setQueryTimeout(int seconds) throws SQLException {
-        stmt.setQueryTimeout(seconds);
+    @Suspendable
+    public void setQueryTimeout(final int seconds) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setQueryTimeout(seconds);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void cancel() throws SQLException {
-        stmt.cancel();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.cancel();
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public SQLWarning getWarnings() throws SQLException {
-        return stmt.getWarnings();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<SQLWarning, SQLException>() {
+            @Override
+            public SQLWarning call() throws SQLException {
+                return stmt.getWarnings();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void clearWarnings() throws SQLException {
-        stmt.clearWarnings();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.clearWarnings();
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setCursorName(String name) throws SQLException {
-        stmt.setCursorName(name);
+    @Suspendable
+    public void setCursorName(final String name) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setCursorName(name);
+                return null;
+            }
+        });
     }
 
     @Override
     @Suspendable
     public ResultSet getResultSet() throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<ResultSet>() {
-                @Override
-                public ResultSet call() throws Exception {
-                    return stmt().getResultSet();
-                }
-            }));
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
+            @Override
+            public ResultSet call() throws SQLException {
+                return stmt.getResultSet();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getUpdateCount() throws SQLException {
-        return stmt.getUpdateCount();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getUpdateCount();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public boolean getMoreResults() throws SQLException {
-        return stmt.getMoreResults();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.getMoreResults();
+            }
+        });
     }
 
     @Override
-    public void setFetchDirection(int direction) throws SQLException {
-        stmt.setFetchDirection(direction);
+    @Suspendable
+    public void setFetchDirection(final int direction) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setFetchDirection(direction);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getFetchDirection() throws SQLException {
-        return stmt.getFetchDirection();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getFetchDirection();
+            }
+        });
     }
 
     @Override
-    public void setFetchSize(int rows) throws SQLException {
-        stmt.setFetchSize(rows);
+    @Suspendable
+    public void setFetchSize(final int rows) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setFetchSize(rows);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getFetchSize() throws SQLException {
-        return stmt.getFetchSize();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getFetchSize();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getResultSetConcurrency() throws SQLException {
-        return stmt.getResultSetConcurrency();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getResultSetConcurrency();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getResultSetType() throws SQLException {
-        return stmt.getResultSetType();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getResultSetType();
+            }
+        });
     }
 
     @Override
-    public void addBatch(String sql) throws SQLException {
-        stmt.addBatch(sql);
+    @Suspendable
+    public void addBatch(final String sql) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.addBatch(sql);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void clearBatch() throws SQLException {
-        stmt.clearBatch();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.clearBatch();
+                return null;
+            }
+        });
     }
 
     @Override
     @Suspendable
     public int[] executeBatch() throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<int[]>() {
-                @Override
-                public int[] call() throws Exception {
-                    return stmt().executeBatch();
-                }
-            }));
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<int[], SQLException>() {
+            @Override
+            public int[] call() throws SQLException {
+                return stmt.executeBatch();
+            }
+        });
     }
 
     @Override
     public Connection getConnection() throws SQLException {
-        return stmt.getConnection();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Connection, SQLException>() {
+            @Override
+            public Connection call() throws SQLException {
+                return stmt.getConnection();
+            }
+        });
     }
 
     @Override
-    public boolean getMoreResults(int current) throws SQLException {
-        return stmt.getMoreResults(current);
+    @Suspendable
+    public boolean getMoreResults(final int current) throws SQLException {
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.getMoreResults();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public ResultSet getGeneratedKeys() throws SQLException {
-        return stmt.getGeneratedKeys();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
+            @Override
+            public ResultSet call() throws SQLException {
+                return stmt.getGeneratedKeys();
+            }
+        });
     }
 
     @Override
     @Suspendable
     public int executeUpdate(final String sql, final int autoGeneratedKeys) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Integer>() {
-                @Override
-                public Integer call() throws Exception {
-                    return stmt().executeUpdate(sql, autoGeneratedKeys);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.executeUpdate(sql, autoGeneratedKeys);
+            }
+        });
     }
 
     @Override
     @Suspendable
     public int executeUpdate(final String sql, final int[] columnIndexes) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Integer>() {
-                @Override
-                public Integer call() throws Exception {
-                    return stmt().executeUpdate(sql, columnIndexes);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.executeUpdate(sql, columnIndexes);
+            }
+        });
     }
 
     @Override
     @Suspendable
     public int executeUpdate(final String sql, final String[] columnNames) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Integer>() {
-                @Override
-                public Integer call() throws Exception {
-                    return stmt().executeUpdate(sql, columnNames);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.executeUpdate(sql, columnNames);
+            }
+        });
     }
 
     @Suspendable
     @Override
     public boolean execute(final String sql) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return stmt.execute(sql);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.execute(sql);
+            }
+        });
     }
 
     @Override
     @Suspendable
     public boolean execute(final String sql, final int autoGeneratedKeys) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return stmt().execute(sql, autoGeneratedKeys);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.execute(sql, autoGeneratedKeys);
+            }
+        });
     }
 
     @Override
     @Suspendable
     public boolean execute(final String sql, final int[] columnIndexes) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return stmt().execute(sql, columnIndexes);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.execute(sql, columnIndexes);
+            }
+        });
     }
 
     @Override
     @Suspendable
     public boolean execute(final String sql, final String[] columnNames) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return stmt().execute(sql, columnNames);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.execute(sql, columnNames);
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getResultSetHoldability() throws SQLException {
-        return stmt.getResultSetHoldability();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt.getResultSetHoldability();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public boolean isClosed() throws SQLException {
-        return stmt.isClosed();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.isClosed();
+            }
+        });
     }
 
     @Override
-    public void setPoolable(boolean poolable) throws SQLException {
-        stmt.setPoolable(poolable);
+    @Suspendable
+    public void setPoolable(final boolean poolable) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.setPoolable(poolable);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public boolean isPoolable() throws SQLException {
-        return stmt.isPoolable();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.isPoolable();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void closeOnCompletion() throws SQLException {
-        stmt.closeOnCompletion();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt.closeOnCompletion();
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public boolean isCloseOnCompletion() throws SQLException {
-        return stmt.isCloseOnCompletion();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt.isCloseOnCompletion();
+            }
+        });
     }
 
     @Override
@@ -405,6 +529,7 @@ class FiberStatement implements Statement {
     }
 
     @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object obj) {
         return stmt.equals(obj);
     }
