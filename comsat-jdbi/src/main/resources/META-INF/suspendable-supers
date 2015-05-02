@@ -1,0 +1,4 @@
+org.skife.jdbi.v2.tweak.StatementCustomizer.cleanup
+org.skife.jdbi.v2.Handle.execute
+org.skife.jdbi.v2.Cleanable.cleanup
+org.skife.jdbi.v2.tweak.StatementBuilder.close
