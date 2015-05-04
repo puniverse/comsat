@@ -71,12 +71,20 @@ public class UndertowServer extends AbstractEmbeddedServer {
 
     @Override
     public void addServletContextListener(Class<? extends ServletContextListener> scl) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // TODO
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void enableWebsockets() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // TODO
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setResourceBase(String resourceBaseUrl) {
+        // TODO
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private static class UndertowServletDesc implements ServletDesc {
