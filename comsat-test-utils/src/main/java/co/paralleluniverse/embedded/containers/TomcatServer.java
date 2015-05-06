@@ -66,8 +66,8 @@ public class TomcatServer extends AbstractEmbeddedServer {
 
     @Override
     public void setResourceBase(String resourceBaseUrl) {
-        StandardContext tomcatCtx = (StandardContext) this.context;
-        tomcatCtx.setDocBase(resourceBaseUrl);
+        // TODO
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private static class TomcatServletDesc implements ServletDesc {
