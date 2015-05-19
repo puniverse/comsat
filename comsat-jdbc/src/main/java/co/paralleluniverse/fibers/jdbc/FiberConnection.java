@@ -470,45 +470,49 @@ class FiberConnection implements Connection {
     @Suspendable
     @Override
     public Clob createClob() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<Clob, SQLException>() {
+        final Clob clob = JDBCFiberAsync.exec(executor, new CheckedCallable<Clob, SQLException>() {
             @Override
             public Clob call() throws SQLException {
                 return conn.createClob();
             }
         });
+        return new FiberClob(clob, executor);
     }
 
     @Suspendable
     @Override
     public Blob createBlob() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<Blob, SQLException>() {
+        final Blob blob = JDBCFiberAsync.exec(executor, new CheckedCallable<Blob, SQLException>() {
             @Override
             public Blob call() throws SQLException {
                 return conn.createBlob();
             }
         });
+        return new FiberBlob(blob, executor);
     }
 
     @Suspendable
     @Override
     public NClob createNClob() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<NClob, SQLException>() {
+        final NClob nclob = JDBCFiberAsync.exec(executor, new CheckedCallable<NClob, SQLException>() {
             @Override
             public NClob call() throws SQLException {
                 return conn.createNClob();
             }
         });
+        return new FiberNClob(nclob, executor);
     }
 
     @Suspendable
     @Override
     public SQLXML createSQLXML() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<SQLXML, SQLException>() {
+        final SQLXML sqlXML = JDBCFiberAsync.exec(executor, new CheckedCallable<SQLXML, SQLException>() {
             @Override
             public SQLXML call() throws SQLException {
                 return conn.createSQLXML();
             }
         });
+        return new FiberSQLXML(sqlXML, executor);
     }
 
     @Suspendable
