@@ -4,6 +4,7 @@ org.skife.jdbi.v2.SQLStatement.internalExecute
 org.skife.jdbi.v2.Update.executeAndReturnGeneratedKeys
 org.skife.jdbi.v2.Update.execute
 org.skife.jdbi.v2.Update.cleanup
+org.skife.jdbi.v2.Update$1.munge
 org.skife.jdbi.v2.Call.invoke
 org.skife.jdbi.v2.Query.list
 org.skife.jdbi.v2.Query.iterator
@@ -24,3 +25,8 @@ org.skife.jdbi.v2.Cleanables$StatementCleanable.cleanup
 org.skife.jdbi.v2.Cleanables$StatementBuilderCleanable.cleanup
 org.skife.jdbi.v2.Cleanables$HandleCleanable.cleanup
 org.skife.jdbi.v2.DefaultStatementBuilder.close
+org.skife.jdbi.v2.IntegerArgument.apply
+org.skife.jdbi.v2.StringArgument.apply
+org.skife.jdbi.v2.ColonPrefixNamedParamStatementRewriter$MyRewrittenStatement.bind
+org.skife.jdbi.v2.BaseStatement.beforeExecution
+org.skife.jdbi.v2.StatementCustomizers$MaxRowsCustomizer.beforeExecution
