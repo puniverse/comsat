@@ -25,11 +25,25 @@ import co.paralleluniverse.fibers.instrument.SuspendableClassifier;
 public class JooqClassifier implements SuspendableClassifier {
     private static final String PKG_PREFIX = "org/jooq";
     String[][] methodsArray = {
-        {"java/sql/Statement", "execute.*", "getResultSet"},
-        {"java/sql/Connection", "prepareStatement"},
+        {"java/sql/Statement", ".*"},
+        {"java/sql/Connection", ".*"},
+        {"org/jooq/Context", "visit", "bindValue"},
+        {"org/jooq/Binding", "register", "get", "set"},
+        {"org/jooq/QueryPartInternal", "accept", "bind"},
+        {"org/jooq/BindContext", "bind", "bindValue", "bindValues"},
         {"org/jooq/Query", "execute"},
         {"org/jooq/ResultQuery", "getResult", "fetch.*"},
-        {"org/jooq/impl/AbstractQuery", "prepare"}
+
+        {"org/jooq/impl/AbstractField", "accept"},
+        {"org/jooq/impl/AbstractQuery", "prepare"},
+        {"org/jooq/impl/AbstractContext", "visit0"},
+        {"org/jooq/impl/AbstractBindContext", "bindValue0", "bindInternal"},
+        {"org/jooq/impl/AbstractStoreQuery", "accept0"},
+
+        {"org/jooq/impl/InsertQueryImpl", "toSQLInsert"},
+        {"org/jooq/impl/SelectQueryImpl", "toSQLReference0", "toSQLReferenceLimitDefault"},
+
+        {"org/jooq/impl/Utils", "safeClose", "consumeWarnings"},
     };
 
     @Override
