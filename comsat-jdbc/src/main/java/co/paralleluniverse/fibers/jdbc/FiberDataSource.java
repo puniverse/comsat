@@ -15,7 +15,6 @@ package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.Suspendable;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.PrintWriter;
@@ -35,7 +34,7 @@ import javax.sql.DataSource;
  */
 public class FiberDataSource implements DataSource {
     private final DataSource ds;
-    private final ListeningExecutorService executor;
+    private final ExecutorService executor;
 
     /**
      * Wraps a JDBC {@link DataSource}.
@@ -43,7 +42,7 @@ public class FiberDataSource implements DataSource {
      * @param executor The {@link ExecutorService} to use to actually execute JDBC operations.
      * @return 
      */
-    public static DataSource wrap(DataSource ds, ExecutorService executor) {
+    public static DataSource wrap(final DataSource ds, final ExecutorService executor) {
         return new FiberDataSource(ds, MoreExecutors.listeningDecorator(executor));
     }
 
@@ -53,7 +52,7 @@ public class FiberDataSource implements DataSource {
      * @param numThreads The number of threads to create in the thread pool that will be used to execute JDBC operations.
      * @return 
      */
-    public static DataSource wrap(DataSource ds, final int numThreads) {
+    public static DataSource wrap(final DataSource ds, final int numThreads) {
         return wrap(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
     }
 
@@ -62,11 +61,11 @@ public class FiberDataSource implements DataSource {
      * @param ds The {@link DataSource} to wrap.
      * @return 
      */
-    public static DataSource wrap(DataSource ds) {
+    public static DataSource wrap(final DataSource ds) {
         return wrap(ds, 10);
     }
 
-    protected FiberDataSource(DataSource ds, ListeningExecutorService exec) {
+    protected FiberDataSource(final DataSource ds, final ExecutorService exec) {
         this.ds = ds;
         this.executor = exec;
     }
@@ -145,12 +144,12 @@ public class FiberDataSource implements DataSource {
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(final Class<T> iface) throws SQLException {
         return ds.unwrap(iface);
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(final Class<?> iface) throws SQLException {
         return ds.isWrapperFor(iface);
     }
 
@@ -161,7 +160,7 @@ public class FiberDataSource implements DataSource {
 
     @Override
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         return ds.equals(obj);
     }
 

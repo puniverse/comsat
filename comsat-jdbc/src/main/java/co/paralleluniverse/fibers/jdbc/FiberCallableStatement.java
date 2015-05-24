@@ -15,7 +15,6 @@ package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.Suspendable;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -34,12 +33,13 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author eitan
  */
 class FiberCallableStatement extends FiberPreparedStatement implements CallableStatement {
-    public FiberCallableStatement(CallableStatement cs, ListeningExecutorService exec) {
+    public FiberCallableStatement(final CallableStatement cs, final ExecutorService exec) {
         super(cs, exec);
     }
 
@@ -862,13 +862,14 @@ class FiberCallableStatement extends FiberPreparedStatement implements CallableS
 
     @Override
     @Suspendable
-    public Ref getRef(final String parameterName) throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<Ref, SQLException>() {
+    public FiberRef getRef(final String parameterName) throws SQLException {
+        final Ref ref = JDBCFiberAsync.exec(executor, new CheckedCallable<Ref, SQLException>() {
             @Override
             public Ref call() throws SQLException {
                 return stmt().getRef(parameterName);
             }
         });
+        return new FiberRef(ref, executor);
     }
 
     @Override

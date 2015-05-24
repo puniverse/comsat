@@ -25,6 +25,7 @@ import co.paralleluniverse.fibers.instrument.SuspendableClassifier;
 public class JooqClassifier implements SuspendableClassifier {
     private static final String PKG_PREFIX = "org/jooq";
     String[][] methodsArray = {
+        {"java/util/Iterator", "hasNext"},
         {"java/sql/Statement", ".*"},
         {"java/sql/Connection", ".*"},
         {"org/jooq/Context", "visit", "bindValue"},
@@ -33,6 +34,9 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/BindContext", "bind", "bindValue", "bindValues"},
         {"org/jooq/Query", "execute"},
         {"org/jooq/ResultQuery", "getResult", "fetch.*"},
+        {"org/jooq/Cursor", "fetch.*", "hasNext"},
+
+        {"org/jooq/impl/RecordOperation", "operate"},
 
         {"org/jooq/impl/AbstractField", "accept"},
         {"org/jooq/impl/AbstractQuery", "prepare"},
@@ -42,8 +46,13 @@ public class JooqClassifier implements SuspendableClassifier {
 
         {"org/jooq/impl/InsertQueryImpl", "toSQLInsert"},
         {"org/jooq/impl/SelectQueryImpl", "toSQLReference0", "toSQLReferenceLimitDefault"},
+        {"org/jooq/impl/CursorImpl$CursorIterator", "fetch.*"},
+        {"org/jooq/impl/CursorImpl$CursorIterator", "hasNext"},
+        {"org/jooq/impl/CursorImpl$CursorIterator$CursorRecordInitialiser", "setValue"},
+        {"org/jooq/impl/CursorImpl$CursorResultSet", ".*"},
+        {"org/jooq/impl/RecordDelegate", "operate"},
 
-        {"org/jooq/impl/Utils", "safeClose", "consumeWarnings"},
+        {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
     };
 
     @Override

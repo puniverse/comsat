@@ -15,7 +15,6 @@ package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.Suspendable;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -36,12 +35,13 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author eitan
  */
 class FiberPreparedStatement extends FiberStatement implements PreparedStatement {
-    FiberPreparedStatement(java.sql.PreparedStatement ps, ListeningExecutorService exec) {
+    FiberPreparedStatement(final java.sql.PreparedStatement ps, final ExecutorService exec) {
         super(ps, exec);
     }
 
@@ -51,13 +51,14 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
 
     @Override
     @Suspendable
-    public ResultSet executeQuery() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
+    public FiberResultSet executeQuery() throws SQLException {
+        final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
                 return stmt().executeQuery();
             }
         });
+        return new FiberResultSet(result, executor);
     }
 
     @Override
@@ -396,13 +397,14 @@ class FiberPreparedStatement extends FiberStatement implements PreparedStatement
 
     @Override
     @Suspendable
-    public ResultSetMetaData getMetaData() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSetMetaData, SQLException>() {
+    public FiberResultSetMetaData getMetaData() throws SQLException {
+        final ResultSetMetaData meta = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSetMetaData, SQLException>() {
             @Override
             public ResultSetMetaData call() throws SQLException {
                 return stmt().getMetaData();
             }
         });
+        return new FiberResultSetMetaData(meta, executor);
     }
 
     @Override
