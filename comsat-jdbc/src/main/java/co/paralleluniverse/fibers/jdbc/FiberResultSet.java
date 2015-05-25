@@ -29,7 +29,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLType;
+// 1.8
+//
+// import java.sql.SQLType;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Statement;
@@ -2230,53 +2232,55 @@ class FiberResultSet implements ResultSet {
         });
     }
 
-    @Override
-    @Suspendable
-    public void updateObject(final int columnIndex, final Object x, final SQLType targetSqlType, final int scaleOrLength) throws SQLException {
-        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
-            @Override
-            public Void call() throws SQLException {
-                result.updateObject(columnIndex, x, targetSqlType, scaleOrLength);
-                return null;
-            }
-        });
-    }
-
-    @Override
-    @Suspendable
-    public void updateObject(final String columnLabel, final Object x, final SQLType targetSqlType, final int scaleOrLength) throws SQLException {
-        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
-            @Override
-            public Void call() throws SQLException {
-                result.updateObject(columnLabel, x, targetSqlType, scaleOrLength);
-                return null;
-            }
-        });
-    }
-
-    @Override
-    @Suspendable
-    public void updateObject(final int columnIndex, final Object x, final SQLType targetSqlType) throws SQLException {
-        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
-            @Override
-            public Void call() throws SQLException {
-                result.updateObject(columnIndex, x, targetSqlType);
-                return null;
-            }
-        });
-    }
-
-    @Override
-    @Suspendable
-    public void updateObject(final String columnLabel, final Object x, final SQLType targetSqlType) throws SQLException {
-        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
-            @Override
-            public Void call() throws SQLException {
-                result.updateObject(columnLabel, x, targetSqlType);
-                return null;
-            }
-        });
-    }
+//    1.8, have default impl.
+//  
+//    @Override
+//    @Suspendable
+//    public void updateObject(final int columnIndex, final Object x, final SQLType targetSqlType, final int scaleOrLength) throws SQLException {
+//        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+//            @Override
+//            public Void call() throws SQLException {
+//                result.updateObject(columnIndex, x, targetSqlType, scaleOrLength);
+//                return null;
+//            }
+//        });
+//    }
+//
+//    @Override
+//    @Suspendable
+//    public void updateObject(final String columnLabel, final Object x, final SQLType targetSqlType, final int scaleOrLength) throws SQLException {
+//        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+//            @Override
+//            public Void call() throws SQLException {
+//                result.updateObject(columnLabel, x, targetSqlType, scaleOrLength);
+//                return null;
+//            }
+//        });
+//    }
+//
+//    @Override
+//    @Suspendable
+//    public void updateObject(final int columnIndex, final Object x, final SQLType targetSqlType) throws SQLException {
+//        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+//            @Override
+//            public Void call() throws SQLException {
+//                result.updateObject(columnIndex, x, targetSqlType);
+//                return null;
+//            }
+//        });
+//    }
+//
+//    @Override
+//    @Suspendable
+//    public void updateObject(final String columnLabel, final Object x, final SQLType targetSqlType) throws SQLException {
+//        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+//            @Override
+//            public Void call() throws SQLException {
+//                result.updateObject(columnLabel, x, targetSqlType);
+//                return null;
+//            }
+//        });
+//    }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
