@@ -1,3 +1,4 @@
+sudo: required
 language: java
 install: gradle -q assemble
 script: set -o pipefail; gradle -i check | sed 's/\e\[?.*?[\@-~]//g'
