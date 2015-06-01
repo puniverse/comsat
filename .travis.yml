@@ -1,4 +1,4 @@
-sudo: required
+sudo: false
 language: java
 install: gradle -q assemble
 script: set -o pipefail; gradle -i check | sed 's/\e\[?.*?[\@-~]//g'
