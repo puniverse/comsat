@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author crclespainter
  */
-class FiberRef implements Ref {
+public class FiberRef implements Ref {
     private final Ref ref;
     private final ExecutorService executor;
 

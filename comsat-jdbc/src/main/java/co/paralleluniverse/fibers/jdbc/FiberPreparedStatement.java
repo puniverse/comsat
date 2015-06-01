@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author eitan
  */
-class FiberPreparedStatement extends FiberStatement implements PreparedStatement {
+public class FiberPreparedStatement extends FiberStatement implements PreparedStatement {
     FiberPreparedStatement(final java.sql.PreparedStatement ps, final ExecutorService exec) {
         super(ps, exec);
     }

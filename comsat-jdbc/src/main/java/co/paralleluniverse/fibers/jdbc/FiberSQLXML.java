@@ -28,7 +28,7 @@ import javax.xml.transform.Source;
 /**
  * @author crclespainter
  */
-class FiberSQLXML implements SQLXML {
+public class FiberSQLXML implements SQLXML {
     private final SQLXML sqlXML;
     private final ExecutorService executor;
 

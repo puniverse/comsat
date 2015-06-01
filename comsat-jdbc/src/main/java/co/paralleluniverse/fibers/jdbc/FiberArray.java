@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author crclespainter
  */
-class FiberArray implements Array {
+public class FiberArray implements Array {
     private final Array array;
     private final ExecutorService executor;
 

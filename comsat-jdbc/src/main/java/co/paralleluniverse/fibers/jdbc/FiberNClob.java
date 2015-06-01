@@ -27,7 +27,7 @@ import java.sql.NClob;
 /**
  * @author crclespainter
  */
-class FiberNClob implements NClob {
+public class FiberNClob implements NClob {
     private final NClob nclob;
     private final ExecutorService executor;
 

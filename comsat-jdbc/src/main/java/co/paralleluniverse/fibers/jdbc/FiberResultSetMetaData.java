@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author crclespainter
  */
-class FiberResultSetMetaData implements ResultSetMetaData {
+public class FiberResultSetMetaData implements ResultSetMetaData {
     private final ResultSetMetaData resultMeta;
     private final ExecutorService executor;
 

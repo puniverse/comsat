@@ -26,7 +26,7 @@ import co.paralleluniverse.fibers.Suspendable;
 /**
  * @author crclespainter
  */
-class FiberClob implements Clob {
+public class FiberClob implements Clob {
     private final Clob clob;
     private final ExecutorService executor;
 

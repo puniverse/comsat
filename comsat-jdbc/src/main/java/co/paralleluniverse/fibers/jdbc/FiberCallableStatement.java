@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author eitan
  */
-class FiberCallableStatement extends FiberPreparedStatement implements CallableStatement {
+public class FiberCallableStatement extends FiberPreparedStatement implements CallableStatement {
     public FiberCallableStatement(final CallableStatement cs, final ExecutorService exec) {
         super(cs, exec);
     }

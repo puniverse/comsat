@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author crclespainter
  */
-class FiberStruct implements Struct {
+public class FiberStruct implements Struct {
     private final Struct struct;
     private final ExecutorService executor;
 

@@ -24,7 +24,7 @@ import java.sql.Blob;
 /**
  * @author crclespainter
  */
-class FiberBlob implements Blob {
+public class FiberBlob implements Blob {
     private final Blob blob;
     private final ExecutorService executor;
 

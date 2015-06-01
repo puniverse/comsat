@@ -44,7 +44,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author crclespainter
  */
-class FiberResultSet implements ResultSet {
+public class FiberResultSet implements ResultSet {
     private final ResultSet result;
     private final ExecutorService executor;
 

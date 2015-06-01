@@ -2,12 +2,12 @@ allprojects {
     configurations {
         markdownDoclet
     }
-    
+
     repositories {
-//        mavenLocal()
+        mavenLocal()
         mavenCentral()
     }
-    
+
     dependencies {
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
@@ -34,14 +34,14 @@ subprojects {
     ext.licenseUrl2     = "http://www.eclipse.org/legal/epl-v10.html"
     ext.scmUrl          = "https://github.com/puniverse/comsat"
     ext.scmConnection   = "https://github.com/puniverse/comsat.git"
-    
+
     ext.distDir         = "$buildDir/dist"
 
     ext.isRelease       = !version.endsWith("SNAPSHOT")
 
     ext.metricsVer      = '3.1.1'
     ext.asmVer          = '5.0.3'
-    
+
     ext.quasarVer       = '0.7.0'
     ext.jettyVer        = '9.2.10.v20150310'
     ext.undertowVer     = '1.1.3.Final'
@@ -75,7 +75,7 @@ subprojects {
 
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
     ext.embedMongoVer                   = '1.47.0'
-    
+
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
@@ -96,7 +96,7 @@ subprojects {
             force "org.glassfish.hk2.external:javax.inject:$hk2apiVer"
         }
     }
-    
+
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
         //        println "sonatype username or password not set"
         ext.sonatypeUsername = ""
@@ -121,7 +121,7 @@ subprojects {
         provided
         srcFiles
     }
-    
+
     dependencies {
         compile "com.google.guava:guava:$guavaVer"
         quasar "co.paralleluniverse:quasar-core:$quasarVer@jar" 
@@ -129,7 +129,7 @@ subprojects {
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         provided "javax.servlet:javax.servlet-api:$servletVer" // was 3.1.0
     }
-    
+
     sourceSets {
         main.compileClasspath = main.compileClasspath + configurations.provided
         test.compileClasspath = test.compileClasspath + configurations.provided
@@ -151,7 +151,7 @@ subprojects {
                 append: true) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
-            
+
             //            ant.taskdef(name:'scanSuspendables', 
             //                classname:'co.paralleluniverse.fibers.instrument.OldSuspendablesScanner', 
             //                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
@@ -162,17 +162,17 @@ subprojects {
             //            }
         }
     }
-    
+
     tasks.withType(Test) {
-        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
-        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
+        // systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d, =c
     }
-    
+
     test {
         beforeTest { desc ->
             logger.quiet("Running test: " + desc)
         }
-        
+
         afterTest { desc, result -> 
             if(result.resultType == TestResult.ResultType.FAILURE) {
                 logger.quiet("Failed test ${desc.name} [${desc.className}] with exception: ${result.exception}")
@@ -182,7 +182,7 @@ subprojects {
             }
         }
     }
-    
+
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -197,7 +197,7 @@ subprojects {
         skipExistingHeaders true
         mapping('java','SLASHSTAR_STYLE')
     }
-    
+
     apply plugin: 'com.github.ben-manes.versions'
 
     //rest of the subprojects definition in the block after subproject specific definitions
@@ -402,7 +402,6 @@ project (':comsat-httpclient') {
     }
 }
 
-
 /* project (':comsat-mongodb') {    
 dependencies {
 srcFiles "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVer:sources"
@@ -451,7 +450,7 @@ subprojects {
         classifier = 'javadoc'
         from javadoc.destinationDir
     } 
-    
+
     ///////// Publish Artifacts 
     apply plugin: 'maven'
     apply plugin: 'signing'

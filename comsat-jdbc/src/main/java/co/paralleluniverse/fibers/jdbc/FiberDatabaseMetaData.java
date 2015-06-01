@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author crclespainter
  */
-class FiberDatabaseMetaData implements DatabaseMetaData {
+public class FiberDatabaseMetaData implements DatabaseMetaData {
     private final DatabaseMetaData dbMeta;
     private final ExecutorService executor;
 

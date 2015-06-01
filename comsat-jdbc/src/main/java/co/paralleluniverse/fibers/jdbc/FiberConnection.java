@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author eitan
  */
-class FiberConnection implements Connection {
+public class FiberConnection implements Connection {
     private final Connection conn;
     private final ExecutorService executor;
 

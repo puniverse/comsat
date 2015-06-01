@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author eitan
  */
-class FiberStatement implements Statement {
+public class FiberStatement implements Statement {
     protected final Statement stmt;
     protected final ExecutorService executor;
 
