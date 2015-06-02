@@ -101,7 +101,7 @@ public class FiberArray implements Array {
 
     @Override
     @Suspendable
-    public FiberResultSet getResultSet() throws SQLException {
+    public ResultSet getResultSet() throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -113,7 +113,7 @@ public class FiberArray implements Array {
 
     @Override
     @Suspendable
-    public FiberResultSet getResultSet(final Map<String, Class<?>> map) throws SQLException {
+    public ResultSet getResultSet(final Map<String, Class<?>> map) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -126,7 +126,7 @@ public class FiberArray implements Array {
 
     @Override
     @Suspendable
-    public FiberResultSet getResultSet(final long index, final int count) throws SQLException {
+    public ResultSet getResultSet(final long index, final int count) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -138,7 +138,7 @@ public class FiberArray implements Array {
 
     @Override
     @Suspendable
-    public FiberResultSet getResultSet(final long index, final int count, final Map<String, Class<?>> map) throws SQLException {
+    public ResultSet getResultSet(final long index, final int count, final Map<String, Class<?>> map) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {

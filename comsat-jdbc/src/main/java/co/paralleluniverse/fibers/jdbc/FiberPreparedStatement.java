@@ -397,7 +397,7 @@ public class FiberPreparedStatement extends FiberStatement implements PreparedSt
 
     @Override
     @Suspendable
-    public FiberResultSetMetaData getMetaData() throws SQLException {
+    public ResultSetMetaData getMetaData() throws SQLException {
         final ResultSetMetaData meta = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSetMetaData, SQLException>() {
             @Override
             public ResultSetMetaData call() throws SQLException {
@@ -470,12 +470,13 @@ public class FiberPreparedStatement extends FiberStatement implements PreparedSt
     @Override
     @Suspendable
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<ParameterMetaData, SQLException>() {
+        final ParameterMetaData pmeta = JDBCFiberAsync.exec(executor, new CheckedCallable<ParameterMetaData, SQLException>() {
             @Override
             public ParameterMetaData call() throws SQLException {
                 return stmt().getParameterMetaData();
             }
         });
+        return new FiberParameterMetadata(pmeta, executor);
     }
 
     @Override

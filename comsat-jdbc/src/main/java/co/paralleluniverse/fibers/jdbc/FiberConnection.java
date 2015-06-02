@@ -238,7 +238,7 @@ public class FiberConnection implements Connection {
 
     @Override
     @Suspendable
-    public FiberDatabaseMetaData getMetaData() throws SQLException {
+    public DatabaseMetaData getMetaData() throws SQLException {
         final DatabaseMetaData dbMeta = JDBCFiberAsync.exec(executor, new CheckedCallable<DatabaseMetaData, SQLException>() {
             @Override
             public DatabaseMetaData call() throws SQLException {
@@ -342,7 +342,7 @@ public class FiberConnection implements Connection {
 
     @Override
     @Suspendable
-    public FiberStatement createStatement(final int resultSetType, final int resultSetConcurrency) throws SQLException {
+    public Statement createStatement(final int resultSetType, final int resultSetConcurrency) throws SQLException {
         final Statement statement = JDBCFiberAsync.exec(executor, new CheckedCallable<Statement, SQLException>() {
             @Override
             public Statement call() throws SQLException {
@@ -354,7 +354,7 @@ public class FiberConnection implements Connection {
 
     @Override
     @Suspendable
-    public FiberPreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency) throws SQLException {
+    public PreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency) throws SQLException {
         final PreparedStatement stmt = JDBCFiberAsync.exec(executor, new CheckedCallable<PreparedStatement, SQLException>() {
             @Override
             public PreparedStatement call() throws SQLException {
@@ -412,7 +412,7 @@ public class FiberConnection implements Connection {
 
     @Override
     @Suspendable
-    public FiberSavepoint setSavepoint() throws SQLException {
+    public Savepoint setSavepoint() throws SQLException {
         final Savepoint savepoint = JDBCFiberAsync.exec(executor, new CheckedCallable<Savepoint, SQLException>() {
             @Override
             public Savepoint call() throws SQLException {
@@ -424,7 +424,7 @@ public class FiberConnection implements Connection {
 
     @Override
     @Suspendable
-    public FiberSavepoint setSavepoint(final String name) throws SQLException {
+    public Savepoint setSavepoint(final String name) throws SQLException {
         final Savepoint savepoint = JDBCFiberAsync.exec(executor, new CheckedCallable<Savepoint, SQLException>() {
             @Override
             public Savepoint call() throws SQLException {
@@ -577,7 +577,7 @@ public class FiberConnection implements Connection {
 
     @Override
     @Suspendable
-    public FiberArray createArrayOf(final String typeName, final Object[] elements) throws SQLException {
+    public Array createArrayOf(final String typeName, final Object[] elements) throws SQLException {
         final Array array = JDBCFiberAsync.exec(executor, new CheckedCallable<Array, SQLException>() {
             @Override
             public Array call() throws SQLException {
@@ -589,7 +589,7 @@ public class FiberConnection implements Connection {
 
     @Override
     @Suspendable
-    public FiberStruct createStruct(final String typeName, final Object[] attributes) throws SQLException {
+    public Struct createStruct(final String typeName, final Object[] attributes) throws SQLException {
         final Struct struct = JDBCFiberAsync.exec(executor, new CheckedCallable<Struct, SQLException>() {
             @Override
             public Struct call() throws SQLException {
