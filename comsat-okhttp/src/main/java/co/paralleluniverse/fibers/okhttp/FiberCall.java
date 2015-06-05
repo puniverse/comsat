@@ -22,6 +22,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Fiber-blocking OkHttp's {@link Call} implementation.
@@ -29,6 +30,7 @@ import java.io.IOException;
  * @author circlespainter
  */
 public class FiberCall extends Call {
+
     public FiberCall(final OkHttpClient client, final Request originalRequest) {
         super(client, originalRequest);
     }
@@ -38,7 +40,7 @@ public class FiberCall extends Call {
     public Response execute() throws IOException {
         try {
             return new FiberAsyncCallback().run();
-        } catch (SuspendExecution | InterruptedException ex) {
+        } catch (final SuspendExecution | InterruptedException ex) {
             throw new AssertionError(ex);
         }
     }
@@ -57,6 +59,11 @@ public class FiberCall extends Call {
         @Override
         public void onResponse(final Response rspns) throws IOException {
             asyncCompleted(rspns);
+        }
+
+        @Override
+        protected Response requestSync() throws IOException, InterruptedException, ExecutionException {
+            return FiberCall.super.execute();
         }
     }
 }
