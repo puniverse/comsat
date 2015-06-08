@@ -74,6 +74,7 @@ public class FiberCallableStatement extends FiberPreparedStatement implements Ca
     }
 
     @Override
+    @Suspendable
     public boolean wasNull() throws SQLException {
         return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
             @Override
@@ -1880,5 +1881,21 @@ public class FiberCallableStatement extends FiberPreparedStatement implements Ca
                 return null;
             }
         });
+    }
+
+    @Override
+    public int hashCode() {
+        return stmt().hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return stmt().equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return stmt().toString();
     }
 }

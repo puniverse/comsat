@@ -706,4 +706,20 @@ public class FiberPreparedStatement extends FiberStatement implements PreparedSt
             }
         });
     }
+
+    @Override
+    public int hashCode() {
+        return stmt().hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return stmt().equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return stmt().toString();
+    }
 }

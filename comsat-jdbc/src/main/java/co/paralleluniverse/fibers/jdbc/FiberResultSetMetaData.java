@@ -271,4 +271,20 @@ public class FiberResultSetMetaData implements ResultSetMetaData {
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return resultMeta.isWrapperFor(iface);
     }
+
+    @Override
+    public int hashCode() {
+        return resultMeta.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return resultMeta.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return resultMeta.toString();
+    }
 }

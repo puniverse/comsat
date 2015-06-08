@@ -2303,4 +2303,20 @@ public class FiberResultSet implements ResultSet {
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return result.isWrapperFor(iface);
     }
+
+    @Override
+    public int hashCode() {
+        return result.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return result.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return result.toString();
+    }
 }

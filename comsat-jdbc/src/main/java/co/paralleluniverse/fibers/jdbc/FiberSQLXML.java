@@ -137,4 +137,20 @@ public class FiberSQLXML implements SQLXML {
             }
         });
     }
+
+    @Override
+    public int hashCode() {
+        return sqlXML.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return sqlXML.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return sqlXML.toString();
+    }
 }

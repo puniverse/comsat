@@ -339,6 +339,7 @@ public class FiberStatement implements Statement {
     }
 
     @Override
+    @Suspendable
     public Connection getConnection() throws SQLException {
         final Connection conn = JDBCFiberAsync.exec(executor, new CheckedCallable<Connection, SQLException>() {
             @Override

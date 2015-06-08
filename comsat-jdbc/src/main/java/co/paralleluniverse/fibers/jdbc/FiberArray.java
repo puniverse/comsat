@@ -159,4 +159,20 @@ public class FiberArray implements Array {
             }
         });
     }
+
+    @Override
+    public int hashCode() {
+        return array.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return array.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return array.toString();
+    }
 }

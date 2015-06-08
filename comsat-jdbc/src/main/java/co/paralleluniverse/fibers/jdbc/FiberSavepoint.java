@@ -14,6 +14,7 @@
 package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.common.util.CheckedCallable;
+import co.paralleluniverse.fibers.Suspendable;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +32,7 @@ class FiberSavepoint implements Savepoint {
     }
 
     @Override
+    @Suspendable
     public int getSavepointId() throws SQLException {
         return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
             @Override
@@ -41,6 +43,7 @@ class FiberSavepoint implements Savepoint {
     }
 
     @Override
+    @Suspendable
     public String getSavepointName() throws SQLException {
         return JDBCFiberAsync.exec(executor, new CheckedCallable<String, SQLException>() {
             @Override
@@ -48,5 +51,21 @@ class FiberSavepoint implements Savepoint {
                 return savepoint.getSavepointName();
             }
         });
+    }
+
+    @Override
+    public int hashCode() {
+        return savepoint.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return savepoint.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return savepoint.toString();
     }
 }

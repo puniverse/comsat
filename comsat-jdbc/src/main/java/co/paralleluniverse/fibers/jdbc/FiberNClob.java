@@ -180,4 +180,20 @@ public class FiberNClob implements NClob {
             }
         });
     }
+
+    @Override
+    public int hashCode() {
+        return nclob.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return nclob.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return nclob.toString();
+    }
 }

@@ -1972,4 +1972,20 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
     public boolean isWrapperFor(final Class<?> iface) throws SQLException {
         return dbMeta.isWrapperFor(iface);
     }
+
+    @Override
+    public int hashCode() {
+        return dbMeta.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return dbMeta.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return dbMeta.toString();
+    }
 }

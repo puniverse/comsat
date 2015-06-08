@@ -155,4 +155,20 @@ public class FiberBlob implements Blob {
             }
         });
     }
+    
+    @Override
+    public int hashCode() {
+        return blob.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return blob.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return blob.toString();
+    }
 }

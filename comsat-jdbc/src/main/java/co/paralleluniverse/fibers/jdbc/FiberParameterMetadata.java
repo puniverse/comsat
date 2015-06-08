@@ -139,5 +139,20 @@ public class FiberParameterMetadata implements ParameterMetaData {
     public boolean isWrapperFor(final Class<?> iface) throws SQLException {
         return pmeta.isWrapperFor(iface);
     }
-    
+
+    @Override
+    public int hashCode() {
+        return pmeta.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return pmeta.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return pmeta.toString();
+    }
 }

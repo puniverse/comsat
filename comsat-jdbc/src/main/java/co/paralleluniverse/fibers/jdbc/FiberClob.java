@@ -179,4 +179,20 @@ public class FiberClob implements Clob {
             }
         });
     }
+       
+    @Override
+    public int hashCode() {
+        return clob.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return clob.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return clob.toString();
+    }
 }

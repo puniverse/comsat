@@ -16,7 +16,6 @@ package co.paralleluniverse.fibers.jdbc;
 import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.Suspendable;
 import java.sql.Ref;
-// import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -45,6 +44,7 @@ public class FiberRef implements Ref {
     }
 
     @Override
+    @Suspendable
     public Object getObject(final Map<String, Class<?>> map) throws SQLException {
         return JDBCFiberAsync.exec(executor, new CheckedCallable<Object, SQLException>() {
             @Override
@@ -55,6 +55,7 @@ public class FiberRef implements Ref {
     }
 
     @Override
+    @Suspendable
     public Object getObject() throws SQLException {
         return JDBCFiberAsync.exec(executor, new CheckedCallable<Object, SQLException>() {
             @Override
@@ -65,6 +66,7 @@ public class FiberRef implements Ref {
     }
 
     @Override
+    @Suspendable
     public void setObject(final Object value) throws SQLException {
         JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
             @Override
@@ -73,5 +75,21 @@ public class FiberRef implements Ref {
                 return null;
             }
         });
+    }
+    
+    @Override
+    public int hashCode() {
+        return ref.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return ref.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return ref.toString();
     }
 }
