@@ -26,7 +26,7 @@ import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
 import org.apache.http.protocol.HttpContext;
 
-class FiberCloseableHttpAsyncClient extends CloseableHttpAsyncClient {
+public class FiberCloseableHttpAsyncClient extends CloseableHttpAsyncClient {
     private final CloseableHttpAsyncClient client;
 
     private FiberCloseableHttpAsyncClient(CloseableHttpAsyncClient client) {
