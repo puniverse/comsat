@@ -56,7 +56,7 @@ subprojects {
     ext.jaxrsVer        = '2.0.1'
     ext.websocketApiVer = '1.0'
 
-    ext.dropwizardVer   = '0.8.0'
+    ext.dropwizardVer   = '0.8.1'
     ext.jdbiVer         = '2.59'
 
     ext.retrofitVer     = '1.9.0'
@@ -71,7 +71,8 @@ subprojects {
     ext.httpCoreVer            = '4.3.3'
     ext.httpClientVer          = '4.3.6'
 
-    ext.junitVer                = '4.12'
+    ext.junitVer               = '4.12'
+    ext.h2Ver                  = '1.4.187'
 
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
     ext.embedMongoVer                   = '1.47.0'
@@ -169,6 +170,7 @@ subprojects {
 
     tasks.withType(Test) {
         systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+        // systemProperty 'co.paralleluniverse.fibers.writeInstrumentedClassesStartingWith', 'org/skife/jdbi/v2/DBI'
         // systemProperty 'co.paralleluniverse.fibers.detectRunawayFibers', 'false'
         // systemProperty 'org.jboss.byteman.verbose', 'true'
         // systemProperty 'org.jboss.byteman.debug', 'true'
@@ -243,7 +245,7 @@ project (':comsat-actors-servlet') {
 
 project (':comsat-dropwizard') {
     dependencies {
-        testRuntime 'com.h2database:h2:1.4.184'
+        testRuntime "com.h2database:h2:$h2Ver"
         compile "io.dropwizard:dropwizard-core:$dropwizardVer"
         compile "io.dropwizard:dropwizard-client:$dropwizardVer"
         compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
@@ -373,7 +375,7 @@ project (':comsat-test-utils') {
     dependencies {
         compile "org.slf4j:slf4j-api:$slf4jApiVer"
         compile "org.apache.httpcomponents:httpclient:4.3.5"
-        compile 'com.h2database:h2:1.4.180'
+        compile "com.h2database:h2:$h2Ver"
         compile "org.glassfish.jersey.core:jersey-client:$jerseyVer"
         compile "org.glassfish.jersey.media:jersey-media-sse:$jerseyVer"
         
