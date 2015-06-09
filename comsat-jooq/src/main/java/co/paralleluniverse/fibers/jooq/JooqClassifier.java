@@ -36,6 +36,7 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/Query", "execute"},
         {"org/jooq/ResultQuery", "getResult", "fetch.*"},
         {"org/jooq/Cursor", "fetch.*", "hasNext"},
+        {"org/jooq/InsertResultStep", "fetch.*"},
 
         {"org/jooq/impl/RecordOperation", "operate"},
 
@@ -51,10 +52,11 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/impl/CursorImpl$CursorIterator", "hasNext"},
         {"org/jooq/impl/CursorImpl$CursorIterator$CursorRecordInitialiser", "setValue"},
         {"org/jooq/impl/CursorImpl$CursorResultSet", ".*"},
+        {"org/jooq/impl/CursorImpl", "close"},
         {"org/jooq/impl/RecordDelegate", "operate"},
         {"org/jooq/impl/DSL", "using"},
 
-        {"org/jooq/tools/jdbc/JDBCUtils", "dialect"},
+        {"org/jooq/tools/jdbc/JDBCUtils", "dialect", "safeClose"},
         {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
     };
 
