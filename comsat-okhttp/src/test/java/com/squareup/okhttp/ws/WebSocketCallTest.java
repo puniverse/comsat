@@ -21,6 +21,7 @@ package com.squareup.okhttp.ws;
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.IOException;
@@ -37,8 +38,10 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import javax.net.ssl.SSLContext;
 
 public final class WebSocketCallTest {
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
   @Rule public final MockWebServerRule server = new MockWebServerRule();
 
   private final WebSocketRecorder listener = new WebSocketRecorder();
@@ -69,9 +72,16 @@ public final class WebSocketCallTest {
 
   @Test public void serverMessage() throws IOException {
     WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
-          throws IOException {
-        webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+      @Override public void onOpen(final WebSocket webSocket, Response response) {
+        new Thread() {
+          @Override public void run() {
+            try {
+              webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+            } catch (IOException e) {
+              throw new AssertionError(e);
+            }
+          }
+        }.start();
       }
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
@@ -95,12 +105,19 @@ public final class WebSocketCallTest {
 
   @Test public void serverStreamingMessage() throws IOException {
     WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
-          throws IOException {
-        BufferedSink sink = webSocket.newMessageSink(TEXT);
-        sink.writeUtf8("Hello, ").flush();
-        sink.writeUtf8("WebSockets!").flush();
-        sink.close();
+      @Override public void onOpen(final WebSocket webSocket, Response response) {
+        new Thread() {
+          @Override public void run() {
+            try {
+              BufferedSink sink = webSocket.newMessageSink(TEXT);
+              sink.writeUtf8("Hello, ").flush();
+              sink.writeUtf8("WebSockets!").flush();
+              sink.close();
+            } catch (IOException e) {
+              throw new AssertionError(e);
+            }
+          }
+        }.start();
       }
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
@@ -133,7 +150,8 @@ public final class WebSocketCallTest {
   }
 
   @Test public void wrongConnectionHeader() {
-    server.enqueue(new MockResponse().setResponseCode(101)
+    server.enqueue(new MockResponse()
+        .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
@@ -184,8 +202,32 @@ public final class WebSocketCallTest {
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
   }
 
+  @Test public void wsScheme() throws IOException {
+    websocketScheme("ws");
+  }
+
+  @Test public void wsUppercaseScheme() throws IOException {
+    websocketScheme("WS");
+  }
+
+  private void websocketScheme(String scheme) throws IOException {
+    WebSocketRecorder serverListener = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    Request request1 = new Request.Builder()
+        .url(scheme + "://" + server.getHostName() + ":" + server.getPort() + "/")
+        .build();
+
+    WebSocket webSocket = awaitWebSocket(request1);
+    webSocket.sendMessage(TEXT, new Buffer().writeUtf8("abc"));
+    serverListener.assertTextMessage("abc");
+  }
+
   private WebSocket awaitWebSocket() {
-    Request request = new Request.Builder().get().url(server.getUrl("/")).build();
+    return awaitWebSocket(new Request.Builder().get().url(server.getUrl("/")).build());
+  }
+
+  private WebSocket awaitWebSocket(Request request) {
     WebSocketCall call = new WebSocketCall(client, request, random);
 
     final AtomicReference<Response> responseRef = new AtomicReference<>();
@@ -193,8 +235,7 @@ public final class WebSocketCallTest {
     final AtomicReference<IOException> failureRef = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
-          throws IOException {
+      @Override public void onOpen(WebSocket webSocket, Response response) {
         webSocketRef.set(webSocket);
         responseRef.set(response);
         latch.countDown();
@@ -213,8 +254,8 @@ public final class WebSocketCallTest {
         listener.onClose(code, reason);
       }
 
-      @Override public void onFailure(IOException e) {
-        listener.onFailure(e);
+      @Override public void onFailure(IOException e, Response response) {
+        listener.onFailure(e, null);
         failureRef.set(e);
         latch.countDown();
       }
@@ -232,8 +273,7 @@ public final class WebSocketCallTest {
   }
 
   private static class EmptyWebSocketListener implements WebSocketListener {
-    @Override public void onOpen(WebSocket webSocket, Request request, Response response)
-        throws IOException {
+    @Override public void onOpen(WebSocket webSocket, Response response) {
     }
 
     @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
@@ -246,7 +286,7 @@ public final class WebSocketCallTest {
     @Override public void onClose(int code, String reason) {
     }
 
-    @Override public void onFailure(IOException e) {
+    @Override public void onFailure(IOException e, Response response) {
     }
   }
 }

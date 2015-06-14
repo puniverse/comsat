@@ -33,16 +33,16 @@ import org.apache.http.client.methods.HttpRequestBase;
  * @author circlespainter
  */
 public class FiberOkHttpUtils {
-  public static RecordedResponse executeSynchronouslyRecorded(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {
-    final Response response = executeSynchronously(client.newCall(request));
+  public static RecordedResponse fiberExecRecorded(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {
+    final Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
     return new RecordedResponse(request, response, null, response.body().string(), null);
   }
 
-  public static Response executeSynchronously(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {
-    return executeSynchronously(client.newCall(request));
+  public static Response fiberExec(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {
+    return FiberOkHttpUtils.fiberExec(client.newCall(request));
   }
 
-  public static Response executeSynchronously(final Call call) throws InterruptedException, IOException, ExecutionException {
+  public static Response fiberExec(final Call call) throws InterruptedException, IOException, ExecutionException {
     return fiberOkTry (
         new SuspendableCallable<Response>() {
             @Override

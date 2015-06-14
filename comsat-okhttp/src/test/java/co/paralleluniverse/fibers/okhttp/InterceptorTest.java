@@ -89,7 +89,7 @@ public final class InterceptorTest {
       }
     });
 
-    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
+    Response response = FiberOkHttpUtils.fiberExec(client, request);
     assertSame(interceptorResponse, response);
   }
 
@@ -114,7 +114,7 @@ public final class InterceptorTest {
         .build();
 
     try {
-      FiberOkHttpUtils.executeSynchronously(client, request);
+      FiberOkHttpUtils.fiberExec(client, request);
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
@@ -139,7 +139,7 @@ public final class InterceptorTest {
         .build();
 
     try {
-      FiberOkHttpUtils.executeSynchronously(client, request);
+      FiberOkHttpUtils.fiberExec(client, request);
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
@@ -167,7 +167,7 @@ public final class InterceptorTest {
         .build();
 
     try {
-      FiberOkHttpUtils.executeSynchronously(client, request);
+      FiberOkHttpUtils.fiberExec(client, request);
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must retain the same host and port",
@@ -189,7 +189,7 @@ public final class InterceptorTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    FiberOkHttpUtils.executeSynchronously(client, request);
+    FiberOkHttpUtils.fiberExec(client, request);
   }
 
   @Test public void networkInterceptorsObserveNetworkHeaders() throws Exception {
@@ -223,7 +223,7 @@ public final class InterceptorTest {
     assertNull(request.header("Accept-Encoding"));
 
     // No extra headers in the application's response.
-    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
+    Response response = FiberOkHttpUtils.fiberExec(client, request);
     assertNull(request.header("Content-Encoding"));
     assertEquals("abcabcabc", response.body().string());
   }
@@ -255,7 +255,7 @@ public final class InterceptorTest {
         .method("PUT", RequestBody.create(MediaType.parse("text/plain"), "abc"))
         .build();
 
-    FiberOkHttpUtils.executeSynchronously(client, request);
+    FiberOkHttpUtils.fiberExec(client, request);
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("ABC", recordedRequest.getBody().readUtf8());
@@ -291,7 +291,7 @@ public final class InterceptorTest {
         .url(server.getUrl("/"))
         .build();
 
-    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
+    Response response = FiberOkHttpUtils.fiberExec(client, request);
     assertEquals("ABC", response.body().string());
     assertEquals("yep", response.header("OkHttp-Intercepted"));
     assertEquals("foo", response.header("Original-Header"));
@@ -335,7 +335,7 @@ public final class InterceptorTest {
         .url(server.getUrl("/"))
         .build();
 
-    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
+    Response response = FiberOkHttpUtils.fiberExec(client, request);
     assertEquals(Arrays.asList("Cupcake", "Donut"),
         response.headers("Response-Interceptor"));
 
@@ -389,7 +389,7 @@ public final class InterceptorTest {
         .url(server.getUrl("/"))
         .build();
 
-    Response response = FiberOkHttpUtils.executeSynchronously(client, request);
+    Response response = FiberOkHttpUtils.fiberExec(client, request);
     assertEquals(response.body().string(), "b");
   }
 
@@ -406,7 +406,7 @@ public final class InterceptorTest {
               .build();
           Response responseA = null;
             try {
-                responseA = FiberOkHttpUtils.executeSynchronously(client, requestA);
+                responseA = FiberOkHttpUtils.fiberExec(client, requestA);
             } catch (InterruptedException | ExecutionException ex) {
                 throw new AssertionError(ex);
             }
@@ -420,7 +420,7 @@ public final class InterceptorTest {
     Request requestB = new Request.Builder()
         .url(server.getUrl("/b"))
         .build();
-    Response responseB = FiberOkHttpUtils.executeSynchronously(client, requestB);
+    Response responseB = FiberOkHttpUtils.fiberExec(client, requestB);
     assertEquals("b", responseB.body().string());
   }
 
@@ -484,7 +484,7 @@ public final class InterceptorTest {
         .build();
 
     try {
-      FiberOkHttpUtils.executeSynchronously(client, request);
+      FiberOkHttpUtils.fiberExec(client, request);
       fail();
     } catch (RuntimeException expected) {
       assertEquals("boom!", expected.getMessage());
@@ -497,6 +497,30 @@ public final class InterceptorTest {
 
   @Test public void networkInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
     interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
+  }
+
+  @Test public void networkInterceptorModifiedRequestIsReturned() throws IOException, InterruptedException, ExecutionException {
+    server.enqueue(new MockResponse());
+
+    Interceptor modifyHeaderInterceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request().newBuilder()
+          .header("User-Agent", "intercepted request")
+          .build());
+      }
+    };
+
+    client.networkInterceptors().add(modifyHeaderInterceptor);
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("User-Agent", "user request")
+        .build();
+
+    Response response = FiberOkHttpUtils.fiberExec(client, request);
+    assertNotNull(response.request().header("User-Agent"));
+    assertEquals("user request", response.request().header("User-Agent"));
+    assertEquals("intercepted request", response.networkResponse().request().header("User-Agent"));
   }
 
   /**

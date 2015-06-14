@@ -18,8 +18,6 @@
  */
 package co.paralleluniverse.fibers.okhttp.apache;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
 import com.squareup.okhttp.apache.OkApacheClient;
@@ -48,6 +46,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
+import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
+import org.apache.http.client.methods.HttpPut;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -138,6 +139,26 @@ public class OkApacheClientTest {
     assertEquals(request.getHeader("Content-Length"), "13");
   }
 
+  @Test public void postEmptyEntity() throws Exception {
+    server.enqueue(new MockResponse());
+    final HttpPost post = new HttpPost(server.getUrl("/").toURI());
+    FiberOkHttpUtils.execute(client, post);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals(0, request.getBodySize());
+    assertNotNull(request.getBody());
+  }
+
+  @Test public void putEmptyEntity() throws Exception {
+    server.enqueue(new MockResponse());
+    final HttpPut put = new HttpPut(server.getUrl("/").toURI());
+    FiberOkHttpUtils.execute(client, put);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals(0, request.getBodySize());
+    assertNotNull(request.getBody());
+  }
+
   @Test public void postOverrideContentType() throws Exception {
     server.enqueue(new MockResponse());
 
@@ -179,6 +200,15 @@ public class OkApacheClientTest {
     Header[] headers3 = response3.getHeaders("Content-Type");
     assertEquals(0, headers3.length);
     assertNull(response3.getEntity().getContentType());
+  }
+
+  @Test public void contentTypeIsCaseInsensitive() throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+    server.enqueue(new MockResponse().setBody("{\"Message\": { \"text\": \"Hello, World!\" } }")
+        .setHeader("cONTENT-tYPE", "application/json"));
+
+    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpResponse response = FiberOkHttpUtils.execute(client, request);
+    assertEquals("application/json", response.getEntity().getContentType().getValue());
   }
 
   @Test public void contentEncoding() throws Exception {

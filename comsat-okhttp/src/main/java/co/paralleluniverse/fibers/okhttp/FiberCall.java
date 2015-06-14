@@ -16,7 +16,7 @@ package co.paralleluniverse.fibers.okhttp;
 import co.paralleluniverse.fibers.FiberAsync;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
-import com.squareup.okhttp.Call;
+import com.squareup.okhttp.CallProxy;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @author circlespainter
  */
-public class FiberCall extends Call {
+public class FiberCall extends CallProxy {
 
     public FiberCall(final OkHttpClient client, final Request originalRequest) {
         super(client, originalRequest);
