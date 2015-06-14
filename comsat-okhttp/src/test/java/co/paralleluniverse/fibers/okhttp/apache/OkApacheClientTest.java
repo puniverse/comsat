@@ -19,7 +19,7 @@
 package co.paralleluniverse.fibers.okhttp.apache;
 
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
-import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtil;
 import com.squareup.okhttp.apache.OkApacheClient;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -72,7 +72,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().setBody("Hello, World!"));
 
     HttpGet request = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response = FiberOkHttpUtils.execute(client, request);
+    HttpResponse response = FiberOkHttpUtil.executeInFiber(client, request);
     String actual = EntityUtils.toString(response.getEntity());
     assertEquals("Hello, World!", actual);
   }
@@ -82,7 +82,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().setBody("Hello, Redirect!"));
 
     HttpGet request = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response = FiberOkHttpUtils.execute(client, request);
+    HttpResponse response = FiberOkHttpUtil.executeInFiber(client, request);
     String actual = EntityUtils.toString(response.getEntity(), UTF_8);
     assertEquals("Hello, Redirect!", actual);
   }
@@ -91,7 +91,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().setResponseCode(422));
 
     HttpGet request = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response = FiberOkHttpUtils.execute(client, request);
+    HttpResponse response = FiberOkHttpUtil.executeInFiber(client, request);
     assertEquals(422, response.getStatusLine().getStatusCode());
   }
 
@@ -100,13 +100,13 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().addHeader("Foo", "Bar").addHeader("Foo", "Baz"));
 
     HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response1 = FiberOkHttpUtils.execute(client, request1);
+    HttpResponse response1 = FiberOkHttpUtil.executeInFiber(client, request1);
     Header[] headers1 = response1.getHeaders("Foo");
     assertEquals(1, headers1.length);
     assertEquals("Bar", headers1[0].getValue());
 
     HttpGet request2 = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response2 = FiberOkHttpUtils.execute(client, request2);
+    HttpResponse response2 = FiberOkHttpUtil.executeInFiber(client, request2);
     Header[] headers2 = response2.getHeaders("Foo");
     assertEquals(2, headers2.length);
     assertEquals("Bar", headers2[0].getValue());
@@ -119,7 +119,7 @@ public class OkApacheClientTest {
     final HttpPost post = new HttpPost(server.getUrl("/").toURI());
     byte[] body = "Hello, world!".getBytes(UTF_8);
     post.setEntity(new ByteArrayEntity(body));
-    FiberOkHttpUtils.execute(client, post);
+    FiberOkHttpUtil.executeInFiber(client, post);
 
     RecordedRequest request = server.takeRequest();
     assertEquals("Hello, world!", request.getBody().readUtf8());
@@ -132,7 +132,7 @@ public class OkApacheClientTest {
     final HttpPost post = new HttpPost(server.getUrl("/").toURI());
     byte[] body = "Hello, world!".getBytes(UTF_8);
     post.setEntity(new InputStreamEntity(new ByteArrayInputStream(body), body.length));
-    FiberOkHttpUtils.execute(client, post);
+    FiberOkHttpUtil.executeInFiber(client, post);
 
     RecordedRequest request = server.takeRequest();
     assertEquals("Hello, world!", request.getBody().readUtf8());
@@ -142,7 +142,7 @@ public class OkApacheClientTest {
   @Test public void postEmptyEntity() throws Exception {
     server.enqueue(new MockResponse());
     final HttpPost post = new HttpPost(server.getUrl("/").toURI());
-    FiberOkHttpUtils.execute(client, post);
+    FiberOkHttpUtil.executeInFiber(client, post);
 
     RecordedRequest request = server.takeRequest();
     assertEquals(0, request.getBodySize());
@@ -152,7 +152,7 @@ public class OkApacheClientTest {
   @Test public void putEmptyEntity() throws Exception {
     server.enqueue(new MockResponse());
     final HttpPut put = new HttpPut(server.getUrl("/").toURI());
-    FiberOkHttpUtils.execute(client, put);
+    FiberOkHttpUtil.executeInFiber(client, put);
 
     RecordedRequest request = server.takeRequest();
     assertEquals(0, request.getBodySize());
@@ -166,7 +166,7 @@ public class OkApacheClientTest {
     httpPost.setURI(server.getUrl("/").toURI());
     httpPost.addHeader("Content-Type", "application/xml");
     httpPost.setEntity(new StringEntity("<yo/>"));
-    FiberOkHttpUtils.execute(client, httpPost);
+    FiberOkHttpUtil.executeInFiber(client, httpPost);
 
     RecordedRequest request = server.takeRequest();
     assertEquals(request.getHeader("Content-Type"), "application/xml");
@@ -180,7 +180,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().setBody("Hello, World!"));
 
     HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response1 = FiberOkHttpUtils.execute(client, request1);
+    HttpResponse response1 = FiberOkHttpUtil.executeInFiber(client, request1);
     Header[] headers1 = response1.getHeaders("Content-Type");
     assertEquals(1, headers1.length);
     assertEquals("text/html", headers1[0].getValue());
@@ -188,7 +188,7 @@ public class OkApacheClientTest {
     assertEquals("text/html", response1.getEntity().getContentType().getValue());
 
     HttpGet request2 = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response2 = FiberOkHttpUtils.execute(client, request2);
+    HttpResponse response2 = FiberOkHttpUtil.executeInFiber(client, request2);
     Header[] headers2 = response2.getHeaders("Content-Type");
     assertEquals(1, headers2.length);
     assertEquals("application/json", headers2[0].getValue());
@@ -196,7 +196,7 @@ public class OkApacheClientTest {
     assertEquals("application/json", response2.getEntity().getContentType().getValue());
 
     HttpGet request3 = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response3 = FiberOkHttpUtils.execute(client, request3);
+    HttpResponse response3 = FiberOkHttpUtil.executeInFiber(client, request3);
     Header[] headers3 = response3.getHeaders("Content-Type");
     assertEquals(0, headers3.length);
     assertNull(response3.getEntity().getContentType());
@@ -207,7 +207,7 @@ public class OkApacheClientTest {
         .setHeader("cONTENT-tYPE", "application/json"));
 
     HttpGet request = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response = FiberOkHttpUtils.execute(client, request);
+    HttpResponse response = FiberOkHttpUtil.executeInFiber(client, request);
     assertEquals("application/json", response.getEntity().getContentType().getValue());
   }
 
@@ -218,7 +218,7 @@ public class OkApacheClientTest {
 
     HttpGet request = new HttpGet(server.getUrl("/").toURI());
     request.setHeader("Accept-encoding", "gzip"); // Not transparent gzip.
-    HttpResponse response = FiberOkHttpUtils.execute(client, request);
+    HttpResponse response = FiberOkHttpUtil.executeInFiber(client, request);
     HttpEntity entity = response.getEntity();
 
     Header[] encodingHeaders = response.getHeaders("Content-Encoding");
@@ -239,7 +239,7 @@ public class OkApacheClientTest {
     HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
     request1.setHeader("Accept-encoding", "gzip"); // Not transparent gzip.
 
-    HttpResponse response = FiberOkHttpUtils.execute(client, request1);
+    HttpResponse response = FiberOkHttpUtil.executeInFiber(client, request1);
     HttpEntity entity = response.getEntity();
 
     Header[] encodingHeaders = response.getHeaders("Content-Encoding");
@@ -264,7 +264,7 @@ public class OkApacheClientTest {
         .setHeader("Content-Type", "application/json"));
 
     HttpGet request = new HttpGet(server.getUrl("/").toURI());
-    HttpResponse response = FiberOkHttpUtils.execute(client, request);
+    HttpResponse response = FiberOkHttpUtil.executeInFiber(client, request);
     HttpEntity entity = response.getEntity();
 
     // Expecting transparent gzip response by not adding header "Accept-encoding: gzip"

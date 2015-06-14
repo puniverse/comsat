@@ -19,7 +19,7 @@
 package co.paralleluniverse.fibers.okhttp.urlconnection;
 
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
-import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtil;
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Platform;
@@ -67,7 +67,7 @@ public class OkUrlFactoryTest {
   @Test public void originServerSends407() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(407));
 
-    HttpURLConnection conn = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection conn = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     try {
       conn.getResponseCode();
       fail();
@@ -78,7 +78,7 @@ public class OkUrlFactoryTest {
   @Test public void networkResponseSourceHeader() throws Exception {
     server.enqueue(new MockResponse().setBody("Isla Sorna"));
 
-    HttpURLConnection connection = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection, "NETWORK 200");
     assertResponseBody(connection, "Isla Sorna");
   }
@@ -86,7 +86,7 @@ public class OkUrlFactoryTest {
   @Test public void networkFailureResponseSourceHeader() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(404));
 
-    HttpURLConnection connection = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection, "NETWORK 404");
   }
 
@@ -97,11 +97,11 @@ public class OkUrlFactoryTest {
         .setBody("Isla Nublar"));
     server.enqueue(new MockResponse().setResponseCode(304));
 
-    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection2, "CONDITIONAL_CACHE 304");
     assertResponseBody(connection2, "Isla Nublar");
   }
@@ -113,11 +113,11 @@ public class OkUrlFactoryTest {
         .setBody("Isla Nublar"));
     server.enqueue(new MockResponse().setBody("Isla Sorna"));
 
-    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection2, "CONDITIONAL_CACHE 200");
     assertResponseBody(connection2, "Isla Sorna");
   }
@@ -127,11 +127,11 @@ public class OkUrlFactoryTest {
         .addHeader("Expires: " + formatDate(2, TimeUnit.HOURS))
         .setBody("Isla Nublar"));
 
-    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection2, "CACHE 200");
     assertResponseBody(connection2, "Isla Nublar");
   }
@@ -139,11 +139,11 @@ public class OkUrlFactoryTest {
   @Test public void noneResponseSourceHeaders() throws Exception {
     server.enqueue(new MockResponse().setBody("Isla Nublar"));
 
-    HttpURLConnection connection1 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection1 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = FiberOkHttpUtils.open(factory, server.getUrl("/"));
+    HttpURLConnection connection2 = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/"));
     connection2.setRequestProperty("Cache-Control", "only-if-cached");
     assertResponseHeader(connection2, "NONE");
   }
@@ -157,7 +157,7 @@ public class OkUrlFactoryTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    HttpURLConnection connection = FiberOkHttpUtils.open(factory, server.getUrl("/a"));
+    HttpURLConnection connection = FiberOkHttpUtil.openInFiber(factory, server.getUrl("/a"));
     connection.setInstanceFollowRedirects(false);
     assertResponseBody(connection, "A");
     assertResponseCode(connection, 302);

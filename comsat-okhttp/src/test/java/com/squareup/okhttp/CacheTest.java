@@ -19,7 +19,7 @@
 package com.squareup.okhttp;
 
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
-import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtils;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtil;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
@@ -186,7 +186,7 @@ public final class CacheTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals(responseCode, response.code());
 
     // Exhaust the content stream.
@@ -228,7 +228,7 @@ public final class CacheTest {
 
     // Make sure that calling skip() doesn't omit bytes from the cache.
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
 
     BufferedSource in1 = response1.body().source();
     assertEquals("I love ", in1.readUtf8("I love ".length()));
@@ -239,7 +239,7 @@ public final class CacheTest {
     assertEquals(1, cache.getWriteSuccessCount());
     assertEquals(0, cache.getWriteAbortCount());
 
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     BufferedSource in2 = response2.body().source();
     assertEquals("I love puppies but hate spiders",
         in2.readUtf8("I love puppies but hate spiders".length()));
@@ -265,7 +265,7 @@ public final class CacheTest {
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     BufferedSource in = response1.body().source();
     assertEquals("ABC", in.readUtf8());
 
@@ -276,7 +276,7 @@ public final class CacheTest {
     Principal peerPrincipal = response1.handshake().peerPrincipal();
     Principal localPrincipal = response1.handshake().localPrincipal();
 
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request)); // Cached!
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request)); // Cached!
     assertEquals("ABC", response2.body().source().readUtf8());
 
     assertEquals(2, cache.getRequestCount());
@@ -304,10 +304,10 @@ public final class CacheTest {
         .setBody("DEF"));
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("ABC", response1.body().string());
 
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request)); // Cached!
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request)); // Cached!
     assertEquals("ABC", response2.body().string());
 
     assertEquals(4, cache.getRequestCount()); // 2 requests + 2 redirects
@@ -326,14 +326,14 @@ public final class CacheTest {
         .setBody("DEF"));
 
     Request request1 = new Request.Builder().url(server.getUrl("/foo")).build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request1));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
     assertEquals("ABC", response1.body().string());
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", recordedRequest1.getRequestLine());
     assertEquals(0, recordedRequest1.getSequenceNumber());
 
     Request request2 = new Request.Builder().url(server.getUrl("/bar")).build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request2));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
     assertEquals("ABC", response2.body().string());
     RecordedRequest recordedRequest2 = server.takeRequest();
     assertEquals("GET /bar HTTP/1.1", recordedRequest2.getRequestLine());
@@ -341,7 +341,7 @@ public final class CacheTest {
 
     // an unrelated request should reuse the pooled connection
     Request request3 = new Request.Builder().url(server.getUrl("/baz")).build();
-    Response response3 = FiberOkHttpUtils.fiberExec(client.newCall(request3));
+    Response response3 = FiberOkHttpUtil.executeInFiber(client.newCall(request3));
     assertEquals("DEF", response3.body().string());
     RecordedRequest recordedRequest3 = server.takeRequest();
     assertEquals("GET /baz HTTP/1.1", recordedRequest3.getRequestLine());
@@ -736,7 +736,7 @@ public final class CacheTest {
         .url(url)
         .method(requestMethod, requestBodyOrNull(requestMethod))
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     response1.body().close();
     assertEquals("1", response1.header("X-Response-ID"));
 
@@ -787,7 +787,7 @@ public final class CacheTest {
         .url(url)
         .method(requestMethod, requestBodyOrNull(requestMethod))
         .build();
-    Response invalidate = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response invalidate = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", invalidate.body().string());
 
     assertEquals("C", get(url).body().string());
@@ -814,7 +814,7 @@ public final class CacheTest {
         .url(url)
         .method("POST", requestBodyOrNull("POST"))
         .build();
-    Response invalidate = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response invalidate = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", invalidate.body().string());
 
     assertEquals("C", get(url).body().string());
@@ -901,7 +901,7 @@ public final class CacheTest {
         .url(url)
         .header("Range", "bytes=1000-1001")
         .build();
-    Response range = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response range = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("AA", range.body().string());
 
     assertEquals("BB", get(url).body().string());
@@ -934,13 +934,13 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .cacheControl(new CacheControl.Builder().noStore().build())
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request1));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request2));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
     assertEquals("B", response2.body().string());
   }
 
@@ -1042,7 +1042,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "max-age=30")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", response.body().string());
   }
 
@@ -1060,7 +1060,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "min-fresh=120")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", response.body().string());
   }
 
@@ -1078,7 +1078,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "max-stale=180")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response.body().string());
     assertEquals("110 HttpURLConnection \"Response is stale\"", response.header("Warning"));
   }
@@ -1099,7 +1099,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "max-stale")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response.body().string());
     assertEquals("110 HttpURLConnection \"Response is stale\"", response.header("Warning"));
   }
@@ -1118,7 +1118,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "max-stale=180")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", response.body().string());
   }
 
@@ -1129,7 +1129,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
     assertEquals(1, cache.getRequestCount());
@@ -1148,7 +1148,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response.body().string());
     assertEquals(2, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
@@ -1166,7 +1166,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
     assertEquals(2, cache.getRequestCount());
@@ -1183,7 +1183,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
     assertEquals(2, cache.getRequestCount());
@@ -1206,7 +1206,7 @@ public final class CacheTest {
         .url(url)
         .header("Cache-Control", "no-cache")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", response.body().string());
   }
 
@@ -1225,7 +1225,7 @@ public final class CacheTest {
         .url(url)
         .header("Pragma", "no-cache")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", response.body().string());
   }
 
@@ -1264,7 +1264,7 @@ public final class CacheTest {
         .url(url)
         .header(conditionName, conditionValue)
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, response.code());
     assertEquals("", response.body().string());
 
@@ -1313,7 +1313,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("If-Modified-Since", formatDate(-24, TimeUnit.HOURS))
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, response.code());
     assertEquals("", response.body().string());
   }
@@ -1330,7 +1330,7 @@ public final class CacheTest {
         .url(url)
         .header("Authorization", "password")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response.body().string());
     assertEquals("A", get(url).body().string());
   }
@@ -1437,14 +1437,14 @@ public final class CacheTest {
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response frResponse = FiberOkHttpUtils.fiberExec(client.newCall(frRequest));
+    Response frResponse = FiberOkHttpUtil.executeInFiber(client.newCall(frRequest));
     assertEquals("A", frResponse.body().string());
 
     Request enRequest = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
-    Response enResponse = FiberOkHttpUtils.fiberExec(client.newCall(enRequest));
+    Response enResponse = FiberOkHttpUtil.executeInFiber(client.newCall(enRequest));
     assertEquals("B", enResponse.body().string());
   }
 
@@ -1461,13 +1461,13 @@ public final class CacheTest {
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response1.body().string());
     Request request1 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request1));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
     assertEquals("A", response2.body().string());
   }
 
@@ -1496,7 +1496,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Foo", "bar")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("B", response.body().string());
   }
 
@@ -1512,7 +1512,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Foo", "bar")
         .build();
-    Response fooresponse = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response fooresponse = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", fooresponse.body().string());
     assertEquals("B", get(server.getUrl("/")).body().string());
   }
@@ -1530,13 +1530,13 @@ public final class CacheTest {
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response1.body().string());
     Request request1 = new Request.Builder()
         .url(url)
         .header("accept-language", "fr-CA")
         .build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response2.body().string());
   }
 
@@ -1556,7 +1556,7 @@ public final class CacheTest {
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response1.body().string());
     Request request1 = new Request.Builder()
         .url(url)
@@ -1564,7 +1564,7 @@ public final class CacheTest {
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response2.body().string());
   }
 
@@ -1584,7 +1584,7 @@ public final class CacheTest {
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response frResponse = FiberOkHttpUtils.fiberExec(client.newCall(frRequest));
+    Response frResponse = FiberOkHttpUtil.executeInFiber(client.newCall(frRequest));
     assertEquals("A", frResponse.body().string());
     Request enRequest = new Request.Builder()
         .url(url)
@@ -1592,7 +1592,7 @@ public final class CacheTest {
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response enResponse = FiberOkHttpUtils.fiberExec(client.newCall(enRequest));
+    Response enResponse = FiberOkHttpUtil.executeInFiber(client.newCall(enRequest));
     assertEquals("B", enResponse.body().string());
   }
 
@@ -1610,7 +1610,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "fr-CA, fr-FR")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request1));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
@@ -1618,7 +1618,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "fr-CA, fr-FR")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request2));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
     assertEquals("A", response2.body().string());
   }
 
@@ -1636,7 +1636,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "fr-CA, fr-FR")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request1));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
@@ -1644,7 +1644,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "fr-CA")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request2));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
     assertEquals("B", response2.body().string());
   }
 
@@ -1677,14 +1677,14 @@ public final class CacheTest {
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
-    Response response1 = FiberOkHttpUtils.fiberExec(client.newCall(request1));
+    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
-    Response response2 = FiberOkHttpUtils.fiberExec(client.newCall(request2));
+    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
     assertEquals("A", response2.body().string());
   }
 
@@ -1837,7 +1837,7 @@ public final class CacheTest {
         .url(server.getUrl("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtils.fiberExec(client.newCall(request));
+    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
     assertEquals("A", response.body().string());
   }
 
@@ -2136,7 +2136,7 @@ public final class CacheTest {
     Request request = new Request.Builder()
         .url(url)
         .build();
-    return FiberOkHttpUtils.fiberExec(client.newCall(request));
+    return FiberOkHttpUtil.executeInFiber(client.newCall(request));
   }
 
 

@@ -42,7 +42,7 @@ subprojects {
     ext.metricsVer      = '3.1.1'
     ext.asmVer          = '5.0.3'
     
-    ext.quasarVer       = '0.6.3-SNAPSHOT'
+    ext.quasarVer       = '0.7.0'
     ext.jettyVer        = '9.2.10.v20150310'
     ext.undertowVer     = '1.1.3.Final'
     ext.tomcatVer       = '8.0.21'
@@ -65,7 +65,7 @@ subprojects {
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '18.0'
 
-    ext.okhttpVer       = '2.3.0'
+    ext.okhttpVer       = '2.4.0'
 
     ext.apacheAsyncClientVer   = '4.0.2'
     ext.httpCoreVer            = '4.3.3'

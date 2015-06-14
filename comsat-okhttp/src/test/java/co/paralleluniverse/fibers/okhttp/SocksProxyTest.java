@@ -58,11 +58,11 @@ public final class SocksProxyTest {
         .setProxy(socksProxy.proxy());
 
     Request request1 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtils.fiberExec((FiberOkHttpClient) client, request1);
+    Response response1 = FiberOkHttpUtil.executeInFiber((FiberOkHttpClient) client, request1);
     assertEquals("abc", response1.body().string());
 
     Request request2 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response2 = FiberOkHttpUtils.fiberExec((FiberOkHttpClient) client, request2);
+    Response response2 = FiberOkHttpUtil.executeInFiber((FiberOkHttpClient) client, request2);
     assertEquals("def", response2.body().string());
 
     // The HTTP calls should share a single connection.
@@ -86,7 +86,7 @@ public final class SocksProxyTest {
         .setProxySelector(proxySelector);
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response = FiberOkHttpUtils.fiberExec((FiberOkHttpClient) client, request);
+    Response response = FiberOkHttpUtil.executeInFiber((FiberOkHttpClient) client, request);
     assertEquals("abc", response.body().string());
 
     assertEquals(1, socksProxy.connectionCount());
