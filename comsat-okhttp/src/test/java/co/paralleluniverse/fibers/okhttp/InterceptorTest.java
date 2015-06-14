@@ -407,7 +407,7 @@ public final class InterceptorTest {
           Response responseA = null;
             try {
                 responseA = FiberOkHttpUtil.executeInFiber(client, requestA);
-            } catch (InterruptedException | ExecutionException ex) {
+            } catch (InterruptedException ex) {
                 throw new AssertionError(ex);
             }
           assertEquals("a", responseA.body().string());

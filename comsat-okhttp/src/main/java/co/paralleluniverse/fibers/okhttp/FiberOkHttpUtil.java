@@ -24,7 +24,6 @@ import com.squareup.okhttp.apache.OkApacheClient;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 
@@ -33,7 +32,7 @@ import org.apache.http.client.methods.HttpRequestBase;
  * @author circlespainter
  */
 public class FiberOkHttpUtil {
-  public static Response executeInFiber(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException, ExecutionException {
+  public static Response executeInFiber(final FiberOkHttpClient client, final Request request) throws InterruptedException, IOException {
     return FiberOkHttpUtil.executeInFiber(client.newCall(request));
   }
 
@@ -52,14 +51,14 @@ public class FiberOkHttpUtil {
         );
     }
 
-    public static HttpURLConnection openInFiber(final OkUrlFactory factory, final URL url) throws InterruptedException, IOException {
-        return FiberUtil.runInFiberChecked (
+    public static HttpURLConnection openInFiber(final OkUrlFactory factory, final URL url) throws InterruptedException {
+        return FiberUtil.runInFiberRuntime (
             new SuspendableCallable<HttpURLConnection>() {
                 @Override
                 public HttpURLConnection run() throws SuspendExecution, InterruptedException {
                     return factory.open(url);
                 }
-            }, IOException.class
+            }
         );
     }
 
