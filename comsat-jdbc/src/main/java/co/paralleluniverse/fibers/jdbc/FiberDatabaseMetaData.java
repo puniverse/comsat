@@ -1322,7 +1322,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getProcedures(final String catalog, final String schemaPattern, final String procedureNamePattern) throws SQLException {
+    public FiberResultSet getProcedures(final String catalog, final String schemaPattern, final String procedureNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1334,7 +1334,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getProcedureColumns(final String catalog, final String schemaPattern, final String procedureNamePattern, final String columnNamePattern) throws SQLException {
+    public FiberResultSet getProcedureColumns(final String catalog, final String schemaPattern, final String procedureNamePattern, final String columnNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1346,7 +1346,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getTables(final String catalog, final String schemaPattern, final String tableNamePattern, final String[] types) throws SQLException {
+    public FiberResultSet getTables(final String catalog, final String schemaPattern, final String tableNamePattern, final String[] types) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1358,7 +1358,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getSchemas() throws SQLException {
+    public FiberResultSet getSchemas() throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1370,7 +1370,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getCatalogs() throws SQLException {
+    public FiberResultSet getCatalogs() throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1382,7 +1382,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getTableTypes() throws SQLException {
+    public FiberResultSet getTableTypes() throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1394,7 +1394,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern, final String columnNamePattern) throws SQLException {
+    public FiberResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern, final String columnNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1406,7 +1406,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getColumnPrivileges(final String catalog, final String schema, final String table, final String columnNamePattern) throws SQLException {
+    public FiberResultSet getColumnPrivileges(final String catalog, final String schema, final String table, final String columnNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1418,7 +1418,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getTablePrivileges(final String catalog, final String schemaPattern, final String tableNamePattern) throws SQLException {
+    public FiberResultSet getTablePrivileges(final String catalog, final String schemaPattern, final String tableNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1430,7 +1430,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getBestRowIdentifier(final String catalog, final String schema, final String table, final int scope, final boolean nullable) throws SQLException {
+    public FiberResultSet getBestRowIdentifier(final String catalog, final String schema, final String table, final int scope, final boolean nullable) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1442,7 +1442,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getVersionColumns(final String catalog, final String schema, final String table) throws SQLException {
+    public FiberResultSet getVersionColumns(final String catalog, final String schema, final String table) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1454,7 +1454,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getPrimaryKeys(final String catalog, final String schema, final String table) throws SQLException {
+    public FiberResultSet getPrimaryKeys(final String catalog, final String schema, final String table) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1466,7 +1466,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getImportedKeys(final String catalog, final String schema, final String table) throws SQLException {
+    public FiberResultSet getImportedKeys(final String catalog, final String schema, final String table) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1478,7 +1478,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getExportedKeys(final String catalog, final String schema, final String table) throws SQLException {
+    public FiberResultSet getExportedKeys(final String catalog, final String schema, final String table) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1490,7 +1490,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getCrossReference(final String parentCatalog, final String parentSchema, final String parentTable, final String foreignCatalog, final String foreignSchema, final String foreignTable) throws SQLException {
+    public FiberResultSet getCrossReference(final String parentCatalog, final String parentSchema, final String parentTable, final String foreignCatalog, final String foreignSchema, final String foreignTable) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1502,7 +1502,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getTypeInfo() throws SQLException {
+    public FiberResultSet getTypeInfo() throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1514,7 +1514,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getIndexInfo(final String catalog, final String schema, final String table, final boolean unique, final boolean approximate) throws SQLException {
+    public FiberResultSet getIndexInfo(final String catalog, final String schema, final String table, final boolean unique, final boolean approximate) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1658,7 +1658,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getUDTs(final String catalog, final String schemaPattern, final String typeNamePattern, final int[] types) throws SQLException {
+    public FiberResultSet getUDTs(final String catalog, final String schemaPattern, final String typeNamePattern, final int[] types) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1670,7 +1670,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public Connection getConnection() throws SQLException {
+    public FiberConnection getConnection() throws SQLException {
         final Connection conn = JDBCFiberAsync.exec(executor, new CheckedCallable<Connection, SQLException>() {
             @Override
             public Connection call() throws SQLException {
@@ -1726,7 +1726,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getSuperTypes(final String catalog, final String schemaPattern, final String typeNamePattern) throws SQLException {
+    public FiberResultSet getSuperTypes(final String catalog, final String schemaPattern, final String typeNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1738,7 +1738,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getSuperTables(final String catalog, final String schemaPattern, final String tableNamePattern) throws SQLException {
+    public FiberResultSet getSuperTables(final String catalog, final String schemaPattern, final String tableNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1750,7 +1750,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getAttributes(final String catalog, final String schemaPattern, final String typeNamePattern, final String attributeNamePattern) throws SQLException {
+    public FiberResultSet getAttributes(final String catalog, final String schemaPattern, final String typeNamePattern, final String attributeNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1872,7 +1872,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getSchemas(final String catalog, final String schemaPattern) throws SQLException {
+    public FiberResultSet getSchemas(final String catalog, final String schemaPattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1906,7 +1906,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getClientInfoProperties() throws SQLException {
+    public FiberResultSet getClientInfoProperties() throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1918,7 +1918,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getFunctions(final String catalog, final String schemaPattern, final String functionNamePattern) throws SQLException {
+    public FiberResultSet getFunctions(final String catalog, final String schemaPattern, final String functionNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1930,7 +1930,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getFunctionColumns(final String catalog, final String schemaPattern, final String functionNamePattern, final String columnNamePattern) throws SQLException {
+    public FiberResultSet getFunctionColumns(final String catalog, final String schemaPattern, final String functionNamePattern, final String columnNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -1942,7 +1942,7 @@ public class FiberDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     @Suspendable
-    public ResultSet getPseudoColumns(final String catalog, final String schemaPattern, final String tableNamePattern, final String columnNamePattern) throws SQLException {
+    public FiberResultSet getPseudoColumns(final String catalog, final String schemaPattern, final String tableNamePattern, final String columnNamePattern) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {

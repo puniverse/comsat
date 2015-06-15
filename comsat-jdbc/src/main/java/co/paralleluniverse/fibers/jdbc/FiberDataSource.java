@@ -72,7 +72,7 @@ public class FiberDataSource implements DataSource {
 
     @Override
     @Suspendable
-    public Connection getConnection() throws SQLException {
+    public FiberConnection getConnection() throws SQLException {
         return JDBCFiberAsync.exec(executor, new CheckedCallable<FiberConnection, SQLException>() {
             @Override
             public FiberConnection call() throws SQLException {
@@ -83,7 +83,7 @@ public class FiberDataSource implements DataSource {
 
     @Override
     @Suspendable
-    public Connection getConnection(final String username, final String password) throws SQLException {
+    public FiberConnection getConnection(final String username, final String password) throws SQLException {
         return JDBCFiberAsync.exec(executor, new CheckedCallable<FiberConnection, SQLException>() {
             @Override
             public FiberConnection call() throws SQLException {
