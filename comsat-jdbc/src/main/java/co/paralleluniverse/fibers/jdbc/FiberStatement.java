@@ -36,7 +36,7 @@ public class FiberStatement implements Statement {
 
     @Override
     @Suspendable
-    public ResultSet executeQuery(final String sql) throws SQLException {
+    public FiberResultSet executeQuery(final String sql) throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -203,7 +203,7 @@ public class FiberStatement implements Statement {
 
     @Override
     @Suspendable
-    public ResultSet getResultSet() throws SQLException {
+    public FiberResultSet getResultSet() throws SQLException {
         final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
             @Override
             public ResultSet call() throws SQLException {
@@ -340,7 +340,7 @@ public class FiberStatement implements Statement {
 
     @Override
     @Suspendable
-    public Connection getConnection() throws SQLException {
+    public FiberConnection getConnection() throws SQLException {
         final Connection conn = JDBCFiberAsync.exec(executor, new CheckedCallable<Connection, SQLException>() {
             @Override
             public Connection call() throws SQLException {

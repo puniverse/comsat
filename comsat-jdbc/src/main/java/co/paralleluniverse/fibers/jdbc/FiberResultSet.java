@@ -479,7 +479,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public ResultSetMetaData getMetaData() throws SQLException {
+    public FiberResultSetMetaData getMetaData() throws SQLException {
         final ResultSetMetaData meta = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSetMetaData, SQLException>() {
             @Override
             public ResultSetMetaData call() throws SQLException {
@@ -1343,13 +1343,14 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Statement getStatement() throws SQLException {
-        return JDBCFiberAsync.exec(executor, new CheckedCallable<Statement, SQLException>() {
+    public FiberStatement getStatement() throws SQLException {
+        final Statement s = JDBCFiberAsync.exec(executor, new CheckedCallable<Statement, SQLException>() {
             @Override
             public Statement call() throws SQLException {
                 return result.getStatement();
             }
         });
+        return new FiberStatement(s, executor);
     }
 
     @Override
@@ -1365,7 +1366,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Ref getRef(final int columnIndex) throws SQLException {
+    public FiberRef getRef(final int columnIndex) throws SQLException {
         final Ref ref = JDBCFiberAsync.exec(executor, new CheckedCallable<Ref, SQLException>() {
             @Override
             public Ref call() throws SQLException {
@@ -1377,7 +1378,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Blob getBlob(final int columnIndex) throws SQLException {
+    public FiberBlob getBlob(final int columnIndex) throws SQLException {
         final Blob blob = JDBCFiberAsync.exec(executor, new CheckedCallable<Blob, SQLException>() {
             @Override
             public Blob call() throws SQLException {
@@ -1389,7 +1390,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Clob getClob(final int columnIndex) throws SQLException {
+    public FiberClob getClob(final int columnIndex) throws SQLException {
         final Clob clob = JDBCFiberAsync.exec(executor, new CheckedCallable<Clob, SQLException>() {
             @Override
             public Clob call() throws SQLException {
@@ -1401,7 +1402,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Array getArray(final int columnIndex) throws SQLException {
+    public FiberArray getArray(final int columnIndex) throws SQLException {
         final Array array =  JDBCFiberAsync.exec(executor, new CheckedCallable<Array, SQLException>() {
             @Override
             public Array call() throws SQLException {
@@ -1424,7 +1425,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Ref getRef(final String columnLabel) throws SQLException {
+    public FiberRef getRef(final String columnLabel) throws SQLException {
         final Ref ref = JDBCFiberAsync.exec(executor, new CheckedCallable<Ref, SQLException>() {
             @Override
             public Ref call() throws SQLException {
@@ -1436,7 +1437,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Blob getBlob(final String columnLabel) throws SQLException {
+    public FiberBlob getBlob(final String columnLabel) throws SQLException {
         final Blob blob = JDBCFiberAsync.exec(executor, new CheckedCallable<Blob, SQLException>() {
             @Override
             public Blob call() throws SQLException {
@@ -1448,7 +1449,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Clob getClob(final String columnLabel) throws SQLException {
+    public FiberClob getClob(final String columnLabel) throws SQLException {
         final Clob clob = JDBCFiberAsync.exec(executor, new CheckedCallable<Clob, SQLException>() {
             @Override
             public Clob call() throws SQLException {
@@ -1460,7 +1461,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public Array getArray(final String columnLabel) throws SQLException {
+    public FiberArray getArray(final String columnLabel) throws SQLException {
         final Array array = JDBCFiberAsync.exec(executor, new CheckedCallable<Array, SQLException>() {
             @Override
             public Array call() throws SQLException {
@@ -1772,7 +1773,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public NClob getNClob(final int columnIndex) throws SQLException {
+    public FiberNClob getNClob(final int columnIndex) throws SQLException {
         final NClob nclob = JDBCFiberAsync.exec(executor, new CheckedCallable<NClob, SQLException>() {
             @Override
             public NClob call() throws SQLException {
@@ -1784,7 +1785,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public NClob getNClob(final String columnLabel) throws SQLException {
+    public FiberNClob getNClob(final String columnLabel) throws SQLException {
         final NClob nclob = JDBCFiberAsync.exec(executor, new CheckedCallable<NClob, SQLException>() {
             @Override
             public NClob call() throws SQLException {
@@ -1796,7 +1797,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public SQLXML getSQLXML(final int columnIndex) throws SQLException {
+    public FiberSQLXML getSQLXML(final int columnIndex) throws SQLException {
         final SQLXML sqlxml = JDBCFiberAsync.exec(executor, new CheckedCallable<SQLXML, SQLException>() {
             @Override
             public SQLXML call() throws SQLException {
@@ -1808,7 +1809,7 @@ public class FiberResultSet implements ResultSet {
 
     @Override
     @Suspendable
-    public SQLXML getSQLXML(final String columnLabel) throws SQLException {
+    public FiberSQLXML getSQLXML(final String columnLabel) throws SQLException {
         final SQLXML sqlxml = JDBCFiberAsync.exec(executor, new CheckedCallable<SQLXML, SQLException>() {
             @Override
             public SQLXML call() throws SQLException {

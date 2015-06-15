@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 public class FiberDriver implements Driver {
     @Suspendable
     @Override
-    public Connection connect(final String url, final Properties info) throws SQLException {
+    public FiberConnection connect(final String url, final Properties info) throws SQLException {
         final String dbURL = url.replaceFirst("fiber:", "");
         final int threadCount = Integer.parseInt(info.getProperty(THREADS_COUNT, "10"));
         info.remove(THREADS_COUNT);
