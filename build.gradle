@@ -40,7 +40,7 @@ subprojects {
     ext.isRelease       = !version.endsWith("SNAPSHOT")
 
     ext.metricsVer      = '3.1.1'
-    ext.asmVer          = '5.0.3'
+    ext.asmVer          = '5.0.4'
 
     ext.quasarVer       = '0.7.1-SNAPSHOT'
     ext.jettyVer        = '9.2.10.v20150310'
@@ -57,7 +57,7 @@ subprojects {
     ext.websocketApiVer = '1.0'
 
     ext.dropwizardVer   = '0.8.1'
-    ext.jdbiVer         = '2.59'
+    ext.jdbiVer         = '2.62'
 
     ext.retrofitVer     = '1.9.0'
     ext.jooqVer         = '3.6.2'
@@ -82,6 +82,7 @@ subprojects {
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
+            force "org.jdbi:jdbi:$jdbiVer"
             force "org.ow2.asm:asm:$asmVer"
             force "org.ow2.asm:asm-commons:$asmVer"
             force "com.codahale.metrics:metrics-core:$metricsVer"
