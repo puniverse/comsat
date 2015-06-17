@@ -21,7 +21,7 @@
 
      [org.slf4j/slf4j-simple "1.7.9"]
 
-     [co.paralleluniverse/pulsar "0.6.2"]]
+     [co.paralleluniverse/pulsar "0.7.1-SNAPSHOT"]]
 
   :java-agents [[co.paralleluniverse/quasar-core "0.6.2"]]
 
