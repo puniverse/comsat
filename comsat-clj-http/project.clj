@@ -13,8 +13,21 @@
   :dependencies
     [[org.clojure/clojure "1.6.0"]
 
-     [clj-http "1.1.0"]
-     [co.paralleluniverse/comsat-httpclient "0.4.0-SNAPSHOT"]
-     [co.paralleluniverse/pulsar "0.6.3-SNAPSHOT"]]
+     [http-kit "2.1.19"]
+     [co.paralleluniverse/pulsar "0.7.1-SNAPSHOT"]]
 
-  :java-agents [[co.paralleluniverse/quasar-core "0.6.3-SNAPSHOT"]])
+  :profiles {:dev {:dependencies [
+                                  [clj-http "1.1.2"]
+                                  [ch.qos.logback/logback-classic "1.1.3"]
+                                  [compojure "1.3.2"]
+                                  [ring/ring-jetty-adapter "1.3.2"]
+                                  [ring/ring-core "1.3.2"]
+                                 ]}}
+
+  :java-agents [[co.paralleluniverse/quasar-core "0.7.1-SNAPSHOT"]]
+
+  :jvm-opts [;"-Dco.paralleluniverse.fibers.verifyInstrumentation=true"
+;             "-Xdebug" "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
+            ]
+;  :jvm-opts ["-Dco.paralleluniverse.pulsar.instrument.auto=all"]
+)
