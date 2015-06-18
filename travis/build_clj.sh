@@ -15,6 +15,11 @@ cd comsat-ring-jetty9
 lein test || error_exit "Error building 'comsat-ring-jetty9'"
 cd ..
 
+echo -e "Building 'comsat-httpkit'..."
+cd comsat-kttpkit
+lein test || error_exit "Error building 'comsat-clj-http'"
+cd ..
+
 end=$(date +%s)
 elapsed=$(( $end - $start ))
 minutes=$(( $elapsed / 60 ))

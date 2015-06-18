@@ -75,6 +75,7 @@ where `ARTIFACT` is:
 
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
 * `comsat-ring-jetty9` - A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.2
+* `comsat-httpkit` - [HTTP Kit](http://www.http-kit.org/client.html)-based fiber-blocking HTTP client.
 * `comsat-jersey-server` – [Jersey server](https://jersey.java.net/) integration for defining REST services.
 * `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
 * `comsat-spring-webmvc` – [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.
@@ -177,6 +178,41 @@ Then you can simply add it as a regular servlet to you favorite servlet containt
 
 To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html).
 
+### REST Services
+
+You can easily create Comsat REST services with the [JAX-RS API](https://jax-rs-spec.java.net/nonav/2.0/apidocs/index.html), the standard Java REST service API. Comsat integrates with [Jersey](https://jersey.java.net/), the reference JAX-RS implementation.
+
+All you need to do in order to enjoy Comsat's scalabilty, is replace the line
+
+~~~ xml
+<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+~~~
+
+in your `web.xml` file, which is how you would normally use Jersey in a Servlet container, with:
+
+~~~ xml
+<servlet-class>co.paralleluniverse.fibers.jersey.ServletContainer</servlet-class>
+<async-supported>true</async-supported>
+~~~
+
+Your resource methods (the ones you annotate with `@GET`, `@PUT`, `@POST` etc.) can now be made suspendable by declaring `throws SuspendExecution`. Comsat would then run each request in a fiber. Your resource methods are free to use Comsat's JDBC implementation, or Comsat's JAX-RS client.
+
+Here is an example of REST resource declaration:
+
+~~~ java
+{% include_snippet REST resource example ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/TestResource.java %}
+~~~
+
+And then initiation of the jersey container:
+
+~~~ java
+{% include_snippet jersey registration ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/FiberServletContainerTest.java %}
+~~~
+To learn about writing REST services with JAX-RS, please refer to the [Jersey User Guide](https://jersey.java.net/documentation/latest/user-guide.html).
+
+{:.alert .alert-info}
+**Note**: [Web Actors](webactors.html) are a great way to write REST services, as well as web-socket services, for interactive web applications.
+
 ### Clojure Ring
 
 The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring handler logic changes.
@@ -217,40 +253,23 @@ Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pul
 
 Your handler is now running inside fibers rather than threads.
 
-### REST Services
+### Clojure HTTP Kit Client
 
-You can easily create Comsat REST services with the [JAX-RS API](https://jax-rs-spec.java.net/nonav/2.0/apidocs/index.html), the standard Java REST service API. Comsat integrates with [Jersey](https://jersey.java.net/), the reference JAX-RS implementation.
+[HTTP Kit](http://www.http-kit.org/) is a minimalist, efficient, Ring-compatible HTTP client/server for Clojure that supports async operation. The client API is an async subset of [clj-http](https://github.com/dakrone/clj-http) and the `comsat-httpkit` integration converts it back to straightforward (fiber-blocking) `clj-http` through the `await` function. At 18 sloc, this integration also shows how easy it is to integrate Clojure async APIs with Pulsar.
 
-All you need to do in order to enjoy Comsat's scalabilty, is replace the line
+Just add `comsat-httpkit` to your dependencies and `require` the `co.paralleluniverse.fiber.httpkit.client` namespace. You can then use `request`, `get`, `delete`, `head`, `post`, `put`, `options`, `patch` inside your fibers as you would use `clj-http` (currently limited to the `clj-http` features supported by HTTP Kit):
 
-~~~ xml
-<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+~~~ clojure
+(ns myapp
+  (:require
+    [co.paralleluniverse.fiber.httpkit.client :refer :all]
+    [co.paralleluniverse.pulsar.core :refer [fiber]]))
+
+(defn -main []
+  (println @(fiber (get "http://google.com"))))
 ~~~
 
-in your `web.xml` file, which is how you would normally use Jersey in a Servlet container, with:
-
-~~~ xml
-<servlet-class>co.paralleluniverse.fibers.jersey.ServletContainer</servlet-class>
-<async-supported>true</async-supported>
-~~~
-
-Your resource methods (the ones you annotate with `@GET`, `@PUT`, `@POST` etc.) can now be made suspendable by declaring `throws SuspendExecution`. Comsat would then run each request in a fiber. Your resource methods are free to use Comsat's JDBC implementation, or Comsat's JAX-RS client.
-
-Here is an example of REST resource declaration:
-
-~~~ java
-{% include_snippet REST resource example ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/TestResource.java %}
-~~~
-
-And then initiation of the jersey container:
-
-~~~ java
-{% include_snippet jersey registration ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/FiberServletContainerTest.java %}
-~~~
-To learn about writing REST services with JAX-RS, please refer to the [Jersey User Guide](https://jersey.java.net/documentation/latest/user-guide.html).
-
-{:.alert .alert-info}
-**Note**: [Web Actors](webactors.html) are a great way to write REST services, as well as web-socket services, for interactive web applications.
+Have also a look at the testsuite ported from HTTP Kit.
 
 ### HTTP Clients
 
@@ -280,6 +299,7 @@ Then you can use it as follows:
 ~~~
 
 #### Jersey Http Client
+
 Comsat's integrated HTTP client is a JAX-RS client (specifically, Jersey client). To create a client instance compatible with Quasar fibers, use the [`AsyncClientBuilder`]({{javadoc}}/fibers/ws/rs/client/AsyncClientBuilder.html) class:
 
 ~~~ java
