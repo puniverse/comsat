@@ -89,7 +89,7 @@ public class JdbiClassifier implements SuspendableClassifier {
     }
 
     private boolean isJDBICGLibProxy(String className, String methodName) {
-        boolean ret = className.startsWith("org/skife/jdbi/v2/sqlobject/CloseInternalDoNotUseThisClass$$EnhancerByCGLIB$$");
+        boolean ret = className.startsWith("org/skife/jdbi/v2/sqlobject/CloseInternalDoNotUseThisClass$$EnhancerByCGLIB$$") && !methodName.startsWith("<");
         if (ret)
             SuspendableHelper.addWaiver(className.replace("/", "."), methodName); // @Instrumented added during instrumentation seems not to stick to CGLIB proxies, let verification know
         return ret;
