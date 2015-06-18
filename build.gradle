@@ -46,7 +46,7 @@ subprojects {
 
     ext.jettyVer        = '9.2.11.v20150529' // '9.3.0.v20150612' requires JDK8
     ext.undertowVer     = '1.2.8.Final'
-    ext.tomcatVer       = '8.0.21'
+    ext.tomcatVer       = '8.0.23'
 
     ext.osgiVer         = '6.0.0'
     ext.jerseyVer       = '2.18'
