@@ -1,7 +1,7 @@
 subprojects {
-    ext.springSecurityVer               = '3.2.7.RELEASE'
+    ext.springSecurityVer               = '4.0.1.RELEASE'
     ext.springVer                       = '4.1.6.RELEASE'
-    ext.springBootVer                   = '1.2.2.RELEASE'
+    ext.springBootVer                   = '1.2.4.RELEASE'
     ext.aspectjVer                      = '1.8.5'
     ext.commonsLoggingVer               = '1.2'
     ext.commonsBeanUtilsVer             = '1.9.2'
@@ -69,6 +69,8 @@ subprojects {
             force "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
             force "org.apache.tomcat.embed:tomcat-embed-el:$tomcatVer"
             force "org.hibernate:hibernate-validator:$hibernateValidatorVer"
+
+            force "org.slf4j:jcl-over-slf4j:$slf4jApiVer"
 
             force "junit:junit:$junitVer"
         }

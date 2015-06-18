@@ -39,18 +39,18 @@ subprojects {
 
     ext.isRelease       = !version.endsWith("SNAPSHOT")
 
-    ext.metricsVer      = '3.1.1'
+    ext.metricsVer      = '3.1.2'
     ext.asmVer          = '5.0.4'
 
     ext.quasarVer       = '0.7.1-SNAPSHOT'
 
     ext.jettyVer        = '9.3.0.v20150612'
-    ext.undertowVer     = '1.1.3.Final'
+    ext.undertowVer     = '1.2.8.Final'
     ext.tomcatVer       = '8.0.21'
 
     ext.osgiVer         = '6.0.0'
     ext.jerseyVer       = '2.18'
-    ext.hk2apiVer       = '2.4.0-b10'
+    ext.hk2apiVer       = '2.4.0-b25'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
     ext.servletVer      = '3.0.1'
@@ -68,21 +68,22 @@ subprojects {
 
     ext.okhttpVer       = '2.4.0'
 
-    ext.apacheAsyncClientVer   = '4.1.2'
-    ext.httpCoreVer            = '4.4.3'
-    ext.httpClientVer          = '4.3.6'
+    ext.apacheAsyncClientVer   = '4.1'
+    ext.httpCoreVer            = '4.4.1'
+    ext.httpClientVer          = '4.5'
 
     ext.junitVer               = '4.12'
     ext.h2Ver                  = '1.4.187'
 
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
-    ext.embedMongoVer                   = '1.48.0'
+    ext.embedMongoVer                   = '1.47.0'
 
     // ext.bytemanVer = '3.0.1'
 
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
+
             force "org.jdbi:jdbi:$jdbiVer"
             force "org.ow2.asm:asm:$asmVer"
             force "org.ow2.asm:asm-commons:$asmVer"
@@ -96,6 +97,7 @@ subprojects {
             force "org.glassfish.jersey.core:jersey-server:$jerseyVer"
             force "org.glassfish.jersey.core:jersey-client:$jerseyVer"
             force "org.glassfish.jersey.core:jersey-common:$jerseyVer"
+            force "org.glassfish.jersey.containers:jersey-container-servlet-core:$jerseyVer"
             force "org.glassfish.hk2:hk2-api:$hk2apiVer"
             force "org.glassfish.hk2:hk2-locator:$hk2apiVer"
             force "org.glassfish.hk2.external:javax.inject:$hk2apiVer"
@@ -315,7 +317,7 @@ project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.1.1' // instead of old cglib in jersey
-        compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVer" ) {
+        compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVer") {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
         provided "org.osgi:org.osgi.core:$osgiVer"
@@ -375,7 +377,7 @@ project (':comsat-servlet') {
 project (':comsat-test-utils') {
     dependencies {
         compile "org.slf4j:slf4j-api:$slf4jApiVer"
-        compile "org.apache.httpcomponents:httpclient:4.3.5"
+        compile "org.apache.httpcomponents:httpclient:$httpClientVer"
         compile "com.h2database:h2:$h2Ver"
         compile "org.glassfish.jersey.core:jersey-client:$jerseyVer"
         compile "org.glassfish.jersey.media:jersey-media-sse:$jerseyVer"
@@ -403,12 +405,13 @@ project (':comsat-servlet') {
         srcFiles "javax.servlet:javax.servlet-api:$servletVer:sources"
     }
 }
+
 project (':comsat-httpclient') {    
     dependencies {
         srcFiles ("org.apache.httpcomponents:httpasyncclient:$apacheAsyncClientVer:sources") {
             exclude group: 'org.apache.httpcomponents', module: 'httpclient'
         }
-        srcFiles "org.apache.httpcomponents:httpclient:4.3.5:sources"
+        srcFiles "org.apache.httpcomponents:httpclient:$httpClientVer:sources"
         // srcFiles "org.apache.httpcomponents:httpcore:$httpCoreVer:sources"
     }
 }
@@ -422,18 +425,19 @@ srcFiles "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVer:sources"
 // links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
 ext.javadocLinks =  [
                 "http://docs.oracle.com/javaee/7/api/",
-                "http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/",
-                "http://hc.apache.org/httpcomponents-asyncclient-4.0.x/httpasyncclient/apidocs/",
-                "http://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/",
+                "http://hc.apache.org/httpcomponents-client-4.5.x/httpclient/apidocs/",
+                "http://hc.apache.org/httpcomponents-asyncclient-4.1.x/httpasyncclient/apidocs/",
+                "http://hc.apache.org/httpcomponents-core-4.4.x/httpcore/apidocs/",
                 "http://square.github.io/retrofit/javadoc/",
                 "http://jdbi.org/apidocs/",
-                "http://www.jooq.org/javadoc/3.3.x/",
+                "http://www.jooq.org/javadoc/3.6.x/",
                 "http://docs.oracle.com/javase/7/docs/api/",
                 "http://puniverse.github.io/quasar/javadoc/",
-                "http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/",
+                "http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc/",
                 "http://jersey.java.net/apidocs/latest/jersey/",
                 "http://www.allanbank.com/mongodb-async-driver/apidocs/",
-                "http://docs.spring.io/spring/docs/current/javadoc-api/"
+                "http://docs.spring.io/spring/docs/current/javadoc-api/",
+                "http://square.github.io/okhttp/javadoc/"
 ]
 
 ext.javadocExcludes = [
