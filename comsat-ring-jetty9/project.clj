@@ -8,7 +8,7 @@
 
   :distribution :repo
 
-  :min-lein-version "2.4.3"
+  :min-lein-version "2.5.0"
 
   :dependencies
     [[org.clojure/clojure "1.6.0"]
@@ -17,13 +17,13 @@
      [ring/ring-devel "1.3.2"]
      [ring/ring-servlet "1.3.2"]
 
-     [org.eclipse.jetty/jetty-server "9.2.6.v20141205"]
+     [org.eclipse.jetty/jetty-server "9.3.0.v20150612"]
 
-     [org.slf4j/slf4j-simple "1.7.9"]
+     [org.slf4j/slf4j-simple "1.7.12"]
 
      [co.paralleluniverse/pulsar "0.7.1-SNAPSHOT"]]
 
-  :java-agents [[co.paralleluniverse/quasar-core "0.6.2"]]
+  :java-agents [[co.paralleluniverse/quasar-core "0.7.1-SNAPSHOT"]]
 
   :profiles
-    {:dev {:dependencies [[clj-http "1.0.1"]]}})
+    {:dev {:dependencies [[clj-http "1.1.2"]]}})
