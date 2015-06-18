@@ -10,7 +10,7 @@ COMSAT (or Comsat) is a set of open source libraries that integrate [Quasar](htt
 
 Comsat is not a web framework. In fact, it does not add new APIs at all (with one exception, Web Actors, mentioned later). It provides implementation to popular (and often, standard) APIs like Servlet, JAX-RS, and JDBC, that can be used efficiently within Quasar fibers.
 
-Comsat does provide one new API that you may choose to use: [Web Actors](manual/webactors.html). Web actors let you define a Quasar actor that receives and responds to HTTP requests and web socket messages. The Web Actors API is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the client.
+Comsat does provide one new API that you may choose to use: Web Actors. Web actors let you define a Quasar actor that receives and responds to HTTP requests and web socket messages. The Web Actors API is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the client.
 
 [Parallel Universe]: http://paralleluniverse.co
 
@@ -40,13 +40,13 @@ Java 7 is required to use COMSAT.
 
 ### Using Maven {#maven}
 
-First, you must add the `quasar-core` dependency:
+First, you need the `quasar-core` dependency:
 
 ~~~ xml
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>{{site.version}}</version>
+    <version>0.7.1</version>
 </dependency>
 ~~~
 
@@ -56,7 +56,7 @@ or, for JDK8:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>{{site.version}}</version>
+    <version>0.7.1</version>
     <classifier>jdk8</classifier>
 </dependency>
 ~~~
@@ -67,7 +67,7 @@ Then add those Comsat modules that you'd like to use:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>ARTIFACT</artifactId>
-    <version>{{site.version}}</version>
+    <version>0.7.1}</version>
 </dependency>
 ~~~
 
