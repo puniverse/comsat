@@ -357,6 +357,25 @@ This interface can then be registered with `FiberRestAdapterBuilder` and then us
 {% include_snippet usage ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}
 ~~~
 
+#### OkHttp
+
+Comsat integrates with [OkHttp](https://github.com/square/okhttp), a modern HTTP+SPDY client and offers fiber-blocking `OkHttpClient` and `Call` implementation.
+
+Build fiber-friendly, fully OkHttp-compatible `FiberOkHttpClient` and `FiberCall` as follows:
+
+~~~ java
+Request req = ...;
+OkHttpClient client = new FiberOkHttpClient();
+Call call = client.newCall(req);
+~~~
+
+OkHttp's `urlconnection` and `apache` modules are supported as well: just pass an `FiberOkHttpClient` instance when building `OkUrlFactory` and `OkApacheClient`:
+
+~~~ java
+OkUrlFactory factory = new OkUrlFactory(new FiberOkHttpClient());
+OkApacheClient client = new OkApacheClient(new FiberOkHttpClient());
+~~~
+
 ### DB Access
 
 #### JDBC
@@ -454,25 +473,6 @@ This is how you get a fiber-friendly `MongoDatabase` instance, which you can the
 ~~~ java
 MongoClient mongoClient = FiberMongoFactory.createClient( "mongodb://localhost:" + port + "/test?maxConnectionCount=10" ).asSerializedClient();
 MongoDatabase mongoDb = mongoClient.getDatabase("mydb");
-~~~
-
-#### OkHttp
-
-Comsat integrates with [OkHttp](https://github.com/square/okhttp), a modern HTTP+SPDY client and offers fiber-blocking `OkHttpClient` and `Call` implementation.
-
-Build fiber-friendly, fully OkHttp-compatible `FiberOkHttpClient` and `FiberCall` as follows:
-
-~~~ java
-Request req = ...;
-OkHttpClient client = new FiberOkHttpClient();
-Call call = client.newCall(req);
-~~~
-
-OkHttp's `urlconnection` and `apache` modules are supported as well: just pass an `FiberOkHttpClient` instance when building `OkUrlFactory` and `OkApacheClient`:
-
-~~~ java
-OkUrlFactory factory = new OkUrlFactory(new FiberOkHttpClient());
-OkApacheClient client = new OkApacheClient(new FiberOkHttpClient());
 ~~~
 
 ### Dropwizard
