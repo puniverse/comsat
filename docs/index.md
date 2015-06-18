@@ -123,7 +123,7 @@ Then, include the following in your webapp's `META-INF/context.xml`:
 {% include_snippet loader ./comsat-test-war/src/main/webapp/META-INF/context.xml %}
 ~~~
 
-The Tomcat instrumenting class-loader has been verified to work with Tomcat 7.0.56 and Tomcat 8.0.21 standalone Servlet containers.
+The Tomcat instrumenting class-loader has been verified to work with Tomcat 7.0.56 and Tomcat 8.0.23 standalone Servlet containers.
 
 #### In Jetty
 
