@@ -10,7 +10,7 @@
 ; under the terms of the GNU Lesser General Public License version 3.0
 ; as published by the Free Software Foundation.
 
-(ns co.paralleluniverse.fiber.httpkit.client
+(ns ^{:author "circlespainter"} co.paralleluniverse.fiber.httpkit.client
   (:require [org.httpkit.client :as hc]
             [co.paralleluniverse.pulsar.core :refer [defsfn await]]))
 

@@ -16,7 +16,7 @@
 ; Distributed under the Apache License Version 2.0.
 ;
 
-(ns co.paralleluniverse.fiber.httpkit.client-test
+(ns ^{:author "circlespainter"} co.paralleluniverse.fiber.httpkit.client-test
   (:use clojure.test
         [ring.adapter.jetty :only [run-jetty]]
         [org.httpkit.server :only [run-server]]

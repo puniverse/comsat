@@ -16,7 +16,7 @@
 ; Distributed under the Apache License Version 2.0.
 ;
 
-(ns co.paralleluniverse.fiber.httpkit.test-util
+(ns ^{:author "circlespainter"} co.paralleluniverse.fiber.httpkit.test-util
   (:use clojure.test)
   (:import [java.io File FileOutputStream]))
 

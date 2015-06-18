@@ -16,7 +16,7 @@ lein test || error_exit "Error building 'comsat-ring-jetty9'"
 cd ..
 
 echo -e "Building 'comsat-httpkit'..."
-cd comsat-kttpkit
+cd comsat-httpkit
 lein test || error_exit "Error building 'comsat-clj-http'"
 cd ..
 
