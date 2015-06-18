@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -13,19 +13,14 @@
  */
 package co.paralleluniverse.fibers.jdbc;
 
-import co.paralleluniverse.common.util.Exceptions;
-import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -39,7 +34,7 @@ import javax.sql.DataSource;
  */
 public class FiberDataSource implements DataSource {
     private final DataSource ds;
-    private final ListeningExecutorService exec;
+    private final ExecutorService executor;
 
     /**
      * Wraps a JDBC {@link DataSource}.
@@ -47,7 +42,7 @@ public class FiberDataSource implements DataSource {
      * @param executor The {@link ExecutorService} to use to actually execute JDBC operations.
      * @return 
      */
-    public static DataSource wrap(DataSource ds, ExecutorService executor) {
+    public static DataSource wrap(final DataSource ds, final ExecutorService executor) {
         return new FiberDataSource(ds, MoreExecutors.listeningDecorator(executor));
     }
 
@@ -57,7 +52,7 @@ public class FiberDataSource implements DataSource {
      * @param numThreads The number of threads to create in the thread pool that will be used to execute JDBC operations.
      * @return 
      */
-    public static DataSource wrap(DataSource ds, final int numThreads) {
+    public static DataSource wrap(final DataSource ds, final int numThreads) {
         return wrap(ds, Executors.newFixedThreadPool(numThreads, new ThreadFactoryBuilder().setNameFormat("jdbc-worker-%d").setDaemon(true).build()));
     }
 
@@ -66,67 +61,81 @@ public class FiberDataSource implements DataSource {
      * @param ds The {@link DataSource} to wrap.
      * @return 
      */
-    public static DataSource wrap(DataSource ds) {
+    public static DataSource wrap(final DataSource ds) {
         return wrap(ds, 10);
     }
 
-    protected FiberDataSource(DataSource ds, ListeningExecutorService exec) {
+    protected FiberDataSource(final DataSource ds, final ExecutorService exec) {
         this.ds = ds;
-        this.exec = exec;
+        this.executor = exec;
     }
 
     @Override
     @Suspendable
-    public Connection getConnection() throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<FiberConnection>() {
-                @Override
-                public FiberConnection call() throws Exception {
-                    return new FiberConnection(ds.getConnection(), exec);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+    public FiberConnection getConnection() throws SQLException {
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<FiberConnection, SQLException>() {
+            @Override
+            public FiberConnection call() throws SQLException {
+                return new FiberConnection(ds.getConnection(), executor);
+            }
+        });
     }
 
     @Override
     @Suspendable
-    public Connection getConnection(final String username, final String password) throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<FiberConnection>() {
-                @Override
-                public FiberConnection call() throws Exception {
-                    return new FiberConnection(ds.getConnection(username, password), exec);
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+    public FiberConnection getConnection(final String username, final String password) throws SQLException {
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<FiberConnection, SQLException>() {
+            @Override
+            public FiberConnection call() throws SQLException {
+                return new FiberConnection(ds.getConnection(username, password), executor);
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public PrintWriter getLogWriter() throws SQLException {
-        return ds.getLogWriter();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<PrintWriter, SQLException>() {
+            @Override
+            public PrintWriter call() throws SQLException {
+                return ds.getLogWriter();
+            }
+        });
     }
 
     @Override
-    public void setLogWriter(PrintWriter out) throws SQLException {
-        ds.setLogWriter(out);
+    @Suspendable
+    public void setLogWriter(final PrintWriter out) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                ds.setLogWriter(out);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setLoginTimeout(int seconds) throws SQLException {
-        ds.setLoginTimeout(seconds);
+    @Suspendable
+    public void setLoginTimeout(final int seconds) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                ds.setLoginTimeout(seconds);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getLoginTimeout() throws SQLException {
-        return ds.getLoginTimeout();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return ds.getLoginTimeout();
+            }
+        });
     }
 
     @Override
@@ -135,12 +144,12 @@ public class FiberDataSource implements DataSource {
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(final Class<T> iface) throws SQLException {
         return ds.unwrap(iface);
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(final Class<?> iface) throws SQLException {
         return ds.isWrapperFor(iface);
     }
 
@@ -150,7 +159,8 @@ public class FiberDataSource implements DataSource {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    public boolean equals(final Object obj) {
         return ds.equals(obj);
     }
 

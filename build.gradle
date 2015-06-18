@@ -2,12 +2,12 @@ allprojects {
     configurations {
         markdownDoclet
     }
-    
+
     repositories {
 //        mavenLocal()
         mavenCentral()
     }
-    
+
     dependencies {
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
@@ -34,21 +34,22 @@ subprojects {
     ext.licenseUrl2     = "http://www.eclipse.org/legal/epl-v10.html"
     ext.scmUrl          = "https://github.com/puniverse/comsat"
     ext.scmConnection   = "https://github.com/puniverse/comsat.git"
-    
+
     ext.distDir         = "$buildDir/dist"
 
     ext.isRelease       = !version.endsWith("SNAPSHOT")
 
     ext.metricsVer      = '3.1.1'
-    ext.asmVer          = '5.0.3'
-    
-    ext.quasarVer       = '0.7.0'
-    ext.jettyVer        = '9.2.10.v20150310'
+    ext.asmVer          = '5.0.4'
+
+    ext.quasarVer       = '0.7.1-SNAPSHOT'
+
+    ext.jettyVer        = '9.3.0.v20150612'
     ext.undertowVer     = '1.1.3.Final'
     ext.tomcatVer       = '8.0.21'
 
     ext.osgiVer         = '6.0.0'
-    ext.jerseyVer       = '2.17'
+    ext.jerseyVer       = '2.18'
     ext.hk2apiVer       = '2.4.0-b10'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
@@ -56,29 +57,33 @@ subprojects {
     ext.jaxrsVer        = '2.0.1'
     ext.websocketApiVer = '1.0'
 
-    ext.dropwizardVer   = '0.8.0'
-    ext.jdbiVer         = '2.59'
+    ext.dropwizardVer   = '0.8.1'
+    ext.jdbiVer         = '2.62'
 
     ext.retrofitVer     = '1.9.0'
-    ext.jooqVer         = '3.5.3'
+    ext.jooqVer         = '3.6.2'
     ext.slf4jApiVer     = '1.7.12'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '18.0'
 
     ext.okhttpVer       = '2.4.0'
 
-    ext.apacheAsyncClientVer   = '4.0.2'
-    ext.httpCoreVer            = '4.3.3'
+    ext.apacheAsyncClientVer   = '4.1.2'
+    ext.httpCoreVer            = '4.4.3'
     ext.httpClientVer          = '4.3.6'
 
-    ext.junitVer                = '4.12'
+    ext.junitVer               = '4.12'
+    ext.h2Ver                  = '1.4.187'
 
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
-    ext.embedMongoVer                   = '1.47.0'
-    
+    ext.embedMongoVer                   = '1.48.0'
+
+    // ext.bytemanVer = '3.0.1'
+
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
+            force "org.jdbi:jdbi:$jdbiVer"
             force "org.ow2.asm:asm:$asmVer"
             force "org.ow2.asm:asm-commons:$asmVer"
             force "com.codahale.metrics:metrics-core:$metricsVer"
@@ -96,7 +101,7 @@ subprojects {
             force "org.glassfish.hk2.external:javax.inject:$hk2apiVer"
         }
     }
-    
+
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
         //        println "sonatype username or password not set"
         ext.sonatypeUsername = ""
@@ -118,18 +123,20 @@ subprojects {
 
     configurations {
         quasar
+        // byteman
         provided
         srcFiles
     }
-    
+
     dependencies {
         compile "com.google.guava:guava:$guavaVer"
         quasar "co.paralleluniverse:quasar-core:$quasarVer@jar" 
+        // byteman "org.jboss.byteman:byteman:$bytemanVer@jar"
         testCompile "junit:junit:$junitVer"
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         provided "javax.servlet:javax.servlet-api:$servletVer" // was 3.1.0
     }
-    
+
     sourceSets {
         main.compileClasspath = main.compileClasspath + configurations.provided
         test.compileClasspath = test.compileClasspath + configurations.provided
@@ -151,7 +158,7 @@ subprojects {
                 append: true) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
-            
+
             //            ant.taskdef(name:'scanSuspendables', 
             //                classname:'co.paralleluniverse.fibers.instrument.OldSuspendablesScanner', 
             //                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
@@ -162,17 +169,21 @@ subprojects {
             //            }
         }
     }
-    
+
     tasks.withType(Test) {
-        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
-        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
+        // systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+        // systemProperty 'co.paralleluniverse.fibers.detectRunawayFibers', 'false'
+        // systemProperty 'org.jboss.byteman.verbose', 'true'
+        // systemProperty 'org.jboss.byteman.debug', 'true'
+        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d, =c
+                // , "-javaagent:${configurations.byteman.singleFile}=script:${projectDir}/script.btm"
     }
-    
+
     test {
         beforeTest { desc ->
             logger.quiet("Running test: " + desc)
         }
-        
+
         afterTest { desc, result -> 
             if(result.resultType == TestResult.ResultType.FAILURE) {
                 logger.quiet("Failed test ${desc.name} [${desc.className}] with exception: ${result.exception}")
@@ -182,7 +193,7 @@ subprojects {
             }
         }
     }
-    
+
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -197,7 +208,7 @@ subprojects {
         skipExistingHeaders true
         mapping('java','SLASHSTAR_STYLE')
     }
-    
+
     apply plugin: 'com.github.ben-manes.versions'
 
     //rest of the subprojects definition in the block after subproject specific definitions
@@ -235,7 +246,7 @@ project (':comsat-actors-servlet') {
 
 project (':comsat-dropwizard') {
     dependencies {
-        testRuntime 'com.h2database:h2:1.4.184'
+        testRuntime "com.h2database:h2:$h2Ver"
         compile "io.dropwizard:dropwizard-core:$dropwizardVer"
         compile "io.dropwizard:dropwizard-client:$dropwizardVer"
         compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
@@ -365,7 +376,7 @@ project (':comsat-test-utils') {
     dependencies {
         compile "org.slf4j:slf4j-api:$slf4jApiVer"
         compile "org.apache.httpcomponents:httpclient:4.3.5"
-        compile 'com.h2database:h2:1.4.180'
+        compile "com.h2database:h2:$h2Ver"
         compile "org.glassfish.jersey.core:jersey-client:$jerseyVer"
         compile "org.glassfish.jersey.media:jersey-media-sse:$jerseyVer"
         
@@ -401,7 +412,6 @@ project (':comsat-httpclient') {
         // srcFiles "org.apache.httpcomponents:httpcore:$httpCoreVer:sources"
     }
 }
-
 
 /* project (':comsat-mongodb') {    
 dependencies {
@@ -451,7 +461,7 @@ subprojects {
         classifier = 'javadoc'
         from javadoc.destinationDir
     } 
-    
+
     ///////// Publish Artifacts 
     apply plugin: 'maven'
     apply plugin: 'signing'
@@ -547,7 +557,7 @@ buildscript {
 } 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.2.1'
+    gradleVersion = '2.4'
 }
 
 defaultTasks 'install'

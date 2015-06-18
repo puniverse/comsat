@@ -46,7 +46,7 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
             }
 
             @Override
-            public void error(String msg, Exception exc) {
+            public void error(String msg, Throwable exc) {
                 System.out.println("[quasar] ERROR: " + msg);
                 exc.printStackTrace(System.out);
             }

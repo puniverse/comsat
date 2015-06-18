@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -13,11 +13,8 @@
  */
 package co.paralleluniverse.fibers.jdbc;
 
-import co.paralleluniverse.common.util.Exceptions;
-import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.common.util.CheckedCallable;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -38,331 +35,691 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 /**
- *
  * @author eitan
  */
-class FiberPreparedStatement extends FiberStatement implements PreparedStatement {
-    FiberPreparedStatement(java.sql.PreparedStatement ps, ListeningExecutorService exec) {
+public class FiberPreparedStatement extends FiberStatement implements PreparedStatement {
+    FiberPreparedStatement(final java.sql.PreparedStatement ps, final ExecutorService exec) {
         super(ps, exec);
     }
 
-    @Override
-    java.sql.PreparedStatement stmt() {
-        return (java.sql.PreparedStatement) super.stmt();
+    protected PreparedStatement stmt() {
+        return (PreparedStatement) stmt;
     }
 
     @Override
     @Suspendable
-    public ResultSet executeQuery() throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<ResultSet>() {
-                @Override
-                public ResultSet call() throws Exception {
-                    return stmt().executeQuery();
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+    public FiberResultSet executeQuery() throws SQLException {
+        final ResultSet result = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSet, SQLException>() {
+            @Override
+            public ResultSet call() throws SQLException {
+                return stmt().executeQuery();
+            }
+        });
+        return new FiberResultSet(result, executor);
     }
 
     @Override
     @Suspendable
     public int executeUpdate() throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Integer>() {
-                @Override
-                public Integer call() throws Exception {
-                    return stmt().executeUpdate();
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return stmt().executeUpdate();
+            }
+        });
     }
 
     @Override
     @Suspendable
     public boolean execute() throws SQLException {
-        try {
-            return AsyncListenableFuture.get(exec.submit(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return stmt().execute();
-                }
-            }));
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return stmt().execute();
+            }
+        });
     }
 
     @Override
-    public void setNull(int parameterIndex, int sqlType) throws SQLException {
-        stmt().setNull(parameterIndex, sqlType);
+    @Suspendable
+    public void setNull(final int parameterIndex, final int sqlType) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNull(parameterIndex, sqlType);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-        stmt().setBoolean(parameterIndex, x);
+    @Suspendable
+    public void setBoolean(final int parameterIndex, final boolean x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBoolean(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setByte(int parameterIndex, byte x) throws SQLException {
-        stmt().setByte(parameterIndex, x);
+    @Suspendable
+    public void setByte(final int parameterIndex, final byte x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setByte(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setShort(int parameterIndex, short x) throws SQLException {
-        stmt().setShort(parameterIndex, x);
+    @Suspendable
+    public void setShort(final int parameterIndex, final short x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setShort(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setInt(int parameterIndex, int x) throws SQLException {
-        stmt().setInt(parameterIndex, x);
+    @Suspendable
+    public void setInt(final int parameterIndex, final int x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setInt(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setLong(int parameterIndex, long x) throws SQLException {
-        stmt().setLong(parameterIndex, x);
+    @Suspendable
+    public void setLong(final int parameterIndex, final long x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setLong(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setFloat(int parameterIndex, float x) throws SQLException {
-        stmt().setFloat(parameterIndex, x);
+    @Suspendable
+    public void setFloat(final int parameterIndex, final float x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setFloat(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setDouble(int parameterIndex, double x) throws SQLException {
-        stmt().setDouble(parameterIndex, x);
+    @Suspendable
+    public void setDouble(final int parameterIndex, final double x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setDouble(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-        stmt().setBigDecimal(parameterIndex, x);
+    @Suspendable
+    public void setBigDecimal(final int parameterIndex, final BigDecimal x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBigDecimal(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setString(int parameterIndex, String x) throws SQLException {
-        stmt().setString(parameterIndex, x);
+    @Suspendable
+    public void setString(final int parameterIndex, final String x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setString(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-        stmt().setBytes(parameterIndex, x);
+    @Suspendable
+    public void setBytes(final int parameterIndex, final byte[] x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBytes(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setDate(int parameterIndex, Date x) throws SQLException {
-        stmt().setDate(parameterIndex, x);
+    @Suspendable
+    public void setDate(final int parameterIndex, final Date x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setDate(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setTime(int parameterIndex, Time x) throws SQLException {
-        stmt().setTime(parameterIndex, x);
+    @Suspendable
+    public void setTime(final int parameterIndex, final Time x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setTime(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-        stmt().setTimestamp(parameterIndex, x);
+    @Suspendable
+    public void setTimestamp(final int parameterIndex, final Timestamp x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setTimestamp(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        stmt().setAsciiStream(parameterIndex, x, length);
+    @Suspendable
+    public void setAsciiStream(final int parameterIndex, final InputStream x, final int length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setAsciiStream(parameterIndex, x, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        stmt().setUnicodeStream(parameterIndex, x, length);
+    @Suspendable
+    public void setUnicodeStream(final int parameterIndex, final InputStream x, final int length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setUnicodeStream(parameterIndex, x, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        stmt().setBinaryStream(parameterIndex, x, length);
+    @Suspendable
+    public void setBinaryStream(final int parameterIndex, final InputStream x, final int length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBinaryStream(parameterIndex, x, length);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void clearParameters() throws SQLException {
-        stmt().clearParameters();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().clearParameters();
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
-        stmt().setObject(parameterIndex, x, targetSqlType);
+    @Suspendable
+    public void setObject(final int parameterIndex, final Object x, final int targetSqlType) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setObject(parameterIndex, x, targetSqlType);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setObject(int parameterIndex, Object x) throws SQLException {
-        stmt().setObject(parameterIndex, x);
+    @Suspendable
+    public void setObject(final int parameterIndex, final Object x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setObject(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void addBatch() throws SQLException {
-        stmt().addBatch();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().addBatch();
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
-        stmt().setCharacterStream(parameterIndex, reader, length);
+    @Suspendable
+    public void setCharacterStream(final int parameterIndex, final Reader reader, final int length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setCharacterStream(parameterIndex, reader, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setRef(int parameterIndex, Ref x) throws SQLException {
-        stmt().setRef(parameterIndex, x);
+    @Suspendable
+    public void setRef(final int parameterIndex, final Ref x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setRef(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBlob(int parameterIndex, Blob x) throws SQLException {
-        stmt().setBlob(parameterIndex, x);
+    @Suspendable
+    public void setBlob(final int parameterIndex, final Blob x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBlob(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setClob(int parameterIndex, Clob x) throws SQLException {
-        stmt().setClob(parameterIndex, x);
+    @Suspendable
+    public void setClob(final int parameterIndex, final Clob x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setClob(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setArray(int parameterIndex, Array x) throws SQLException {
-        stmt().setArray(parameterIndex, x);
+    @Suspendable
+    public void setArray(final int parameterIndex, final Array x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setArray(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public ResultSetMetaData getMetaData() throws SQLException {
-        return stmt().getMetaData();
+    @Suspendable
+    public FiberResultSetMetaData getMetaData() throws SQLException {
+        final ResultSetMetaData meta = JDBCFiberAsync.exec(executor, new CheckedCallable<ResultSetMetaData, SQLException>() {
+            @Override
+            public ResultSetMetaData call() throws SQLException {
+                return stmt().getMetaData();
+            }
+        });
+        return new FiberResultSetMetaData(meta, executor);
     }
 
     @Override
-    public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
-        stmt().setDate(parameterIndex, x, cal);
+    @Suspendable
+    public void setDate(final int parameterIndex, final Date x, final Calendar cal) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setDate(parameterIndex, x, cal);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
-        stmt().setTime(parameterIndex, x, cal);
+    @Suspendable
+    public void setTime(final int parameterIndex, final Time x, final Calendar cal) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setTime(parameterIndex, x, cal);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
-        stmt().setTimestamp(parameterIndex, x, cal);
+    @Suspendable
+    public void setTimestamp(final int parameterIndex, final Timestamp x, final Calendar cal) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setTimestamp(parameterIndex, x, cal);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
-        stmt().setNull(parameterIndex, sqlType, typeName);
+    @Suspendable
+    public void setNull(final int parameterIndex, final int sqlType, final String typeName) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNull(parameterIndex, sqlType, typeName);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setURL(int parameterIndex, URL x) throws SQLException {
-        stmt().setURL(parameterIndex, x);
+    @Suspendable
+    public void setURL(final int parameterIndex, final URL x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setURL(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public ParameterMetaData getParameterMetaData() throws SQLException {
-        return stmt().getParameterMetaData();
+    @Suspendable
+    public FiberParameterMetadata getParameterMetaData() throws SQLException {
+        final ParameterMetaData pmeta = JDBCFiberAsync.exec(executor, new CheckedCallable<ParameterMetaData, SQLException>() {
+            @Override
+            public ParameterMetaData call() throws SQLException {
+                return stmt().getParameterMetaData();
+            }
+        });
+        return new FiberParameterMetadata(pmeta, executor);
     }
 
     @Override
-    public void setRowId(int parameterIndex, RowId x) throws SQLException {
-        stmt().setRowId(parameterIndex, x);
+    @Suspendable
+    public void setRowId(final int parameterIndex, final RowId x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setRowId(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNString(int parameterIndex, String value) throws SQLException {
-        stmt().setNString(parameterIndex, value);
+    @Suspendable
+    public void setNString(final int parameterIndex, final String value) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNString(parameterIndex, value);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
-        stmt().setNCharacterStream(parameterIndex, value, length);
+    @Suspendable
+    public void setNCharacterStream(final int parameterIndex, final Reader value, final long length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNCharacterStream(parameterIndex, value, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNClob(int parameterIndex, NClob value) throws SQLException {
-        stmt().setNClob(parameterIndex, value);
+    @Suspendable
+    public void setNClob(final int parameterIndex, final NClob value) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNClob(parameterIndex, value);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        stmt().setClob(parameterIndex, reader, length);
+    @Suspendable
+    public void setClob(final int parameterIndex, final Reader reader, final long length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setClob(parameterIndex, reader, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
-        stmt().setBlob(parameterIndex, inputStream, length);
+    @Suspendable
+    public void setBlob(final int parameterIndex, final InputStream inputStream, final long length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBlob(parameterIndex, inputStream, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        stmt().setNClob(parameterIndex, reader, length);
+    @Suspendable
+    public void setNClob(final int parameterIndex, final Reader reader, final long length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNClob(parameterIndex, reader, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-        stmt().setSQLXML(parameterIndex, xmlObject);
+    @Suspendable
+    public void setSQLXML(final int parameterIndex, final SQLXML xmlObject) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setSQLXML(parameterIndex, xmlObject);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
-        stmt().setObject(parameterIndex, x, targetSqlType, scaleOrLength);
+    @Suspendable
+    public void setObject(final int parameterIndex, final Object x, final int targetSqlType, final int scaleOrLength) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setObject(parameterIndex, x, targetSqlType, scaleOrLength);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        stmt().setAsciiStream(parameterIndex, x, length);
+    @Suspendable
+    public void setAsciiStream(final int parameterIndex, final InputStream x, final long length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setAsciiStream(parameterIndex, x, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        stmt().setBinaryStream(parameterIndex, x, length);
+    @Suspendable
+    public void setBinaryStream(final int parameterIndex, final InputStream x, final long length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBinaryStream(parameterIndex, x, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
-        stmt().setCharacterStream(parameterIndex, reader, length);
+    @Suspendable
+    public void setCharacterStream(final int parameterIndex, final Reader reader, final long length) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setCharacterStream(parameterIndex, reader, length);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
-        stmt().setAsciiStream(parameterIndex, x);
+    @Suspendable
+    public void setAsciiStream(final int parameterIndex, final InputStream x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setAsciiStream(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-        stmt().setBinaryStream(parameterIndex, x);
+    @Suspendable
+    public void setBinaryStream(final int parameterIndex, final InputStream x) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBinaryStream(parameterIndex, x);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
-        stmt().setCharacterStream(parameterIndex, reader);
+    @Suspendable
+    public void setCharacterStream(final int parameterIndex, final Reader reader) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setCharacterStream(parameterIndex, reader);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
-        stmt().setNCharacterStream(parameterIndex, value);
+    @Suspendable
+    public void setNCharacterStream(final int parameterIndex, final Reader value) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNCharacterStream(parameterIndex, value);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setClob(int parameterIndex, Reader reader) throws SQLException {
-        stmt().setClob(parameterIndex, reader);
+    @Suspendable
+    public void setClob(final int parameterIndex, final Reader reader) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setClob(parameterIndex, reader);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-        stmt().setBlob(parameterIndex, inputStream);
+    @Suspendable
+    public void setBlob(final int parameterIndex, final InputStream inputStream) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setBlob(parameterIndex, inputStream);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNClob(int parameterIndex, Reader reader) throws SQLException {
-        stmt().setNClob(parameterIndex, reader);
+    @Suspendable
+    public void setNClob(final int parameterIndex, final Reader reader) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                stmt().setNClob(parameterIndex, reader);
+                return null;
+            }
+        });
+    }
+
+    @Override
+    public int hashCode() {
+        return stmt().hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+        return stmt().equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return stmt().toString();
     }
 }
