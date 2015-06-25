@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -40,6 +40,7 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.conn.NHttpClientConnectionManager;
 import org.apache.http.nio.conn.SchemeIOSessionStrategy;
+import org.apache.http.nio.reactor.IOReactor;
 import org.apache.http.protocol.HttpProcessor;
 
 /**
@@ -49,6 +50,7 @@ import org.apache.http.protocol.HttpProcessor;
  */
 public class FiberHttpClientBuilder {
     private final HttpAsyncClientBuilder builder;
+    private IOReactor ioreactor;
 
     protected FiberHttpClientBuilder(HttpAsyncClientBuilder builder) {
         this.builder = builder;
@@ -74,6 +76,11 @@ public class FiberHttpClientBuilder {
 
     public final FiberHttpClientBuilder setConnectionManager(NHttpClientConnectionManager connManager) {
         builder.setConnectionManager(connManager);
+        return this;
+    }
+
+    public final FiberHttpClientBuilder setIOReactor(IOReactor ioreactor) {
+        this.ioreactor = ioreactor;
         return this;
     }
 
@@ -241,7 +248,10 @@ public class FiberHttpClientBuilder {
     }
 
     public CloseableHttpClient build() {
-        return new FiberHttpClient(builder.build());
+        final FiberHttpClient res =
+            ioreactor != null ?
+                new FiberHttpClient(builder.build(), ioreactor) :
+                new FiberHttpClient(builder.build());
+        return res;
     }
-
 }

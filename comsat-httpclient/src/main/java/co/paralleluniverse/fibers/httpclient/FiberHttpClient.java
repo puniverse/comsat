@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -16,8 +16,11 @@ package co.paralleluniverse.fibers.httpclient;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
+import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
@@ -33,6 +36,9 @@ import org.apache.http.client.utils.URIUtils;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.ExceptionEvent;
+import org.apache.http.nio.reactor.IOReactor;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.Args;
@@ -43,13 +49,25 @@ public class FiberHttpClient extends CloseableHttpClient {
     private final CloseableHttpAsyncClient client;
     private final HttpRequestRetryHandler httpRequestRetryHandler;
 
+    private DefaultConnectingIOReactor ioreactor;
+
     public FiberHttpClient(CloseableHttpAsyncClient client) {
-        this(client, null);
+        this(client, null, null);
+    }
+
+    public FiberHttpClient(CloseableHttpAsyncClient client, IOReactor ioreactor) {
+        this(client, null, ioreactor);
     }
 
     public FiberHttpClient(CloseableHttpAsyncClient client, HttpRequestRetryHandler httpRequestRetryHandler) {
+        this(client, httpRequestRetryHandler, null);
+    }
+
+    public FiberHttpClient(CloseableHttpAsyncClient client, HttpRequestRetryHandler httpRequestRetryHandler, IOReactor ioreactor) {
         this.client = client;
         this.httpRequestRetryHandler = httpRequestRetryHandler;
+        if (ioreactor != null && ioreactor instanceof DefaultConnectingIOReactor)
+            this.ioreactor = (DefaultConnectingIOReactor) ioreactor;
         if (!client.isRunning())
             client.start();
     }
@@ -94,6 +112,26 @@ public class FiberHttpClient extends CloseableHttpClient {
             }
         } catch (SuspendExecution e) {
             throw new AssertionError();
+        } catch (IllegalStateException ise) {
+            if (ioreactor != null) {
+                final List<ExceptionEvent> events = ioreactor.getAuditLog();
+                if (events != null) {
+                    for (ExceptionEvent event : events) {
+                        final StringBuilder msg = new StringBuilder();
+                        msg.append("Apache Async HTTP Client I/O Reactor exception timestamp: ");
+                        msg.append(event.getTimestamp());
+                        if (event.getCause() != null) {
+                            msg.append(", cause stacktrace:\n");
+                            final StringWriter sw = new StringWriter();
+                            final PrintWriter pw = new PrintWriter(sw);
+                            ise.getCause().printStackTrace(pw);
+                            msg.append(sw.toString());
+                        }
+                        this.log.fatal(msg.toString());
+                    }
+                }
+            }
+            throw ise;
         }
     }
 
