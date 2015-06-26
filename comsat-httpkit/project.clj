@@ -15,7 +15,7 @@
   :dependencies
     [[org.clojure/clojure "1.6.0"]
      [http-kit "2.1.19"]
-     [co.paralleluniverse/pulsar "0.7.1-SNAPSHOT"]]
+     [co.paralleluniverse/pulsar "0.7.2"]]
 
   :profiles {:dev {:dependencies
     [[clj-http "1.1.2"]
