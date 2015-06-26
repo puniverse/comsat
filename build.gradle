@@ -42,7 +42,7 @@ subprojects {
     ext.metricsVer      = '3.1.2'
     ext.asmVer          = '5.0.4'
 
-    ext.quasarVer       = '0.7.1-SNAPSHOT'
+    ext.quasarVer       = '0.7.2'
 
     ext.jettyVer        = '9.2.11.v20150529' // '9.3.0.v20150612' requires JDK8
     ext.undertowVer     = '1.2.8.Final'
