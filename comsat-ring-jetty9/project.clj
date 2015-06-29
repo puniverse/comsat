@@ -23,7 +23,7 @@
 
      [co.paralleluniverse/pulsar "0.7.2"]]
 
-  :java-agents [[co.paralleluniverse/quasar-core "0.7.1-SNAPSHOT"]]
+  :java-agents [[co.paralleluniverse/quasar-core "0.7.2"]]
 
   :profiles
     {:dev {:dependencies [[clj-http "1.1.2"]]}})
