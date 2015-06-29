@@ -17,7 +17,7 @@ import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import co.paralleluniverse.embedded.containers.EmbeddedServer;
 import co.paralleluniverse.embedded.containers.JettyServer;
 import co.paralleluniverse.embedded.containers.TomcatServer;
-// import co.paralleluniverse.embedded.containers.UndertowServer;
+import co.paralleluniverse.embedded.containers.UndertowServer;
 import co.paralleluniverse.strands.SettableFuture;
 import com.google.common.collect.Lists;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public class WebActorServletTest {
         return Arrays.asList(new Object[][]{
             {JettyServer.class}, 
             {TomcatServer.class},
-         // {UndertowServer.class},
+            {UndertowServer.class},
         });
     }
     private final Class<? extends EmbeddedServer> cls;

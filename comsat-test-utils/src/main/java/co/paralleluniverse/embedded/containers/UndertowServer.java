@@ -19,8 +19,19 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.RequestLimit;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
+import io.undertow.servlet.core.CompositeThreadSetupAction;
+import io.undertow.servlet.util.ConstructorInstanceFactory;
+import io.undertow.websockets.jsr.JsrWebSocketFilter;
+import io.undertow.websockets.jsr.ServerWebSocketContainer;
+import java.util.Collections;
+import javax.servlet.DispatcherType;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContextListener;
+import org.xnio.ByteBufferSlicePool;
+import org.xnio.OptionMap;
+import org.xnio.Options;
+import org.xnio.Xnio;
+import org.xnio.XnioWorker;
 
 public class UndertowServer extends AbstractEmbeddedServer {
     private static final String ANY_LOCAL_ADDRESS = "0.0.0.0"; // not "localhost"!
@@ -38,14 +49,14 @@ public class UndertowServer extends AbstractEmbeddedServer {
     @Override
     public ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
         build();
-        ServletInfo info = Servlets.servlet(name, servletClass).addMapping(mapping).setAsyncSupported(true);
+        final ServletInfo info = Servlets.servlet(name, servletClass).addMapping(mapping).setAsyncSupported(true);
         deployment.addServlet(info);
         return new UndertowServletDesc(info);
     }
 
     @Override
     public void start() throws Exception {
-        DeploymentManager servletsContainer = Servlets.defaultContainer().addDeployment(deployment);
+        final DeploymentManager servletsContainer = Servlets.defaultContainer().addDeployment(deployment);
         servletsContainer.deploy();
         HttpHandler handler = servletsContainer.start();
         handler = Handlers.requestLimitingHandler(new RequestLimit(maxConn), handler);
@@ -71,14 +82,40 @@ public class UndertowServer extends AbstractEmbeddedServer {
 
     @Override
     public void addServletContextListener(Class<? extends ServletContextListener> scl) {
-        // TODO
-        throw new UnsupportedOperationException("Not supported yet.");
+        build();
+        final ListenerInfo li = Servlets.listener(scl);
+        deployment.addListener(li);
     }
 
     @Override
     public void enableWebsockets() throws Exception {
-        // TODO
-        throw new UnsupportedOperationException("Not supported yet.");
+        final Xnio xnio = Xnio.getInstance("nio", this.getClass().getClassLoader());
+        final XnioWorker worker = xnio.createWorker(OptionMap.builder()
+                        .set(Options.WORKER_IO_THREADS, 8)
+                        .set(Options.CONNECTION_HIGH_WATER, 1000000)
+                        .set(Options.CONNECTION_LOW_WATER, 1000000)
+                        .set(Options.WORKER_TASK_CORE_THREADS, 30)
+                        .set(Options.WORKER_TASK_MAX_THREADS, 30)
+                        .set(Options.TCP_NODELAY, true)
+                        .set(Options.CORK, true)
+                        .getMap());
+        final ClassIntrospecter ci = new ClassIntrospecter() {
+            @Override
+            public <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
+                try {
+                    return new ConstructorInstanceFactory<>(clazz.getDeclaredConstructor());
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+        final ServerWebSocketContainer wsc = new ServerWebSocketContainer(ci, worker, new ByteBufferSlicePool(100, 100), new CompositeThreadSetupAction(Collections.EMPTY_LIST), false, false);
+        final FilterInfo fi = new FilterInfo("filter", JsrWebSocketFilter.class);
+        fi.setAsyncSupported(true);
+        deployment
+            .addFilter(fi)
+            .addFilterUrlMapping("filter", "/*", DispatcherType.REQUEST)
+            .addServletContextAttribute(javax.websocket.server.ServerContainer.class.getName(), wsc);
     }
 
     @Override
