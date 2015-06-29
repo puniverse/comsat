@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -14,12 +14,7 @@
 package co.paralleluniverse.fibers.jdbc;
 
 import co.paralleluniverse.common.util.CheckedCallable;
-import co.paralleluniverse.common.util.Exceptions;
-import co.paralleluniverse.fibers.FiberAsync;
-import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
-import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -37,372 +32,638 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
- *
  * @author eitan
  */
-class FiberConnection implements Connection {
+public class FiberConnection implements Connection {
     private final Connection conn;
-    private final ListeningExecutorService exec;
+    private final ExecutorService executor;
 
-    FiberConnection(Connection conn, ListeningExecutorService exec) {
+    FiberConnection(final Connection conn, final ExecutorService exec) {
         this.conn = conn;
-        this.exec = exec;
+        this.executor = exec;
     }
 
     @Override
-    public Statement createStatement() throws SQLException {
-        return new FiberStatement(conn.createStatement(), exec);
+    @Suspendable
+    public FiberStatement createStatement() throws SQLException {
+        final Statement statement = JDBCFiberAsync.exec(executor, new CheckedCallable<Statement, SQLException>() {
+            @Override
+            public Statement call() throws SQLException {
+                return conn.createStatement();
+            }
+        });
+        return new FiberStatement(statement, executor);
     }
     
+    @Override
     @Suspendable
-    @Override
-    public PreparedStatement prepareStatement(final String sql) throws SQLException {
-        try {
-            PreparedStatement prepareStatement = FiberAsync.runBlocking(exec, new CheckedCallable<PreparedStatement, SQLException>() {
-
-                @Override
-                public PreparedStatement call() throws SQLException {
-                    return conn.prepareCall(sql);
-                }
-            });
-            return new FiberPreparedStatement(prepareStatement, exec);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+    public FiberPreparedStatement prepareStatement(final String sql) throws SQLException {
+        final PreparedStatement prepareStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<PreparedStatement, SQLException>() {
+            @Override
+            public PreparedStatement call() throws SQLException {
+                return conn.prepareStatement(sql);
+            }
+        });
+        return new FiberPreparedStatement(prepareStatement, executor);
     }
 
+    @Override
     @Suspendable
-    @Override
-    public PreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
-        try {
-            PreparedStatement prepareStatement = FiberAsync.runBlocking(exec, new CheckedCallable<PreparedStatement, SQLException>() {
-
-                @Override
-                public PreparedStatement call() throws SQLException {
-                    return conn.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
-                }
-            });
-            return new FiberPreparedStatement(prepareStatement, exec);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+    public FiberPreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
+        final PreparedStatement prepareStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<PreparedStatement, SQLException>() {
+            @Override
+            public PreparedStatement call() throws SQLException {
+                return conn.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+            }
+        });
+        return new FiberPreparedStatement(prepareStatement, executor);
     }
 
+    @Override
     @Suspendable
-    @Override
-    public PreparedStatement prepareStatement(final String sql, final int autoGeneratedKeys) throws SQLException {
-        try {
-            PreparedStatement prepareStatement = FiberAsync.runBlocking(exec, new CheckedCallable<PreparedStatement, SQLException>() {
-
-                @Override
-                public PreparedStatement call() throws SQLException {
-                    return conn.prepareStatement(sql, autoGeneratedKeys);
-                }
-            });
-            return new FiberPreparedStatement(prepareStatement, exec);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+    public FiberPreparedStatement prepareStatement(final String sql, final int autoGeneratedKeys) throws SQLException {
+        final PreparedStatement prepareStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<PreparedStatement, SQLException>() {
+            @Override
+            public PreparedStatement call() throws SQLException {
+                return conn.prepareStatement(sql, autoGeneratedKeys);
+            }
+        });
+        return new FiberPreparedStatement(prepareStatement, executor);
     }
 
+    @Override
     @Suspendable
-    @Override
-    public PreparedStatement prepareStatement(final String sql, final int[] columnIndexes) throws SQLException {
-        try {
-            PreparedStatement prepareStatement = FiberAsync.runBlocking(exec, new CheckedCallable<PreparedStatement, SQLException>() {
-
-                @Override
-                public PreparedStatement call() throws SQLException {
-                    return conn.prepareStatement(sql, columnIndexes);
-                }
-            });
-            return new FiberPreparedStatement(prepareStatement, exec);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+    public FiberPreparedStatement prepareStatement(final String sql, final int[] columnIndexes) throws SQLException {
+        final PreparedStatement prepareStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<PreparedStatement, SQLException>() {
+            @Override
+            public PreparedStatement call() throws SQLException {
+                return conn.prepareStatement(sql, columnIndexes);
+            }
+        });
+        return new FiberPreparedStatement(prepareStatement, executor);
     }
 
+    @Override
     @Suspendable
-    @Override
-    public PreparedStatement prepareStatement(final String sql, final String[] columnNames) throws SQLException {
-        try {
-            PreparedStatement prepareStatement = FiberAsync.runBlocking(exec, new CheckedCallable<PreparedStatement, SQLException>() {
-
-                @Override
-                public PreparedStatement call() throws SQLException {
-                    return conn.prepareStatement(sql, columnNames);
-                }
-            });
-            return new FiberPreparedStatement(prepareStatement, exec);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+    public FiberPreparedStatement prepareStatement(final String sql, final String[] columnNames) throws SQLException {
+        final PreparedStatement prepareStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<PreparedStatement, SQLException>() {
+            @Override
+            public PreparedStatement call() throws SQLException {
+                return conn.prepareStatement(sql, columnNames);
+            }
+        });
+        return new FiberPreparedStatement(prepareStatement, executor);
     }
 
     @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        return new FiberCallableStatement(conn.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability), exec);
+    @Suspendable
+    public FiberCallableStatement prepareCall(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
+        final CallableStatement callableStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<CallableStatement, SQLException>() {
+            @Override
+            public CallableStatement call() throws SQLException {
+                return conn.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+            }
+        });
+        return new FiberCallableStatement(callableStatement, executor);
     }
 
     @Override
-    public CallableStatement prepareCall(String sql) throws SQLException {
-        return new FiberCallableStatement(conn.prepareCall(sql), exec);
+    @Suspendable
+    public FiberCallableStatement prepareCall(final String sql) throws SQLException {
+        final CallableStatement callableStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<CallableStatement, SQLException>() {
+            @Override
+            public CallableStatement call() throws SQLException {
+                return conn.prepareCall(sql);
+            }
+        });
+        return new FiberCallableStatement(callableStatement, executor);
     }
 
     @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        return new FiberCallableStatement(conn.prepareCall(sql, resultSetType, resultSetConcurrency), exec);
+    @Suspendable
+    public FiberCallableStatement prepareCall(final String sql, final int resultSetType, final int resultSetConcurrency) throws SQLException {
+        final CallableStatement callableStatement = JDBCFiberAsync.exec(executor, new CheckedCallable<CallableStatement, SQLException>() {
+            @Override
+            public CallableStatement call() throws SQLException {
+                return conn.prepareCall(sql, resultSetType, resultSetConcurrency);
+            }
+        });
+        return new FiberCallableStatement(callableStatement, executor);
     }
 
     @Override
-    public String nativeSQL(String sql) throws SQLException {
-        return conn.nativeSQL(sql);
+    @Suspendable
+    public String nativeSQL(final String sql) throws SQLException {
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<String, SQLException>() {
+            @Override
+            public String call() throws SQLException {
+                return conn.nativeSQL(sql);
+            }
+        });
     }
 
     @Override
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-        conn.setAutoCommit(autoCommit);
+    @Suspendable
+    public void setAutoCommit(final boolean autoCommit) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setAutoCommit(autoCommit);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public boolean getAutoCommit() throws SQLException {
-        return conn.getAutoCommit();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return conn.getAutoCommit();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void commit() throws SQLException {
-        conn.commit();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.commit();
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void rollback() throws SQLException {
-        conn.rollback();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.rollback();
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void close() throws SQLException {
-        conn.close();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.close();
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public boolean isClosed() throws SQLException {
-        return conn.isClosed();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return conn.isClosed();
+            }
+        });
     }
 
     @Override
-    public DatabaseMetaData getMetaData() throws SQLException {
-        return conn.getMetaData();
+    @Suspendable
+    public FiberDatabaseMetaData getMetaData() throws SQLException {
+        final DatabaseMetaData dbMeta = JDBCFiberAsync.exec(executor, new CheckedCallable<DatabaseMetaData, SQLException>() {
+            @Override
+            public DatabaseMetaData call() throws SQLException {
+                return conn.getMetaData();
+            }
+        });
+        return new FiberDatabaseMetaData(dbMeta, executor);
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
-        conn.setReadOnly(readOnly);
+    @Suspendable
+    public void setReadOnly(final boolean readOnly) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setReadOnly(readOnly);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public boolean isReadOnly() throws SQLException {
-        return conn.isReadOnly();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return conn.isReadOnly();
+            }
+        });
     }
 
     @Override
-    public void setCatalog(String catalog) throws SQLException {
-        conn.setCatalog(catalog);
+    @Suspendable
+    public void setCatalog(final String catalog) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setCatalog(catalog);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public String getCatalog() throws SQLException {
-        return conn.getCatalog();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<String, SQLException>() {
+            @Override
+            public String call() throws SQLException {
+                return conn.getCatalog();
+            }
+        });
     }
 
     @Override
-    public void setTransactionIsolation(int level) throws SQLException {
-        conn.setTransactionIsolation(level);
+    @Suspendable
+    public void setTransactionIsolation(final int level) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setTransactionIsolation(level);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getTransactionIsolation() throws SQLException {
-        return conn.getTransactionIsolation();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return conn.getTransactionIsolation();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public SQLWarning getWarnings() throws SQLException {
-        return conn.getWarnings();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<SQLWarning, SQLException>() {
+            @Override
+            public SQLWarning call() throws SQLException {
+                return conn.getWarnings();
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public void clearWarnings() throws SQLException {
-        conn.clearWarnings();
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.clearWarnings();
+                return null;
+            }
+        });
     }
 
     @Override
-    public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        return conn.createStatement(resultSetType, resultSetConcurrency);
+    @Suspendable
+    public FiberStatement createStatement(final int resultSetType, final int resultSetConcurrency) throws SQLException {
+        final Statement statement = JDBCFiberAsync.exec(executor, new CheckedCallable<Statement, SQLException>() {
+            @Override
+            public Statement call() throws SQLException {
+                return conn.createStatement(resultSetType, resultSetConcurrency);
+            }
+        });
+        return new FiberStatement(statement, executor);
     }
 
     @Override
+    @Suspendable
     public FiberPreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency) throws SQLException {
-        try {
-            PreparedStatement stmt = AsyncListenableFuture.get(exec.submit(new Callable<PreparedStatement>() {
-                @Override
-                public PreparedStatement call() throws Exception {
-                    return conn.prepareStatement(sql, resultSetType, resultSetConcurrency);
-                }
-            }));
-            return new FiberPreparedStatement(stmt, exec);
-        } catch (InterruptedException | ExecutionException ex) {
-            throw Exceptions.rethrowUnwrap(ex, SQLException.class);
-        } catch (SuspendExecution ex) {
-            throw new AssertionError(ex);
-        }
+        final PreparedStatement stmt = JDBCFiberAsync.exec(executor, new CheckedCallable<PreparedStatement, SQLException>() {
+            @Override
+            public PreparedStatement call() throws SQLException {
+                return conn.prepareStatement(sql, resultSetType, resultSetConcurrency);
+            }
+        });
+        return new FiberPreparedStatement(stmt, executor);
     }
 
     @Override
+    @Suspendable
     public Map<String, Class<?>> getTypeMap() throws SQLException {
-        return conn.getTypeMap();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable< Map<String, Class<?>>, SQLException>() {
+            @Override
+            public Map<String, Class<?>> call() throws SQLException {
+                return conn.getTypeMap();
+            }
+        });
     }
 
     @Override
-    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-        conn.setTypeMap(map);
+    @Suspendable
+    public void setTypeMap(final Map<String, Class<?>> map) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setTypeMap(map);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setHoldability(int holdability) throws SQLException {
-        conn.setHoldability(holdability);
+    @Suspendable
+    public void setHoldability(final int holdability) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setHoldability(holdability);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getHoldability() throws SQLException {
-        return conn.getHoldability();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return conn.getHoldability();
+            }
+        });
     }
 
     @Override
-    public Savepoint setSavepoint() throws SQLException {
-        return conn.setSavepoint();
+    @Suspendable
+    public FiberSavepoint setSavepoint() throws SQLException {
+        final Savepoint savepoint = JDBCFiberAsync.exec(executor, new CheckedCallable<Savepoint, SQLException>() {
+            @Override
+            public Savepoint call() throws SQLException {
+                return conn.setSavepoint();
+            }
+        });
+        return new FiberSavepoint(savepoint, executor);
     }
 
     @Override
-    public Savepoint setSavepoint(String name) throws SQLException {
-        return conn.setSavepoint(name);
+    @Suspendable
+    public FiberSavepoint setSavepoint(final String name) throws SQLException {
+        final Savepoint savepoint = JDBCFiberAsync.exec(executor, new CheckedCallable<Savepoint, SQLException>() {
+            @Override
+            public Savepoint call() throws SQLException {
+                return conn.setSavepoint(name);
+            }
+        });
+        return new FiberSavepoint(savepoint, executor);
     }
 
     @Override
-    public void rollback(Savepoint savepoint) throws SQLException {
-        conn.rollback(savepoint);
+    @Suspendable
+    public void rollback(final Savepoint savepoint) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.rollback(savepoint);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        conn.releaseSavepoint(savepoint);
+    @Suspendable
+    public void releaseSavepoint(final Savepoint savepoint) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.releaseSavepoint(savepoint);
+                return null;
+            }
+        });
     }
 
     @Override
-    public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        return conn.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+    @Suspendable
+    public FiberStatement createStatement(final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
+        final Statement statement = JDBCFiberAsync.exec(executor, new CheckedCallable<Statement, SQLException>() {
+            @Override
+            public Statement call() throws SQLException {
+                return conn.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+            }
+        });
+        return new FiberStatement(statement, executor);
     }
 
     @Override
-    public Clob createClob() throws SQLException {
-        return conn.createClob();
+    @Suspendable
+    public FiberClob createClob() throws SQLException {
+        final Clob clob = JDBCFiberAsync.exec(executor, new CheckedCallable<Clob, SQLException>() {
+            @Override
+            public Clob call() throws SQLException {
+                return conn.createClob();
+            }
+        });
+        return new FiberClob(clob, executor);
     }
 
     @Override
-    public Blob createBlob() throws SQLException {
-        return conn.createBlob();
+    @Suspendable
+    public FiberBlob createBlob() throws SQLException {
+        final Blob blob = JDBCFiberAsync.exec(executor, new CheckedCallable<Blob, SQLException>() {
+            @Override
+            public Blob call() throws SQLException {
+                return conn.createBlob();
+            }
+        });
+        return new FiberBlob(blob, executor);
     }
 
     @Override
-    public NClob createNClob() throws SQLException {
-        return conn.createNClob();
+    @Suspendable
+    public FiberNClob createNClob() throws SQLException {
+        final NClob nclob = JDBCFiberAsync.exec(executor, new CheckedCallable<NClob, SQLException>() {
+            @Override
+            public NClob call() throws SQLException {
+                return conn.createNClob();
+            }
+        });
+        return new FiberNClob(nclob, executor);
     }
 
     @Override
-    public SQLXML createSQLXML() throws SQLException {
-        return conn.createSQLXML();
+    @Suspendable
+    public FiberSQLXML createSQLXML() throws SQLException {
+        final SQLXML sqlXML = JDBCFiberAsync.exec(executor, new CheckedCallable<SQLXML, SQLException>() {
+            @Override
+            public SQLXML call() throws SQLException {
+                return conn.createSQLXML();
+            }
+        });
+        return new FiberSQLXML(sqlXML, executor);
     }
 
     @Override
-    public boolean isValid(int timeout) throws SQLException {
-        return conn.isValid(timeout);
+    @Suspendable
+    public boolean isValid(final int timeout) throws SQLException {
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Boolean, SQLException>() {
+            @Override
+            public Boolean call() throws SQLException {
+                return conn.isValid(timeout);
+            }
+        });
     }
 
     @Override
-    public void setClientInfo(String name, String value) throws SQLClientInfoException {
-        conn.setClientInfo(name, value);
+    @Suspendable
+    public void setClientInfo(final String name, final String value) throws SQLClientInfoException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLClientInfoException>() {
+            @Override
+            public Void call() throws SQLClientInfoException {
+                conn.setClientInfo(name, value);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        conn.setClientInfo(properties);
+    @Suspendable
+    public void setClientInfo(final Properties properties) throws SQLClientInfoException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLClientInfoException>() {
+            @Override
+            public Void call() throws SQLClientInfoException {
+                conn.setClientInfo(properties);
+                return null;
+            }
+        });
     }
 
     @Override
-    public String getClientInfo(String name) throws SQLException {
-        return conn.getClientInfo(name);
+    @Suspendable
+    public String getClientInfo(final String name) throws SQLException {
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<String, SQLException>() {
+            @Override
+            public String call() throws SQLException {
+                return conn.getClientInfo(name);
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public Properties getClientInfo() throws SQLException {
-        return conn.getClientInfo();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Properties, SQLException>() {
+            @Override
+            public Properties call() throws SQLException {
+                return conn.getClientInfo();
+            }
+        });
     }
 
     @Override
-    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        return conn.createArrayOf(typeName, elements);
+    @Suspendable
+    public FiberArray createArrayOf(final String typeName, final Object[] elements) throws SQLException {
+        final Array array = JDBCFiberAsync.exec(executor, new CheckedCallable<Array, SQLException>() {
+            @Override
+            public Array call() throws SQLException {
+                return conn.createArrayOf(typeName, elements);
+            }
+        });
+        return new FiberArray(array, executor);
     }
 
     @Override
-    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        return conn.createStruct(typeName, attributes);
+    @Suspendable
+    public FiberStruct createStruct(final String typeName, final Object[] attributes) throws SQLException {
+        final Struct struct = JDBCFiberAsync.exec(executor, new CheckedCallable<Struct, SQLException>() {
+            @Override
+            public Struct call() throws SQLException {
+                return conn.createStruct(typeName, attributes);
+            }
+        });
+        return new FiberStruct(struct, executor);
     }
 
     @Override
-    public void setSchema(String schema) throws SQLException {
-        conn.setSchema(schema);
+    @Suspendable
+    public void setSchema(final String schema) throws SQLException {
+        JDBCFiberAsync.exec(executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setSchema(schema);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public String getSchema() throws SQLException {
-        return conn.getSchema();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<String, SQLException>() {
+            @Override
+            public String call() throws SQLException {
+                return conn.getSchema();
+            }
+        });
     }
 
     @Override
-    public void abort(Executor executor) throws SQLException {
-        conn.abort(executor);
+    @Suspendable
+    public void abort(final Executor executor) throws SQLException {
+        JDBCFiberAsync.exec(this.executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.abort(executor);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-        conn.setNetworkTimeout(executor, milliseconds);
+    @Suspendable
+    public void setNetworkTimeout(final Executor executor, final int milliseconds) throws SQLException {
+        JDBCFiberAsync.exec(this.executor, new CheckedCallable<Void, SQLException>() {
+            @Override
+            public Void call() throws SQLException {
+                conn.setNetworkTimeout(executor, milliseconds);
+                return null;
+            }
+        });
     }
 
     @Override
+    @Suspendable
     public int getNetworkTimeout() throws SQLException {
-        return conn.getNetworkTimeout();
+        return JDBCFiberAsync.exec(executor, new CheckedCallable<Integer, SQLException>() {
+            @Override
+            public Integer call() throws SQLException {
+                return conn.getNetworkTimeout();
+            }
+        });
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(final Class<T> iface) throws SQLException {
         return conn.unwrap(iface);
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(final Class<?> iface) throws SQLException {
         return conn.isWrapperFor(iface);
     }
 
@@ -411,6 +672,7 @@ class FiberConnection implements Connection {
         return conn.hashCode();
     }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
         return conn.equals(obj);

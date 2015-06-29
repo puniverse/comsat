@@ -1,3 +1,16 @@
+/*
+ * COMSAT
+ * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
+ */
 package co.paralleluniverse.fibers.jooq;
 
 import co.paralleluniverse.fibers.instrument.LogLevel;
@@ -12,15 +25,49 @@ import co.paralleluniverse.fibers.instrument.SuspendableClassifier;
 public class JooqClassifier implements SuspendableClassifier {
     private static final String PKG_PREFIX = "org/jooq";
     String[][] methodsArray = {
-        {"java/sql/Statement", "execute.*", "getResultSet"},
-        {"java/sql/Connection", "prepareStatement"},
+        {"java/util/Iterator", "hasNext"},
+        {"java/sql/Statement", ".*"},
+        {"java/sql/Connection", ".*"},
+
+        {"org/jooq/Context", "visit", "bindValue"},
+        {"org/jooq/Binding", "register", "get", "set"},
+        {"org/jooq/QueryPartInternal", "accept", "bind"},
+        {"org/jooq/BindContext", "bind", "bindValue", "bindValues"},
         {"org/jooq/Query", "execute"},
         {"org/jooq/ResultQuery", "getResult", "fetch.*"},
-        {"org/jooq/impl/AbstractQuery", "prepare"}
+        {"org/jooq/Cursor", "fetch.*", "hasNext"},
+        {"org/jooq/InsertResultStep", "fetch.*"},
+
+        {"org/jooq/impl/RecordOperation", "operate"},
+
+        {"org/jooq/impl/AbstractField", "accept"},
+        {"org/jooq/impl/AbstractQuery", "prepare"},
+        {"org/jooq/impl/AbstractContext", "visit0"},
+        {"org/jooq/impl/AbstractBindContext", "bindValue0", "bindInternal"},
+        {"org/jooq/impl/AbstractStoreQuery", "accept0"},
+        {"org/jooq/impl/AbstractDMLQuery", "accept0"},
+
+        {"org/jooq/impl/InsertQueryImpl", "toSQLInsert"},
+        {"org/jooq/impl/SelectQueryImpl", "toSQLReference0", "toSQLReferenceLimitDefault"},
+        {"org/jooq/impl/CursorImpl$CursorIterator", "fetch.*"},
+        {"org/jooq/impl/CursorImpl$CursorIterator", "hasNext"},
+        {"org/jooq/impl/CursorImpl$CursorIterator$CursorRecordInitialiser", "setValue"},
+        {"org/jooq/impl/CursorImpl$CursorResultSet", ".*"},
+        {"org/jooq/impl/CursorImpl", "close"},
+        {"org/jooq/impl/RecordDelegate", "operate"},
+        {"org/jooq/impl/DSL", "using"},
+
+        {"org/jooq/tools/jdbc/JDBCUtils", "dialect", "safeClose"},
+        {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
     };
 
     @Override
-    public MethodDatabase.SuspendableType isSuspendable(MethodDatabase db, String className, String superClassName, String[] interfaces, String methodName, String methodDesc, String methodSignature, String[] methodExceptions) {
+    public MethodDatabase.SuspendableType isSuspendable (
+        MethodDatabase db,
+        String sourceName, String sourceDebugInfo,
+        boolean isInterface, String className, String superClassName, String[] interfaces,
+        String methodName, String methodDesc, String methodSignature, String[] methodExceptions
+    ) {
         // declares given methods as supers
         for (String[] susExtendables : methodsArray) {
             if (className.equals(susExtendables[0]))

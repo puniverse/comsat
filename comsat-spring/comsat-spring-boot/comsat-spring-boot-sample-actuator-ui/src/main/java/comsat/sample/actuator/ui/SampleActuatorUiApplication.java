@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -20,29 +20,21 @@ package comsat.sample.actuator.ui;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration;
-import co.paralleluniverse.springframework.security.config.FiberSecurityContextHolderConfig;
+import co.paralleluniverse.springframework.boot.security.autoconfigure.web.FiberSecureSpringBootApplication;
 import java.util.Date;
 import java.util.Map;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@EnableAutoConfiguration
-@ComponentScan
 @Controller
-// The following will enable fiber-blocking while still preserving autoconfiguration and will let fibers inherit security context
-@Import({FiberWebMvcAutoConfiguration.class, FiberSecurityContextHolderConfig.class})
+@FiberSecureSpringBootApplication
 public class SampleActuatorUiApplication {
-
     @RequestMapping("/")
     public String home(Map<String, Object> model) throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         model.put("message", "Hello World");
         model.put("title", "Hello Home");
         model.put("date", new Date());
@@ -51,7 +43,7 @@ public class SampleActuatorUiApplication {
 
     @RequestMapping("/foo")
     public String foo() throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         throw new RuntimeException("Expected exception in controller");
     }
 
@@ -65,5 +57,4 @@ public class SampleActuatorUiApplication {
         security.getBasic().setPath(""); // empty so home page is unsecured
         return security;
     }
-
 }

@@ -2,12 +2,12 @@ allprojects {
     configurations {
         markdownDoclet
     }
-    
+
     repositories {
 //        mavenLocal()
         mavenCentral()
     }
-    
+
     dependencies {
         markdownDoclet "ch.raffael.pegdown-doclet:pegdown-doclet:1.1.1"
     }
@@ -22,7 +22,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.3.0"
+    version             = "0.4.0-SNAPSHOT"
     status              = "integration"
     description         = "Fibers services for web"
 
@@ -34,66 +34,57 @@ subprojects {
     ext.licenseUrl2     = "http://www.eclipse.org/legal/epl-v10.html"
     ext.scmUrl          = "https://github.com/puniverse/comsat"
     ext.scmConnection   = "https://github.com/puniverse/comsat.git"
-    
+
     ext.distDir         = "$buildDir/dist"
 
     ext.isRelease       = !version.endsWith("SNAPSHOT")
 
-    ext.metricsVer      = '3.0.2'
-    ext.asmVer          = '5.0.3'
-    
-    ext.quasarVer       = "0.6.2"
-    ext.jettyVer        = '9.2.6.v20141205'
-    ext.undertowVer     = '1.1.1.Final'
-    ext.tomcatVer       = '8.0.9' // '8.0.15'
+    ext.metricsVer      = '3.1.2'
+    ext.asmVer          = '5.0.4'
+
+    ext.quasarVer       = '0.7.2'
+
+    ext.jettyVer        = '9.2.11.v20150529' // '9.3.0.v20150612' requires JDK8
+    ext.undertowVer     = '1.2.8.Final'
+    ext.tomcatVer       = '8.0.23'
 
     ext.osgiVer         = '6.0.0'
-    ext.jerseyVer       = '2.14'
+    ext.jerseyVer       = '2.18'
+    ext.hk2apiVer       = '2.4.0-b25'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
     ext.servletVer      = '3.0.1'
     ext.jaxrsVer        = '2.0.1'
     ext.websocketApiVer = '1.0'
 
-    ext.dropwizardVer   = '0.7.1'
-    ext.jdbiVer         = '2.55'
-    ext.apacheAsyncClientVer   = '4.0.2'
-    ext.httpCoreVer            = '4.3.3'
-    ext.httpClientVer          = '4.3.6'
+    ext.dropwizardVer   = '0.8.1'
+    ext.jdbiVer         = '2.62'
 
-    ext.retrofitVer     = '1.8.0'
-    ext.jooqVer         = '3.5.0'
-    ext.slf4jApiVer     = '1.7.9'
+    ext.retrofitVer     = '1.9.0'
+    ext.jooqVer         = '3.6.2'
+    ext.slf4jApiVer     = '1.7.12'
+    ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '18.0'
-    
+
+    ext.okhttpVer       = '2.4.0'
+
+    ext.apacheAsyncClientVer   = '4.1'
+    ext.httpCoreVer            = '4.4.1'
+    ext.httpClientVer          = '4.5'
+
+    ext.junitVer               = '4.12'
+    ext.h2Ver                  = '1.4.187'
+
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
-    ext.embedMongoVer                   = '1.46.4'
+    ext.embedMongoVer                   = '1.47.0'
 
-    ext.springSecurityVer               = '3.2.5.RELEASE'
-
-    ext.springVer                       = '4.0.8.RELEASE'
-    ext.springBootVer                   = '1.1.9.RELEASE'
-
-    ext.aspectjVer              = '1.8.4'
-    ext.jqueryVer               = '2.0.3-1'
-    ext.commonsBeanUtilsVer     = '1.9.2'
-    ext.commonsDigesterVer      = '2.1'
-    ext.commonsCollectionsVer   = '3.2.1'
-    ext.velocityVer             = '1.7'
-    ext.hamcrestVer             = '1.3'
-    ext.jbossLoggingVer         = '3.1.3.GA'
-    ext.jspVer                  = '2.2.0.v201112011158'
-    ext.snakeYamlVer            = '1.14'
-    
-    ext.junitVer                = '4.12'
-    
-    // These are for next Spring Boot release, 1.2.0
-    // ext.springVer                    = '4.1.2.RELEASE'
-    // ext.springBootVer                = '1.2.0.RC2'
+    // ext.bytemanVer = '3.0.1'
 
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
+
+            force "org.jdbi:jdbi:$jdbiVer"
             force "org.ow2.asm:asm:$asmVer"
             force "org.ow2.asm:asm-commons:$asmVer"
             force "com.codahale.metrics:metrics-core:$metricsVer"
@@ -103,40 +94,16 @@ subprojects {
             force "org.apache.httpcomponents:httpclient:$httpClientVer"
             force "javax.servlet:javax.servlet-api:$servletVer"
             force "javax.ws.rs:javax.ws.rs-api:$jaxrsVer"
-
-            force "org.springframework:spring-aop:$springVer"
-            force "org.springframework:spring-beans:$springVer"
-            force "org.springframework:spring-context:$springVer"
-            force "org.springframework:spring-core:$springVer"
-            force "org.springframework:spring-expression:$springVer"
-            force "org.springframework:spring-web:$springVer"
-            force "org.springframework:spring-orm:$springVer"
-            force "org.springframework:spring-tx:$springVer"
-            
-            force "org.aspectj:aspectjrt:$aspectjVer"
-            force "org.aspectj:aspectjweaver:$aspectjVer"
-            force "org.webjars:jquery:$jqueryVer"
-            force "commons-beanutils:commons-beanutils:$commonsBeanUtilsVer"
-            force "commons-digester:commons-digester:$commonsDigesterVer"
-            force "commons-collections:commons-collections:$commonsCollectionsVer"
-            force "org.apache.velocity:velocity:$velocityVer"
-            force "org.hamcrest:hamcrest-core:$hamcrestVer"
-            force "org.jboss.logging:jboss-logging:$jbossLoggingVer"
-            force "org.eclipse.jetty.orbit:javax.servlet.jsp:$jspVer"
-            force "org.yaml:snakeyaml:$snakeYamlVer"
-
-            force "junit:junit:$junitVer"
-
-            // These are for next Spring Boot release, 1.2.0
-            /*
-            force "org.glassfish:javax.el:3.0.1-b05"
-            force "org.apache.tomcat.embed:tomcat-embed-core:8.0.15"
-            force "org.apache.tomcat.embed:tomcat-embed-el:8.0.15"
-            force "org.hibernate:hibernate-validator:5.1.3.Final"
-            */
+            force "org.glassfish.jersey.core:jersey-server:$jerseyVer"
+            force "org.glassfish.jersey.core:jersey-client:$jerseyVer"
+            force "org.glassfish.jersey.core:jersey-common:$jerseyVer"
+            force "org.glassfish.jersey.containers:jersey-container-servlet-core:$jerseyVer"
+            force "org.glassfish.hk2:hk2-api:$hk2apiVer"
+            force "org.glassfish.hk2:hk2-locator:$hk2apiVer"
+            force "org.glassfish.hk2.external:javax.inject:$hk2apiVer"
         }
     }
-    
+
     if (!project.hasProperty("sonatypeUsername") || !project.hasProperty("sonatypePassword")) {
         //        println "sonatype username or password not set"
         ext.sonatypeUsername = ""
@@ -158,18 +125,20 @@ subprojects {
 
     configurations {
         quasar
+        // byteman
         provided
         srcFiles
     }
-    
+
     dependencies {
         compile "com.google.guava:guava:$guavaVer"
         quasar "co.paralleluniverse:quasar-core:$quasarVer@jar" 
+        // byteman "org.jboss.byteman:byteman:$bytemanVer@jar"
         testCompile "junit:junit:$junitVer"
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         provided "javax.servlet:javax.servlet-api:$servletVer" // was 3.1.0
     }
-    
+
     sourceSets {
         main.compileClasspath = main.compileClasspath + configurations.provided
         test.compileClasspath = test.compileClasspath + configurations.provided
@@ -191,7 +160,7 @@ subprojects {
                 append: true) {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
-            
+
             //            ant.taskdef(name:'scanSuspendables', 
             //                classname:'co.paralleluniverse.fibers.instrument.OldSuspendablesScanner', 
             //                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
@@ -202,17 +171,21 @@ subprojects {
             //            }
         }
     }
-    
+
     tasks.withType(Test) {
-        systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
-        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
+        // systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+        // systemProperty 'co.paralleluniverse.fibers.detectRunawayFibers', 'false'
+        // systemProperty 'org.jboss.byteman.verbose', 'true'
+        // systemProperty 'org.jboss.byteman.debug', 'true'
+        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d, =c
+                // , "-javaagent:${configurations.byteman.singleFile}=script:${projectDir}/script.btm"
     }
-    
+
     test {
         beforeTest { desc ->
             logger.quiet("Running test: " + desc)
         }
-        
+
         afterTest { desc, result -> 
             if(result.resultType == TestResult.ResultType.FAILURE) {
                 logger.quiet("Failed test ${desc.name} [${desc.className}] with exception: ${result.exception}")
@@ -222,7 +195,7 @@ subprojects {
             }
         }
     }
-    
+
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -237,7 +210,7 @@ subprojects {
         skipExistingHeaders true
         mapping('java','SLASHSTAR_STYLE')
     }
-    
+
     apply plugin: 'com.github.ben-manes.versions'
 
     //rest of the subprojects definition in the block after subproject specific definitions
@@ -275,7 +248,7 @@ project (':comsat-actors-servlet') {
 
 project (':comsat-dropwizard') {
     dependencies {
-        testRuntime 'com.h2database:h2:1.4.184'
+        testRuntime "com.h2database:h2:$h2Ver"
         compile "io.dropwizard:dropwizard-core:$dropwizardVer"
         compile "io.dropwizard:dropwizard-client:$dropwizardVer"
         compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
@@ -344,7 +317,7 @@ project (':comsat-jersey-server') {
     dependencies {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.1.1' // instead of old cglib in jersey
-        compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVer" ) {
+        compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVer") {
             exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
         }
         provided "org.osgi:org.osgi.core:$osgiVer"
@@ -365,6 +338,16 @@ project (':comsat-mongodb-allanbank') {
         compile "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVer"
         testCompile "de.flapdoodle.embed:de.flapdoodle.embed.mongo:$embedMongoVer"
         testCompile project(':comsat-test-utils')
+    }
+}
+
+project (':comsat-okhttp') {
+    dependencies {
+        compile "com.squareup.okhttp:okhttp:$okhttpVer"
+        compile "com.squareup.okhttp:okhttp-urlconnection:$okhttpVer"
+        compile "com.squareup.okhttp:okhttp-apache:$okhttpVer"
+        compile project (':comsat-httpclient')
+        testCompile "com.squareup.okhttp:mockwebserver:$okhttpVer"
     }
 }
 
@@ -394,8 +377,8 @@ project (':comsat-servlet') {
 project (':comsat-test-utils') {
     dependencies {
         compile "org.slf4j:slf4j-api:$slf4jApiVer"
-        compile "org.apache.httpcomponents:httpclient:4.3.5"
-        compile 'com.h2database:h2:1.4.180'
+        compile "org.apache.httpcomponents:httpclient:$httpClientVer"
+        compile "com.h2database:h2:$h2Ver"
         compile "org.glassfish.jersey.core:jersey-client:$jerseyVer"
         compile "org.glassfish.jersey.media:jersey-media-sse:$jerseyVer"
         
@@ -422,16 +405,16 @@ project (':comsat-servlet') {
         srcFiles "javax.servlet:javax.servlet-api:$servletVer:sources"
     }
 }
+
 project (':comsat-httpclient') {    
     dependencies {
         srcFiles ("org.apache.httpcomponents:httpasyncclient:$apacheAsyncClientVer:sources") {
             exclude group: 'org.apache.httpcomponents', module: 'httpclient'
         }
-        srcFiles "org.apache.httpcomponents:httpclient:4.3.5:sources"
+        srcFiles "org.apache.httpcomponents:httpclient:$httpClientVer:sources"
         // srcFiles "org.apache.httpcomponents:httpcore:$httpCoreVer:sources"
     }
 }
-
 
 /* project (':comsat-mongodb') {    
 dependencies {
@@ -442,18 +425,19 @@ srcFiles "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVer:sources"
 // links are needed for javadoc external links. (eg. instead of javax.sql.DataSource link to DataSource)
 ext.javadocLinks =  [
                 "http://docs.oracle.com/javaee/7/api/",
-                "http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/",
-                "http://hc.apache.org/httpcomponents-asyncclient-4.0.x/httpasyncclient/apidocs/",
-                "http://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/",
+                "http://hc.apache.org/httpcomponents-client-4.5.x/httpclient/apidocs/",
+                "http://hc.apache.org/httpcomponents-asyncclient-4.1.x/httpasyncclient/apidocs/",
+                "http://hc.apache.org/httpcomponents-core-4.4.x/httpcore/apidocs/",
                 "http://square.github.io/retrofit/javadoc/",
                 "http://jdbi.org/apidocs/",
-                "http://www.jooq.org/javadoc/3.3.x/",
+                "http://www.jooq.org/javadoc/3.6.x/",
                 "http://docs.oracle.com/javase/7/docs/api/",
                 "http://puniverse.github.io/quasar/javadoc/",
-                "http://docs.guava-libraries.googlecode.com/git-history/v17.0/javadoc/",
+                "http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc/",
                 "http://jersey.java.net/apidocs/latest/jersey/",
                 "http://www.allanbank.com/mongodb-async-driver/apidocs/",
-                "http://docs.spring.io/spring/docs/current/javadoc-api/"
+                "http://docs.spring.io/spring/docs/current/javadoc-api/",
+                "http://square.github.io/okhttp/javadoc/"
 ]
 
 ext.javadocExcludes = [
@@ -481,7 +465,7 @@ subprojects {
         classifier = 'javadoc'
         from javadoc.destinationDir
     } 
-    
+
     ///////// Publish Artifacts 
     apply plugin: 'maven'
     apply plugin: 'signing'
@@ -577,7 +561,7 @@ buildscript {
 } 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.2.1'
+    gradleVersion = '2.4'
 }
 
 defaultTasks 'install'

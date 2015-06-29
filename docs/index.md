@@ -6,15 +6,19 @@ description: "Comsat integrates lightweight threads and actors with the JVM web 
 
 # Overview
 
-COMSAT (or Comsat) is a set of open source libraries that integrate [Quasar](http://puniverse.github.io/quasar/) with various web or enterprise technologies (like HTTP services and database access). With Comsat, you can write web applications that are scalable and performant while, at the same time, are simple to code and maintain.
+COMSAT (or Comsat) is a set of open source libraries that integrate [Quasar](http://puniverse.github.io/quasar/) with various web or enterprise technologies (like HTTP services and database access). With Comsat, you can write web applications that are scalable and performant and, at the same time, are simple to code and maintain.
 
-Comsat is not a web framework. In fact, it does not add new APIs at all (with one exception, Web Actors, mentioned later). It provides implementation to popular (and often, standard) APIs like Servlet, JAX-RS, and JDBC, that can be called within Quasar fibers.
+Comsat is not a web framework. In fact, it does not add new APIs at all (with one exception, Web Actors, mentioned later). It provides implementation to popular (and often, standard) APIs like Servlet, JAX-RS, and JDBC, that can be used efficiently within Quasar fibers.
 
-Comsat does provide one new API that you may choose to use: [Web Actors](manual/webactors.html). Web actors let you define a Quasar actor that receives and responds to HTTP requests and web socket messages. The Web Actors API is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the client.
+Comsat does provide one new API that you may choose to use: Web Actors. Web actors let you define a Quasar actor that receives and responds to HTTP requests and web socket messages. The Web Actors API is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the client.
 
 [Parallel Universe]: http://paralleluniverse.co
 
 ## News
+
+### TBBD
+
+COMSAT [0.4.0](https://github.com/puniverse/comsat/releases/tag/v0.4.0) has been released.
 
 ### December 23, 2014
 
@@ -36,13 +40,13 @@ Java 7 is required to use COMSAT.
 
 ### Using Maven {#maven}
 
-First, you must add the `quasar-core` dependency:
+First, you need the `quasar-core` dependency:
 
 ~~~ xml
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>{{site.version}}</version>
+    <version>0.7.1</version>
 </dependency>
 ~~~
 
@@ -52,7 +56,7 @@ or, for JDK8:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>{{site.version}}</version>
+    <version>0.7.1</version>
     <classifier>jdk8</classifier>
 </dependency>
 ~~~
@@ -63,7 +67,7 @@ Then add those Comsat modules that you'd like to use:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>ARTIFACT</artifactId>
-    <version>{{site.version}}</version>
+    <version>0.7.1}</version>
 </dependency>
 ~~~
 
@@ -71,11 +75,13 @@ where `ARTIFACT` is:
 
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
 * `comsat-ring-jetty9` - A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.2
+* `comsat-httpkit` - [HTTP Kit](http://www.http-kit.org/client.html)-based fiber-blocking HTTP client.
 * `comsat-jersey-server` – [Jersey server](https://jersey.java.net/) integration for defining REST services.
 * `comsat-dropwizard` – [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.
 * `comsat-spring-webmvc` – [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.
-* `comsat-spring-boot` – [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.
 * `comsat-spring-security` – [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.
+* `comsat-spring-boot` – [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.
+* `comsat-spring-boot-security` – auto-configuration support with security for Web MVC controllers.
 * `comsat-jax-rs-client` – [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for calling HTTP services.
 * `comsat-httpclient` – [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for calling HTTP services.
 * `comsat-retrofit` – [Retrofit](http://square.github.io/retrofit/) integration.
@@ -83,6 +89,7 @@ where `ARTIFACT` is:
 * `comsat-jdbc` – JDBC integration for using the JDBC API in fibers.
 * `comsat-jooq` – [jOOQ](http://www.jooq.org/) integration for using the jOOQ API in fibers.
 * `comsat-mongodb-allanbank` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
+* `comsat-okhttp` – [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.
 * `comsat-actors-api` – the Web Actors API
 * `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
@@ -116,7 +123,7 @@ Then, include the following in your webapp's `META-INF/context.xml`:
 {% include_snippet loader ./comsat-test-war/src/main/webapp/META-INF/context.xml %}
 ~~~
 
-The Tomcat instrumenting class-loader has been verified to work with Tomcat 7.0.56 and Tomcat 8.0.15 standalone Servlet containers.
+The Tomcat instrumenting class-loader has been verified to work with Tomcat 7.0.62 and Tomcat 8.0.23 standalone Servlet containers.
 
 #### In Jetty
 
@@ -171,45 +178,6 @@ Then you can simply add it as a regular servlet to you favorite servlet containt
 
 To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html).
 
-### Clojure Ring
-
-The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring any handler code change.
-
-Comsat Ring is based on Pulsar, so it is necessary that the handler itself and all middlewares applied around it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
-
-So rather than:
-
-~~~ clojure
-(ns myapp
-  (:use ring.adapter.jetty))
-
-(defn- hello-world [request]
-  (Thread/sleep 100)
-  {:status  200
-   :headers {"Content-Type" "text/plain"}
-   :body    "Hello World"})
-
-(run-jetty hello-world {:port 8080})
-~~~
-
-Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-clj-ring "{{site.version}}"]` dependency, and change your `use`/`require` clauses slightly:
-
-~~~ clojure
-(ns myapp
-  (:use co.paralleluniverse.fiber.ring.jetty9)
-  (:import (co.paralleluniverse.fibers Fiber)))
-
-(defn- hello-world [request]
-  (Fiber/sleep 100)
-  {:status  200
-   :headers {"Content-Type" "text/plain"}
-   :body    "Hello World"})
-
-(run-jetty hello-world {:port 8080})
-~~~
-
-Congratulations! Your handler is now running inside fibers rather than threads.
-
 ### REST Services
 
 You can easily create Comsat REST services with the [JAX-RS API](https://jax-rs-spec.java.net/nonav/2.0/apidocs/index.html), the standard Java REST service API. Comsat integrates with [Jersey](https://jersey.java.net/), the reference JAX-RS implementation.
@@ -235,7 +203,7 @@ Here is an example of REST resource declaration:
 {% include_snippet REST resource example ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/TestResource.java %}
 ~~~
 
-And then initiation of the jersey container:
+And then initialization of the jersey container:
 
 ~~~ java
 {% include_snippet jersey registration ./comsat-jersey-server/src/test/java/co/paralleluniverse/fibers/jersey/FiberServletContainerTest.java %}
@@ -245,22 +213,81 @@ To learn about writing REST services with JAX-RS, please refer to the [Jersey Us
 {:.alert .alert-info}
 **Note**: [Web Actors](webactors.html) are a great way to write REST services, as well as web-socket services, for interactive web applications.
 
+### Clojure Ring
+
+The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring handler logic changes.
+
+Comsat Ring is based on Pulsar, so it is necessary that the handler's fiber-blocking logic and all functions calling it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). This often means declaring suspendable the handler itself and middlewares applied to it. You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
+
+So rather than:
+
+~~~ clojure
+(ns myapp.core
+  (:use ring.adapter.jetty))
+
+(defn- hello-world [request]
+  (Thread/sleep 100)
+  {:status  200
+   :headers {"Content-Type" "text/plain"}
+   :body    "Hello World"})
+
+(defn run [] (run-jetty hello-world {:port 8080}))
+~~~
+
+Just setup Pulsar as described in the [docs](http://docs.paralleluniverse.co/pulsar/#lein), remembering to add the `[co.paralleluniverse/comsat-ring-jetty9 "{{site.version}}"]` dependency, and change your `use` or `require` clauses slightly:
+
+~~~ clojure
+(ns myapp.core
+  (:use co.paralleluniverse.fiber.ring.jetty9)
+  (:import (co.paralleluniverse.fibers Fiber))
+  (:require [co.paralleluniverse.pulsar.core :as pc]))
+
+(pc/defsfn hello-world [request]
+  (Fiber/sleep 100)
+  {:status  200
+   :headers {"Content-Type" "text/plain"}
+   :body    "Hello World"})
+
+(defn run [] (run-jetty hello-world {:port 8080}))
+~~~
+
+Your handler is now running inside fibers rather than threads.
+
+### Clojure HTTP Kit Client
+
+[HTTP Kit](http://www.http-kit.org/) is a minimalist, efficient, Ring-compatible HTTP client/server for Clojure that supports async operation. The client API is an async subset of [clj-http](https://github.com/dakrone/clj-http) and the `comsat-httpkit` integration converts it back to straightforward fiber-blocking `clj-http` through the `await` function. Being only 18 lines of code, this integration also shows how easy it is to integrate Clojure async APIs with Pulsar.
+
+Just add `comsat-httpkit` to your dependencies and `require` the `co.paralleluniverse.fiber.httpkit.client` namespace. You can then use `request`, `get`, `delete`, `head`, `post`, `put`, `options`, `patch` inside your fibers as you would use `clj-http` (currently limited to the `clj-http` features supported by HTTP Kit):
+
+~~~ clojure
+(ns myapp
+  (:require
+    [co.paralleluniverse.fiber.httpkit.client :refer :all]
+    [co.paralleluniverse.pulsar.core :refer [fiber]]))
+
+(defn -main []
+  (println @(fiber (get "http://google.com"))))
+~~~
+
+Have also a look at the testsuite ported from HTTP Kit.
+
 ### HTTP Clients
 
 #### Apache Http Client
-The fiber blocking version of the Apache Http Client can be used with FiberHttpClientBuilder.
+The fiber blocking version of the Apache Http Client can be used with `FiberHttpClientBuilder`.
 For example:
 
 ~~~ java
 {% include_snippet client configuration ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpclient/FiberHttpClientBuilderTest.java %}
 ~~~
-After that you may call the refular API from fiber context:
+
+After that you can call the regular API from fibers:
 
 ~~~ java
 {% include_snippet http call ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpclient/FiberHttpClientBuilderTest.java %}
 ~~~
 
-If you prefer to use the future API of apacheHttpClient you should build regular HttpAsyncClient and then wrap it with FiberCloseableHttpAsyncClient.wrap, for example
+If you prefer to use the future API you should build a regular `HttpAsyncClient `and then wrap it with `FiberCloseableHttpAsyncClient.wrap`, for example
 
 ~~~ java
 {% include_snippet client configuration ./comsat-httpclient/src/test/java/co/paralleluniverse/fibers/httpasyncclient/FiberHttpAsyncClientTest.java %}
@@ -273,25 +300,26 @@ Then you can use it as follows:
 ~~~
 
 #### Jersey Http Client
-Comsat's integrated HTTP client is a JAX-RS client (specifically, Jersey client). To create a client instance compatible with Quasar fibers, use the [`AsyncClientBuilder`]({{javadoc}}/fibers/ws/rs/client/AsyncClientBuilder.html) class:
+
+Comsat's integrated HTTP client is a JAX-RS client (specifically, a Jersey client). To create a client instance compatible with Quasar fibers, use the [`AsyncClientBuilder`]({{javadoc}}/fibers/ws/rs/client/AsyncClientBuilder.html) class:
 
 ~~~ java
 Client client = AsyncClientBuilder.newClient();
 ~~~
 
-You can also pass a configuration
+You can also pass a configuration:
 
 ~~~ java
 Client client = AsyncClientBuilder.newClient(config);
 ~~~
 
-or use the builder API
+or use the builder API:
 
 ~~~ java
 {% include_snippet client creation ./comsat-jax-rs-client/src/test/java/co/paralleluniverse/fibers/ws/rs/client/AsyncClientBuilderTest.java %}
 ~~~
 
-Then the usage is in the regular API, for example:
+Then the usage is like the regular API, for example:
 
 ~~~ java
 {% include_snippet http call ./comsat-jax-rs-client/src/test/java/co/paralleluniverse/fibers/ws/rs/client/AsyncClientBuilderTest.java %}
@@ -311,17 +339,17 @@ Calling `Future.get()` would also just block the fiber and not any OS thread.
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
 
 {:.alert .alert-warn}
-**Note**: Jersey client's current implementation (since 2.5) has significant disadvantage relative to ApacheHttpClient since it uses thread per each open http call. Therefore it is not recommended, till it is fixed.
+**Note**: the Jersey client's current implementation (since 2.5) has a significant disadvantage w.r.t ApacheHttpClient because it uses one thread per http call. Therefore it is not recommended until this is fixed.
 
 #### Retrofit
 
-[`Retrofit`](http://square.github.io/retrofit/) lets you access REST api through java interface. In order to use it from fiber context you should first declare `Suspendable` interface:
+[`Retrofit`](http://square.github.io/retrofit/) lets you access REST API through java interface. In order to use it from fibers you should first declare a `Suspendable` interface:
 
 ~~~ java
 {% include_snippet interface ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}
 ~~~
 
-This interface can be registered with `FiberRestAdapterBuilder` and then used from fiber context.
+This interface can then be registered with `FiberRestAdapterBuilder` and then used from fibers:
 
 ~~~ java
 {% include_snippet registration ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}// ...
@@ -329,17 +357,36 @@ This interface can be registered with `FiberRestAdapterBuilder` and then used fr
 {% include_snippet usage ./comsat-retrofit/src/test/java/co/paralleluniverse/fibers/retrofit/FiberRestAdapterBuilderTest.java %}
 ~~~
 
+#### OkHttp
+
+Comsat integrates with [OkHttp](https://github.com/square/okhttp), a modern HTTP+SPDY client and offers fiber-blocking `OkHttpClient` and `Call` implementation.
+
+Build fiber-friendly, fully OkHttp-compatible `FiberOkHttpClient` and `FiberCall` as follows:
+
+~~~ java
+Request req = ...;
+OkHttpClient client = new FiberOkHttpClient();
+Call call = client.newCall(req);
+~~~
+
+OkHttp's `urlconnection` and `apache` modules are supported as well: just pass an `FiberOkHttpClient` instance when building `OkUrlFactory` and `OkApacheClient`:
+
+~~~ java
+OkUrlFactory factory = new OkUrlFactory(new FiberOkHttpClient());
+OkApacheClient client = new OkApacheClient(new FiberOkHttpClient());
+~~~
+
 ### DB Access
 
 #### JDBC
 
-The `comsat-jdbc` project integrates the JDBC API with applications employing Quasar fibers (or actors). To use JDBC in Quasar fibers or actors, simply wrap your database driver's `DataSource` with [`FiberDataSource`]({{javadoc}}/fibers/jdbc/FiberDataSource.html), and use it to obtain connections which you may then freely use within fibers. For example:
+The `comsat-jdbc` project makes the JDBC API more efficient when using Quasar fibers (or fiber-backed actors). To use JDBC in fibers, simply wrap your database driver's `DataSource` with [`FiberDataSource`]({{javadoc}}/fibers/jdbc/FiberDataSource.html), and use it to obtain connections. For example:
 
 ~~~ java
 {% include_snippet DataSource wrapping ./comsat-jdbc/src/test/java/co/paralleluniverse/fibers/jdbc/FiberDataSourceTest.java %}
 ~~~
 
-Then the DataSource can be used with the regular API from fiber context, For example:
+Then the DataSource can be used with the regular API from fibers, For example:
 
 ~~~ java
 {% include_snippet DataSource usage ./comsat-jdbc/src/test/java/co/paralleluniverse/fibers/jdbc/FiberDataSourceTest.java %}// ...
@@ -350,7 +397,7 @@ Then the DataSource can be used with the regular API from fiber context, For exa
 {:.alert .alert-info}
 **Note**: A method that makes use of the API and runs in a fiber must be declared [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) (normally by declaring `throws SuspendExecution`).
 
-Normally, Comsat transforms asynchronous (callback based) API into fiber-blocking operations. JDBC, however, has no asynchronous API. c`omsat-jdbc` simply runs the actual thread-blocking JDBC operations in a thread pool, and blocks the calling fiber until the operation has completed execution in the thread pool. As a result, you will not get any scalability benefits by calling your database in fibers (unlike, say, calling web services), because an OS thread will still block on every JDBC call. In practice, though, it matters little, as your database is likely to be a narrower bottleneck than the OS scheduler anyway.
+Normally, Comsat transforms asynchronous (callback based) API into fiber-blocking operations. JDBC, however, has no asynchronous API. `comsat-jdbc` simply runs the actual thread-blocking JDBC operations in a thread pool, and blocks the calling fiber until the operation has completed execution in the thread pool. As a result, you will not get any scalability benefits by calling your database in fibers (unlike, say, calling web services), because an OS thread will still block on every JDBC call. In practice, though, it matters little, as your database is likely to be a narrower bottleneck than the OS scheduler anyway.
 
 {:.alert .alert-warn}
 **Note**: Your application may only may direct use of the Comsat JDBC data source, because methods calling the API must be declared suspendable (or run on regular threads). Database access frameworks (like various ORM solutions) that make use of JDBC cannot use this data source and be used in Quasar fibers. In the future, we will provide separate integration module for some popular database access libraries.
@@ -359,7 +406,7 @@ If you want to learn how to use JDBC, the [JDBC tutorial](http://docs.oracle.com
 
 #### JDBC Deployment Via JNDI
 
-Servlets often make use of JDBC data sources exposed through JNDI. If you do that, you can declare a COMSAT (i.e. a fiber-aware) JDBC data source through JNDI that will wrap your native data source. To do so, you will use the `co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory` DataSource factory, and pass in the number of threads you'd like COMSAT to use in the JDBC worker pool.
+Servlets often make use of JDBC data sources exposed through JNDI. If you do that, you can declare a COMSAT (i.e. a fiber-aware) JDBC data source through JNDI that will wrap your native data source. To do so, use the `co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory` DataSource factory, and pass in the number of threads you'd like COMSAT to use in the JDBC worker pool.
 
 In order to do that first you have to include `comsat-jdbc-{{site.version}}.jar` in your container's runtime classpath, by putting it into the container's `lib` directory.
 
@@ -379,24 +426,25 @@ In order to do the same thing with `Jetty`, you have to include similar definiti
 
 #### JDBI
 
-To use the powerful API of [JDBI](http://jdbi.org/) to access databases you first have to create IDBI instance using the FiberDBI implementation:
+To use the powerful API of [JDBI](http://jdbi.org/) to access databases you first have to create an `IDBI` instance using the `FiberDBI` class:
 
 ~~~ java
 {% include_snippet creation ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberFluentAPITest.java %}
 ~~~
-The created instance can be used both with the Fluent API as well as with the SqlObject API. First the fluent API example:
+
+The created instance can be used both with the Fluent API as well as with the `SqlObject` API. First the fluent API example:
 
 ~~~ java
 {% include_snippet usage ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberFluentAPITest.java %}
 ~~~
 
-And now to the SqlObjectAPI. In this API you have to declare first a `Suspendable` interface. Here is an example:
+As for the `SqlObject` API, declare first a `Suspendable` interface. Here is an example:
 
 ~~~ java
 {% include_snippet interface ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberSqlObjectAPITest.java %}
 ~~~
 
-The interface now can be registered and used in the regular manner from fiber context:
+The interface now can be registered and used as usual from fibers:
 
 ~~~ java
 {% include_snippet registration ./comsat-jdbi/src/test/java/co/paralleluniverse/fibers/jdbi/FiberSqlObjectAPITest.java %}//...
@@ -406,8 +454,7 @@ The interface now can be registered and used in the regular manner from fiber co
 
 #### jOOQ
 
-Another possibility accessing a relational databases is [JOOQ](http://www.jooq.org/).
-In order to use jOOQ from fiber context, all you have to do is to provide connection originated from `FiberDataSource`, For example:
+[JOOQ](http://www.jooq.org/) is a comprehensive solution to access SQL databases. In order to use jOOQ from fibers, all you have to do is to provide a connection originated from `FiberDataSource`, for example:
 
 ~~~ java
 {% include_snippet creation ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}// ...
@@ -419,9 +466,9 @@ In order to use jOOQ from fiber context, all you have to do is to provide connec
 
 #### MongoDB
 
-Comsat integrates with MongoDB, for a fiber-blocking Mongo access via the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).
+Comsat integrates with MongoDB and offers a fiber-blocking [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).
 
-This is how you get a fiber-friendly `MongoDatabase` instance:
+This is how you get a fiber-friendly `MongoDatabase` instance, which you can then use regularly from fibers:
 
 ~~~ java
 MongoClient mongoClient = FiberMongoFactory.createClient( "mongodb://localhost:" + port + "/test?maxConnectionCount=10" ).asSerializedClient();
@@ -430,37 +477,41 @@ MongoDatabase mongoDb = mongoClient.getDatabase("mydb");
 
 ### Dropwizard
 
-[Dropwizard](http://dropwizard.io/) is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find sample for dropwizard-comsat application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
+[Dropwizard](http://dropwizard.io/) is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find dropwizard-comsat sample application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
 
-In order to use dropwizaed in a Comsat environment, only few changes have to be made in the application declaration.
-First the yaml configuration file:
+In order to use dropwizard with fibers, only few changes have to be made in the application declaration.
+
+First the YAML configuration file:
 
 ~~~ yaml
 {% include_snippet server ./comsat-dropwizard/src/test/resources/server.yml %}
 ~~~
-The number of thread needed for comsat container is not high even if the number of concurrent connection is. You can leave it with 50 or 200 threads, but you should enlarge the queue size configuration in order to handle this amount of connection. You also have to configure apropriate requestLog appender or shut it down. Next is the httpClient configuration:
+
+The number of concurrent threads needed for the `comsat-dropwizard` container will be low even if the number of concurrent connection is high because threads will just hand the established connections to newly created fibers. 50 to 200 threads will be enough but you should increase the queue size. You also need to configure an adequate `requestLog` appender (or disable it). Next is the `httpClient` configuration:
 
 ~~~ yaml
 {% include_snippet httpclient ./comsat-dropwizard/src/test/resources/server.yml %}
 ~~~
-Here also you should enlarge `maxConnections` properties to support many connections at the same time. The db configuration should be looked like this:
+
+You should also increase `maxConnections`. The DB configuration will look like this:
 
 ~~~ yaml
 {% include_snippet db ./comsat-dropwizard/src/test/resources/server.yml %}
 ~~~
 
-The `driverClass` has to point to the `co.paralleluniverse.fibers.jdbc.FiberDriver` class. The `url` has to be the url of your real datasource with the addition of 'fiber:' prefix, and as ussual you should include the driver of the your real datasource in your runtime classpath.
+The `driverClass` will be `co.paralleluniverse.fibers.jdbc.FiberDriver`. The `url` will be your real datasource's with the addition of the 'fiber:' prefix, and as usual you should include the DB driver in your runtime classpath.
 
-Now we can move to the code declaratations:
+As for the code:
 
 ~~~ java
 {% include_snippet app ./comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java %}
 ~~~
-Instead of extending the regular `io.dropwizard.Application` class, you should extend the Comsat's `FiberApplication`. Your regular `run` function should be slightly changed to be called `fiberRun`. The creation of httpClient should be done using the `FiberHttpClientBuilder` class and the creation of `jdbi` should be done using the `FiberDBIFactory` class.
+
+Instead of extending the regular `io.dropwizard.Application` class, you should extend the Comsat's `FiberApplication`. Your regular `run` function should be named `fiberRun` instead. The creation of the HTTP client should be through `FiberHttpClientBuilder` and the creation of `jdbi` should be through `FiberDBIFactory`.
 
 ### Spring
 
-[Spring Framework](http://projects.spring.io/spring-framework/) is a popular Dependency Injection engine; it integrates with many enterprise Java tools and libraries and complements them with new uniform and easy-to-use APIs.
+[Spring Framework](http://projects.spring.io/spring-framework/) is a popular Dependency Injection engine; it integrates with many enterprise Java tools and libraries and complements them with uniform and easy-to-use APIs.
 
 [Spring Boot](http://projects.spring.io/spring-boot/) adds fast project bootstrap facilities, convention over configuration, auto-configuration based on classpath (and other conditions) and embedded Tomcat and Jetty containers integration. It also provides [Actuator](http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready), a set of ready-to-use facilities for production environments like auditing, health-checks, metrics and JMX monitoring/management through JMX's native protocol, HTTP, SSH or telnet.
 
@@ -473,7 +524,7 @@ Comsat provides the ability to write fiber-blocking Spring Web MVC controllers w
 Adding support for fiber-blocking Spring Web MVC controllers is as easy as adding an `@Import` for the Spring configuration class `FiberWebMvcConfigurationSupport` in the `co.paralleluniverse.springframework.web.servlet.config.annotation` package:
 
 ~~~ java
-{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-data-jpa/src/main/java/comsat/sample/data/jpa/SampleDataJpaApplication.java %}
+{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-traditional/src/main/java/comsat/sample/traditional/SampleTraditionalApplication.java %}
 ~~~
 
 ...And declaring your controller methods as suspendable, as you would normally do with any fiber-blocking method:
@@ -483,14 +534,6 @@ Adding support for fiber-blocking Spring Web MVC controllers is as easy as addin
 ~~~
 
 Spring Web MVC controller methods that have not been annotated (nor otherwise instrumented) to be suspendable will be invoked in thread-blocking mode rather than fiber-blocking.
-
-#### Spring Boot auto-configuration support
-
-If you prefer using auto-configuration, it is enough to change the `@Import` to include `co.paralleluniverse.springframework.boot.autoconfigure.web.FiberWebMvcAutoConfiguration` instead:
-
-~~~ java
-{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-web-groovy-templates/src/main/java/comsat/sample/ui/SampleGroovyTemplateApplication.java %}
-~~~
 
 #### Spring Security support
 
@@ -504,15 +547,23 @@ This is as easy as adding an `@Import` for the `co.paralleluniverse.springframew
 
 At present there is one small caveat to consider when using Spring method security: as Spring will proxy secured methods so that all declared exceptions (including `SuspendExecution`) are catched individually, Quasar will refuse to instrument them. In this specific case `SuspendExecution` should not be declared but catched in the method body, and the method signature should be annotated with `@Suspendable` instead.
 
+#### Spring Boot auto-configuration support
+
+If you prefer using auto-configuration, it is enough to use the `FiberSpringBootApplication` or `FiberSecureSpringBootApplication` annotation instead, depending if you want to use Spring Security and its support for fibers:
+
+~~~ java
+{% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-web-groovy-templates/src/main/java/comsat/sample/ui/SampleGroovyTemplateApplication.java %}
+~~~
+
 ## Web Actors
 
-Web Actors are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, SSE and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
+Web Actors are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, WebSocket and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
 
 ### Deployment
 
 WebActors are implemented on top of a web server. Currently, they can be deployed be deployed in any JavaEE 7 servlet container, but we are working on supporting deploying them on top of [Netty](http://netty.io/) and [Undertow](http://undertow.io/).
 
-A web actor is attached to a web session. It can be spawned and attached manually (say, after the user logs in and the session is authenticated). The manual attachment API is container dependent: see [here](??????) for the API for JavaEE containers. A web actor can also be spawned and attached automatically by letting COMSAT spawn and attach a web actor to every newly created session. This method will be described below. Because a web actor consumes very few resources, spawning them automatically is sufficient in all but the most extreme circumstances.
+A web actor is attached to a web session. It can be spawned and attached manually (say, after the user logs in and the session is authenticated). The manual attachment API unfortunately is container dependent. A web actor can also be spawned and attached automatically by letting COMSAT spawn and attach a web actor to every newly created session and this method will be described below. Because a web actor consumes very few resources, spawning them automatically is sufficient in all but the most extreme circumstances.
 
 For automatic deployment, all you have to do is define an actor class (one that extends `BasicActor` or `Actor`), and annotate it with the [`WebActor`]({{javadoc}}comsat/webactors/WebActor.html) annotation. For example:
 
@@ -531,30 +582,29 @@ In this example, all HTTP requests to the `/chat` resource, as well as all webso
 
 #### Embedded containers
 
-If you use embedded container, you have to register `WebActorInitializer` as a ServletContextListener to your servletContainer. It will scan and register the webactors according to the @Webactor annotations. This registration should be looked somethink like this:
+If you use embedded container, you have to register `WebActorInitializer` as a `ServletContextListener` to your servlet container. It will scan and register the web actors according to the `@WebActor` annotation:
 
 ~~~ java
 {% include_snippet WebActorInitializer ./comsat-actors-servlet/src/test/java/co/paralleluniverse/comsat/webactors/servlet/WebActorServletTest.java %}
 ~~~
 
-Webactors may use websockets. In order to do that the container has to be configured to support it. Each container has its own way. In Jetty you have to include the `javax-websocket-server-impl` jar and call the following method before you start the container:
+Web actors may use websockets. In order to do that the container has to be configured to support it and unfortunately there's no standard mechanism for that yet. With Jetty you have to include the `javax-websocket-server-impl` jar and call the following method before you start the container:
 
 ~~~ java
 WebSocketServerContainerInitializer.configureContext(context);
 ~~~
 
-In tomcat you have to include the `tomcat-embed-websocket` jar and register `ServletContainerInitilizer`:
+With Tomcat you have to include the `tomcat-embed-websocket` jar and register `ServletContainerInitilizer`:
 
 ~~~ java
 context.addServletContainerInitializer(new WsSci(), null);
 ~~~
 
-
 For details, see the [Javadoc]({{javadoc}}/comsat/webactors/WebActor.html).
 
 ### Basic Operation
 
-A web actor should be able to receive messages of type [`WebMessage`]({{javadoc}}/comsat/webactors/WebMessage.html). `WebMessage` is the supertype of all messages that can be received from or sent to a web client. The class encapsulates a message body, that can be either text or binary, and a *sender*, which, following a common actor pattern, is the actor that sent the message.
+A web actor will receive messages of type [`WebMessage`]({{javadoc}}/comsat/webactors/WebMessage.html), which is the supertype of all messages that can be received from or sent to a web client. The class encapsulates a message body which can be either text or binary, and a *sender*, which, following a common actor pattern, is the actor that sent the message.
 
 For messages received from the web client, the *sender* is a virtual actor representing the web client. You can perform normal actor operations on it, like `watch` to detect actor death; their semantics depend on the specific type of the message.
 
@@ -566,13 +616,13 @@ A web actor is attached to one or more HTTP resources (as specified by `@WebActo
 
 All HTTP request messages to a specific web actor instance will come from the same sender. If you `watch` that sender actor, it will emit an `ExitMessage` (signifying its death), when the session is terminated.
 
-When you responsd to an `HttpRequest` with an `HttpResponse`, by default, the request stream will close. If, however, you wish to send the response's body in parts (e.g., for SSE, discussed in the next section), you may call `HttpRequest.openChannel`, which will return a Quasar *channel* that can be used to send [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html)s messages to the stream. The stream will flush after each `WebDataMessage`'s body has been written to it. If `openChannel` has been called, the HTTP response stream will be closed when `close` is called on the returned channel.
+When you respond to an `HttpRequest` with an `HttpResponse`, by default, the request stream will close. If, however, you wish to send the response's body in parts (e.g., for SSE, discussed in the next section), you may call `HttpRequest.openChannel`, which will return a Quasar *channel* that can be used to send [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html)s messages to the stream. The stream will flush after each `WebDataMessage`'s body has been written to it. If `openChannel` has been called, the HTTP response stream will be closed when `close` is called on the returned channel.
 
 Please refer to the [Javadoc]({{javadoc}}/comsat/webactors/HttpRequest.html) for details.
 
 ### SSE
 
-SSE, or [Server-Sent Events](http://dev.w3.org/html5/eventsource/), is an HTML5 stnadard, supported by most modern browsers, for pushing discrete messages to the web client, without it sending new HTTP requests for each one. A good tutorial by Eric Bidelman on SSE can be found [here](http://www.html5rocks.com/en/tutorials/eventsource/basics/). An SSE stream is initiated with an HTTP request; then, each event message is written to the response stream and flushed, only the messages need to be encoded according to the SSE standard. SSE also specifies that if the connection is closed, the client will attempt to reconnect with a new request after a timeout, that can be set by the server.
+SSE, or [Server-Sent Events](http://dev.w3.org/html5/eventsource/), is an HTML5 standard, supported by most modern browsers, for pushing discrete messages to the web client, without it sending new HTTP requests for each one. A good tutorial by Eric Bidelman on SSE can be found [here](http://www.html5rocks.com/en/tutorials/eventsource/basics/). An SSE stream is initiated with an HTTP request; then, each event message is written to the response stream and flushed, only the messages need to be encoded according to the SSE standard. SSE also specifies that if the connection is closed, the client will attempt to reconnect with a new request after a timeout, that can be set by the server.
 
 The [`SSE`]({{javadoc}}/comsat/webactors/SSE.html) class contains a set of static utility methods that encode the events according to the SSE standard, and ensure that the response headers are set correctly (in terms of character encoding, etc.).
 
@@ -582,8 +632,7 @@ To start an SSE stream in response to an `HttpRequest`, do the following:
 request.getFrom().send(new HttpResponse(self(), SSE.startSSE(request)));
 ~~~
 
-This will set `HttpResponse`'s `startActor` flag, which will leave the response stream open and send back an [`HttpStreamOpened`]({{javadoc}}/comsat/webactors/HttpStreamOpened.html) message from a newly created actor representing the SSE stream. Once you receive
-the message, you send SSE events by sending `WebDataMessage`s to that actor:
+This will set `HttpResponse`'s `startActor` flag, which will leave the response stream open and send back an [`HttpStreamOpened`]({{javadoc}}/comsat/webactors/HttpStreamOpened.html) message from a newly created actor representing the SSE stream. Once you receive the message, you send SSE events by sending `WebDataMessage`s to that actor:
 
 ~~~ java
 sseActor.send(new WebDataMessage(self(), SSE.event("this is an SSE event!")));
@@ -595,7 +644,7 @@ To close the stream, you send a `co.paralleluniverse.actors.ShutdownMessage` to 
 co.paralleluniverse.actors.ActorUtil.sendOrInterrupt(sseActor, new ShutdownMessage());
 ~~~
 
-It might be convient (and elegant) to wrap the channel returned by `openStream` with a *mapping channel* (see the Quasar docs), that will transform a message class representing the event into an SSE-encoded `WebDataMessage`.
+It might be convient (and elegant) to wrap the channel returned by `openStream` with a *mapping channel* (see the Quasar docs) that will transform a message class representing the event into an SSE-encoded `WebDataMessage`.
 
 ### WebSockets
 
@@ -610,3 +659,5 @@ The virtual actor that's the *sender* of the messages received from the client r
 ## Examples
 
 This GitHub project contains examples covering most of the COMSAT functionality: [puniverse/comsat-examples](https://github.com/puniverse/comsat-examples).
+
+A [Maven archetype](https://github.com/puniverse/comsat-maven-archetype) and a [Gradle template](https://github.com/puniverse/comsat-gradle-template) are also available.

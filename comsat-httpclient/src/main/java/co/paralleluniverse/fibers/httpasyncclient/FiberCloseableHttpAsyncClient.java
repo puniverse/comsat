@@ -1,3 +1,16 @@
+/*
+ * COMSAT
+ * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
+ */
 package co.paralleluniverse.fibers.httpasyncclient;
 
 import co.paralleluniverse.strands.SettableFuture;
@@ -13,12 +26,13 @@ import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
 import org.apache.http.protocol.HttpContext;
 
-class FiberCloseableHttpAsyncClient extends CloseableHttpAsyncClient {
+public class FiberCloseableHttpAsyncClient extends CloseableHttpAsyncClient {
     private final CloseableHttpAsyncClient client;
 
     private FiberCloseableHttpAsyncClient(CloseableHttpAsyncClient client) {
         this.client = client;
     }
+
     public static CloseableHttpAsyncClient wrap(CloseableHttpAsyncClient client) {
         return new FiberCloseableHttpAsyncClient(client);
     };

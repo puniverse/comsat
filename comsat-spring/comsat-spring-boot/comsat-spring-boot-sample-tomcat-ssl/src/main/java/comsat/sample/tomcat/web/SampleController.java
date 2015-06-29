@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -26,11 +26,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class SampleController {
-
     @RequestMapping("/")
     @ResponseBody
     public String helloWorld() throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         return "Hello, world";
     }
 }

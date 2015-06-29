@@ -18,6 +18,7 @@
  */
 package comsat.sample.ui;
 
+import co.paralleluniverse.test.categories.CI;
 import java.net.URI;
 
 import org.junit.Test;
@@ -37,12 +38,14 @@ import org.springframework.util.MultiValueMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import org.junit.experimental.categories.Category;
 
 /**
  * Basic integration tests for demo application.
  *
  * @author Dave Syer
  */
+@Category(CI.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = SampleGroovyTemplateApplication.class)
 @WebAppConfiguration

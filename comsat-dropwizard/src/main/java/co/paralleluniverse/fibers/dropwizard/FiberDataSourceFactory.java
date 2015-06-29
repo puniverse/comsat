@@ -28,7 +28,7 @@ public class FiberDataSourceFactory extends DataSourceFactory {
     }
 
     @Override
-    public ManagedDataSource build(MetricRegistry metricRegistry, String name) throws ClassNotFoundException {
+    public ManagedDataSource build(MetricRegistry metricRegistry, String name) {
         ManagedDataSource ds = dsf.build(metricRegistry, name);
         return dsf.getUrl().startsWith("jdbc:fiber:")
                 ? ds : FiberManagedDataSource.wrap(ds, 10);

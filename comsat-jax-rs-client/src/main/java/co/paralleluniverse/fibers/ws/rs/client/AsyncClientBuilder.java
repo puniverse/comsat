@@ -26,7 +26,7 @@ import javax.ws.rs.core.Configuration;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jetty.connector.JettyConnectorProvider;
-import org.glassfish.jersey.spi.RequestExecutorProvider;
+import org.glassfish.jersey.spi.ExecutorServiceProvider;
 
 /**
  * Main entry point to the client API used to bootstrap Client instances that integrate with Quasar fibers.
@@ -71,16 +71,16 @@ public class AsyncClientBuilder extends ClientBuilder {
 
     private static ClientConfig addDefaultConfigurations(Configuration configuration) {
         // currently there is no usage with the singleThreadPool variable due to jersey bug. See below.
-        final RequestExecutorProvider singleThreadPool = new RequestExecutorProvider() {
+        final ExecutorServiceProvider singleThreadPool = new ExecutorServiceProvider() {
             private ExecutorService tp = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("jersey-puniverse-single-worker-%d").build());
 
             @Override
-            public ExecutorService getRequestingExecutor() {
+            public ExecutorService getExecutorService() {
                 return tp;
             }
 
             @Override
-            public void releaseRequestingExecutor(ExecutorService es) {
+            public void dispose(ExecutorService es) {
             }
         };
         final ClientConfig config = new ClientConfig().

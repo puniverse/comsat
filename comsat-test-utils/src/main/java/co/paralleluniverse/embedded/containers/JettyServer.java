@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -13,8 +13,6 @@
  */
 package co.paralleluniverse.embedded.containers;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContextListener;
 import org.eclipse.jetty.server.Server;
@@ -80,6 +78,13 @@ public class JettyServer extends AbstractEmbeddedServer {
     @Override
     public void enableWebsockets() throws Exception {
         this.wsEnabled = true;
+    }
+
+    @Override
+    public void setResourceBase(final String resourceBaseUrl) {
+        if (context==null)
+            build();
+        context.setResourceBase(resourceBaseUrl);
     }
 
     private static class JettyServletDesc implements ServletDesc {

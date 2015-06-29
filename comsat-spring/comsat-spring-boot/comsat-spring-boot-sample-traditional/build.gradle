@@ -3,7 +3,7 @@ dependencies {
     compile project(":comsat-spring:comsat-spring-boot")
 
     provided("org.springframework.boot:spring-boot-starter-tomcat:$springBootVer")
-    provided("org.apache.tomcat.embed:tomcat-embed-jasper:7.0.56")
+    provided("org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVer")
 
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
 }

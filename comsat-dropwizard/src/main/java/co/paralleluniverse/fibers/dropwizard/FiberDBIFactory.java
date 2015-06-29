@@ -43,12 +43,11 @@ public class FiberDBIFactory {
     public IDBI build(Environment environment, DataSourceFactory dsFactory, ManagedDataSource dataSource, String name) {
         IDBI build = builder.build(environment, new FiberDataSourceFactory(dsFactory),
                 FiberManagedDataSource.wrap(dataSource, es), name);
-        return new FiberDBI(build, es);
+        return new FiberDBI(build);
     }
 
     public IDBI build(Environment environment, DataSourceFactory dsFactory, String name) throws ClassNotFoundException {
         IDBI build = builder.build(environment, new FiberDataSourceFactory(dsFactory), name);
-        return new FiberDBI(build, es);
+        return new FiberDBI(build);
     }
-
 }

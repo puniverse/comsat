@@ -4,7 +4,7 @@ dependencies {
         exclude group: 'org.apache.tomcat.embed', module: '*'         
     }
     testRuntime "org.slf4j:slf4j-log4j12:$slf4jApiVer"
-    testRuntime 'log4j:log4j:1.2.17'
+    testRuntime "log4j:log4j:$log4jVer"
     testRuntime project(':comsat-jdbc')
 }
 jar {

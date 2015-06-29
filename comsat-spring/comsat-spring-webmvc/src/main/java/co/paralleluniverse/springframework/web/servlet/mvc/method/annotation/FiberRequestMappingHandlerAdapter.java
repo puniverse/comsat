@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.xml.transform.Source;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
@@ -183,17 +182,17 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
     private ConfigurableBeanFactory beanFactory;
 
     private final Map<Class<?>, SessionAttributesHandler> sessionAttributesHandlerCache
-            = new ConcurrentHashMap<Class<?>, SessionAttributesHandler>(64);
+        = new ConcurrentHashMap<>(64);
 
-    private final Map<Class<?>, Set<Method>> initBinderCache = new ConcurrentHashMap<Class<?>, Set<Method>>(64);
+    private final Map<Class<?>, Set<Method>> initBinderCache = new ConcurrentHashMap<>(64);
 
     private final Map<ControllerAdviceBean, Set<Method>> initBinderAdviceCache
-            = new LinkedHashMap<ControllerAdviceBean, Set<Method>>();
+        = new LinkedHashMap<>();
 
-    private final Map<Class<?>, Set<Method>> modelAttributeCache = new ConcurrentHashMap<Class<?>, Set<Method>>(64);
+    private final Map<Class<?>, Set<Method>> modelAttributeCache = new ConcurrentHashMap<>(64);
 
     private final Map<ControllerAdviceBean, Set<Method>> modelAttributeAdviceCache
-            = new LinkedHashMap<ControllerAdviceBean, Set<Method>>();
+        = new LinkedHashMap<>();
 
     /**
      * Default constructor.
@@ -203,10 +202,10 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
         StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter();
         stringHttpMessageConverter.setWriteAcceptCharset(false); // See SPR-7316
 
-        this.messageConverters = new ArrayList<HttpMessageConverter<?>>();
+        this.messageConverters = new ArrayList<>();
         this.messageConverters.add(new ByteArrayHttpMessageConverter());
         this.messageConverters.add(stringHttpMessageConverter);
-        this.messageConverters.add(new SourceHttpMessageConverter<Source>());
+        this.messageConverters.add(new SourceHttpMessageConverter<>());
         this.messageConverters.add(new AllEncompassingFormHttpMessageConverter());
     }
 
@@ -542,7 +541,7 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      * and custom resolvers provided via {@link #setCustomArgumentResolvers}.
      */
     private List<HandlerMethodArgumentResolver> getDefaultArgumentResolvers() {
-        List<HandlerMethodArgumentResolver> resolvers = new ArrayList<HandlerMethodArgumentResolver>();
+        List<HandlerMethodArgumentResolver> resolvers = new ArrayList<>();
 
         // Annotation-based argument resolution
         resolvers.add(new RequestParamMethodArgumentResolver(getBeanFactory(), false));
@@ -587,7 +586,7 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      * methods including built-in and custom resolvers.
      */
     private List<HandlerMethodArgumentResolver> getDefaultInitBinderArgumentResolvers() {
-        List<HandlerMethodArgumentResolver> resolvers = new ArrayList<HandlerMethodArgumentResolver>();
+        List<HandlerMethodArgumentResolver> resolvers = new ArrayList<>();
 
         // Annotation-based argument resolution
         resolvers.add(new RequestParamMethodArgumentResolver(getBeanFactory(), false));
@@ -618,7 +617,7 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      * custom handlers provided via {@link #setReturnValueHandlers}.
      */
     private List<HandlerMethodReturnValueHandler> getDefaultReturnValueHandlers() {
-        List<HandlerMethodReturnValueHandler> handlers = new ArrayList<HandlerMethodReturnValueHandler>();
+        List<HandlerMethodReturnValueHandler> handlers = new ArrayList<>();
 
         // Single-purpose return value types
         handlers.add(new ModelAndViewMethodReturnValueHandler());
@@ -734,14 +733,12 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      */
     private SessionAttributesHandler getSessionAttributesHandler(HandlerMethod handlerMethod) {
         Class<?> handlerType = handlerMethod.getBeanType();
-        SessionAttributesHandler sessionAttrHandler = this.sessionAttributesHandlerCache.get(handlerType);
-        if (sessionAttrHandler == null) {
-            synchronized (this.sessionAttributesHandlerCache) {
-                sessionAttrHandler = this.sessionAttributesHandlerCache.get(handlerType);
-                if (sessionAttrHandler == null) {
-                    sessionAttrHandler = new SessionAttributesHandler(handlerType, sessionAttributeStore);
-                    this.sessionAttributesHandlerCache.put(handlerType, sessionAttrHandler);
-                }
+        SessionAttributesHandler sessionAttrHandler = null;
+        synchronized (this.sessionAttributesHandlerCache) {
+            sessionAttrHandler = this.sessionAttributesHandlerCache.get(handlerType);
+            if (sessionAttrHandler == null) {
+                sessionAttrHandler = new SessionAttributesHandler(handlerType, sessionAttributeStore);
+                this.sessionAttributesHandlerCache.put(handlerType, sessionAttrHandler);
             }
         }
         return sessionAttrHandler;
@@ -753,7 +750,6 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      */
     private ModelAndView invokeHandleMethod(HttpServletRequest request,
             HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {
-
         ServletWebRequest webRequest = new ServletWebRequest(request, response);
 
         WebDataBinderFactory binderFactory = getDataBinderFactory(handlerMethod);
@@ -814,7 +810,7 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
             methods = HandlerMethodSelector.selectMethods(handlerType, MODEL_ATTRIBUTE_METHODS);
             this.modelAttributeCache.put(handlerType, methods);
         }
-        List<InvocableHandlerMethod> attrMethods = new ArrayList<InvocableHandlerMethod>();
+        List<InvocableHandlerMethod> attrMethods = new ArrayList<>();
         // Global methods first
         for (Entry<ControllerAdviceBean, Set<Method>> entry : this.modelAttributeAdviceCache.entrySet()) {
             if (entry.getKey().isApplicableToBeanType(handlerType)) {
@@ -846,7 +842,7 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
             methods = HandlerMethodSelector.selectMethods(handlerType, INIT_BINDER_METHODS);
             this.initBinderCache.put(handlerType, methods);
         }
-        List<InvocableHandlerMethod> initBinderMethods = new ArrayList<InvocableHandlerMethod>();
+        List<InvocableHandlerMethod> initBinderMethods = new ArrayList<>();
         // Global methods first
         for (Entry<ControllerAdviceBean, Set<Method>> entry : this.initBinderAdviceCache.entrySet()) {
             if (entry.getKey().isApplicableToBeanType(handlerType)) {
@@ -883,13 +879,11 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      */
     protected InitBinderDataBinderFactory createDataBinderFactory(List<InvocableHandlerMethod> binderMethods)
             throws Exception {
-
         return new ServletRequestDataBinderFactory(binderMethods, getWebBindingInitializer());
     }
 
     private ModelAndView getModelAndView(ModelAndViewContainer mavContainer,
             ModelFactory modelFactory, NativeWebRequest webRequest) throws Exception {
-
         modelFactory.updateModel(webRequest, mavContainer);
         if (mavContainer.isRequestHandled()) {
             return null;
@@ -911,7 +905,6 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      * MethodFilter that matches {@link InitBinder @InitBinder} methods.
      */
     public static final MethodFilter INIT_BINDER_METHODS = new MethodFilter() {
-
         @Override
         public boolean matches(Method method) {
             return AnnotationUtils.findAnnotation(method, InitBinder.class) != null;
@@ -922,12 +915,10 @@ public class FiberRequestMappingHandlerAdapter extends AbstractHandlerMethodAdap
      * MethodFilter that matches {@link ModelAttribute @ModelAttribute} methods.
      */
     public static final MethodFilter MODEL_ATTRIBUTE_METHODS = new MethodFilter() {
-
         @Override
         public boolean matches(Method method) {
             return ((AnnotationUtils.findAnnotation(method, RequestMapping.class) == null)
                     && (AnnotationUtils.findAnnotation(method, ModelAttribute.class) != null));
         }
     };
-
 }

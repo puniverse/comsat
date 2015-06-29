@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -16,13 +16,13 @@ package co.paralleluniverse.embedded.containers;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContextListener;
 
-
 public interface EmbeddedServer {
     EmbeddedServer setPort(int port);
     EmbeddedServer setNumThreads(int nThreads);
     EmbeddedServer setMaxConnections(int maxConn);
     ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping);
     void addServletContextListener(Class <? extends ServletContextListener> scl);
+    void setResourceBase(String resourceBaseUrl);
     
     void enableWebsockets() throws Exception;
     void start() throws Exception;

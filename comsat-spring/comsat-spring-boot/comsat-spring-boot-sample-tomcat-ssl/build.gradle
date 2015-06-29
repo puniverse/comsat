@@ -1,6 +1,6 @@
 dependencies {
     compile("org.springframework.boot:spring-boot-starter:$springBootVer")
-    compile("org.apache.httpcomponents:httpclient:4.3")
+    compile("org.apache.httpcomponents:httpclient:$httpClientVer")
     compile("org.yaml:snakeyaml:$snakeYamlVer")
     compile project(":comsat-spring:comsat-spring-boot")
 

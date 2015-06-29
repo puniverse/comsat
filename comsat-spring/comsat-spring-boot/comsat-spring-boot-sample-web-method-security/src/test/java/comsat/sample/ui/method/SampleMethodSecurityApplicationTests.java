@@ -18,7 +18,7 @@
  */
 package comsat.sample.ui.method;
 
-import comsat.sample.ui.method.SampleMethodSecurityApplication;
+import co.paralleluniverse.test.categories.CI;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,12 +43,14 @@ import org.springframework.util.MultiValueMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.experimental.categories.Category;
 
 /**
  * Basic integration tests for demo application.
  *
  * @author Dave Syer
  */
+@Category(CI.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = SampleMethodSecurityApplication.class)
 @WebAppConfiguration

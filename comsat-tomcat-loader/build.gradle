@@ -5,6 +5,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 dependencies {
     compile "co.paralleluniverse:quasar-core:$quasarVer"
 
+    provided "org.apache.tomcat:tomcat-juli:$tomcatVer"
     provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
 
     testCompile (project(':comsat-test-utils')) {
@@ -46,8 +47,8 @@ if (System.properties['java.version'].startsWith('1.8') ) {
         //    archives distZip
     }
 
-    install.dependsOn ':comsat-tomcat-loader-jdk8:jar'
-    uploadArchives.dependsOn ':comsat-tomcat-loader-jdk8:jar'
+    install.dependsOn ':comsat-tomcat-loader-jdk8:shadowJar'
+    uploadArchives.dependsOn ':comsat-tomcat-loader-jdk8:shadowJar'
 }
 
 task deployWar(type: Copy) {

@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":comsat-spring:comsat-spring-boot")
+    compile project(":comsat-spring:comsat-spring-security")
+}

@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -18,6 +18,8 @@
  */
 package comsat.sample.jetty.service;
 
+import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.SuspendExecution;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +29,8 @@ public class HelloWorldService {
     @Value("${name:World}")
     private String name;
 
-    public String getHelloMessage() {
+    public String getHelloMessage() throws InterruptedException, SuspendExecution {
+        Fiber.sleep(10);
         return "Hello " + this.name;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -18,19 +18,10 @@
  */
 package comsat.sample.data.jpa;
 
-import co.paralleluniverse.springframework.web.servlet.config.annotation.FiberWebMvcConfigurationSupport;
+import co.paralleluniverse.springframework.boot.autoconfigure.web.FiberSpringBootApplication;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
-@Configuration
-@ComponentScan
-//snippet import
-@Import(FiberWebMvcConfigurationSupport.class) // This will enable fiber-blocking
-// end of snippet
-@EnableAutoConfiguration
+@FiberSpringBootApplication // This will enable fiber-blocking
 public class SampleDataJpaApplication {
     public static void main(String[] args) throws Exception {
         SpringApplication.run(SampleDataJpaApplication.class, args);

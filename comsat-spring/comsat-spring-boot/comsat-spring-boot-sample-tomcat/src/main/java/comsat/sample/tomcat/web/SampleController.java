@@ -34,7 +34,7 @@ public class SampleController {
     @RequestMapping("/")
     @ResponseBody
     public String helloWorld() throws InterruptedException, SuspendExecution {
-        Fiber.sleep(100);
+        Fiber.sleep(10);
         return this.helloWorldService.getHelloMessage();
     }
 }

@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -17,7 +17,7 @@ import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import co.paralleluniverse.embedded.containers.EmbeddedServer;
 import co.paralleluniverse.embedded.containers.JettyServer;
 import co.paralleluniverse.embedded.containers.TomcatServer;
-import co.paralleluniverse.embedded.containers.UndertowServer;
+// import co.paralleluniverse.embedded.containers.UndertowServer;
 import co.paralleluniverse.strands.SettableFuture;
 import com.google.common.collect.Lists;
 import java.io.IOException;
@@ -50,7 +50,6 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -172,7 +171,6 @@ public class WebActorServletTest {
     private static String after(String str, String substr) {
         return str.substring(str.indexOf(substr) + substr.length());
     }
-    private static final String JSESSIONID = "JSESSIONID";
 
-    private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
+    private static final String JSESSIONID = "JSESSIONID";
 }

@@ -23,11 +23,25 @@ import org.apache.catalina.loader.WebappClassLoader;
 
 /**
  * See:
- * http://tomcat.apache.org/tomcat-6.0-doc/config/loader.html
+ * http://tomcat.apache.org/tomcat-7.0-doc/config/loader.html
+ * http://tomcat.apache.org/tomcat-8.0-doc/config/loader.html
  *
  * @author pron
  */
 public class QuasarWebAppClassLoader extends WebappClassLoader {
+
+    @Override
+    protected synchronized boolean filter(String name) {
+        // Don't re-load the instrumentation logic, including the `SuspendableClassifier` interface,
+        // else implementations in the webapp classloader will have trouble loading when running in
+        // a standalone servlet container
+        return
+            name.startsWith("co.paralleluniverse.common.") ||
+            name.startsWith("co.paralleluniverse.fibers.instrument.") ||
+            name.startsWith("jsr166e") ||
+            name.startsWith("co.paralleluniverse.asm.");
+    }
+
     private QuasarInstrumentor instrumentor;
 
     public QuasarWebAppClassLoader() {
@@ -46,7 +60,7 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
             }
 
             @Override
-            public void error(String msg, Exception exc) {
+            public void error(String msg, Throwable exc) {
                 System.out.println("[quasar] ERROR: " + msg);
                 exc.printStackTrace(System.out);
             }

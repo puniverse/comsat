@@ -1,6 +1,6 @@
-;
+
 ; COMSAT
-; Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+; Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
 ;
 ; This program and the accompanying materials are dual-licensed under
 ; either the terms of the Eclipse Public License v1.0 as published by
@@ -72,7 +72,7 @@
                    (is (= (:status response) 500))
                    (is (.contains
                          (:body response)
-                         "testExc")))))
+                         "java.lang.RuntimeException")))))
 
   (testing "HTTPS server"
     (with-server hello-world {:port 4347
@@ -92,7 +92,7 @@
                    (is (= (:status response) 500))
                    (is (.contains
                          (:body response)
-                         "testExc")))))
+                         "java.lang.RuntimeException")))))
 
   (testing "configurator set to run last"
     (let [new-handler  (proxy [AbstractHandler] []

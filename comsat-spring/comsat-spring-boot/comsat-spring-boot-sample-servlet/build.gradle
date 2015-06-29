@@ -1,0 +1,8 @@
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter:$springBootVer")
+    compile("org.springframework.boot:spring-boot-starter-security:$springBootVer")
+    compile project(":comsat-spring:comsat-spring-boot-security")
+    compile project(":comsat-servlet")
+
+    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
+}

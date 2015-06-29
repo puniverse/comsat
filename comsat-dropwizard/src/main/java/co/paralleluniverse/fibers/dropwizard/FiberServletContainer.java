@@ -15,7 +15,6 @@ package co.paralleluniverse.fibers.dropwizard;
 
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.servlet.FiberHttpServlet;
-import com.sun.jersey.api.core.ResourceConfig;
 import java.io.IOException;
 import java.util.Enumeration;
 import javax.servlet.Filter;
@@ -28,6 +27,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 /**
  * A Servlet for deploying root resource classes that assign a fiber per request.
@@ -37,13 +38,13 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class FiberServletContainer extends FiberHttpServlet implements Filter {
     private static final int DEFAULT_STACK_SIZE = 120;
-    private final com.sun.jersey.spi.container.servlet.ServletContainer jerseySC;
+    private final ServletContainer jerseySC;
 
     /**
      * Create Jersey Servlet container.
      */
     public FiberServletContainer() {
-        this.jerseySC = new com.sun.jersey.spi.container.servlet.ServletContainer();
+        this.jerseySC = new ServletContainer();
     }
 
     /**
@@ -52,7 +53,7 @@ public class FiberServletContainer extends FiberHttpServlet implements Filter {
      * @param resourceConfig container configuration.
      */
     public FiberServletContainer(ResourceConfig resourceConfig) {
-        this.jerseySC = new com.sun.jersey.spi.container.servlet.ServletContainer(resourceConfig);
+        this.jerseySC = new ServletContainer(resourceConfig);
     }
 
     /**
@@ -60,7 +61,7 @@ public class FiberServletContainer extends FiberHttpServlet implements Filter {
      *
      * @param sc the servlet container
      */
-    public FiberServletContainer(com.sun.jersey.spi.container.servlet.ServletContainer sc) {
+    public FiberServletContainer(ServletContainer sc) {
         this.jerseySC = sc;
     }
 
