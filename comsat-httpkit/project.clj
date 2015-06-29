@@ -24,5 +24,5 @@
      [ring/ring-jetty-adapter "1.3.2"]
      [ring/ring-core "1.3.2"]]}}
 
-  :java-agents [[co.paralleluniverse/quasar-core "0.7.1-SNAPSHOT"]]
+  :java-agents [[co.paralleluniverse/quasar-core "0.7.2"]]
 )
