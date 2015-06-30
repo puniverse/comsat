@@ -223,12 +223,12 @@ project (':comsat-actors-api') {
     }  
 }
 
-//project (':comsat-actors-netty') {
+// project (':comsat-actors-netty') {
 //    dependencies {
 //        compile 'org.webbitserver:webbit:0.4.15'
 //        compile project (':comsat-actors-api')
 //    }
-//}
+// }
 
 project (':comsat-actors-servlet') {
     dependencies {
@@ -239,12 +239,12 @@ project (':comsat-actors-servlet') {
     }
 }
 
-//project (':comsat-actors-undertow') {
-//    dependencies {
-//        compile 'io.undertow:undertow-core:1.1.0.Beta5'
-//        compile project (':comsat-actors-api')
-//    }
-//}
+project (':comsat-actors-undertow') {
+    dependencies {
+        compile "io.undertow:undertow-core:$undertowVer"
+        compile project (':comsat-actors-api')
+    }
+}
 
 project (':comsat-dropwizard') {
     dependencies {
