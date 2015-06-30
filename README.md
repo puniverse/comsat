@@ -58,7 +58,7 @@ Questions and suggestions are welcome at this [forum/mailing list](https://group
 COMSAT is free software published under the following license:
 
 ```
-Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
 
 This program and the accompanying materials are dual-licensed under
 either the terms of the Eclipse Public License v1.0 as published by
@@ -69,5 +69,3 @@ the Eclipse Foundation
 under the terms of the GNU Lesser General Public License version 3.0
 as published by the Free Software Foundation.
 ```
-
-[![githalytics.com alpha](https://cruel-carlota.gopagoda.com/d376531837c3513ea73279fdbee7d48b "githalytics.com")](http://githalytics.com/puniverse/quasar)
