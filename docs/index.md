@@ -600,7 +600,11 @@ With Tomcat you have to include the `tomcat-embed-websocket` jar and register `S
 context.addServletContainerInitializer(new WsSci(), null);
 ~~~
 
-For details, see the [Javadoc]({{javadoc}}/comsat/webactors/WebActor.html).
+With Undertow you'll need the `undertow-websockets-jsr` jar; the setup is then a bit more involved as Undertow's `ServerWebSocketContainer` requires several construction arguments.
+
+You can find an example for each of the servers above in the `comsat-test-utils` project [here](https://github.com/puniverse/comsat/tree/master/comsat-test-utils/src/main/java/co/paralleluniverse/embedded/containers): each embedded server utility class has an `enableWebsockets` method that performs the websockets setup.
+
+For further details about the Web Actors API see the [Javadoc]({{javadoc}}/comsat/webactors/WebActor.html).
 
 ### Basic Operation
 
