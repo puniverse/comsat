@@ -47,6 +47,7 @@ if(ext.java8) {
 }
 ssets.each { set ->
     def jarTask = task("${set.name}Jar", type: Jar) {
+        from set.output
         from { project.configurations["${set.name}Runtime"].collect { it.isDirectory() ? it : zipTree(it) } }
     } 
 
