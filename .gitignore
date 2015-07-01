@@ -17,3 +17,5 @@ tomcat.8080
 **/target
 /comsat-ring-jetty9/pom.xml
 /comsat-ring-jetty9/pom.xml.asc
+/comsat-httpkit/pom.xml
+/comsat-httpkit/pom.xml.asc
