@@ -55,8 +55,10 @@ ssets.each { set ->
     assemble.dependsOn jarTask
 }
 
-jdk8Jar {
-    classifier = 'jdk8'
+if (ext.java8) {
+    jdk8Jar {
+        classifier = 'jdk8'
+    }
 }
 
 artifacts {
