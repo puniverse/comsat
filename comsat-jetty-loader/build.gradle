@@ -1,4 +1,35 @@
+sourceSets {
+    jdk7 {
+        java {
+            srcDir 'src/main/java'
+        }
+            
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+    jdk8 {
+        java {
+            srcDir 'src/main/java'
+        }
+            
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+
+compileJdk7Java {
+    sourceCompatibility = '1.7'
+    targetCompatibility = '1.7'
+}
+
+compileJdk8Java {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
 dependencies {
+    jdk7Compile "co.paralleluniverse:quasar-core:$quasarVer"
+    jdk8Compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
     compile "org.eclipse.jetty:jetty-webapp:$jettyVer"
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.apache.tomcat.embed', module: '*'         
@@ -7,9 +38,31 @@ dependencies {
     testRuntime "log4j:log4j:$log4jVer"
     testRuntime project(':comsat-jdbc')
 }
-jar {
-    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
-} 
+
+def ssets = [sourceSets.jdk7]
+if(ext.java8) {
+    ssets += sourceSets.jdk8
+}
+ssets.each { set ->
+    def jarTask = task("${set.name}Jar", type: Jar) {
+        from { project.configurations["${set.name}Runtime"].collect { it.isDirectory() ? it : zipTree(it) } }
+    } 
+
+    artifacts {
+        archives jarTask
+    }
+
+    assemble.dependsOn jarTask
+}
+
+jdk8Jar {
+    classifier = 'jdk8'
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
 
 task deployWar(type: Copy) {
     evaluationDependsOn ":comsat-test-war"
@@ -20,16 +73,4 @@ task deployWar(type: Copy) {
 
 tasks.withType(Test) {
     dependsOn deployWar
-}
-
-if (System.properties['java.version'].startsWith('1.8') ) { 
-    artifacts {
-        archives jar
-        archives project(':comsat-jetty-loader-jdk8').jar
-        archives sourcesJar
-        archives javadocJar
-        //    archives distZip
-    }
-    
-    uploadArchives.dependsOn ':comsat-jetty-loader-jdk8:jar'
 }

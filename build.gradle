@@ -39,6 +39,8 @@ subprojects {
 
     ext.isRelease       = !version.endsWith("SNAPSHOT")
 
+    ext.java8 = System.properties['java.version'].startsWith('1.8')
+
     ext.metricsVer      = '3.1.2'
     ext.asmVer          = '5.0.4'
 
