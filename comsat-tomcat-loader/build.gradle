@@ -1,17 +1,13 @@
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-
 dependencies {
     compile "co.paralleluniverse:quasar-core:$quasarVer"
-
     provided "org.apache.tomcat:tomcat-juli:$tomcatVer"
     provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
-
     testCompile (project(':comsat-test-utils')) {
         exclude group: 'org.eclipse.jetty.websocket', module: '*'         
     }
-
     testRuntime project(':comsat-jdbc')
 }
 
@@ -53,8 +49,8 @@ if (System.properties['java.version'].startsWith('1.8') ) {
 
 task deployWar(type: Copy) {
     evaluationDependsOn ":comsat-test-war"
-    into "build/wars"
     from project(":comsat-test-war").war
+    into "build/wars"
 }
 
 tasks.withType(Test) {
