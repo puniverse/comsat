@@ -1,5 +1,5 @@
 # *COMSAT*<br/>Scalable, Concurrent Web Apps
-[![Build Status](http://img.shields.io/travis/puniverse/comsat.svg?style=flat)](https://travis-ci.org/puniverse/comsat) [![Dependency Status](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f/badge.png?style=flat)](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f) [![Version](http://img.shields.io/badge/version-0.3.0-blue.svg?style=flat)](https://github.com/puniverse/comsat/releases) [![License](http://img.shields.io/badge/license-EPL-blue.svg?style=flat)](https://www.eclipse.org/legal/epl-v10.html) [![License](http://img.shields.io/badge/license-LGPL-blue.svg?style=flat)](https://www.gnu.org/licenses/lgpl.html)
+[![Build Status](http://img.shields.io/travis/puniverse/comsat.svg?style=flat)](https://travis-ci.org/puniverse/comsat) [![Dependency Status](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f/badge.png?style=flat)](https://www.versioneye.com/user/projects/52dfc913ec1375318800039f) [![Version](http://img.shields.io/badge/version-0.4.0-blue.svg?style=flat)](https://github.com/puniverse/comsat/releases) [![License](http://img.shields.io/badge/license-EPL-blue.svg?style=flat)](https://www.eclipse.org/legal/epl-v10.html) [![License](http://img.shields.io/badge/license-LGPL-blue.svg?style=flat)](https://www.gnu.org/licenses/lgpl.html)
 
 ## Getting started
 
@@ -9,7 +9,7 @@ In Maven:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>ARTIFACT</artifactId>
-    <version>0.4.0-SNAPSHOT</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 

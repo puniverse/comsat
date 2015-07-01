@@ -16,7 +16,7 @@ Comsat does provide one new API that you may choose to use: Web Actors. Web acto
 
 ## News
 
-### TBBD
+### July 1, 2015
 
 COMSAT [0.4.0](https://github.com/puniverse/comsat/releases/tag/v0.4.0) has been released.
 
