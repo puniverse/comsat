@@ -52,7 +52,7 @@ subprojects {
 
     ext.osgiVer         = '6.0.0'
     ext.jerseyVer       = '2.18'
-    ext.hk2apiVer       = '2.4.0-b25'
+    ext.hk2apiVer       = '2.4.0-b26'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
     ext.servletVer      = '3.0.1'
