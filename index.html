@@ -93,12 +93,18 @@
 </li></ul>
 </li>
 <li class="li1">
-<a href="#getting-started">Getting Started</a><ul><li><ul>
+<a href="#getting-started">Getting Started</a><ul>
+<li><ul>
 <li><a href="#system-requirements">System requirements</a></li>
-<li><a href="#maven">Using Maven</a></li>
+<li><a href="#maven">Using Comsat with Maven and Gradle</a></li>
+</ul></li>
+<li>
+<a href="#examples" class="cat-link">Examples</a><ul>
 <li><a href="#enabling-comsat">Enabling Comsat</a></li>
 <li><a href="#build">Building Comsat</a></li>
-</ul></li></ul>
+</ul>
+</li>
+</ul>
 </li>
 <li class="li1">
 <a href="#user-manual">User Manual</a><ul>
@@ -123,7 +129,6 @@
 <li><a href="#websockets">WebSockets</a></li>
 </ul>
 </li>
-<li><a href="#examples" class="cat-link">Examples</a></li>
 </ul>
 </li>
 </ul>
@@ -163,14 +168,14 @@
 
 <p>Java 7 is required to use&nbsp;<span class="caps">COMSAT.</span></p>
 
-<h3 id="maven">Using&nbsp;Maven</h3>
+<h3 id="maven">Using Comsat with <a href="https://maven.apache.org">Maven</a> and <a href="http://www.gradle.org">Gradle</a></h3>
 
-<p>First, you need the <code>quasar-core</code>&nbsp;dependency:</p>
+<p>First, you need the <code>quasar-core</code> dependency. With&nbsp;Maven:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;dependency&gt;</span>
 </span><span id="line-2">    <span class="nt">&lt;groupId&gt;</span>co.paralleluniverse<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="line-3">    <span class="nt">&lt;artifactId&gt;</span>quasar-core<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.7.1<span class="nt">&lt;/version&gt;</span>
+</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.7.2<span class="nt">&lt;/version&gt;</span>
 </span><span id="line-5"><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
 <p>or, for&nbsp;<span class="caps">JDK8</span>:</p>
@@ -178,19 +183,23 @@
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;dependency&gt;</span>
 </span><span id="line-2">    <span class="nt">&lt;groupId&gt;</span>co.paralleluniverse<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="line-3">    <span class="nt">&lt;artifactId&gt;</span>quasar-core<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.7.1<span class="nt">&lt;/version&gt;</span>
+</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.7.2<span class="nt">&lt;/version&gt;</span>
 </span><span id="line-5">    <span class="nt">&lt;classifier&gt;</span>jdk8<span class="nt">&lt;/classifier&gt;</span>
 </span><span id="line-6"><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
-<p>Then add those Comsat modules that you’d like to&nbsp;use:</p>
+<p>The corresponding Gradle dependencies are respectively <code>co.paralleluniverse:quasar-core:0.7.2</code> or, for <span class="caps">JDK8</span>,&nbsp;<code>co.paralleluniverse:quasar-core:0.7.2@jdk8</code>.</p>
+
+<p>Then add the Comsat module relevant to your needs&nbsp;(Maven):</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;dependency&gt;</span>
 </span><span id="line-2">    <span class="nt">&lt;groupId&gt;</span>co.paralleluniverse<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="line-3">    <span class="nt">&lt;artifactId&gt;</span>ARTIFACT<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.7.1}<span class="nt">&lt;/version&gt;</span>
+</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.4.0<span class="nt">&lt;/version&gt;</span>
 </span><span id="line-5"><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
-<p>where <code>ARTIFACT</code>&nbsp;is:</p>
+<p>The corresponding Gradle dependency is&nbsp;<code>co.paralleluniverse:ARTIFACT:0.4.0</code>.</p>
+
+<p><code>ARTIFACT</code> will be one&nbsp;of:</p>
 
 <ul>
   <li><code>comsat-servlet</code> – Servlet integration for defining fiber-per-request&nbsp;servlets.</li>
@@ -216,11 +225,21 @@
   <li><code>comsat-jetty-loader</code> – Enables using Comsat in Jetty container without the need of&nbsp;javaAgent</li>
 </ul>
 
+<h2 id="examples">Examples</h2>
+
+<p>A <a href="https://github.com/puniverse/comsat-gradle-template">Gradle template</a> project and a <a href="https://github.com/puniverse/comsat-mvn-archetype">Maven archetype</a> using various integration modules and featuring setup with both Dropwizard and standalone Tomcat are available for jumpstart and study. Both have a <code>without-comsat</code> branch which is useful to clearly see the (minimal, if any) porting effort required (branches comparison works very well for this&nbsp;purporse).</p>
+
+<p>There’s a <a href="https://github.com/puniverse/comsat-ring-template">Comsat-Ring Clojure Leiningen template</a> as well which includes an <code>auto-instrument</code> branch that doesn’t need any explicit suspendable-marking code (<code>suspendable!</code>, <code>defsfn</code>, <code>sfn</code> etc.) thanks to <a href="http://docs.paralleluniverse.co/pulsar/#automatic-instrumentation">Pulsar’s new auto-instrumentation feature</a>.</p>
+
+<p>This GitHub project contains examples covering most of the <span class="caps">COMSAT</span> functionality: <a href="https://github.com/puniverse/comsat-examples">puniverse/comsat-examples</a>.</p>
+
+<p>Finally there are several regularly updated third-party bootstrap projects: <a href="https://github.com/circlespainter/comsat-jooq-gradle-template">Comsat + Dropwizard + j<span class="caps">OOQ</span></a>, <a href="https://github.com/circlespainter/quasar-stocks">Comsat Web Actors Stock Quotes (ported from Akka)</a>, <a href="https://github.com/circlespainter/spring4-mvc-gradle-annotation-hello-world">Spring <span class="caps">MVC</span> + Tomcat standalone servlet container</a>.</p>
+
 <h3 id="enabling-comsat">Enabling&nbsp;Comsat</h3>
 
 <p>Comsat runs code in <a href="http://docs.paralleluniverse.co/quasar/">Quasar</a> fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat and Jetty; or at compilation&nbsp;time.</p>
 
-<p><span class="caps">AOT</span> instrumentation is an advanced topic eplained in the <a href="http://docs.paralleluniverse.co/quasar/index.html#instrumentation">Quasar documentation</a>.</p>
+<p><span class="caps">AOT</span> instrumentation is an advanced topic explained in the <a href="http://docs.paralleluniverse.co/quasar/index.html#instrumentation">Quasar documentation</a>.</p>
 
 <p>When using <span class="caps">AOT</span> instrumentation alone, all of your fiber-blocking dependencies will need to have been <span class="caps">AOT</span>-compiled already. Please note that some Comsat modules, such as <code>comast-jersey-server</code>, rely on dynamic instrumentation of third-party libraries and so they cannot be used with <span class="caps">AOT</span> instrumentation&nbsp;alone.</p>
 
@@ -262,18 +281,16 @@
 </span></code></pre></div>
 <h3 id="build">Building&nbsp;Comsat</h3>
 
-<p>Clone the&nbsp;repository:</p>
+<p>Install <a href="http://www.gradle.org">Gradle</a>, then clone the&nbsp;repository:</p>
 
 <pre><code>git clone https://github.com/puniverse/comsat.git
 </code></pre>
-<p>and&nbsp;run:</p>
+<p>and finally&nbsp;run:</p>
 
-<pre><code>./gradlew
+<pre><code>gradle install
 </code></pre>
-<p>Or, if you have gradle installed,&nbsp;run:</p>
+<p>The full testsuite can be run with&nbsp;<code>gradle build</code>.</p>
 
-<pre><code>gradle
-</code></pre>
 <h1 id="user-manual">User&nbsp;Manual</h1>
 
 <h2 id="comsat-integration">Comsat&nbsp;Integration</h2>
@@ -659,9 +676,9 @@ For&nbsp;example:</p>
 </span></code></pre></div>
 <h3 id="dropwizard">Dropwizard</h3>
 
-<p><a href="http://dropwizard.io/">Dropwizard</a> is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find dropwizard-comsat sample application <a href="https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java">here</a>.</p>
+<p><a href="http://dropwizard.io/">Dropwizard</a> is a Java framework for developing ops-friendly, high-performance, RESTful web&nbsp;services.</p>
 
-<p>In order to use dropwizard with fibers, only few changes have to be made in the application&nbsp;declaration.</p>
+<p>Only few changes are needed in order to use dropwizard with&nbsp;fibers.</p>
 
 <p>First the <span class="caps">YAML</span> configuration&nbsp;file:</p>
 
@@ -721,9 +738,17 @@ For&nbsp;example:</p>
 
 <h4 id="fiber-blocking-spring-web-mvc-controllers">Fiber-blocking Spring Web <span class="caps">MVC</span>&nbsp;controllers</h4>
 
-<p>Adding support for fiber-blocking Spring Web <span class="caps">MVC</span> controllers is as easy as adding an <code>@Import</code> for the Spring configuration class <code>FiberWebMvcConfigurationSupport</code> in the <code>co.paralleluniverse.springframework.web.servlet.config.annotation</code>&nbsp;package:</p>
+<p>Adding support for fiber-blocking Spring Web <span class="caps">MVC</span> controllers is as easy as replacing in your Spring configuration class the <code>@EnableWebMvc</code> annotation with <code>@Import(FiberWebMvcConfigurationSupport.class)</code>, for&nbsp;example:</p>
 
-<div class="highlight"><pre><code><span id="line-1"><span class="nd">@Import</span><span class="o">(</span><span class="n">FiberWebMvcConfigurationSupport</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<div class="highlight"><pre><code><span id="line-1"><span class="nd">@Configuration</span>
+</span><span id="line-2"><span class="nd">@Import</span><span class="o">(</span><span class="n">FiberWebMvcConfigurationSupport</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span id="line-3"><span class="nd">@EnableAutoConfiguration</span>
+</span><span id="line-4"><span class="nd">@ComponentScan</span>
+</span><span id="line-5"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SampleTraditionalApplication</span> <span class="o">{</span>
+</span><span id="line-6">    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span id="line-7">        <span class="n">SpringApplication</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">SampleTraditionalApplication</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+</span><span id="line-8">    <span class="o">}</span>
+</span><span id="line-9"><span class="o">}</span>
 </span></code></pre></div>
 <p>…And declaring your controller methods as suspendable, as you would normally do with any fiber-blocking&nbsp;method:</p>
 
@@ -844,12 +869,6 @@ For&nbsp;example:</p>
 <p>When the client connects to a web socket, the web actor will receive a <a href="/comsat/javadoc/co/paralleluniverse/comsat/webactors/WebSocketOpened.html"><code>WebSocketOpened</code></a> message, and each following message will be received as a <a href="/comsat/javadoc/co/paralleluniversecomsat/webactors/WebDataMessage.html"><code>WebDataMessage</code></a>. The actor can send messages to the client by replying to the sender with <code>WebDataMessage</code>s of its&nbsp;own.</p>
 
 <p>The virtual actor that’s the <em>sender</em> of the messages received from the client represents the WebSocket session; i.e., each open web socket will have a different actor as the sender of the messages. That virtual actor dies when the web socket connection&nbsp;closes.</p>
-
-<h2 id="examples">Examples</h2>
-
-<p>This GitHub project contains examples covering most of the <span class="caps">COMSAT</span> functionality: <a href="https://github.com/puniverse/comsat-examples">puniverse/comsat-examples</a>.</p>
-
-<p>A <a href="https://github.com/puniverse/comsat-maven-archetype">Maven archetype</a> and a <a href="https://github.com/puniverse/comsat-gradle-template">Gradle template</a> are also&nbsp;available.</p>
 
 					</div>
 				</div><!--main-->
