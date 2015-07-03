@@ -25,10 +25,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-@Configuration
 //snippet import
+@Configuration
 @Import(FiberWebMvcConfigurationSupport.class)
-// end of snippet
 @EnableAutoConfiguration
 @ComponentScan
 public class SampleTraditionalApplication {
@@ -36,3 +35,4 @@ public class SampleTraditionalApplication {
         SpringApplication.run(SampleTraditionalApplication.class, args);
     }
 }
+// end of snippet

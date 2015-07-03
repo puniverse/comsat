@@ -3,7 +3,7 @@
 
 ## Getting started
 
-In Maven:
+In [Maven](https://maven.apache.org):
 
 ```xml
 <dependency>
@@ -12,6 +12,8 @@ In Maven:
     <version>0.4.0</version>
 </dependency>
 ```
+
+The corresponding Gradle dependency is ```'co.paralleluniverse:ARTIFACT:0.4.0'```
 
 Where `ARTIFACT` is:
 
@@ -36,18 +38,26 @@ Where `ARTIFACT` is:
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
 * `comsat-spring-web` – [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers
 
-Or, build from sources by running:
+Or, build and install from sources (after installing [Gradle](http://www.gradle.org) locally) in your local maven repository with:
 
 ```
-./gradlew
+gradle install
 ```
+
+The full testsuite can be run with `gradle build`.
 
 ## Usage
 
 * [Documentation](http://docs.paralleluniverse.co/comsat/)
 * [Javadoc](http://docs.paralleluniverse.co/comsat/javadoc)
 
-You can also study the examples [here](https://github.com/puniverse/comsat-examples).
+A [Gradle template](https://github.com/puniverse/comsat-gradle-template) project and a [Maven archetype](https://github.com/puniverse/comsat-mvn-archetype) using various integration modules and featuring setup with both Dropwizard and standalone Tomcat are also available for jumpstart and study. Both have a `without-comsat` branch which is useful to clearly see the (minimal, if any) porting effort required (branches comparison works very well for this purporse).
+
+There's a [Comsat-Ring Clojure Leiningen template](https://github.com/puniverse/comsat-ring-template) as well which includes an `auto-instrument` branch that doesn't need any explicit suspendable-marking code (`suspendable!`, `defsfn`, `sfn` etc.) thanks to [Pulsar's new auto-instrumentation feature](http://docs.paralleluniverse.co/pulsar/#automatic-instrumentation).
+
+You can also have a look at [additional examples](https://github.com/puniverse/comsat-examples).
+
+Finally there are several regularly updated third-party bootstrap projects: [Comsat + Dropwizard + jOOQ](https://github.com/circlespainter/comsat-jooq-gradle-template), [Comsat Web Actors Stock Quotes (ported from Akka)](https://github.com/circlespainter/quasar-stocks), [Spring MVC + Tomcat standalone servlet container](https://github.com/circlespainter/spring4-mvc-gradle-annotation-hello-world).
 
 ## Getting help
 

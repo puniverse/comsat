@@ -38,15 +38,15 @@ COMSAT [0.1.0](https://github.com/puniverse/comsat/releases/tag/v0.1.0) has been
 
 Java 7 is required to use COMSAT.
 
-### Using Maven {#maven}
+### Using Comsat with [Maven](https://maven.apache.org) and [Gradle](http://www.gradle.org) {#maven}
 
-First, you need the `quasar-core` dependency:
+First, you need the `quasar-core` dependency. With Maven:
 
 ~~~ xml
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.2</version>
 </dependency>
 ~~~
 
@@ -56,22 +56,26 @@ or, for JDK8:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.2</version>
     <classifier>jdk8</classifier>
 </dependency>
 ~~~
 
-Then add those Comsat modules that you'd like to use:
+The corresponding Gradle dependencies are respectively `co.paralleluniverse:quasar-core:0.7.2` or, for JDK8, `co.paralleluniverse:quasar-core:0.7.2@jdk8`.
+
+Then add the Comsat module relevant to your needs (Maven):
 
 ~~~ xml
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>ARTIFACT</artifactId>
-    <version>0.7.1}</version>
+    <version>0.4.0</version>
 </dependency>
 ~~~
 
-where `ARTIFACT` is:
+The corresponding Gradle dependency is `co.paralleluniverse:ARTIFACT:0.4.0`.
+
+`ARTIFACT` will be one of:
 
 * `comsat-servlet` – Servlet integration for defining fiber-per-request servlets.
 * `comsat-ring-jetty9` - A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.2
@@ -95,11 +99,21 @@ where `ARTIFACT` is:
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
 * `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
 
+## Examples
+
+A [Gradle template](https://github.com/puniverse/comsat-gradle-template) project and a [Maven archetype](https://github.com/puniverse/comsat-mvn-archetype) using various integration modules and featuring setup with both Dropwizard and standalone Tomcat are available for jumpstart and study. Both have a `without-comsat` branch which is useful to clearly see the (minimal, if any) porting effort required (branches comparison works very well for this purporse).
+
+There's a [Comsat-Ring Clojure Leiningen template](https://github.com/puniverse/comsat-ring-template) as well which includes an `auto-instrument` branch that doesn't need any explicit suspendable-marking code (`suspendable!`, `defsfn`, `sfn` etc.) thanks to [Pulsar's new auto-instrumentation feature](http://docs.paralleluniverse.co/pulsar/#automatic-instrumentation).
+
+This GitHub project contains examples covering most of the COMSAT functionality: [puniverse/comsat-examples](https://github.com/puniverse/comsat-examples).
+
+Finally there are several regularly updated third-party bootstrap projects: [Comsat + Dropwizard + jOOQ](https://github.com/circlespainter/comsat-jooq-gradle-template), [Comsat Web Actors Stock Quotes (ported from Akka)](https://github.com/circlespainter/quasar-stocks), [Spring MVC + Tomcat standalone servlet container](https://github.com/circlespainter/spring4-mvc-gradle-annotation-hello-world).
+
 ### Enabling Comsat
 
 Comsat runs code in [Quasar](http://docs.paralleluniverse.co/quasar/) fibers, which rely on bytecode instrumentation. This instrumentation is done in one of three ways: via a Java agent that must be loaded into the Servlet container; with a custom class-loader available for Tomcat and Jetty; or at compilation time.
 
-AOT instrumentation is an advanced topic eplained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instrumentation).
+AOT instrumentation is an advanced topic explained in the [Quasar documentation](http://docs.paralleluniverse.co/quasar/index.html#instrumentation).
 
 When using AOT instrumentation alone, all of your fiber-blocking dependencies will need to have been AOT-compiled already. Please note that some Comsat modules, such as `comast-jersey-server`, rely on dynamic instrumentation of third-party libraries and so they cannot be used with AOT instrumentation alone.
 
@@ -137,17 +151,15 @@ Then, include a `<Set name="classLoader">` tag in your webapp's context xml:
 
 ### Building Comsat {#build}
 
-Clone the repository:
+Install [Gradle](http://www.gradle.org), then clone the repository:
 
     git clone https://github.com/puniverse/comsat.git
 
-and run:
+and finally run:
 
-    ./gradlew
+    gradle install
 
-Or, if you have gradle installed, run:
-
-    gradle
+The full testsuite can be run with `gradle build`.
 
 # User Manual
 
@@ -477,9 +489,9 @@ MongoDatabase mongoDb = mongoClient.getDatabase("mydb");
 
 ### Dropwizard
 
-[Dropwizard](http://dropwizard.io/) is a Java framework for developing ops-friendly, high-performance, RESTful web services. You can find dropwizard-comsat sample application [here](https://github.com/puniverse/comsat/blob/master/comsat-dropwizard/src/test/java/co/paralleluniverse/fibers/dropwizard/MyDropwizardApp.java).
+[Dropwizard](http://dropwizard.io/) is a Java framework for developing ops-friendly, high-performance, RESTful web services.
 
-In order to use dropwizard with fibers, only few changes have to be made in the application declaration.
+Only few changes are needed in order to use dropwizard with fibers.
 
 First the YAML configuration file:
 
@@ -521,7 +533,7 @@ Comsat provides the ability to write fiber-blocking Spring Web MVC controllers w
 
 #### Fiber-blocking Spring Web MVC controllers
 
-Adding support for fiber-blocking Spring Web MVC controllers is as easy as adding an `@Import` for the Spring configuration class `FiberWebMvcConfigurationSupport` in the `co.paralleluniverse.springframework.web.servlet.config.annotation` package:
+Adding support for fiber-blocking Spring Web MVC controllers is as easy as replacing in your Spring configuration class the `@EnableWebMvc` annotation with `@Import(FiberWebMvcConfigurationSupport.class)`, for example:
 
 ~~~ java
 {% include_snippet import ./comsat-spring/comsat-spring-boot/comsat-spring-boot-sample-traditional/src/main/java/comsat/sample/traditional/SampleTraditionalApplication.java %}
@@ -659,9 +671,3 @@ A web actor may register itself to handle web socket connections by declaring wh
 When the client connects to a web socket, the web actor will receive a [`WebSocketOpened`]({{javadoc}}/comsat/webactors/WebSocketOpened.html) message, and each following message will be received as a [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html). The actor can send messages to the client by replying to the sender with `WebDataMessage`s of its own.
 
 The virtual actor that's the *sender* of the messages received from the client represents the WebSocket session; i.e., each open web socket will have a different actor as the sender of the messages. That virtual actor dies when the web socket connection closes.
-
-## Examples
-
-This GitHub project contains examples covering most of the COMSAT functionality: [puniverse/comsat-examples](https://github.com/puniverse/comsat-examples).
-
-A [Maven archetype](https://github.com/puniverse/comsat-maven-archetype) and a [Gradle template](https://github.com/puniverse/comsat-gradle-template) are also available.
