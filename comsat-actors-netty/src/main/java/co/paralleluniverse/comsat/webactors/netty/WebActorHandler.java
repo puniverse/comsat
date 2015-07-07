@@ -40,6 +40,7 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.GenericFutureListener;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -84,12 +85,15 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
     private static final String ACTOR_KEY = "co.paralleluniverse.actor";
 
+    private final SessionSelector selector;
+    private final String httpResponseEncoderName;
+
     private WebSocketServerHandshaker handshaker;
     private WebSocketActorAdapter webSocketActor;
-    private final SessionSelector selector;
 
-    public WebActorHandler(SessionSelector selector) {
+    public WebActorHandler(SessionSelector selector, String httpResponseEncoderName) {
         this.selector = selector;
+        this.httpResponseEncoderName = httpResponseEncoderName;
     }
 
     @Override
@@ -181,6 +185,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
+        // TODO Make session access thread-safe
         final Session session = selector.select(req);
         ActorImpl<? extends WebMessage> userActor;
         ActorRef<? extends WebMessage> userActorRef = null;
@@ -225,7 +230,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             } else if (handlesWithHttp(uri, userActorClass)) {
                 if (internalActor == null) {
                     //noinspection unchecked
-                    internalActor = new HttpActorAdapter(session, (ActorRef<HttpRequest>) userActorRef);
+                    internalActor = new HttpActorAdapter(session, (ActorRef<HttpRequest>) userActorRef, httpResponseEncoderName);
                     session.getAttachments().put(ACTOR_KEY, internalActor);
                 }
                 ((HttpActorAdapter) internalActor).service(ctx, req);
@@ -342,8 +347,8 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         private final Session session;
         private volatile boolean dead;
 
-        public HttpActorAdapter(Session session, ActorRef<? super HttpRequest> webActor) {
-            super(webActor.getName(), new HttpChannelAdapter());
+        public HttpActorAdapter(Session session, ActorRef<? super HttpRequest> webActor, String httpResponseEncoderName) {
+            super(webActor.getName(), new HttpChannelAdapter(httpResponseEncoderName));
 
             this.session = session;
             this.webActor = webActor;
@@ -399,6 +404,12 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static class HttpChannelAdapter implements SendPort<HttpResponse> {
+        private final String httpResponseEncoderName;
+
+        public HttpChannelAdapter(String httpResponseEncoderName) {
+            this.httpResponseEncoderName = httpResponseEncoderName;
+        }
+
         @Override
         public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
             trySend(message);
@@ -458,11 +469,17 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             if (message.getCharacterEncoding() != null)
                 HttpHeaders.setHeader(res, CONTENT_ENCODING, message.getCharacterEncoding());
 
-            sendHttpResponse(ctx, req, res, !message.shouldStartActor());
+            // This will copy the request content, which must still be referenceable, doing before the request handler
+            // unallocates it (unfortunately it is explicitly reference-counted in Netty)
+            final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
 
-            if (message.shouldStartActor()) {
+            final boolean sseStarted = message.shouldStartActor();
+            sendHttpResponse(ctx, req, res, !sseStarted);
+
+            if (sseStarted) {
+                ctx.pipeline().remove(httpResponseEncoderName);
                 try {
-                    message.getFrom().send(new HttpStreamOpened(new HttpStreamActorAdapter(ctx, req).ref(), message));
+                    message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
                 } catch (SuspendExecution e) {
                     throw new AssertionError(e);
                 }
@@ -496,7 +513,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         private volatile boolean dead;
 
         public HttpStreamActorAdapter(final ChannelHandlerContext ctx, final FullHttpRequest req) {
-            super(req.toString(), new HttpStreamChannelAdapter(ctx));
+            super(req.toString(), new HttpStreamChannelAdapter(ctx, req));
             ((HttpStreamChannelAdapter) (Object) mailbox()).actor = this;
         }
 
@@ -534,11 +551,13 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
+        private final Charset encoding;
         HttpStreamActorAdapter actor;
         final ChannelHandlerContext ctx;
 
-        public HttpStreamChannelAdapter(ChannelHandlerContext ctx) {
+        public HttpStreamChannelAdapter(ChannelHandlerContext ctx, FullHttpRequest req) {
             this.ctx = ctx;
+            this.encoding = HttpRequestWrapper.extractCharacterEncodingOrDefault(req.headers());
         }
 
         @Override
@@ -560,12 +579,16 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         @Override
         public boolean trySend(WebDataMessage res) {
             final ByteBuf buf;
-            if (res.getByteBufferBody() != null)
+            final String stringBody = res.getStringBody();
+            if (stringBody != null) {
+                byte[] bs = stringBody.getBytes(encoding);
+                buf = Unpooled.wrappedBuffer(bs);
+            } else {
                 buf = Unpooled.wrappedBuffer(res.getByteBufferBody());
-            else
-                buf = Unpooled.wrappedBuffer(res.getStringBody().getBytes());
-            buf.release();
-            ctx.writeAndFlush(buf);
+            }
+            ChannelFuture channelFuture = ctx.writeAndFlush(buf);
+            channelFuture.syncUninterruptibly();
+            System.out.println(channelFuture.isSuccess());
             return true;
         }
 

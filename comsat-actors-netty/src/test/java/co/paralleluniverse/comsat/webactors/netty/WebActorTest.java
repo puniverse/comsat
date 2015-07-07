@@ -27,9 +27,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.apache.http.HttpVersion;
@@ -56,12 +54,12 @@ public class WebActorTest {
     private ChannelFuture ch;
     private NioEventLoopGroup bossGroup;
     private NioEventLoopGroup workerGroup;
-    private String prevKeepAlive;
+    // private String prevKeepAlive;
 
     @Before
     public void setUp() throws Exception {
-        prevKeepAlive = System.getProperty("http.keepAlive");
-        System.setProperty("http.keepAlive", "false");
+        // prevKeepAlive = System.getProperty("http.keepAlive");
+        // System.setProperty("http.keepAlive", "false");
         this.bossGroup = new NioEventLoopGroup(1);
         this.workerGroup = new NioEventLoopGroup();
         final ServerBootstrap b = new ServerBootstrap();
@@ -80,14 +78,15 @@ public class WebActorTest {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
                     ChannelPipeline pipeline = ch.pipeline();
-                    pipeline.addLast(new HttpServerCodec());
+                    pipeline.addLast(new HttpRequestDecoder());
+                    pipeline.addLast("httpResponseEncoder", new HttpResponseEncoder());
                     pipeline.addLast(new HttpObjectAggregator(65536));
-                    pipeline.addLast(new WebActorHandler(new WebActorHandler.SessionSelector() {
+                    pipeline.addLast(new LoggingHandler(LogLevel.INFO), new WebActorHandler(new WebActorHandler.SessionSelector() {
                         @Override
                         public WebActorHandler.Session select(FullHttpRequest req) {
                             return session;
                         }
-                    }));
+                    }, "httpResponseEncoder"), new LoggingHandler(LogLevel.INFO));
                 }
             });
 
@@ -102,10 +101,10 @@ public class WebActorTest {
         bossGroup.shutdownGracefully().sync();
         workerGroup.shutdownGracefully().sync();
 
-        if (prevKeepAlive == null)
-            System.clearProperty("http.keepAlive");
-        else
-            System.setProperty("http.keepAlive", prevKeepAlive);
+        // if (prevKeepAlive == null)
+        //    System.clearProperty("http.keepAlive");
+        // else
+        //    System.setProperty("http.keepAlive", prevKeepAlive);
 
         System.out.println("Server is down");
     }
@@ -113,6 +112,7 @@ public class WebActorTest {
     @Test
     public void testHttpMsg() throws IOException, InterruptedException, ExecutionException {
         final HttpGet httpGet = new HttpGet("http://localhost:8080");
+        // httpGet.setProtocolVersion(HttpVersion.HTTP_1_0);
         final String res = HttpClients.createDefault().execute(httpGet, new BasicResponseHandler());
         assertEquals("httpResponse", res);
     }
@@ -121,7 +121,7 @@ public class WebActorTest {
     public void testWebSocketMsg() throws IOException, InterruptedException, ExecutionException, DeploymentException {
         BasicCookieStore cookieStore = new BasicCookieStore();
         final HttpGet httpGet = new HttpGet("http://localhost:8080");
-        httpGet.setProtocolVersion(HttpVersion.HTTP_1_0);
+        // httpGet.setProtocolVersion(HttpVersion.HTTP_1_0);
         HttpClients.custom().setDefaultCookieStore(cookieStore).build().execute(httpGet, new BasicResponseHandler());
 
         final SettableFuture<String> res = new SettableFuture<>();

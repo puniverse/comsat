@@ -19,6 +19,8 @@ import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import com.google.common.collect.*;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -28,7 +30,10 @@ import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
@@ -38,6 +43,10 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
  * @author circlespainter
  */
 final class HttpRequestWrapper extends HttpRequest {
+    public static final String CHARSET_MARKER_STRING = "charset=";
+
+    private final ByteBuf reqContent;
+
     final ActorRef<? super HttpResponse> actorRef;
     final FullHttpRequest req;
     final ChannelHandlerContext ctx;
@@ -46,11 +55,17 @@ final class HttpRequestWrapper extends HttpRequest {
     private URI uri;
     private Collection<Cookie> cookies;
     private ListMultimap<String, String> heads;
+    private ByteBuffer byteBufferBody;
+    private String stringBody;
+    private Charset encoding;
+    private Integer length;
+    private String contentType;
 
     public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req) {
         this.actorRef = actorRef;
         this.ctx = ctx;
         this.req = req;
+        this.reqContent = Unpooled.copiedBuffer(req.content());
     }
 
     @Override
@@ -136,11 +151,7 @@ final class HttpRequestWrapper extends HttpRequest {
     @Override
     public ListMultimap<String, String> getHeaders() {
         if (heads == null) {
-            final ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
-            final HttpHeaders headers = req.headers();
-            for (final String n : headers.names())
-                builder.putAll(n, headers.getAll(n));
-            heads = builder.build();
+            heads = extractHeaders(req.headers());
         }
         return heads;
     }
@@ -148,7 +159,7 @@ final class HttpRequestWrapper extends HttpRequest {
     @Override
     public Collection<Cookie> getCookies() {
         if (cookies == null) {
-            final ImmutableList.Builder<Cookie> builder = ImmutableList.<Cookie>builder();
+            final ImmutableList.Builder<Cookie> builder = ImmutableList.builder();
             for (io.netty.handler.codec.http.cookie.Cookie c : ServerCookieDecoder.LAX.decode(req.headers().get("Cookies"))) {
                 builder.add (
                     Cookie.cookie(c.name(), c.value())
@@ -167,35 +178,105 @@ final class HttpRequestWrapper extends HttpRequest {
 
     @Override
     public int getContentLength() {
-        final List<String> contentLength = heads.get(CONTENT_LENGTH);
-        if (contentLength != null && contentLength.size() > 0)
-            return Integer.parseInt(contentLength.get(0));
-        return -1;
+        if (length == null) {
+            final List<String> contentLength = heads.get(CONTENT_LENGTH);
+            if (contentLength != null && contentLength.size() > 0)
+                length = Integer.parseInt(contentLength.get(0));
+        }
+        return length;
     }
 
     @Override
     public Charset getCharacterEncoding() {
-        final List<String> charEnc = heads.get(CONTENT_ENCODING);
-        if (charEnc != null && charEnc.size() > 0)
-            return Charset.forName(charEnc.get(0));
-        return null;
+        if (encoding == null) {
+            encoding = extractCharacterEncoding(getHeaders());
+        }
+        return encoding;
     }
 
     @Override
     public String getContentType() {
-        final List<String> contentType = heads.get(CONTENT_TYPE);
-        if (contentType != null && contentType.size() > 0)
-            return contentType.get(0);
+        if (contentType == null) {
+            final List<String> cts = heads.get(CONTENT_TYPE);
+            if (cts != null && cts.size() > 0)
+                contentType = cts.get(0);
+        }
         return null;
     }
 
     @Override
     public String getStringBody() {
-        return req.content().toString();
+        if (stringBody == null) {
+            if (byteBufferBody != null)
+                return null;
+            decodeStringBody();
+        }
+        return stringBody;
     }
 
     @Override
     public ByteBuffer getByteBufferBody() {
-        return req.content().nioBuffer();
+        if (byteBufferBody == null) {
+            if (stringBody != null)
+                return null;
+            if (reqContent != null)
+                byteBufferBody = reqContent.nioBuffer();
+        }
+        return byteBufferBody;
+    }
+
+    private String decodeStringBody() {
+        if (reqContent != null) {
+            try {
+                stringBody =
+                    getCharsetEncodingOrDefault()
+                        .newDecoder()
+                            .onMalformedInput(CodingErrorAction.REPORT)
+                            .onUnmappableCharacter(CodingErrorAction.REPORT)
+                        .decode(reqContent.nioBuffer())
+                        .toString();
+            } catch (CharacterCodingException ignored) {}
+        }
+        return stringBody;
+    }
+
+    Charset getCharsetEncodingOrDefault() {
+        return getOrDefault(getCharacterEncoding());
+    }
+
+    static ImmutableListMultimap<String, String> extractHeaders(HttpHeaders headers) {
+        if (headers != null) {
+            final ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
+            for (final String n : headers.names())
+                builder.putAll(n, headers.getAll(n));
+            return builder.build();
+        }
+        return null;
+    }
+
+    static Charset extractCharacterEncoding(ListMultimap<String, String> heads) {
+        if (heads != null) {
+            final List<String> cts = heads.get(CONTENT_TYPE);
+            if (cts != null && cts.size() > 0) {
+                final String ct = cts.get(0).trim().toLowerCase();
+                if (ct.contains(CHARSET_MARKER_STRING)) {
+                    try {
+                        return Charset.forName(ct.substring(ct.indexOf(CHARSET_MARKER_STRING) + CHARSET_MARKER_STRING.length()).trim());
+                    } catch (UnsupportedCharsetException ignored) {
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    static Charset extractCharacterEncodingOrDefault(HttpHeaders headers) {
+        return getOrDefault(extractCharacterEncoding(extractHeaders(headers)));
+    }
+
+    private static Charset getOrDefault(Charset characterEncoding) {
+        if (characterEncoding == null)
+            return Charset.defaultCharset();
+        return characterEncoding;
     }
 }
