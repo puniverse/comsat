@@ -50,14 +50,14 @@ import java.util.concurrent.TimeUnit;
  */
 public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
-    public interface NettySession {
+    public interface Session {
         boolean isValid();
         void invalidate();
         ActorImpl<? extends WebMessage> getActor();
         Map<String, Object> getAttachments();
     }
 
-    public static abstract class DefaultNettySessionImpl implements NettySession {
+    public static abstract class DefaultSessionImpl implements Session {
         final Map<String, Object> attachments = new ConcurrentHashMap<>();
         private boolean valid = true;
 
@@ -78,17 +78,17 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    public interface NettySessionSelector {
-        NettySession select(FullHttpRequest req);
+    public interface SessionSelector {
+        Session select(FullHttpRequest req);
     }
 
     private static final String ACTOR_KEY = "co.paralleluniverse.actor";
 
     private WebSocketServerHandshaker handshaker;
-    private NettyWebSocketActor webSocketActor;
-    private final NettySessionSelector selector;
+    private WebSocketActorAdapter webSocketActor;
+    private final SessionSelector selector;
 
-    public WebActorHandler(NettySessionSelector selector) {
+    public WebActorHandler(SessionSelector selector) {
         this.selector = selector;
     }
 
@@ -181,7 +181,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
-        final NettySession session = selector.select(req);
+        final Session session = selector.select(req);
         ActorImpl<? extends WebMessage> userActor;
         ActorRef<? extends WebMessage> userActorRef = null;
         Class userActorClass = null;
@@ -197,9 +197,9 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         if (userActorRef != null) {
             // TODO Fix to test first the most specific one
             if (handlesWithWebSocket(uri, session.getActor().getClass())) {
-                if (internalActor == null || !(internalActor instanceof NettyWebSocketActor)) {
+                if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
                     //noinspection unchecked
-                    this.webSocketActor = new NettyWebSocketActor(ctx, (ActorRef<? super WebMessage>) userActorRef);
+                    this.webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
                     session.getAttachments().put(ACTOR_KEY, this.webSocketActor);
                 }
                 // Handshake
@@ -225,10 +225,10 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             } else if (handlesWithHttp(uri, userActorClass)) {
                 if (internalActor == null) {
                     //noinspection unchecked
-                    internalActor = new NettyHttpActor(session, (ActorRef<HttpRequest>) userActorRef);
+                    internalActor = new HttpActorAdapter(session, (ActorRef<HttpRequest>) userActorRef);
                     session.getAttachments().put(ACTOR_KEY, internalActor);
                 }
-                ((NettyHttpActor) internalActor).service(ctx, req);
+                ((HttpActorAdapter) internalActor).service(ctx, req);
                 return;
             }
         }
@@ -236,12 +236,12 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), NOT_FOUND));
     }
 
-    private static class NettyWebSocketActor extends FakeActor<WebDataMessage> {
+    private static class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
         final ActorRef<? super WebMessage> webActor;
         private final ChannelHandlerContext ctx;
 
-        public NettyWebSocketActor(ChannelHandlerContext ctx, ActorRef<? super WebMessage> webActor) {
-            super(webActor.getName(), new NettyWebSocketChannel(ctx));
+        public WebSocketActorAdapter(ChannelHandlerContext ctx, ActorRef<? super WebMessage> webActor) {
+            super(webActor.getName(), new WebSocketChannelAdapter(ctx));
             this.ctx = ctx;
             this.webActor = webActor;
             watch(webActor);
@@ -295,10 +295,10 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class NettyWebSocketChannel implements SendPort<WebDataMessage> {
+    private static class WebSocketChannelAdapter implements SendPort<WebDataMessage> {
         private final ChannelHandlerContext ctx;
 
-        public NettyWebSocketChannel(ChannelHandlerContext ctx) {
+        public WebSocketChannelAdapter(ChannelHandlerContext ctx) {
             this.ctx = ctx;
         }
 
@@ -337,13 +337,13 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class NettyHttpActor extends FakeActor<HttpResponse> {
+    private static class HttpActorAdapter extends FakeActor<HttpResponse> {
         final ActorRef<? super HttpRequest> webActor;
-        private final NettySession session;
+        private final Session session;
         private volatile boolean dead;
 
-        public NettyHttpActor(NettySession session, ActorRef<? super HttpRequest> webActor) {
-            super(webActor.getName(), new NettyHttpChannel());
+        public HttpActorAdapter(Session session, ActorRef<? super HttpRequest> webActor) {
+            super(webActor.getName(), new HttpChannelAdapter());
 
             this.session = session;
             this.webActor = webActor;
@@ -360,7 +360,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 return;
             }
 
-            webActor.send(new NettyHttpRequest(ref(), ctx, req));
+            webActor.send(new HttpRequestWrapper(ref(), ctx, req));
         }
 
         @Override
@@ -398,7 +398,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class NettyHttpChannel implements SendPort<HttpResponse> {
+    private static class HttpChannelAdapter implements SendPort<HttpResponse> {
         @Override
         public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
             trySend(message);
@@ -417,7 +417,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public boolean trySend(HttpResponse message) {
-            final NettyHttpRequest nettyRequest = (NettyHttpRequest) message.getRequest();
+            final HttpRequestWrapper nettyRequest = (HttpRequestWrapper) message.getRequest();
             final FullHttpRequest req = nettyRequest.req;
             final ChannelHandlerContext ctx = nettyRequest.ctx;
 
@@ -462,7 +462,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
             if (message.shouldStartActor()) {
                 try {
-                    message.getFrom().send(new HttpStreamOpened(new NettyHttpStreamActor(ctx, req).ref(), message));
+                    message.getFrom().send(new HttpStreamOpened(new HttpStreamActorAdapter(ctx, req).ref(), message));
                 } catch (SuspendExecution e) {
                     throw new AssertionError(e);
                 }
@@ -492,12 +492,12 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class NettyHttpStreamActor extends FakeActor<WebDataMessage> {
+    private static class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
         private volatile boolean dead;
 
-        public NettyHttpStreamActor(final ChannelHandlerContext ctx, final FullHttpRequest req) {
-            super(req.toString(), new NettyHttpStreamChannel(ctx));
-            ((NettyHttpStreamChannel) (Object) mailbox()).actor = this;
+        public HttpStreamActorAdapter(final ChannelHandlerContext ctx, final FullHttpRequest req) {
+            super(req.toString(), new HttpStreamChannelAdapter(ctx));
+            ((HttpStreamChannelAdapter) (Object) mailbox()).actor = this;
         }
 
         @Override
@@ -533,11 +533,11 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class NettyHttpStreamChannel implements SendPort<WebDataMessage> {
-        NettyHttpStreamActor actor;
+    private static class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
+        HttpStreamActorAdapter actor;
         final ChannelHandlerContext ctx;
 
-        public NettyHttpStreamChannel(ChannelHandlerContext ctx) {
+        public HttpStreamChannelAdapter(ChannelHandlerContext ctx) {
             this.ctx = ctx;
         }
 
@@ -565,7 +565,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             else
                 buf = Unpooled.wrappedBuffer(res.getStringBody().getBytes());
             buf.release();
-            ctx.channel().writeAndFlush(buf);
+            ctx.writeAndFlush(buf);
             return true;
         }
 

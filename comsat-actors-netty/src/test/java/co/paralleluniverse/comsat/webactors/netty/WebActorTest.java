@@ -44,7 +44,6 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.websocket.*;
@@ -53,7 +52,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-public class WebActorNettyTest {
+public class WebActorTest {
     private ChannelFuture ch;
     private NioEventLoopGroup bossGroup;
     private NioEventLoopGroup workerGroup;
@@ -68,7 +67,7 @@ public class WebActorNettyTest {
         final ServerBootstrap b = new ServerBootstrap();
         final MyWebActor actor = new MyWebActor();
         actor.spawn();
-        final WebActorHandler.NettySession session = new WebActorHandler.DefaultNettySessionImpl() {
+        final WebActorHandler.Session session = new WebActorHandler.DefaultSessionImpl() {
             @Override
             public ActorImpl<? extends WebMessage> getActor() {
                 return actor;
@@ -83,9 +82,9 @@ public class WebActorNettyTest {
                     ChannelPipeline pipeline = ch.pipeline();
                     pipeline.addLast(new HttpServerCodec());
                     pipeline.addLast(new HttpObjectAggregator(65536));
-                    pipeline.addLast(new WebActorHandler(new WebActorHandler.NettySessionSelector() {
+                    pipeline.addLast(new WebActorHandler(new WebActorHandler.SessionSelector() {
                         @Override
-                        public WebActorHandler.NettySession select(FullHttpRequest req) {
+                        public WebActorHandler.Session select(FullHttpRequest req) {
                             return session;
                         }
                     }));
@@ -132,7 +131,6 @@ public class WebActorNettyTest {
     }
 
     @Test
-    @Ignore
     public void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
         final Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
         Response resp = client.target("http://localhost:8080/ssechannel").request().get();

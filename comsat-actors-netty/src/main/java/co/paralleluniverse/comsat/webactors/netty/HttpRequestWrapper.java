@@ -37,7 +37,7 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
  *
  * @author circlespainter
  */
-final class NettyHttpRequest extends HttpRequest {
+final class HttpRequestWrapper extends HttpRequest {
     final ActorRef<? super HttpResponse> actorRef;
     final FullHttpRequest req;
     final ChannelHandlerContext ctx;
@@ -47,7 +47,7 @@ final class NettyHttpRequest extends HttpRequest {
     private Collection<Cookie> cookies;
     private ListMultimap<String, String> heads;
 
-    public NettyHttpRequest(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req) {
+    public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req) {
         this.actorRef = actorRef;
         this.ctx = ctx;
         this.req = req;
