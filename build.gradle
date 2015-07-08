@@ -228,9 +228,13 @@ project (':comsat-actors-api') {
 
 project (':comsat-actors-netty') {
     dependencies {
-        compile project (':comsat-actors-api')
         compile "io.netty:netty-all:$nettyVer"
-        compile "javax.websocket:javax.websocket-api:$websocketApiVer"
+
+        compile project (':comsat-actors-api')
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+
+        testCompile "javax.websocket:javax.websocket-api:$websocketApiVer"
         testCompile project(':comsat-test-utils')
     }
 }
@@ -238,8 +242,12 @@ project (':comsat-actors-netty') {
 project (':comsat-actors-servlet') {
     dependencies {
         compile project (':comsat-actors-api')
+
         provided "javax.websocket:javax.websocket-api:$websocketApiVer"
         provided "javax.servlet:javax.servlet-api:$servletVer" // was 3.1.0
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+
         testCompile project(':comsat-test-utils')
     }
 }
@@ -400,6 +408,11 @@ project (':comsat-test-utils') {
 
         compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
         compile "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVer"
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+        provided "co.paralleluniverse:quasar-actors:$quasarVer"
+        provided project (':comsat-actors-api')
+
         runtime "org.apache.tomcat.embed:tomcat-embed-logging-log4j:$tomcatVer"
         runtime "org.apache.tomcat:tomcat-dbcp:$tomcatVer"
     }
@@ -451,6 +464,7 @@ ext.javadocExcludes = [
         "co/paralleluniverse/comsat/webactors/servlet/WebActorEndpoint.java",
     //        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
         "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
+        "co/paralleluniverse/comsat/webactors/netty/WebActorHandler.java",
 ]
 
 // Rest of the subprojects common definitions 
