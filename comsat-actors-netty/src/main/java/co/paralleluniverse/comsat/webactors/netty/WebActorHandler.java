@@ -15,10 +15,12 @@ package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.*;
 import co.paralleluniverse.common.util.Pair;
+import co.paralleluniverse.common.util.SystemProperties;
 import co.paralleluniverse.comsat.webactors.*;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
+import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
@@ -40,18 +42,28 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
  * @author circlespainter
  */
-public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
-    private static WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
+public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
+    final static String SESSION_COOKIE_KEY = "JSESSIONID";
+    final static Map<String, Session> sessions = new ConcurrentHashMap<>();
+
+    private static AtomicReference<Fiber> cleanupFiber = new AtomicReference<>();
+
+    private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
 
     public interface Session {
         boolean isValid();
@@ -62,10 +74,20 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     public static abstract class DefaultSessionImpl implements Session {
-        private boolean valid = true;
+        private final static String durationProp = System.getProperty(DefaultSessionImpl.class.getName() + ".durationMs");
+        private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000l;
+
         private final ReentrantLock lock = new ReentrantLock();
 
+        private final long created;
+
         final Map<String, Object> attachments = new HashMap<>();
+
+        private boolean valid = true;
+
+        public DefaultSessionImpl() {
+            this.created = new Date().getTime();
+        }
 
         @Override
         public final void invalidate() {
@@ -75,7 +97,10 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final boolean isValid() {
-            return valid;
+            final boolean ret = valid && (new Date().getTime() - created) <= DURATION;
+            if (!ret)
+                invalidate();
+            return ret;
         }
 
         @Override
@@ -89,8 +114,9 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
+    // @FunctionalInterface
     public interface SessionSelector {
-        Session select(FullHttpRequest req);
+        Session select(ChannelHandlerContext ctx, FullHttpRequest req);
     }
 
     private static final String ACTOR_KEY = "co.paralleluniverse.actor";
@@ -114,7 +140,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         ctx.close();
-        cause.printStackTrace(System.err);
+        log.error("Exception caught", cause);
     }
 
     @Override
@@ -159,7 +185,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
-        final Session session = selector.select(req);
+        final Session session = selector.select(ctx, req);
         assert session != null;
 
         final ReentrantLock lock = session.getLock();
@@ -337,7 +363,7 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         private volatile boolean dead;
 
         public HttpActorAdapter(Session session, ActorRef<? super HttpRequest> webActor, String httpResponseEncoderName) {
-            super(webActor.getName(), new HttpChannelAdapter(httpResponseEncoderName));
+            super(webActor.getName(), new HttpChannelAdapter(session, httpResponseEncoderName));
 
             this.session = session;
             this.webActor = webActor;
@@ -393,9 +419,13 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static class HttpChannelAdapter implements SendPort<HttpResponse> {
-        private final String httpResponseEncoderName;
+        private final static boolean alwaysStartSession = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".alwaysStartSession");
 
-        public HttpChannelAdapter(String httpResponseEncoderName) {
+        private final String httpResponseEncoderName;
+        private final Session session;
+
+        public HttpChannelAdapter(Session session, String httpResponseEncoderName) {
+            this.session = session;
             this.httpResponseEncoderName = httpResponseEncoderName;
         }
 
@@ -463,6 +493,11 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
 
             final boolean sseStarted = message.shouldStartActor();
+            if (sseStarted || alwaysStartSession) {
+                final String sessionId = UUID.randomUUID().toString();
+                res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
+                startSession(sessionId, session);
+            }
             sendHttpResponse(ctx, req, res, !sseStarted);
 
             if (sseStarted) {
@@ -475,6 +510,25 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             return true;
+        }
+
+        private static void startSession(String sessionId, Session session) {
+            sessions.put(sessionId, session);
+
+            if (cleanupFiber.get() == null) {
+                cleanupFiber.set(new Fiber<Void>() {
+                    @Override
+                    public Void run() throws SuspendExecution, InterruptedException {
+                        for (final String sessionId : sessions.keySet()) {
+                            final Session s = sessions.get(sessionId);
+                            if (!s.isValid())
+                                sessions.remove(sessionId);
+                        }
+                        cleanupFiber.set(null);
+                        return null;
+                    }
+                }.start());
+            }
         }
 
         private io.netty.handler.codec.http.cookie.Cookie getNettyCookie(Cookie c) {
@@ -496,6 +550,14 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         public void close(Throwable t) {
             throw new UnsupportedOperationException();
         }
+    }
+
+    static boolean handlesWithHttp(String uri, Class<?> actorClass) {
+        return match(uri, actorClass).equals("http");
+    }
+
+    static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
+        return match(uri, actorClass).equals("ws");
     }
 
     private static class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
@@ -625,14 +687,6 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 //            res.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
 //            ctx.writeAndFlush(res);
 //        }
-    }
-
-    private static boolean handlesWithHttp(String uri, Class<?> actorClass) {
-        return match(uri, actorClass).equals("http");
-    }
-
-    private static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
-        return match(uri, actorClass).equals("ws");
     }
 
     private static String match(String uri, Class<?> actorClass) {
