@@ -14,6 +14,7 @@
 package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.*;
+import co.paralleluniverse.common.util.Pair;
 import co.paralleluniverse.comsat.webactors.*;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
@@ -23,6 +24,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
+import co.paralleluniverse.strands.concurrent.ReentrantLock;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -41,8 +43,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,17 +51,21 @@ import java.util.concurrent.TimeUnit;
  * @author circlespainter
  */
 public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
+    private static WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
 
     public interface Session {
         boolean isValid();
         void invalidate();
         ActorImpl<? extends WebMessage> getActor();
+        ReentrantLock getLock();
         Map<String, Object> getAttachments();
     }
 
     public static abstract class DefaultSessionImpl implements Session {
-        final Map<String, Object> attachments = new ConcurrentHashMap<>();
         private boolean valid = true;
+        private final ReentrantLock lock = new ReentrantLock();
+
+        final Map<String, Object> attachments = new HashMap<>();
 
         @Override
         public final void invalidate() {
@@ -76,6 +81,11 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         @Override
         public final Map<String, Object> getAttachments() {
             return attachments;
+        }
+
+        @Override
+        public final ReentrantLock getLock() {
+            return lock;
         }
     }
 
@@ -116,42 +126,6 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private boolean handlesWithHttp(String uri, Class<?> actorClass) {
-        final WebActor w = actorClass.getAnnotation(WebActor.class);
-        if (w != null) {
-            for (String httpPattern : w.httpUrlPatterns()) {
-                if (servletMatch(httpPattern, uri))
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
-        final WebActor w = actorClass.getAnnotation(WebActor.class);
-        if (w != null) {
-            for (String webSocketPattern : w.webSocketUrlPatterns()) {
-                if (servletMatch(webSocketPattern, uri))
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean servletMatch(String pattern, String uri) {
-        // As per servlet spec
-        if (pattern != null && uri != null) {
-            if (pattern.startsWith("/") && pattern.endsWith("*"))
-                return uri.startsWith(pattern.substring(0, pattern.length() - 1));
-            if (pattern.startsWith("*."))
-                return uri.endsWith(pattern.substring(2));
-            if (pattern.isEmpty())
-                return uri.equals("/");
-            return pattern.equals("/") || pattern.equals(uri);
-        }
-        return false;
-    }
-
     private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
         // Check for closing frame
         if (frame instanceof CloseWebSocketFrame) {
@@ -185,60 +159,75 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
-        // TODO Make session access thread-safe
         final Session session = selector.select(req);
-        ActorImpl<? extends WebMessage> userActor;
-        ActorRef<? extends WebMessage> userActorRef = null;
-        Class userActorClass = null;
-        ActorImpl internalActor = null;
-        if (session.isValid() && session.getActor() != null) {
-            internalActor = (ActorImpl) session.getAttachments().get(ACTOR_KEY);
-            userActor = session.getActor();
-            userActorRef = userActor.ref();
-            userActorClass = userActor.getClass();
-        }
+        assert session != null;
 
-        final String uri = req.getUri();
-        if (userActorRef != null) {
-            // TODO Fix to test first the most specific one
-            if (handlesWithWebSocket(uri, session.getActor().getClass())) {
-                if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
-                    //noinspection unchecked
-                    this.webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
-                    session.getAttachments().put(ACTOR_KEY, this.webSocketActor);
-                }
-                // Handshake
-                final WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(uri), null, true);
-                handshaker = wsFactory.newHandshaker(req);
-                if (handshaker == null) {
-                    WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
-                } else {
-                    @SuppressWarnings("unchecked") final ActorRef<WebMessage> userActorRef0 = (ActorRef<WebMessage>) webSocketActor.webActor;
-                    handshaker.handshake(ctx.channel(), req).addListener(new GenericFutureListener<ChannelFuture>() {
-                        @Override
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            FiberUtil.runInFiber(new SuspendableRunnable() {
-                                @Override
-                                public void run() throws SuspendExecution, InterruptedException {
-                                    userActorRef0.send(new WebSocketOpened(WebActorHandler.this.webSocketActor.ref()));
-                                }
-                            });
-                        }
-                    });
-                }
-                return;
-            } else if (handlesWithHttp(uri, userActorClass)) {
-                if (internalActor == null) {
-                    //noinspection unchecked
-                    internalActor = new HttpActorAdapter(session, (ActorRef<HttpRequest>) userActorRef, httpResponseEncoderName);
-                    session.getAttachments().put(ACTOR_KEY, internalActor);
-                }
-                ((HttpActorAdapter) internalActor).service(ctx, req);
-                return;
+        final ReentrantLock lock = session.getLock();
+        assert lock != null;
+
+        lock.lock();
+
+        try {
+            ActorImpl<? extends WebMessage> userActor;
+            ActorRef<? extends WebMessage> userActorRef = null;
+            Class userActorClass = null;
+            ActorImpl internalActor = null;
+            if (session.isValid() && session.getActor() != null) {
+                internalActor = (ActorImpl) session.getAttachments().get(ACTOR_KEY);
+                userActor = session.getActor();
+                userActorRef = userActor.ref();
+                userActorClass = userActor.getClass();
             }
+
+            final String uri = req.getUri();
+            if (userActorRef != null) {
+                if (handlesWithWebSocket(uri, session.getActor().getClass())) {
+                    if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
+                        //noinspection unchecked
+                        this.webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
+                        addActorToSessionAndUnlock(session, webSocketActor, lock);
+                    }
+                    // Handshake
+                    final WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(uri, null, true);
+                    handshaker = wsFactory.newHandshaker(req);
+                    if (handshaker == null) {
+                        WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
+                    } else {
+                        @SuppressWarnings("unchecked") final ActorRef<WebMessage> userActorRef0 = (ActorRef<WebMessage>) webSocketActor.webActor;
+                        handshaker.handshake(ctx.channel(), req).addListener(new GenericFutureListener<ChannelFuture>() {
+                            @Override
+                            public void operationComplete(ChannelFuture future) throws Exception {
+                                FiberUtil.runInFiber(new SuspendableRunnable() {
+                                    @Override
+                                    public void run() throws SuspendExecution, InterruptedException {
+                                        userActorRef0.send(new WebSocketOpened(WebActorHandler.this.webSocketActor.ref()));
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    return;
+                } else if (handlesWithHttp(uri, userActorClass)) {
+                    if (internalActor == null) {
+                        //noinspection unchecked
+                        internalActor = new HttpActorAdapter(session, (ActorRef<HttpRequest>) userActorRef, httpResponseEncoderName);
+                        addActorToSessionAndUnlock(session, internalActor, lock);
+                    }
+                    ((HttpActorAdapter) internalActor).service(ctx, req);
+                    return;
+                }
+            }
+        } finally {
+            if (lock.isHeldByCurrentStrand() && lock.isLocked())
+                lock.unlock();
         }
 
         sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), NOT_FOUND));
+    }
+
+    private void addActorToSessionAndUnlock(Session session, ActorImpl actor, ReentrantLock lock) {
+        session.getAttachments().put(ACTOR_KEY, actor);
+        lock.unlock();
     }
 
     private static class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
@@ -638,7 +627,69 @@ public final class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 //        }
     }
 
-    private static String getWebSocketLocation(String uri) {
-        return uri.replace("http://", "ws://").replace("https://", "wss://");
+    private static boolean handlesWithHttp(String uri, Class<?> actorClass) {
+        return match(uri, actorClass).equals("http");
+    }
+
+    private static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
+        return match(uri, actorClass).equals("ws");
+    }
+
+    private static String match(String uri, Class<?> actorClass) {
+        if (uri != null && actorClass != null) {
+            for (final Pair<String, String> e : lookupOrInsert(actorClass)) {
+                if (servletMatch(e.getFirst(), uri))
+                    return e.getSecond();
+            }
+        }
+        return "";
+    }
+
+    private static List<Pair<String, String>> lookupOrInsert(Class<?> actorClass) {
+        if (actorClass != null) {
+            final List<Pair<String, String>> lookup = classToUrlPatterns.get(actorClass);
+            if (lookup != null)
+                return lookup;
+            return insert(actorClass);
+        }
+        return null;
+    }
+
+    private static List<Pair<String, String>> insert(Class<?> actorClass) {
+        if (actorClass != null) {
+            final WebActor wa = actorClass.getAnnotation(WebActor.class);
+            final List<Pair<String, String>> ret = new ArrayList<>(4);
+            for (String httpP : wa.httpUrlPatterns())
+                addPattern(ret, httpP, "http");
+            for (String wsP : wa.webSocketUrlPatterns())
+                addPattern(ret, wsP, "ws");
+            classToUrlPatterns.put(actorClass, ret);
+            return ret;
+        }
+        return null;
+    }
+
+    private static void addPattern(List<Pair<String, String>> ret, String p, String type) {
+        if (p != null) {
+            @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") final Pair<String, String> entry = new Pair<>(p, type);
+            if (p.endsWith("*") || p.startsWith("*.") || p.equals("/")) // Wildcard -> end
+                ret.add(entry);
+            else // Exact -> beginning
+                ret.add(0, entry);
+        }
+    }
+
+    private static boolean servletMatch(String pattern, String uri) {
+        // As per servlet spec
+        if (pattern != null && uri != null) {
+            if (pattern.startsWith("/") && pattern.endsWith("*"))
+                return uri.startsWith(pattern.substring(0, pattern.length() - 1));
+            if (pattern.startsWith("*."))
+                return uri.endsWith(pattern.substring(2));
+            if (pattern.isEmpty())
+                return uri.equals("/");
+            return pattern.equals("/") || pattern.equals(uri);
+        }
+        return false;
     }
 }
