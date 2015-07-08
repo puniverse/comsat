@@ -19,10 +19,14 @@ import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.strands.SettableFuture;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -42,31 +46,76 @@ import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import javax.websocket.*;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
+@RunWith(Parameterized.class)
 public class WebActorTest {
+    private static final int INET_PORT = 8080;
+
+    private static final String HTTP_RESPONSE_ENCODER_KEY = "httpResponseEncoder";
+
+    private static final MyWebActor actor = new MyWebActor();
+    static {
+        actor.spawn();
+    }
+
+    private static final WebActorHandler.DefaultSessionImpl session = new WebActorHandler.DefaultSessionImpl() {
+        @Override
+        public ActorImpl<? extends WebMessage> getActor() {
+            return actor;
+        }
+    };
+
+    private static final Callable<WebActorHandler> basicWebActorHandlerCreator = new Callable<WebActorHandler>() {
+        @Override
+        public WebActorHandler call() throws Exception {
+            return new WebActorHandler(new WebActorHandler.SessionSelector() {
+                @Override
+                public WebActorHandler.Session select(ChannelHandlerContext ctx, FullHttpRequest req) {
+                    return session;
+                }
+            }, HTTP_RESPONSE_ENCODER_KEY);
+        }
+    };
+
+    private static final Callable<WebActorHandler> autoWebActorHandlerCreator = new Callable<WebActorHandler>() {
+        @Override
+        public WebActorHandler call() throws Exception {
+            return new AutoWebActorHandler(HTTP_RESPONSE_ENCODER_KEY);
+        }
+    };
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+            {basicWebActorHandlerCreator},
+            {autoWebActorHandlerCreator},
+        });
+    }
+
+    private final Callable<WebActorHandler> webActorHandlerCreator;
+
     private ChannelFuture ch;
     private NioEventLoopGroup bossGroup;
     private NioEventLoopGroup workerGroup;
+
+    public WebActorTest(Callable<WebActorHandler> webActorHandlerCreator) {
+        this.webActorHandlerCreator = webActorHandlerCreator;
+    }
 
     @Before
     public void setUp() throws Exception {
         this.bossGroup = new NioEventLoopGroup(1);
         this.workerGroup = new NioEventLoopGroup();
         final ServerBootstrap b = new ServerBootstrap();
-        final MyWebActor actor = new MyWebActor();
-        actor.spawn();
-        final WebActorHandler.Session session = new WebActorHandler.DefaultSessionImpl() {
-            @Override
-            public ActorImpl<? extends WebMessage> getActor() {
-                return actor;
-            }
-        };
         b.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
             .handler(new LoggingHandler(LogLevel.INFO))
@@ -77,21 +126,16 @@ public class WebActorTest {
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                     pipeline.addLast(new HttpRequestDecoder());
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
-                    pipeline.addLast("httpResponseEncoder", new HttpResponseEncoder());
+                    pipeline.addLast(HTTP_RESPONSE_ENCODER_KEY, new HttpResponseEncoder());
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                     pipeline.addLast(new HttpObjectAggregator(65536));
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
-                    pipeline.addLast(new WebActorHandler(new WebActorHandler.SessionSelector() {
-                        @Override
-                        public WebActorHandler.Session select(FullHttpRequest req) {
-                            return session;
-                        }
-                    }, "httpResponseEncoder"));
+                    pipeline.addLast(webActorHandlerCreator.call());
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                 }
             });
 
-        this.ch = b.bind(8080).sync();
+        this.ch = b.bind(INET_PORT).sync();
 
         System.out.println("Server is up");
     }
@@ -119,7 +163,7 @@ public class WebActorTest {
         HttpClients.custom().setDefaultCookieStore(cookieStore).build().execute(httpGet, new BasicResponseHandler());
 
         final SettableFuture<String> res = new SettableFuture<>();
-        try (Session ignored = ContainerProvider.getWebSocketContainer().connectToServer(sendAndGetTextEndPoint("test it", res), config(), URI.create("ws://localhost:8080/ws"))) {
+        try (Session ignored = ContainerProvider.getWebSocketContainer().connectToServer(sendAndGetTextEndPoint("test it", res), ClientEndpointConfig.Builder.create().build(), URI.create("ws://localhost:8080/ws"))) {
             assertEquals("test it", res.get());
         }
     }
@@ -128,6 +172,7 @@ public class WebActorTest {
     public void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
         final Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
         Response resp = client.target("http://localhost:8080/ssechannel").request().get();
+        NewCookie session = resp.getCookies().get(WebActorHandler.SESSION_COOKIE_KEY);
         final EventInput eventInput = resp.readEntity(EventInput.class);
         final SettableFuture<String> res = new SettableFuture<>();
         new Thread(new Runnable() {
@@ -141,7 +186,7 @@ public class WebActorTest {
                 }
             }
         }).start();
-        client.target("http://localhost:8080/ssepublish").request().post(Entity.text("test it"));
+        client.target("http://localhost:8080/ssepublish").request().cookie(session).post(Entity.text("test it"));
         assertEquals("test it", res.get());
     }
 
@@ -161,9 +206,5 @@ public class WebActorTest {
                 }
             }
         };
-    }
-
-    private static ClientEndpointConfig config() {
-        return ClientEndpointConfig.Builder.create().build();
     }
 }
