@@ -14,6 +14,7 @@
 package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.ActorImpl;
+import co.paralleluniverse.comsat.webactors.MyWebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.strands.SettableFuture;
 import java.io.IOException;
@@ -30,8 +31,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import org.apache.http.HttpVersion;
-import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -54,12 +53,9 @@ public class WebActorTest {
     private ChannelFuture ch;
     private NioEventLoopGroup bossGroup;
     private NioEventLoopGroup workerGroup;
-    // private String prevKeepAlive;
 
     @Before
     public void setUp() throws Exception {
-        // prevKeepAlive = System.getProperty("http.keepAlive");
-        // System.setProperty("http.keepAlive", "false");
         this.bossGroup = new NioEventLoopGroup(1);
         this.workerGroup = new NioEventLoopGroup();
         final ServerBootstrap b = new ServerBootstrap();
@@ -78,15 +74,20 @@ public class WebActorTest {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
                     ChannelPipeline pipeline = ch.pipeline();
+                    pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                     pipeline.addLast(new HttpRequestDecoder());
+                    pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                     pipeline.addLast("httpResponseEncoder", new HttpResponseEncoder());
+                    pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                     pipeline.addLast(new HttpObjectAggregator(65536));
-                    pipeline.addLast(new LoggingHandler(LogLevel.INFO), new WebActorHandler(new WebActorHandler.SessionSelector() {
+                    pipeline.addLast(new LoggingHandler(LogLevel.INFO));
+                    pipeline.addLast(new WebActorHandler(new WebActorHandler.SessionSelector() {
                         @Override
                         public WebActorHandler.Session select(FullHttpRequest req) {
                             return session;
                         }
-                    }, "httpResponseEncoder"), new LoggingHandler(LogLevel.INFO));
+                    }, "httpResponseEncoder"));
+                    pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                 }
             });
 
@@ -101,18 +102,12 @@ public class WebActorTest {
         bossGroup.shutdownGracefully().sync();
         workerGroup.shutdownGracefully().sync();
 
-        // if (prevKeepAlive == null)
-        //    System.clearProperty("http.keepAlive");
-        // else
-        //    System.setProperty("http.keepAlive", prevKeepAlive);
-
         System.out.println("Server is down");
     }
 
     @Test
     public void testHttpMsg() throws IOException, InterruptedException, ExecutionException {
         final HttpGet httpGet = new HttpGet("http://localhost:8080");
-        // httpGet.setProtocolVersion(HttpVersion.HTTP_1_0);
         final String res = HttpClients.createDefault().execute(httpGet, new BasicResponseHandler());
         assertEquals("httpResponse", res);
     }
@@ -121,11 +116,10 @@ public class WebActorTest {
     public void testWebSocketMsg() throws IOException, InterruptedException, ExecutionException, DeploymentException {
         BasicCookieStore cookieStore = new BasicCookieStore();
         final HttpGet httpGet = new HttpGet("http://localhost:8080");
-        // httpGet.setProtocolVersion(HttpVersion.HTTP_1_0);
         HttpClients.custom().setDefaultCookieStore(cookieStore).build().execute(httpGet, new BasicResponseHandler());
 
         final SettableFuture<String> res = new SettableFuture<>();
-        try (Session ignored = ContainerProvider.getWebSocketContainer().connectToServer(sendAndGetTextEndPoint("test it", res), config(cookieStore), URI.create("ws://localhost:8080/ws"))) {
+        try (Session ignored = ContainerProvider.getWebSocketContainer().connectToServer(sendAndGetTextEndPoint("test it", res), config(), URI.create("ws://localhost:8080/ws"))) {
             assertEquals("test it", res.get());
         }
     }
@@ -169,7 +163,7 @@ public class WebActorTest {
         };
     }
 
-    private static ClientEndpointConfig config(final CookieStore cookieStore) {
+    private static ClientEndpointConfig config() {
         return ClientEndpointConfig.Builder.create().build();
     }
 }
