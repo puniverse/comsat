@@ -49,6 +49,10 @@ public final class AutoWebActorHandler extends WebActorHandler {
     private static final List<Class<?>> actorClasses = new ArrayList<>(4);
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
+    public AutoWebActorHandler() {
+        this(null, null, null);
+    }
+
     public AutoWebActorHandler(String httpResponseEncoderName) {
         this(httpResponseEncoderName, null, null);
     }

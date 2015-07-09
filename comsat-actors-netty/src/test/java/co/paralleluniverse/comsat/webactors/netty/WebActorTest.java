@@ -82,14 +82,14 @@ public class WebActorTest {
                 public WebActorHandler.Session select(ChannelHandlerContext ctx, FullHttpRequest req) {
                     return session;
                 }
-            }, HTTP_RESPONSE_ENCODER_KEY);
+            });
         }
     };
 
     private static final Callable<WebActorHandler> autoWebActorHandlerCreator = new Callable<WebActorHandler>() {
         @Override
         public WebActorHandler call() throws Exception {
-            return new AutoWebActorHandler(HTTP_RESPONSE_ENCODER_KEY);
+            return new AutoWebActorHandler();
         }
     };
 

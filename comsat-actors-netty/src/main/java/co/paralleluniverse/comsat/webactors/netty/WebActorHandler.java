@@ -29,10 +29,7 @@ import co.paralleluniverse.strands.channels.SendPort;
 import co.paralleluniverse.strands.concurrent.ReentrantLock;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
@@ -126,6 +123,10 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
     private WebSocketServerHandshaker handshaker;
     private WebSocketActorAdapter webSocketActor;
+
+    public WebActorHandler(SessionSelector selector) {
+        this(selector, null);
+    }
 
     public WebActorHandler(SessionSelector selector, String httpResponseEncoderName) {
         this.selector = selector;
@@ -501,7 +502,19 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             sendHttpResponse(ctx, req, res, !sseStarted);
 
             if (sseStarted) {
-                ctx.pipeline().remove(httpResponseEncoderName);
+                if (httpResponseEncoderName != null) {
+                    ctx.pipeline().remove(httpResponseEncoderName);
+                } else {
+                    final ChannelPipeline pl = ctx.pipeline();
+                    final List<String> handlerKeysToBeRemoved = new ArrayList<>();
+                    for (final Map.Entry<String, ChannelHandler> e : pl) {
+                        if (e.getValue() instanceof HttpResponseEncoder)
+                            handlerKeysToBeRemoved.add(e.getKey());
+                    }
+                    for (final String k : handlerKeysToBeRemoved)
+                        pl.remove(k);
+                }
+
                 try {
                     message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
                 } catch (SuspendExecution e) {
