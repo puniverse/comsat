@@ -97,7 +97,7 @@ public class WebActorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
             {basicWebActorHandlerCreator},
-            {autoWebActorHandlerCreator},
+            {autoWebActorHandlerCreator}
         });
     }
 
