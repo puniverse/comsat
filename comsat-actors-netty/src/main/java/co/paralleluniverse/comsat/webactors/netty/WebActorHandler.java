@@ -637,9 +637,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             } else {
                 buf = Unpooled.wrappedBuffer(res.getByteBufferBody());
             }
-            ChannelFuture channelFuture = ctx.writeAndFlush(buf);
-            channelFuture.syncUninterruptibly();
-            System.out.println(channelFuture.isSuccess());
+            ctx.writeAndFlush(buf);
             return true;
         }
 
