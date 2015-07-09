@@ -419,7 +419,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static class HttpChannelAdapter implements SendPort<HttpResponse> {
-        private final static boolean alwaysStartSession = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".alwaysStartSession");
+        private final static boolean startSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".startSessionOnlyForSSE");
 
         private final String httpResponseEncoderName;
         private final Session session;
@@ -493,7 +493,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
 
             final boolean sseStarted = message.shouldStartActor();
-            if (sseStarted || alwaysStartSession) {
+            if (sseStarted || !startSessionOnlyForSSE) {
                 final String sessionId = UUID.randomUUID().toString();
                 res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
                 startSession(sessionId, session);
