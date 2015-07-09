@@ -67,7 +67,7 @@ public class WebActorTest {
         actor.spawn();
     }
 
-    private static final WebActorHandler.DefaultSessionImpl session = new WebActorHandler.DefaultSessionImpl() {
+    private static final WebActorHandler.DefaultActorContextImpl session = new WebActorHandler.DefaultActorContextImpl() {
         @Override
         public ActorImpl<? extends WebMessage> getActor() {
             return actor;
@@ -77,9 +77,9 @@ public class WebActorTest {
     private static final Callable<WebActorHandler> basicWebActorHandlerCreator = new Callable<WebActorHandler>() {
         @Override
         public WebActorHandler call() throws Exception {
-            return new WebActorHandler(new WebActorHandler.SessionSelector() {
+            return new WebActorHandler(new WebActorHandler.ActorContextProvider() {
                 @Override
-                public WebActorHandler.Session select(ChannelHandlerContext ctx, FullHttpRequest req) {
+                public WebActorHandler.ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
                     return session;
                 }
             });

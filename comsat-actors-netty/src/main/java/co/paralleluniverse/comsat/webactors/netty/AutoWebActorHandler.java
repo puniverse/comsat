@@ -43,7 +43,7 @@ import java.util.Set;
  * @author circlespainter
  */
 public final class AutoWebActorHandler extends WebActorHandler {
-    private static final AttributeKey<Session> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
+    private static final AttributeKey<ActorContext> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
     private static final List<Class<?>> actorClasses = new ArrayList<>(4);
@@ -66,18 +66,18 @@ public final class AutoWebActorHandler extends WebActorHandler {
     }
 
     public AutoWebActorHandler(String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-        super(new SessionSelector() {
+        super(new ActorContextProvider() {
             @Override
-            public Session select(ChannelHandlerContext ctx, final FullHttpRequest req) {
-                final Attribute<Session> s = ctx.attr(SESSION_KEY);
+            public ActorContext get(ChannelHandlerContext ctx, final FullHttpRequest req) {
+                final Attribute<ActorContext> s = ctx.attr(SESSION_KEY);
                 if (s.get() == null) {
                     final String sessionId = getSessionId(req);
                     if (sessionId != null) {
-                        final Session session = sessions.get(sessionId);
-                        if (session != null && session.isValid())
-                            s.setIfAbsent(session);
+                        final ActorContext actorContext = sessions.get(sessionId);
+                        if (actorContext != null && actorContext.isValid())
+                            s.setIfAbsent(actorContext);
                     } else
-                        s.setIfAbsent(new DefaultSessionImpl() {
+                        s.setIfAbsent(new DefaultActorContextImpl() {
                             private ActorImpl<? extends WebMessage> actor;
 
                             @Override

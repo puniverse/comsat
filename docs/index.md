@@ -582,9 +582,9 @@ WebActors are reployed on a web server. Currently, they can be deployed in any J
 
 Deploying web actors on top of Netty is as easy as inserting one of two Netty handlers in your pipeline: either `AutoWebActorHandler` or `WebActorHandler`.
 
-The way individual actors are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Session` interface which provides methods for session validity check, invalidation, locking, arbitrary data attachment and of course a getter returning a session's web actor.
+The way individual actors are assigned to individual HTTP exchanges is represented by the `WebActorHandler.ActorContext` interface which provides methods for session validity check, invalidation, locking, arbitrary data attachment and of course a getter returning a the web actor.
 
-`WebActorHandler` delegates session lookup (or creation) to a developer-supplied `SessionSelector` based on a channel's `ChannelHandlerContext` and `FullHttpRequest`, so a `SessionSelector` instance is the only required construction argument for it; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty` tests for more insight):
+`WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ActorContextProvider` based on a channel's `ChannelHandlerContext` and `FullHttpRequest`, so a `ActorContextProvider` instance is the only required construction argument for it; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty` tests for more insight):
 
 ~~~ java
 final MyWebActor actor = new MyWebActor();
@@ -606,12 +606,12 @@ b.group(bossGroup, workerGroup)
             pipeline.addLast(new HttpResponseEncoder());
             pipeline.addLast(new HttpObjectAggregator(65536));
 
-            pipeline.addLast(new WebActorHandler.SessionSelector() {
+            pipeline.addLast(new WebActorHandler.ActorContextProvider() {
                 @Override
-                public WebActorHandler.Session select(ChannelHandlerContext ctx, FullHttpRequest req) {
-                    return new WebActorHandler.DefaultSessionImpl() {
+                public WebActorHandler.ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
+                    return new WebActorHandler.DefaultActorContextImpl() {
                         @Override
-                        public ActorImpl<? extends WebMessage> getActor() {
+                        public ActorImpl<? extends WebMessage> get() {
                             return actor;
                         }
                     };
@@ -629,7 +629,7 @@ The only other requirement is that your channel pipeline contains separate `Http
 
 Session duration for the default implementation is 10 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.DefaultSessionImpl.durationMillis` system property.
 
-`AutoWebActorHandler` will additionally scan the classpath for classes with the `WebActor` annotation upon first use then and will automatically create `DefaultSessionImpl`-based sessions by instantiating and starting the approriate actor (among detected ones) per client session. Its construction requires no arguments but a user-specified classloader and/or a map containing per-class actor construction parameters can be optionally passed in.
+`AutoWebActorHandler` will additionally scan the classpath for classes with the `WebActor` annotation upon first use then and will automatically create `DefaultActorContextImpl`-based entries by instantiating and starting the appropriate actor (among detected ones) per client session. Its construction requires no arguments but a user-specified classloader and/or a map containing per-class actor construction parameters can be optionally passed in.
 
 Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-netty` tests for more insight):
 
