@@ -71,7 +71,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     public static abstract class DefaultSessionImpl implements Session {
-        private final static String durationProp = System.getProperty(DefaultSessionImpl.class.getName() + ".durationMs");
+        private final static String durationProp = System.getProperty(DefaultSessionImpl.class.getName() + ".durationMillis");
         private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000l;
 
         private final ReentrantLock lock = new ReentrantLock();
@@ -420,7 +420,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static class HttpChannelAdapter implements SendPort<HttpResponse> {
-        private final static boolean startSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".startSessionOnlyForSSE");
+        private final static boolean trackSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".trackSessionOnlyForSSE");
 
         private final String httpResponseEncoderName;
         private final Session session;
@@ -494,7 +494,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
 
             final boolean sseStarted = message.shouldStartActor();
-            if (sseStarted || !startSessionOnlyForSSE) {
+            if (sseStarted || !trackSessionOnlyForSSE) {
                 final String sessionId = UUID.randomUUID().toString();
                 res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
                 startSession(sessionId, session);

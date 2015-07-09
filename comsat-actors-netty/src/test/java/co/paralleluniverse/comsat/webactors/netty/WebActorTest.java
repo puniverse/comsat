@@ -130,7 +130,6 @@ public class WebActorTest {
                     pipeline.addLast(new HttpObjectAggregator(65536));
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                     pipeline.addLast(webActorHandlerCreatorInEffect.call());
-                    pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                 }
             });
 
