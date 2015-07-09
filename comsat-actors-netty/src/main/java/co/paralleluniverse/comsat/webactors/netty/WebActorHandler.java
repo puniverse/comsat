@@ -674,17 +674,13 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static void writeHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
-        // TODO Understand what's the issue with the keepalive
         // Send the response and close the connection if necessary.
-//        if (!HttpHeaders.isKeepAlive(req) || res.getStatus().code() != 200) {
-        if (close == null || close)
+        if (!HttpHeaders.isKeepAlive(req) || res.getStatus().code() != 200 || close == null || close) {
             ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
-        else
+        } else {
+            res.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
             ctx.writeAndFlush(res);
-//        } else {
-//            res.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-//            ctx.writeAndFlush(res);
-//        }
+        }
     }
 
     private static String match(String uri, Class<?> actorClass) {
