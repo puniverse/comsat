@@ -42,10 +42,10 @@ import org.apache.http.impl.client.HttpClients;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
-import org.junit.After;
+import org.junit.*;
+
 import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
+
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -101,20 +101,19 @@ public class WebActorTest {
         });
     }
 
-    private final Callable<WebActorHandler> webActorHandlerCreator;
-
-    private ChannelFuture ch;
-    private NioEventLoopGroup bossGroup;
-    private NioEventLoopGroup workerGroup;
+    private static ChannelFuture ch;
+    private static NioEventLoopGroup bossGroup;
+    private static NioEventLoopGroup workerGroup;
+    private static Callable<WebActorHandler> webActorHandlerCreatorInEffect;
 
     public WebActorTest(Callable<WebActorHandler> webActorHandlerCreator) {
-        this.webActorHandlerCreator = webActorHandlerCreator;
+        webActorHandlerCreatorInEffect = webActorHandlerCreator;
     }
 
-    @Before
-    public void setUp() throws Exception {
-        this.bossGroup = new NioEventLoopGroup(1);
-        this.workerGroup = new NioEventLoopGroup();
+    @BeforeClass
+    public static void setUp() throws Exception {
+        bossGroup = new NioEventLoopGroup(1);
+        workerGroup = new NioEventLoopGroup();
         final ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
@@ -130,18 +129,18 @@ public class WebActorTest {
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                     pipeline.addLast(new HttpObjectAggregator(65536));
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
-                    pipeline.addLast(webActorHandlerCreator.call());
+                    pipeline.addLast(webActorHandlerCreatorInEffect.call());
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                 }
             });
 
-        this.ch = b.bind(INET_PORT).sync();
+        ch = b.bind(INET_PORT).sync();
 
         System.out.println("Server is up");
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterClass
+    public static void tearDown() throws Exception {
         ch.channel().close();
         bossGroup.shutdownGracefully().sync();
         workerGroup.shutdownGracefully().sync();
