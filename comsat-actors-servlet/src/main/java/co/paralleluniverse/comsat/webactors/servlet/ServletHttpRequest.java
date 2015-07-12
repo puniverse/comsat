@@ -147,7 +147,7 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public Map<String, Object> getAtrributes() {
+    public Map<String, Object> getAttributes() {
         if (attrs == null) {
             ImmutableMap.Builder<String, Object> m = ImmutableMap.builder();
             for (Enumeration<String> as = request.getAttributeNames(); as.hasMoreElements();) {
