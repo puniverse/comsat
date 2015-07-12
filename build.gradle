@@ -235,8 +235,12 @@ project (':comsat-actors-api') {
 project (':comsat-actors-servlet') {
     dependencies {
         compile project (':comsat-actors-api')
+
         provided "javax.websocket:javax.websocket-api:$websocketApiVer"
         provided "javax.servlet:javax.servlet-api:$servletVer" // was 3.1.0
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+
         testCompile project(':comsat-test-utils')
     }
 }
@@ -244,8 +248,13 @@ project (':comsat-actors-servlet') {
 project (':comsat-actors-undertow') {
     dependencies {
         compile "io.undertow:undertow-core:$undertowVer"
+
         compile project (':comsat-actors-api')
-    }
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+
+        testCompile "javax.websocket:javax.websocket-api:$websocketApiVer"
+        testCompile project(':comsat-test-utils')    }
 }
 
 project (':comsat-dropwizard') {
