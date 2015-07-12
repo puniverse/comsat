@@ -1,5 +1,5 @@
-(defproject co.paralleluniverse/comsat-clj-http "0.4.0-SNAPSHOT"
-  :description "'clj-http' Quasar integration based on 'comsat-httpclient'."
+(defproject co.paralleluniverse/comsat-httpkit "0.4.0"
+  :description "'httpkit' Quasar integration"
 
   :url "https://github.com/puniverse/comsat"
 

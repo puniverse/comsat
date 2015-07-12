@@ -57,7 +57,3 @@ include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-static'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-ui'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-velocity'
 
-if (System.properties['java.version'].startsWith('1.8') ) { 
-    include 'comsat-tomcat-loader-jdk8'
-    include 'comsat-jetty-loader-jdk8'
-}

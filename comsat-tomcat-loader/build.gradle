@@ -1,9 +1,35 @@
-apply plugin: 'java'
-apply plugin: 'com.github.johnrengelman.shadow'
+sourceSets {
+    jdk7 {
+        java {
+            srcDir 'src/main/java'
+        }
+            
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+    jdk8 {
+        java {
+            srcDir 'src/main/java'
+        }
+            
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
 
+compileJdk7Java {
+    sourceCompatibility = '1.7'
+    targetCompatibility = '1.7'
+}
+
+compileJdk8Java {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
 
 dependencies {
-    compile "co.paralleluniverse:quasar-core:$quasarVer"
+    jdk7Compile "co.paralleluniverse:quasar-core:$quasarVer"
+    jdk8Compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
 
     provided "org.apache.tomcat:tomcat-juli:$tomcatVer"
     provided "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
@@ -15,40 +41,32 @@ dependencies {
     testRuntime project(':comsat-jdbc')
 }
 
-shadowJar {
-    outputs.upToDateWhen { false }
-        
-    // artifactAttached = false
-    classifier = 'shadow'
-    destinationDir = file("$buildDir/libs")
+def ssets = [sourceSets.jdk7]
+if(ext.java8) {
+    ssets += sourceSets.jdk8
+}
+ssets.each { set ->
+    def jarTask = task("${set.name}Jar", type: Jar) {
+        from set.output
+        from { project.configurations["${set.name}Runtime"].collect { it.isDirectory() ? it : zipTree(it) } }
+    } 
 
-    dependencies {
-        include(dependency('co.paralleluniverse:quasar-core'))
+    artifacts {
+        archives jarTask
     }
 
-    doLast {
-        logger.info("$buildDir/libs/${project.name}-${project.version}-${classifier}.jar -> $buildDir/libs/${project.name}-${project.version}.jar")
-        file("$buildDir/libs/${project.name}-${version}-${classifier}.jar").renameTo(file("$buildDir/libs/${project.name}-${project.version}.jar"))
+    assemble.dependsOn jarTask
+}
+
+if (ext.java8) {
+    jdk8Jar {
+        classifier = 'jdk8'
     }
 }
-    
-shadowJar.dependsOn jar
-build.dependsOn shadowJar
-install.dependsOn shadowJar
-signArchives.dependsOn shadowJar
-uploadArchives.dependsOn shadowJar
 
-if (System.properties['java.version'].startsWith('1.8') ) { 
-    artifacts {
-        archives jar
-        archives project(':comsat-tomcat-loader-jdk8').jar
-        archives sourcesJar
-        archives javadocJar
-        //    archives distZip
-    }
-
-    install.dependsOn ':comsat-tomcat-loader-jdk8:shadowJar'
-    uploadArchives.dependsOn ':comsat-tomcat-loader-jdk8:shadowJar'
+artifacts {
+    archives sourcesJar
+    archives javadocJar
 }
 
 task deployWar(type: Copy) {
