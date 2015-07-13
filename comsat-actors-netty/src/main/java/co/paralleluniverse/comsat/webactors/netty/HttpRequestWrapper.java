@@ -179,27 +179,32 @@ final class HttpRequestWrapper extends HttpRequest {
     @Override
     public int getContentLength() {
         if (length == null) {
-            final List<String> contentLength = heads.get(CONTENT_LENGTH);
-            if (contentLength != null && contentLength.size() > 0)
-                length = Integer.parseInt(contentLength.get(0));
+            getHeaders();
+            if (heads != null) {
+                final List<String> contentLength = heads.get(CONTENT_LENGTH);
+                if (contentLength != null && contentLength.size() > 0)
+                    length = Integer.parseInt(contentLength.get(0));
+            }
         }
         return length;
     }
 
     @Override
     public Charset getCharacterEncoding() {
-        if (encoding == null) {
+        if (encoding == null)
             encoding = extractCharacterEncoding(getHeaders());
-        }
         return encoding;
     }
 
     @Override
     public String getContentType() {
         if (contentType == null) {
-            final List<String> cts = heads.get(CONTENT_TYPE);
-            if (cts != null && cts.size() > 0)
-                contentType = cts.get(0);
+            getHeaders();
+            if (heads != null) {
+                final List<String> cts = heads.get(CONTENT_TYPE);
+                if (cts != null && cts.size() > 0)
+                    contentType = cts.get(0);
+            }
         }
         return null;
     }

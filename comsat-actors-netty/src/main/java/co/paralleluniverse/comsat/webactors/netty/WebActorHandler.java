@@ -44,10 +44,16 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.WeakHashMap;
+import java.util.UUID;
+import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  *
@@ -116,7 +122,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req);
     }
 
-    private static final String ACTOR_KEY = "co.paralleluniverse.actor";
+    protected static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
 
     private final ActorContextProvider selector;
     private final String httpResponseEncoderName;
@@ -175,11 +181,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) throws SuspendExecution {
-        // Handle 100 CONTINUE expectation.
-        if (HttpHeaders.is100ContinueExpected(req)) {
-            ctx.write(new DefaultFullHttpResponse(req.getProtocolVersion(), CONTINUE));
-        }
-
         // Handle a bad request.
         if (!req.getDecoderResult().isSuccess()) {
             sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), BAD_REQUEST));
@@ -212,7 +213,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                     if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
                         //noinspection unchecked
                         this.webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
-                        addActorToSessionAndUnlock(actorContext, webSocketActor, lock);
+                        addActorToContextAndUnlock(actorContext, webSocketActor, lock);
                     }
                     // Handshake
                     final WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(uri, null, true);
@@ -238,7 +239,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                     if (internalActor == null) {
                         //noinspection unchecked
                         internalActor = new HttpActorAdapter(actorContext, (ActorRef<HttpRequest>) userActorRef, httpResponseEncoderName);
-                        addActorToSessionAndUnlock(actorContext, internalActor, lock);
+                        addActorToContextAndUnlock(actorContext, internalActor, lock);
                     }
                     ((HttpActorAdapter) internalActor).service(ctx, req);
                     return;
@@ -252,7 +253,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), NOT_FOUND));
     }
 
-    private void addActorToSessionAndUnlock(ActorContext actorContext, ActorImpl actor, ReentrantLock lock) {
+    private void addActorToContextAndUnlock(ActorContext actorContext, ActorImpl actor, ReentrantLock lock) {
         actorContext.getAttachments().put(ACTOR_KEY, actor);
         lock.unlock();
     }
@@ -312,7 +313,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public String toString() {
-            return "WebSocketActor{" + "webActor=" + webActor + '}';
+            return "WebSocketActorAdapter{" + "webActor=" + webActor + '}';
         }
     }
 
@@ -415,7 +416,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public String toString() {
-            return "ServletHttpActor{" + "webActor=" + webActor + '}';
+            return "HttpActorAdapter{" + "webActor=" + webActor + '}';
         }
     }
 
@@ -610,7 +611,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public String toString() {
-            return "NettyHttpStreamActor{request + " + getName() + "}";
+            return "HttpStreamActorAdapter{request + " + getName() + "}";
         }
     }
 
