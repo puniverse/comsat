@@ -25,74 +25,73 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author circlespainter
  */
 public class FiberReadChannelListener extends FiberAsync<ByteBuffer, IOException> implements ChannelListener<StreamSourceChannel> {
 
-  private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  private final Pool<ByteBuffer> pool;
-  private final StreamSourceChannel ch;
+	private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	private final Pool<ByteBuffer> pool;
+	private final StreamSourceChannel ch;
 
-  public FiberReadChannelListener(Pool<ByteBuffer> pool, StreamSourceChannel ch) {
-    assert pool != null;
-    assert ch != null;
-    this.pool = pool;
-    this.ch = ch;
-  }
+	public FiberReadChannelListener(Pool<ByteBuffer> pool, StreamSourceChannel ch) {
+		assert pool != null;
+		assert ch != null;
+		this.pool = pool;
+		this.ch = ch;
+	}
 
-  @Override
-  protected void requestAsync() {
-    Pooled<ByteBuffer> resource = pool.allocate();
-    ByteBuffer buffer = resource.getResource();
-    try {
-      int r;
-      do {
-        r = ch.read(buffer);
-        if (r == 0) {
-          ch.getReadSetter().set(this);
-          ch.resumeReads();
-        } else if (r == -1) {
-          asyncCompleted(ByteBuffer.wrap(baos.toByteArray()));
-          IoUtils.safeClose(ch);
-        } else {
-          buffer.flip();
-          byte[] b = new byte[buffer.remaining()];
-          buffer.get(b);
-          baos.write(b);
-        }
-      } while (r > 0);
-    } catch (IOException e) {
-      asyncFailed(e);
-    } finally {
-      resource.free();
-    }
-  }
+	@Override
+	protected void requestAsync() {
+		Pooled<ByteBuffer> resource = pool.allocate();
+		ByteBuffer buffer = resource.getResource();
+		try {
+			int r;
+			do {
+				r = ch.read(buffer);
+				if (r == 0) {
+					ch.getReadSetter().set(this);
+					ch.resumeReads();
+				} else if (r == -1) {
+					asyncCompleted(ByteBuffer.wrap(baos.toByteArray()));
+					IoUtils.safeClose(ch);
+				} else {
+					buffer.flip();
+					byte[] b = new byte[buffer.remaining()];
+					buffer.get(b);
+					baos.write(b);
+				}
+			} while (r > 0);
+		} catch (IOException e) {
+			asyncFailed(e);
+		} finally {
+			resource.free();
+		}
+	}
 
-  @Override
-  public void handleEvent(StreamSourceChannel channel) {
-    Pooled<ByteBuffer> resource = pool.allocate();
-    ByteBuffer buffer = resource.getResource();
-    try {
-      int r;
-      do {
-        r = ch.read(buffer);
-        if (r == 0) {
-          return;
-        } else if (r == -1) {
-          asyncCompleted(ByteBuffer.wrap(baos.toByteArray()));
-          IoUtils.safeClose(channel);
-        } else {
-          buffer.flip();
-          byte[] b = new byte[buffer.remaining()];
-          buffer.get(b);
-          baos.write(b);
-        }
-      } while (r > 0);
-    } catch (IOException e) {
-      asyncFailed(e);
-    } finally {
-      resource.free();
-    }
-  }
+	@Override
+	public void handleEvent(StreamSourceChannel channel) {
+		Pooled<ByteBuffer> resource = pool.allocate();
+		ByteBuffer buffer = resource.getResource();
+		try {
+			int r;
+			do {
+				r = ch.read(buffer);
+				if (r == 0) {
+					return;
+				} else if (r == -1) {
+					asyncCompleted(ByteBuffer.wrap(baos.toByteArray()));
+					IoUtils.safeClose(channel);
+				} else {
+					buffer.flip();
+					byte[] b = new byte[buffer.remaining()];
+					buffer.get(b);
+					baos.write(b);
+				}
+			} while (r > 0);
+		} catch (IOException e) {
+			asyncFailed(e);
+		} finally {
+			resource.free();
+		}
+	}
 }
