@@ -43,112 +43,112 @@ import java.util.Set;
  * @author circlespainter
  */
 public final class AutoWebActorHandler extends WebActorHandler {
-    private static final AttributeKey<ActorContext> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
+	private static final AttributeKey<ActorContext> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
 
-    private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
-    private static final List<Class<?>> actorClasses = new ArrayList<>(4);
-    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+	private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
+	private static final List<Class<?>> actorClasses = new ArrayList<>(4);
+	private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
-    public AutoWebActorHandler() {
-        this(null, null, null);
-    }
+	public AutoWebActorHandler() {
+		this(null, null, null);
+	}
 
-    public AutoWebActorHandler(String httpResponseEncoderName) {
-        this(httpResponseEncoderName, null, null);
-    }
+	public AutoWebActorHandler(String httpResponseEncoderName) {
+		this(httpResponseEncoderName, null, null);
+	}
 
-    public AutoWebActorHandler(String httpResponseEncoderName, ClassLoader userClassLoader) {
-        this(httpResponseEncoderName, userClassLoader, null);
-    }
+	public AutoWebActorHandler(String httpResponseEncoderName, ClassLoader userClassLoader) {
+		this(httpResponseEncoderName, userClassLoader, null);
+	}
 
-    public AutoWebActorHandler(String httpResponseEncoderName, Map<Class<?>, Object[]> actorParams) {
-        this(httpResponseEncoderName, null, actorParams);
-    }
+	public AutoWebActorHandler(String httpResponseEncoderName, Map<Class<?>, Object[]> actorParams) {
+		this(httpResponseEncoderName, null, actorParams);
+	}
 
-    public AutoWebActorHandler(String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-        super(new ActorContextProvider() {
-            @Override
-            public ActorContext get(ChannelHandlerContext ctx, final FullHttpRequest req) {
-                final Attribute<ActorContext> s = ctx.attr(SESSION_KEY);
-                if (s.get() == null) {
-                    final String sessionId = getSessionId(req);
-                    if (sessionId != null) {
-                        final ActorContext actorContext = sessions.get(sessionId);
-                        if (actorContext != null && actorContext.isValid())
-                            s.setIfAbsent(actorContext);
-                    } else
-                        s.setIfAbsent(new DefaultActorContextImpl() {
-                            private ActorImpl<? extends WebMessage> actor;
+	public AutoWebActorHandler(String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
+		super(new ActorContextProvider() {
+			@Override
+			public ActorContext get(ChannelHandlerContext ctx, final FullHttpRequest req) {
+				final Attribute<ActorContext> s = ctx.attr(SESSION_KEY);
+				if (s.get() == null) {
+					final String sessionId = getSessionId(req);
+					if (sessionId != null) {
+						final ActorContext actorContext = sessions.get(sessionId);
+						if (actorContext != null && actorContext.isValid())
+							s.setIfAbsent(actorContext);
+					} else
+						s.setIfAbsent(new DefaultActorContextImpl() {
+							              private ActorImpl<? extends WebMessage> actor;
 
-                            @Override
-                            public ActorImpl<? extends WebMessage> getActor() {
-                                if (actor != null)
-                                    return actor;
-                                else
-                                    return (actor = autoCreateActor(req));
-                            }
+							              @Override
+							              public ActorImpl<? extends WebMessage> getActor() {
+								              if (actor != null)
+									              return actor;
+								              else
+									              return (actor = autoCreateActor(req));
+							              }
 
-                            @SuppressWarnings("unchecked")
-                            private ActorImpl<? extends WebMessage> autoCreateActor(FullHttpRequest req) {
-                                registerActorClasses();
-                                final String uri = req.getUri();
-                                for (final Class<?> c : actorClasses) {
-                                    if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c)) {
-                                        final Actor ret = Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY));
-                                        ret.spawn();
-                                        return ret;
-                                    }
-                                }
-                                return null;
-                            }
+							              @SuppressWarnings("unchecked")
+							              private ActorImpl<? extends WebMessage> autoCreateActor(FullHttpRequest req) {
+								              registerActorClasses();
+								              final String uri = req.getUri();
+								              for (final Class<?> c : actorClasses) {
+									              if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c)) {
+										              final Actor ret = Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY));
+										              ret.spawn();
+										              return ret;
+									              }
+								              }
+								              return null;
+							              }
 
-                            private synchronized void registerActorClasses() {
-                                if (actorClasses.isEmpty()) {
-                                    try {
-                                        final ClassLoader classLoader = userClassLoader != null ? userClassLoader : this.getClass().getClassLoader();
-                                        ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
-                                            @Override
-                                            public void visit(String resource, URL url, ClassLoader cl) {
-                                                if (!ClassLoaderUtil.isClassFile(resource))
-                                                    return;
-                                                final String className = ClassLoaderUtil.resourceToClass(resource);
-                                                try (InputStream is = cl.getResourceAsStream(resource)) {
-                                                    if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
-                                                        registerWebActor(cl.loadClass(className));
-                                                } catch (IOException | ClassNotFoundException e) {
-                                                    log.error("Exception while scanning class " + className + " for WebActor annotation", e);
-                                                    throw new RuntimeException(e);
-                                                }
-                                            }
+							              private synchronized void registerActorClasses() {
+								              if (actorClasses.isEmpty()) {
+									              try {
+										              final ClassLoader classLoader = userClassLoader != null ? userClassLoader : this.getClass().getClassLoader();
+										              ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
+											              @Override
+											              public void visit(String resource, URL url, ClassLoader cl) {
+												              if (!ClassLoaderUtil.isClassFile(resource))
+													              return;
+												              final String className = ClassLoaderUtil.resourceToClass(resource);
+												              try (InputStream is = cl.getResourceAsStream(resource)) {
+													              if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
+														              registerWebActor(cl.loadClass(className));
+												              } catch (IOException | ClassNotFoundException e) {
+													              log.error("Exception while scanning class " + className + " for WebActor annotation", e);
+													              throw new RuntimeException(e);
+												              }
+											              }
 
-                                            private void registerWebActor(Class<?> c) {
-                                                actorClasses.add(c);
-                                            }
-                                        });
-                                    } catch (IOException e) {
-                                        log.error("IOException while scanning classes for WebActor annotation", e);
-                                    }
-                                }
-                            }
-                        }
-                    );
-                }
-                return s.get();
-            }
+											              private void registerWebActor(Class<?> c) {
+												              actorClasses.add(c);
+											              }
+										              });
+									              } catch (IOException e) {
+										              log.error("IOException while scanning classes for WebActor annotation", e);
+									              }
+								              }
+							              }
+						              }
+						);
+				}
+				return s.get();
+			}
 
-            private String getSessionId(FullHttpRequest req) {
-                final String cookiesString = req.headers().get(HttpHeaders.Names.COOKIE);
-                if (cookiesString != null) {
-                    final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookiesString);
-                    if (cookies != null) {
-                        for (final Cookie c : cookies) {
-                            if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
-                                return c.value();
-                        }
-                    }
-                }
-                return null;
-            }
-        }, httpResponseEncoderName);
-    }
+			private String getSessionId(FullHttpRequest req) {
+				final String cookiesString = req.headers().get(HttpHeaders.Names.COOKIE);
+				if (cookiesString != null) {
+					final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookiesString);
+					if (cookies != null) {
+						for (final Cookie c : cookies) {
+							if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
+								return c.value();
+						}
+					}
+				}
+				return null;
+			}
+		}, httpResponseEncoderName);
+	}
 }
