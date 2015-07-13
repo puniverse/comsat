@@ -188,10 +188,13 @@ final class HttpRequestWrapper extends HttpRequest {
 
 	@Override
 	public String getContentType() {
-		if (contentType == null) {
-			final List<String> cts = getHeaders().get(Headers.CONTENT_TYPE_STRING);
-			if (cts != null && cts.size() > 0)
-				contentType = cts.get(0);
+		getHeaders();
+		if (heads != null) {
+			if (contentType == null) {
+				final List<String> cts = heads.get(Headers.CONTENT_TYPE_STRING);
+				if (cts != null && cts.size() > 0)
+					contentType = cts.get(0);
+			}
 		}
 		return null;
 	}
