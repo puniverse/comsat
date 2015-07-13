@@ -11,6 +11,12 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
+/*
+ * Adapted from Undertow's `io.undertow.util.StringWriteChannelListener` class.
+ * JBoss, Home of Professional Open Source. Copyright (C) 2014 Red Hat, Inc., and individual contributors as indicated by the @author tags.
+ * Distributed under the Apache License Version 2.0.
+ */
+
 package co.paralleluniverse.comsat.webactors.undertow;
 
 import co.paralleluniverse.fibers.FiberAsync;
@@ -25,6 +31,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 /**
+ *
+ * @author Stuart Douglas
  * @author circlespainter
  */
 public class FiberWriteChannelListener extends FiberAsync<Void, IOException> implements ChannelListener<StreamSinkChannel> {

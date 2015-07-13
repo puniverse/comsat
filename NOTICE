@@ -40,6 +40,12 @@ This product contains modified source code from HTTP Kit:
     * LICENSE: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
     * HOMEPAGE: http://www.http-kit.org/
 
+This product contains modified source code from Undertow:
+
+    JBoss, Home of Professional Open Source. Copyright (C) 2014 Red Hat, Inc., and individual contributors as indicated by the @author tags
+    * LICENSE: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
+    * HOMEPAGE: http://undertow.io/
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
