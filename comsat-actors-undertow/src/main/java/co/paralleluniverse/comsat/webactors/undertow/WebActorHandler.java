@@ -32,19 +32,21 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.CookieImpl;
-import io.undertow.server.handlers.HttpContinueReadHandler;
-import io.undertow.server.handlers.sse.ServerSentEventConnection;
-import io.undertow.server.handlers.sse.ServerSentEventConnectionCallback;
 import io.undertow.server.session.*;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.StatusCodes;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.*;
 import io.undertow.websockets.spi.WebSocketHttpExchange;
 import org.xnio.Buffers;
+import org.xnio.ChannelListener;
+import org.xnio.ChannelListeners;
+import org.xnio.channels.StreamSinkChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class WebActorHandler implements HttpHandler {
   private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
-  private final HttpContinueReadHandler continueHandler;
+//  private final HttpContinueReadHandler continueHandler;
   private final SessionAttachmentHandler sessionHandler;
 
   public interface ActorContext {
@@ -118,7 +120,7 @@ public class WebActorHandler implements HttpHandler {
 
   public WebActorHandler(ActorContextProvider selector) {
     this.selector = selector;
-    this.continueHandler = Handlers.httpContinueRead(null);
+    // this.continueHandler = Handlers.httpContinueRead(null);
     SessionManager sessionManager = new InMemorySessionManager("SESSION_MANAGER");
     SessionCookieConfig sessionConfig = new SessionCookieConfig();
     this.sessionHandler = new SessionAttachmentHandler(sessionManager, sessionConfig);
@@ -126,7 +128,7 @@ public class WebActorHandler implements HttpHandler {
 
   @Override
   public void handleRequest(final HttpServerExchange xch) throws Exception {
-    continueHandler.handleRequest(xch);
+    // continueHandler.handleRequest(xch);
     sessionHandler.handleRequest(xch);
 
     final ActorContext actorContext = selector.get(xch);
@@ -151,60 +153,67 @@ public class WebActorHandler implements HttpHandler {
 
       final String uri = xch.getRequestURI();
       if (userActorRef != null) {
-        if (handlesWithWebSocket(uri, actorContext.getActor().getClass())) {
+        if (handlesWithWebSocket(uri, userActorClass)) {
           if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
 
             @SuppressWarnings("unchecked") final ActorRef<WebMessage> userActorRef0 = (ActorRef<WebMessage>) userActorRef;
-            final WebSocketActorAdapter webSocketActor = new WebSocketActorAdapter(userActorRef0);
+            internalActor = new WebSocketActorAdapter(userActorRef0);
 
             //noinspection unchecked
-            addActorToSessionAndUnlock(actorContext, webSocketActor, lock);
+            addActorToContextAndUnlock(actorContext, internalActor, lock);
+          }
 
-            // Handle with websocket
-            Handlers.websocket(new WebSocketConnectionCallback() {
-              @Override
-              public void onConnect(WebSocketHttpExchange exchange, WebSocketChannel channel) {
-                webSocketActor.setChannel(channel);
+          final WebSocketActorAdapter webSocketActor = (WebSocketActorAdapter) internalActor;
+          final ActorRef userActorRef0 = userActorRef;
 
-                channel.getReceiveSetter().set(new AbstractReceiveListener() {
+          // Handle with websocket
+          Handlers.websocket(new WebSocketConnectionCallback() {
+            @Override
+            public void onConnect(WebSocketHttpExchange exchange, WebSocketChannel channel) {
+              webSocketActor.setChannel(channel);
+
+              channel.getReceiveSetter().set(new AbstractReceiveListener() {
+                @Override
+                protected void onFullBinaryMessage(WebSocketChannel channel, BufferedBinaryMessage message) throws IOException {
+                  webSocketActor.onMessage(message);
+                }
+
+                @Override
+                protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) throws IOException {
+                  webSocketActor.onMessage(message);
+                }
+              });
+
+              channel.resumeReceives();
+
+              try {
+                FiberUtil.runInFiber(new SuspendableRunnable() {
                   @Override
-                  protected void onFullBinaryMessage(WebSocketChannel channel, BufferedBinaryMessage message) throws IOException {
-                    webSocketActor.onMessage(message);
-                  }
-
-                  @Override
-                  protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) throws IOException {
-                    webSocketActor.onMessage(message);
+                  public void run() throws SuspendExecution, InterruptedException {
+                    //noinspection unchecked
+                    userActorRef0.send(new WebSocketOpened(webSocketActor.ref()));
                   }
                 });
-
-                try {
-                  FiberUtil.runInFiber(new SuspendableRunnable() {
-                    @Override
-                    public void run() throws SuspendExecution, InterruptedException {
-                      userActorRef0.send(new WebSocketOpened(webSocketActor.ref()));
-                    }
-                  });
-                } catch (InterruptedException | ExecutionException e) {
-                  throw new RuntimeException(e);
-                }
+              } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
               }
-            }).handleRequest(xch);
-
-            return;
-          } else if (handlesWithHttp(uri, userActorClass)) {
-            xch.dispatch(); // Start async
-
-            //noinspection ConstantConditions
-            if (internalActor == null) {
-              //noinspection unchecked
-              internalActor = new HttpActorAdapter(actorContext, (ActorRef<HttpRequest>) userActorRef);
-              addActorToSessionAndUnlock(actorContext, internalActor, lock);
             }
-            //noinspection ConstantConditions
-            ((HttpActorAdapter) internalActor).service(xch);
-            return;
+          }).handleRequest(xch);
+
+          return;
+        } else if (handlesWithHttp(uri, userActorClass)) {
+          xch.dispatch(); // Start async
+
+          //noinspection ConstantConditions
+          if (internalActor == null) {
+            //noinspection unchecked
+            internalActor = new HttpActorAdapter(actorContext, (ActorRef<HttpRequest>) userActorRef);
+            addActorToContextAndUnlock(actorContext, internalActor, lock);
           }
+
+          //noinspection ConstantConditions
+          ((HttpActorAdapter) internalActor).service(xch);
+          return;
         }
       }
 
@@ -215,7 +224,7 @@ public class WebActorHandler implements HttpHandler {
     }
   }
 
-  private void addActorToSessionAndUnlock(ActorContext actorContext, ActorImpl actor, ReentrantLock lock) {
+  private void addActorToContextAndUnlock(ActorContext actorContext, ActorImpl actor, ReentrantLock lock) {
     actorContext.getAttachments().put(ACTOR_KEY, actor);
     lock.unlock();
   }
@@ -359,7 +368,8 @@ public class WebActorHandler implements HttpHandler {
         @Override
         public void run() throws SuspendExecution, InterruptedException {
           try {
-            webActor.send(new HttpRequestWrapper(ref(), xch, new FiberReadChannelListener(xch).run()));
+            final ByteBuffer buf = new FiberReadChannelListener(xch.getConnection().getBufferPool(), xch.getRequestChannel()).run();
+            webActor.send(new HttpRequestWrapper(ref(), xch, buf));
           } catch (IOException e) {
             throw new RuntimeException(e);
           }
@@ -398,7 +408,7 @@ public class WebActorHandler implements HttpHandler {
 
     @Override
     public String toString() {
-      return "ServletHttpActor{" + "webActor=" + webActor + '}';
+      return "HttpActorAdapter{" + "webActor=" + webActor + '}';
     }
   }
 
@@ -459,17 +469,30 @@ public class WebActorHandler implements HttpHandler {
 
       if (sseStarted) {
         try {
-          Handlers.serverSentEvents(new ServerSentEventConnectionCallback() {
-            @Override
-            @Suspendable
-            public void connected(ServerSentEventConnection connection, String lastEventId) {
-              try {
-                message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
-              } catch (SuspendExecution e) {
-                throw new AssertionError(e);
+          xch.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/event-stream; charset=UTF-8");
+          xch.setPersistent(false);
+
+          final StreamSinkChannel sink = xch.getResponseChannel();
+          if(!sink.flush()) {
+            sink.getWriteSetter().set(ChannelListeners.flushingChannelListener(new ChannelListener<StreamSinkChannel>() {
+              @Override
+              public void handleEvent(final StreamSinkChannel channel) {
+                try {
+                  FiberUtil.runInFiber(new SuspendableRunnable() {
+                    @Override
+                    public void run() throws SuspendExecution, InterruptedException {
+                      handleSSEStart(httpStreamActorAdapter, message, channel);
+                    }
+                  });
+                } catch (InterruptedException | ExecutionException e) {
+                  throw new RuntimeException(e);
+                }
               }
-            }
-          }).handleRequest(xch);
+            }, null));
+            sink.resumeWrites();
+          } else {
+            handleSSEStart(httpStreamActorAdapter, message, sink);
+          }
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -483,6 +506,11 @@ public class WebActorHandler implements HttpHandler {
       }
 
       return true;
+    }
+
+    private void handleSSEStart(HttpStreamActorAdapter httpStreamActorAdapter, HttpResponse message, StreamSinkChannel channel) throws SuspendExecution {
+      httpStreamActorAdapter.setChannel(channel);
+      message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
     }
 
     private static void startSession(HttpServerExchange xch, ActorContext actorContext) {
@@ -526,11 +554,14 @@ public class WebActorHandler implements HttpHandler {
   }
 
   private static class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
+    private final HttpStreamChannelAdapter channelAdapter;
+
     private volatile boolean dead;
 
     public HttpStreamActorAdapter(HttpServerExchange xch) {
       super(xch.toString(), new HttpStreamChannelAdapter(xch));
-      ((HttpStreamChannelAdapter) (Object) mailbox()).actor = this;
+      ((HttpStreamChannelAdapter) (SendPort) mailbox()).actor = this;
+      this.channelAdapter = (HttpStreamChannelAdapter) (SendPort) mailbox();
     }
 
     @Override
@@ -562,41 +593,65 @@ public class WebActorHandler implements HttpHandler {
 
     @Override
     public String toString() {
-      return "NettyHttpStreamActor{request + " + getName() + "}";
+      return "HttpStreamActorAdapter{request + " + getName() + "}";
+    }
+
+    public void setChannel(StreamSinkChannel channel) {
+      this.channelAdapter.channel = channel;
     }
   }
 
   private static class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
-    HttpStreamActorAdapter actor;
     final HttpServerExchange xch;
+
+    HttpStreamActorAdapter actor;
+    StreamSinkChannel channel;
 
     public HttpStreamChannelAdapter(HttpServerExchange xch) {
       this.xch = xch;
     }
 
     @Override
+    @Suspendable
     public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
       trySend(message);
     }
 
     @Override
+    @Suspendable
     public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
       send(message);
       return true;
     }
 
     @Override
+    @Suspendable
     public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
       return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
     }
 
     @Override
-    public boolean trySend(WebDataMessage res) {
-      final String stringBody = res.getStringBody();
-      if (stringBody != null) {
-        xch.getResponseSender().send(stringBody);
-      } else {
-        xch.getResponseSender().send(res.getByteBufferBody());
+    @Suspendable
+    public boolean trySend(final WebDataMessage res) {
+      try {
+        final String stringBody = res.getStringBody();
+        final String charset = xch.getRequestCharset();
+        try {
+          if (stringBody != null) {
+            if (charset != null)
+              new FiberWriteChannelListener(stringBody, Charset.forName(charset), channel).run();
+            else
+              new FiberWriteChannelListener(stringBody, channel).run();
+          } else {
+            new FiberWriteChannelListener(res.getByteBufferBody(), channel).run();
+          }
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      } catch (SuspendExecution e) {
+        throw new AssertionError(e);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
       return true;
     }

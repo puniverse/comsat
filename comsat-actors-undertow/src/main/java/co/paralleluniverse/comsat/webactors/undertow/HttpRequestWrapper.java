@@ -170,7 +170,10 @@ final class HttpRequestWrapper extends HttpRequest {
 
   @Override
   public Charset getCharacterEncoding() {
-    return Charset.forName(xch.getRequestCharset());
+    final String charsetName = xch.getRequestCharset();
+    if (charsetName != null)
+      return Charset.forName(charsetName);
+    return null;
   }
 
   @Override

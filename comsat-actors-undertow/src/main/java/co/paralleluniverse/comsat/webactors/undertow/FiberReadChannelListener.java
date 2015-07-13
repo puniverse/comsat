@@ -14,17 +14,15 @@
 package co.paralleluniverse.comsat.webactors.undertow;
 
 import co.paralleluniverse.fibers.FiberAsync;
-import io.undertow.server.HttpServerExchange;
 import org.xnio.ChannelListener;
 import org.xnio.IoUtils;
+import org.xnio.Pool;
 import org.xnio.Pooled;
 import org.xnio.channels.StreamSourceChannel;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -32,34 +30,36 @@ import java.util.List;
  */
 public class FiberReadChannelListener extends FiberAsync<ByteBuffer, IOException> implements ChannelListener<StreamSourceChannel> {
 
-  private final HttpServerExchange xch;
-  private final List<ByteBuffer> bufs = new ArrayList<>(8);
+  private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  private final Pool<ByteBuffer> pool;
+  private final StreamSourceChannel ch;
 
-  public FiberReadChannelListener(HttpServerExchange xch) {
-    this.xch = xch;
+  public FiberReadChannelListener(Pool<ByteBuffer> pool, StreamSourceChannel ch) {
+    assert pool != null;
+    assert ch != null;
+    this.pool = pool;
+    this.ch = ch;
   }
 
   @Override
   protected void requestAsync() {
-    xch.getRequestChannel().getReadSetter().set(this);
-  }
-
-  @Override
-  public void handleEvent(StreamSourceChannel channel) {
-    Pooled<ByteBuffer> resource = xch.getConnection().getBufferPool().allocate();
+    Pooled<ByteBuffer> resource = pool.allocate();
     ByteBuffer buffer = resource.getResource();
     try {
       int r;
       do {
-        r = channel.read(buffer);
+        r = ch.read(buffer);
         if (r == 0) {
-          return;
+          ch.getReadSetter().set(this);
+          ch.resumeReads();
         } else if (r == -1) {
-          asyncCompleted(join(bufs));
-          IoUtils.safeClose(channel);
+          asyncCompleted(ByteBuffer.wrap(baos.toByteArray()));
+          IoUtils.safeClose(ch);
         } else {
           buffer.flip();
-          bufs.add(buffer.duplicate());
+          byte[] b = new byte[buffer.remaining()];
+          buffer.get(b);
+          baos.write(b);
         }
       } while (r > 0);
     } catch (IOException e) {
@@ -69,12 +69,30 @@ public class FiberReadChannelListener extends FiberAsync<ByteBuffer, IOException
     }
   }
 
-  private ByteBuffer join(List<ByteBuffer> bufs) throws IOException {
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    for (ByteBuffer buf : bufs) {
-      byte[] b = new byte[buf.remaining()];
-      buf.get(b);
+  @Override
+  public void handleEvent(StreamSourceChannel channel) {
+    Pooled<ByteBuffer> resource = pool.allocate();
+    ByteBuffer buffer = resource.getResource();
+    try {
+      int r;
+      do {
+        r = ch.read(buffer);
+        if (r == 0) {
+          return;
+        } else if (r == -1) {
+          asyncCompleted(ByteBuffer.wrap(baos.toByteArray()));
+          IoUtils.safeClose(channel);
+        } else {
+          buffer.flip();
+          byte[] b = new byte[buffer.remaining()];
+          buffer.get(b);
+          baos.write(b);
+        }
+      } while (r > 0);
+    } catch (IOException e) {
+      asyncFailed(e);
+    } finally {
+      resource.free();
     }
-    return ByteBuffer.wrap(baos.toByteArray());
   }
 }
