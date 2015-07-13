@@ -11,7 +11,7 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
-package co.paralleluniverse.comsat.webactors.servlet;
+package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.actors.*;
 import co.paralleluniverse.comsat.webactors.*;
@@ -52,7 +52,6 @@ public class MyWebActor extends BasicActor<Object, Void> {
                         case "/ssechannel":
                             msg.getFrom().send(SSE.startSSE(self(), msg).build());
                             break;
-
                     }
                 } // -------- WebSocket/SSE opened -------- 
                 else if (message instanceof WebStreamOpened) {
