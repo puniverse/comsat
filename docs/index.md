@@ -99,8 +99,8 @@ The corresponding Gradle dependency is `co.paralleluniverse:ARTIFACT:0.4.0`.
 * `comsat-mongodb-allanbank` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
 * `comsat-okhttp` – [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.
 * `comsat-actors-api` – The Web Actors API
-* `comsat-actors-netty` – Enables deploying HTTP, SSE and WebSocket Web Actors as [Netty](http://netty.io/) handlers
-* `comsat-actors-servlet` – Enables deploying HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers
+* `comsat-actors-netty` – Deploy HTTP, SSE and WebSocket Web Actors as [Netty](http://netty.io/) handlers
+* `comsat-actors-servlet` – Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
 * `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
 
@@ -576,22 +576,20 @@ If you prefer using auto-configuration, it is enough to use the `FiberSpringBoot
 
 Web Actors are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, WebSocket and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
 
-WebActors are reployed on a web server. Currently, they can be deployed in any JavaEE 7 servlet container and through a [Netty](http://netty.io/) handler, but we are working on supporting deployment on top of [Undertow](http://undertow.io/) as well.
+WebActors are reployed on a web server. Currently, they can be deployed in any JavaEE 7 servlet container and as a [Netty](http://netty.io/) handler, but we are working on supporting deployment on top of [Undertow](http://undertow.io/) as well.
 
 ### Netty deployment
 
 Deploying web actors on top of Netty is as easy as inserting one of two Netty handlers in your pipeline: either `AutoWebActorHandler` or `WebActorHandler`.
 
-The way individual actors are assigned to individual HTTP exchanges is represented by the `WebActorHandler.ActorContext` interface which provides methods for session validity check, invalidation, locking, arbitrary data attachment and of course a getter returning a the web actor.
+The way individual actors are assigned to individual HTTP exchanges is represented by the `WebActorHandler.ActorContext` interface which provides methods for validity check, invalidation, locking, arbitrary data attachment and of course a getter returning a the web actor.
 
-`WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ActorContextProvider` based on a channel's `ChannelHandlerContext` and `FullHttpRequest`, so a `ActorContextProvider` instance is the only required construction argument for it; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty` tests for more insight):
+`WebActorHandler` delegates context lookup (or creation) to a developer-supplied `ActorContextProvider` based on a channel's `ChannelHandlerContext` and `FullHttpRequest`, so a `ActorContextProvider` instance is the only required construction argument for it; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty`'s' tests for more insight):
 
 ~~~ java
 final MyWebActor actor = new MyWebActor();
 actor.spawn();
-
 // ...
-
 final NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
 final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
 final ServerBootstrap b = new ServerBootstrap();
@@ -606,7 +604,7 @@ b.group(bossGroup, workerGroup)
             pipeline.addLast(new HttpResponseEncoder());
             pipeline.addLast(new HttpObjectAggregator(65536));
 
-            pipeline.addLast(new WebActorHandler.ActorContextProvider() {
+            pipeline.addLast(new WebActorHandler(new WebActorHandler.ActorContextProvider() {
                 @Override
                 public WebActorHandler.ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
                     return new WebActorHandler.DefaultActorContextImpl() {
@@ -616,11 +614,11 @@ b.group(bossGroup, workerGroup)
                         }
                     };
                 }
-            });
+            }));
         }
     });
 
-final ChannelFuture ch = b.bind(INET_PORT).sync();
+final ChannelFuture ch = b.bind(8080).sync();
 ~~~
 
 The only other requirement is that your channel pipeline contains separate `HttpRequestDecoder` and `HttpResponseEncoder` instances rather than a single `HttpServerCodec` because the `HttpResponseEncoder` needs to be dynamically removed when an SSE exchange starts. If you prefer, as an alternative you can pass the name of your installed `HttpResponseEncoder` at handler construction time.
@@ -631,7 +629,7 @@ Session duration for the default implementation is 10 seconds but it can be conf
 
 `AutoWebActorHandler` will additionally scan the classpath for classes with the `WebActor` annotation upon first use then and will automatically create `DefaultActorContextImpl`-based entries by instantiating and starting the appropriate actor (among detected ones) per client session. Its construction requires no arguments but a user-specified classloader and/or a map containing per-class actor construction parameters can be optionally passed in.
 
-Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-netty` tests for more insight):
+Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-netty`'s tests for more insight):
 
 ~~~ java
 final NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
