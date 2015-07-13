@@ -16,6 +16,10 @@ Comsat does provide one new API that you may choose to use: Web Actors. Web acto
 
 ## News
 
+### TBBD
+
+COMSAT [0.5.0](https://github.com/puniverse/comsat/releases/tag/v0.5.0) has been released.
+
 ### July 1, 2015
 
 COMSAT [0.4.0](https://github.com/puniverse/comsat/releases/tag/v0.4.0) has been released.
@@ -95,7 +99,8 @@ The corresponding Gradle dependency is `co.paralleluniverse:ARTIFACT:0.4.0`.
 * `comsat-mongodb-allanbank` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
 * `comsat-okhttp` – [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.
 * `comsat-actors-api` – the Web Actors API
-* `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
+* `comsat-actors-undertow` – Deploy HTTP, SSE and WebSocket Web Actors as [Undertow](http://undertow.io/) handlers
+* `comsat-actors-servlet` – Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
 * `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
 
@@ -571,11 +576,56 @@ If you prefer using auto-configuration, it is enough to use the `FiberSpringBoot
 
 Web Actors are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, WebSocket and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
 
-### Deployment
+WebActors are deployed on a web server. Currently, they can be deployed in any JavaEE 7 servlet container and as an [Underscore](http://underscore.io/) handler, but we are working on supporting deployment on top of [Netty](http://netty.io/) as well.
 
-WebActors are implemented on top of a web server. Currently, they can be deployed be deployed in any JavaEE 7 servlet container, but we are working on supporting deploying them on top of [Netty](http://netty.io/) and [Undertow](http://undertow.io/).
+### Undertow deployment
 
-A web actor is attached to a web session. It can be spawned and attached manually (say, after the user logs in and the session is authenticated). The manual attachment API unfortunately is container dependent. A web actor can also be spawned and attached automatically by letting COMSAT spawn and attach a web actor to every newly created session and this method will be described below. Because a web actor consumes very few resources, spawning them automatically is sufficient in all but the most extreme circumstances.
+Deploying web actors on top of Underscore is as easy as using one of two Underscore handlers: either `AutoWebActorHandler` or `WebActorHandler`.
+
+The way individual actors are assigned to individual HTTP exchanges is represented by the `WebActorHandler.ActorContext` interface which provides methods for validity check, invalidation, locking, arbitrary data attachment and of course a getter returning a the web actor.
+
+`WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ActorContextProvider` based on a `HttpServerExchange`, so an `ActorContextProvider` instance is the only required construction argument for it; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-undertow`'s' tests for more insight):
+
+~~~ java
+final Actor actor = new MyWebActor();
+actor.spawn();
+// ...
+server = Undertow.builder()
+    .addHttpListener(INET_PORT, "localhost")
+    .setHandler(new WebActorHandler(new WebActorHandler.ActorContextProvider() {
+        @Override
+        public WebActorHandler.ActorContext get(HttpServerExchange xch) {
+            return new WebActorHandler.DefaultActorContextImpl() {
+                @Override
+                public ActorImpl<? extends WebMessage> getActor() {
+                    return actor;
+                }
+            };
+        }
+    })).build();
+
+server.start();
+~~~
+
+`WebActorHandler` needs Undertow's in-memory session handler only for SSE exchanges; by default session management is enabled for all exchanges but it can be disabled in non-SSE cases by setting the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.HttpChannelAdapter.trackSessionOnlyForSSE` system property to `true`.
+
+The actor context duration for the default implementation is 10 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
+
+`AutoWebActorHandler` will additionally scan the classpath for classes with the `WebActor` annotation upon first use then and will automatically create `DefaultActorContextImpl`-based entries by instantiating and starting the appropriate actor (among detected ones) per client session. Its construction requires no arguments but a user-specified classloader and/or a map containing per-class actor construction parameters can be optionally passed in.
+
+Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-undertow`'s tests for more insight):
+
+~~~ java
+server = Undertow.builder()
+        .addHttpListener(INET_PORT, "localhost")
+        .setHandler(new AutoWebActorHandler().build();
+
+server.start();
+~~~
+
+### Servlet deployment
+
+A web actor is attached to a servlet web session. It can be spawned and attached manually (say, after the user logs in and the session is authenticated). The manual attachment API unfortunately is container dependent. A web actor can also be spawned and attached automatically by letting COMSAT spawn and attach a web actor to every newly created session and this method will be described below. Because a web actor consumes very few resources, spawning them automatically is sufficient in all but the most extreme circumstances.
 
 For automatic deployment, all you have to do is define an actor class (one that extends `BasicActor` or `Actor`), and annotate it with the [`WebActor`]({{javadoc}}comsat/webactors/WebActor.html) annotation. For example:
 
@@ -588,7 +638,6 @@ public class ChatActor extends BasicActor<WebMessage, Void> {
     }
 }
 ~~~
-
 
 In this example, all HTTP requests to the `/chat` resource, as well as all websocket messages to `/chat/ws` will be received as messages by the actor. A new `ChatActor` will be spawned for every new HTTP session.
 
