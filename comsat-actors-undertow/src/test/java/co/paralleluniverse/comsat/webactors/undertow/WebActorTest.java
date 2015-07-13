@@ -19,6 +19,9 @@ import co.paralleluniverse.comsat.webactors.MyWebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import co.paralleluniverse.strands.SettableFuture;
@@ -34,6 +37,8 @@ import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import static org.junit.Assert.*;
 
@@ -44,29 +49,60 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
+@RunWith(Parameterized.class)
 public class WebActorTest {
+  private static final Actor actor = new MyWebActor();
+  static {
+    actor.spawn();
+  }
+
+  private static final Callable<WebActorHandler> basicWebActorHandlerCreator = new Callable<WebActorHandler>() {
+    @Override
+    public WebActorHandler call() throws Exception {
+      return new WebActorHandler(new WebActorHandler.ActorContextProvider() {
+        @Override
+        public WebActorHandler.ActorContext get(HttpServerExchange xch) {
+          return new WebActorHandler.DefaultActorContextImpl() {
+            @Override
+            public ActorImpl<? extends WebMessage> getActor() {
+              return actor;
+            }
+          };
+        }
+      });
+    }
+  };
+
+  private static final Callable<WebActorHandler> autoWebActorHandlerCreator = new Callable<WebActorHandler>() {
+    @Override
+    public WebActorHandler call() throws Exception {
+      return new AutoWebActorHandler();
+    }
+  };
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][]{
+        {basicWebActorHandlerCreator},
+        {autoWebActorHandlerCreator}
+    });
+  }
+
   private static final int INET_PORT = 8080;
+
+  private final Callable<WebActorHandler> webActorHandlerCreator;
 
   private Undertow server;
 
+  public WebActorTest(Callable<WebActorHandler> webActorHandlerCreator) {
+    this.webActorHandlerCreator = webActorHandlerCreator;
+  }
+
   @Before
   public void setUp() throws Exception {
-    final Actor actor = new MyWebActor();
-    actor.spawn();
-
     server = Undertow.builder()
             .addHttpListener(INET_PORT, "localhost")
-            .setHandler(new RequestDumpingHandler(new WebActorHandler(new WebActorHandler.ActorContextProvider() {
-              @Override
-              public WebActorHandler.ActorContext get(HttpServerExchange xch) {
-                return new WebActorHandler.DefaultActorContextImpl() {
-                  @Override
-                  public ActorImpl<? extends WebMessage> getActor() {
-                    return actor;
-                  }
-                };
-              }
-            }))).build();
+            .setHandler(new RequestDumpingHandler(webActorHandlerCreator.call())).build();
     server.start();
 
     System.out.println("Server is up");

@@ -56,9 +56,6 @@ import java.util.concurrent.TimeUnit;
  * @author circlespainter
  */
 public class WebActorHandler implements HttpHandler {
-  private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
-//  private final HttpContinueReadHandler continueHandler;
-  private final SessionAttachmentHandler sessionHandler;
 
   public interface ActorContext {
     boolean isValid();
@@ -114,7 +111,11 @@ public class WebActorHandler implements HttpHandler {
     ActorContext get(HttpServerExchange xch);
   }
 
-  private static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
+  protected static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
+
+  private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
+
+  private final SessionAttachmentHandler sessionHandler;
 
   private final ActorContextProvider selector;
 
