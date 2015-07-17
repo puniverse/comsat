@@ -65,7 +65,64 @@ public final class AutoWebActorHandler extends WebActorHandler {
 		this(httpResponseEncoderName, null, actorParams);
 	}
 
-	public AutoWebActorHandler(String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
+	private static ActorContext newActorContext(final ChannelHandlerContext ctx, final FullHttpRequest req, final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
+		return new DefaultActorContextImpl() {
+			private ActorImpl<? extends WebMessage> actor;
+
+			@Override
+			public ActorImpl<? extends WebMessage> getActor() {
+				if (actor != null)
+					return actor;
+				else
+					return (actor = autoCreateActor(req));
+			}
+
+			@SuppressWarnings("unchecked")
+			private ActorImpl<? extends WebMessage> autoCreateActor(FullHttpRequest req) {
+				registerActorClasses();
+				final String uri = req.getUri();
+				for (final Class<?> c : actorClasses) {
+					if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c)) {
+						final Actor ret = Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY));
+						ret.spawn();
+						return ret;
+					}
+				}
+				return null;
+			}
+
+			private synchronized void registerActorClasses() {
+				if (actorClasses.isEmpty()) {
+					try {
+						final ClassLoader classLoader = userClassLoader != null ? userClassLoader : this.getClass().getClassLoader();
+						ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
+							@Override
+							public void visit(String resource, URL url, ClassLoader cl) {
+								if (!ClassLoaderUtil.isClassFile(resource))
+									return;
+								final String className = ClassLoaderUtil.resourceToClass(resource);
+								try (InputStream is = cl.getResourceAsStream(resource)) {
+									if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
+										registerWebActor(cl.loadClass(className));
+								} catch (IOException | ClassNotFoundException e) {
+									log.error("Exception while scanning class " + className + " for WebActor annotation", e);
+									throw new RuntimeException(e);
+								}
+							}
+
+							private void registerWebActor(Class<?> c) {
+								actorClasses.add(c);
+							}
+						});
+					} catch (IOException e) {
+						log.error("IOException while scanning classes for WebActor annotation", e);
+					}
+				}
+			}
+		};
+	}
+
+	public AutoWebActorHandler(final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
 		super(new ActorContextProvider() {
 			@Override
 			public ActorContext get(ChannelHandlerContext ctx, final FullHttpRequest req) {
@@ -76,62 +133,10 @@ public final class AutoWebActorHandler extends WebActorHandler {
 						final ActorContext actorContext = sessions.get(sessionId);
 						if (actorContext != null && actorContext.isValid())
 							s.setIfAbsent(actorContext);
+						else
+							return newActorContext(ctx, req, httpResponseEncoderName, userClassLoader, actorParams);
 					} else
-						s.setIfAbsent(new DefaultActorContextImpl() {
-							              private ActorImpl<? extends WebMessage> actor;
-
-							              @Override
-							              public ActorImpl<? extends WebMessage> getActor() {
-								              if (actor != null)
-									              return actor;
-								              else
-									              return (actor = autoCreateActor(req));
-							              }
-
-							              @SuppressWarnings("unchecked")
-							              private ActorImpl<? extends WebMessage> autoCreateActor(FullHttpRequest req) {
-								              registerActorClasses();
-								              final String uri = req.getUri();
-								              for (final Class<?> c : actorClasses) {
-									              if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c)) {
-										              final Actor ret = Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY));
-										              ret.spawn();
-										              return ret;
-									              }
-								              }
-								              return null;
-							              }
-
-							              private synchronized void registerActorClasses() {
-								              if (actorClasses.isEmpty()) {
-									              try {
-										              final ClassLoader classLoader = userClassLoader != null ? userClassLoader : this.getClass().getClassLoader();
-										              ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
-											              @Override
-											              public void visit(String resource, URL url, ClassLoader cl) {
-												              if (!ClassLoaderUtil.isClassFile(resource))
-													              return;
-												              final String className = ClassLoaderUtil.resourceToClass(resource);
-												              try (InputStream is = cl.getResourceAsStream(resource)) {
-													              if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
-														              registerWebActor(cl.loadClass(className));
-												              } catch (IOException | ClassNotFoundException e) {
-													              log.error("Exception while scanning class " + className + " for WebActor annotation", e);
-													              throw new RuntimeException(e);
-												              }
-											              }
-
-											              private void registerWebActor(Class<?> c) {
-												              actorClasses.add(c);
-											              }
-										              });
-									              } catch (IOException e) {
-										              log.error("IOException while scanning classes for WebActor annotation", e);
-									              }
-								              }
-							              }
-						              }
-						);
+						s.setIfAbsent(newActorContext(ctx, req, httpResponseEncoderName, userClassLoader, actorParams));
 				}
 				return s.get();
 			}
