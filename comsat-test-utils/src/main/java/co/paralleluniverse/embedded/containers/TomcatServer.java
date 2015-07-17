@@ -16,19 +16,28 @@ package co.paralleluniverse.embedded.containers;
 import java.io.File;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContextListener;
+
+import co.paralleluniverse.common.util.SystemProperties;
 import org.apache.catalina.Context;
+import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.websocket.server.WsSci;
 
 public class TomcatServer extends AbstractEmbeddedServer {
+    private static final String defaultResDir = System.getProperty(TomcatServer.class.getName() + ".defaultResDir", "./build");
+
     private final Tomcat tomcat;
     private Context context;
 
     public TomcatServer() {
+        this(defaultResDir);
+    }
+
+    public TomcatServer(String resDir) {
         this.tomcat = new Tomcat();
-        this.context = tomcat.addContext("/", new File("./build").getAbsolutePath());
+        this.context = tomcat.addContext("/", new File(resDir).getAbsolutePath());
     }
 
     @Override
@@ -43,7 +52,21 @@ public class TomcatServer extends AbstractEmbeddedServer {
         tomcat.setPort(port);
         tomcat.getConnector().setAttribute("maxThreads", nThreads);
         tomcat.getConnector().setAttribute("acceptCount", maxConn);
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    tomcat.stop();
+                } catch (LifecycleException ignored) {}
+            }
+        });
         tomcat.start();
+        new Thread() {
+            @Override
+            public void run() {
+                tomcat.getServer().await();
+            }
+        }.start();
     }
 
     @Override
