@@ -34,7 +34,7 @@ Where `ARTIFACT` is:
 * `comsat-mongodb-allanbank` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
 * `comsat-okhttp` – [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.
 * `comsat-actors-api` – the Web Actors API
-* `comsat-actors-servlet` – Enables HTTP and WebSocket (JSR-356) usage through Web Actors API
+* `comsat-actors-servlet` – Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers
 * `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
 * `comsat-spring-web` – [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers
 

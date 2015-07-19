@@ -49,6 +49,7 @@ subprojects {
     ext.jettyVer        = '9.2.11.v20150529' // '9.3.0.v20150612' requires JDK8
     ext.undertowVer     = '1.2.8.Final'
     ext.tomcatVer       = '8.0.23'
+    ext.nettyVer        = '4.0.29.Final'
 
     ext.osgiVer         = '6.0.0'
     ext.jerseyVer       = '2.18'
@@ -222,21 +223,31 @@ subprojects {
 project (':comsat-actors-api') {
     dependencies {
         compile "co.paralleluniverse:quasar-actors:$quasarVer"
-    }  
+    }
 }
 
-//project (':comsat-actors-netty') {
-//    dependencies {
-//        compile 'org.webbitserver:webbit:0.4.15'
-//        compile project (':comsat-actors-api')
-//    }
-//}
+project (':comsat-actors-netty') {
+    dependencies {
+        compile "io.netty:netty-all:$nettyVer"
+
+        compile project (':comsat-actors-api')
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+
+        testCompile "javax.websocket:javax.websocket-api:$websocketApiVer"
+        testCompile project(':comsat-test-utils')
+    }
+}
 
 project (':comsat-actors-servlet') {
     dependencies {
         compile project (':comsat-actors-api')
+
         provided "javax.websocket:javax.websocket-api:$websocketApiVer"
         provided "javax.servlet:javax.servlet-api:$servletVer" // was 3.1.0
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+
         testCompile project(':comsat-test-utils')
     }
 }
@@ -397,6 +408,11 @@ project (':comsat-test-utils') {
 
         compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
         compile "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVer"
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+        provided "co.paralleluniverse:quasar-actors:$quasarVer"
+        provided project (':comsat-actors-api')
+
         runtime "org.apache.tomcat.embed:tomcat-embed-logging-log4j:$tomcatVer"
         runtime "org.apache.tomcat:tomcat-dbcp:$tomcatVer"
     }
@@ -448,6 +464,7 @@ ext.javadocExcludes = [
         "co/paralleluniverse/comsat/webactors/servlet/WebActorEndpoint.java",
     //        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
         "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
+        "co/paralleluniverse/comsat/webactors/netty/WebActorHandler.java",
 ]
 
 // Rest of the subprojects common definitions 
@@ -490,9 +507,9 @@ subprojects {
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
                 repository(
-                    url: (isRelease ? 
-	                        "https://oss.sonatype.org/service/local/staging/deploy/maven2" : 
-	                        "https://oss.sonatype.org/content/repositories/snapshots")) {
+                    url: (isRelease ?
+                            "https://oss.sonatype.org/service/local/staging/deploy/maven2" :
+                            "https://oss.sonatype.org/content/repositories/snapshots")) {
                     // User and Password are taken from ~/.gradle/gradle.properties
                     authentication(userName: sonatypeUsername, password: sonatypePassword)
                 } 
@@ -527,7 +544,7 @@ subprojects {
                 }
             }
         }
-    }	
+    }
 }
 
 task javadoc(type: Javadoc) {
@@ -548,7 +565,7 @@ task javadoc(type: Javadoc) {
 
 task clean(dependsOn: subprojects.clean) << {
     delete 'docs/javadoc'
-}   
+}
 
 buildscript {
     repositories {

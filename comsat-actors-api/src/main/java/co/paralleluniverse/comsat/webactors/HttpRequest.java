@@ -54,7 +54,7 @@ public abstract class HttpRequest extends HttpMessage {
      * @return an {@code Object} containing the value of the attribute,
      *         or {@code null} if the attribute does not exist
      */
-    public abstract Map<String, Object> getAtrributes();
+    public abstract Map<String, Object> getAttributes();
 
     /**
      * Returns all values associated with the given parameter
@@ -86,7 +86,7 @@ public abstract class HttpRequest extends HttpMessage {
      * @return the value of the given attribute; {@code null} if the attribute is not found
      */
     public Object getAttribute(String name) {
-        return getAtrributes().get(name);
+        return getAttributes().get(name);
     }
 
     /**
@@ -496,7 +496,7 @@ public abstract class HttpRequest extends HttpMessage {
         }
 
         @Override
-        public Map<String, Object> getAtrributes() {
+        public Map<String, Object> getAttributes() {
             return null;
         }
 
