@@ -47,8 +47,8 @@ subprojects {
     ext.quasarVer       = '0.7.3-SNAPSHOT'
 
     ext.jettyVer        = '9.2.11.v20150529' // '9.3.0.v20150612' requires JDK8
-    ext.undertowVer     = '1.2.8.Final'
     ext.tomcatVer       = '8.0.23'
+    ext.undertowVer     = '1.2.8.Final'
     ext.nettyVer        = '4.0.29.Final'
 
     ext.osgiVer         = '6.0.0'
@@ -90,7 +90,7 @@ subprojects {
             force "org.jdbi:jdbi:$jdbiVer"
             force "org.ow2.asm:asm:$asmVer"
             force "org.ow2.asm:asm-commons:$asmVer"
-            force "com.codahale.metrics:metrics-core:$metricsVer"
+            force "io.dropwizard.metrics:metrics-core:$metricsVer"
             force "com.google.guava:guava:$guavaVer"
             force "org.slf4j:slf4j-api:$slf4jApiVer"
             force "org.apache.httpcomponents:httpcore:$httpCoreVer"
@@ -252,12 +252,18 @@ project (':comsat-actors-servlet') {
     }
 }
 
-//project (':comsat-actors-undertow') {
-//    dependencies {
-//        compile 'io.undertow:undertow-core:1.1.0.Beta5'
-//        compile project (':comsat-actors-api')
-//    }
-//}
+project (':comsat-actors-undertow') {
+    dependencies {
+        compile "io.undertow:undertow-core:$undertowVer"
+
+        compile project (':comsat-actors-api')
+
+        provided "co.paralleluniverse:quasar-core:$quasarVer"
+
+        testCompile "javax.websocket:javax.websocket-api:$websocketApiVer"
+        testCompile project(':comsat-test-utils')
+    }
+}
 
 project (':comsat-dropwizard') {
     dependencies {
@@ -394,7 +400,7 @@ project (':comsat-test-utils') {
         compile "com.h2database:h2:$h2Ver"
         compile "org.glassfish.jersey.core:jersey-client:$jerseyVer"
         compile "org.glassfish.jersey.media:jersey-media-sse:$jerseyVer"
-        
+
         compile "org.eclipse.jetty:jetty-server:$jettyVer"
         compile "org.eclipse.jetty:jetty-servlet:$jettyVer"
         compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:$jettyVer"
@@ -465,6 +471,9 @@ ext.javadocExcludes = [
     //        "co/paralleluniverse/comsat/webactors/servlet/WebActorInitializer.java",
         "co/paralleluniverse/comsat/webactors/servlet/WebActorServlet.java",
         "co/paralleluniverse/comsat/webactors/netty/WebActorHandler.java",
+        "co/paralleluniverse/comsat/webactors/netty/AutoWebActorHandler.java",
+        "co/paralleluniverse/comsat/webactors/undertow/WebActorHandler.java",
+        "co/paralleluniverse/comsat/webactors/undertow/AutoActorHandler.java",
 ]
 
 // Rest of the subprojects common definitions 

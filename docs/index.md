@@ -99,10 +99,11 @@ The corresponding Gradle dependency is `co.paralleluniverse:ARTIFACT:0.4.0`.
 * `comsat-mongodb-allanbank` – MongoDB integration for using the [allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html)
 * `comsat-okhttp` – [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.
 * `comsat-actors-api` – The Web Actors API
+* `comsat-actors-undertow` – Deploy HTTP, SSE and WebSocket Web Actors as [Undertow](http://undertow.io/) handlers
 * `comsat-actors-netty` – Deploy HTTP, SSE and WebSocket Web Actors as [Netty](http://netty.io/) handlers
 * `comsat-actors-servlet` – Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers
-* `comsat-tomcat-loader` – Enables using Comsat in Tomcat container without the need of javaAgent
-* `comsat-jetty-loader` – Enables using Comsat in Jetty container without the need of javaAgent
+* `comsat-tomcat-loader` – Enables using Comsat in a Tomcat container without the need of javaAgent
+* `comsat-jetty-loader` – Enables using Comsat in a Jetty container without the need of javaAgent
 
 ## Examples
 
@@ -576,7 +577,52 @@ If you prefer using auto-configuration, it is enough to use the `FiberSpringBoot
 
 Web Actors are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, WebSocket and SSE (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web applications.
 
-WebActors are reployed on a web server. Currently, they can be deployed in any JavaEE 7 servlet container and as a [Netty](http://netty.io/) handler, but we are working on supporting deployment on top of [Undertow](http://undertow.io/) as well.
+WebActors are deployed on a web server. Currently, they can be deployed in any JavaEE 7 servlet container, as an [Underscore](http://underscore.io/) handler and as a [Netty](http://netty.io/) handler.
+
+### Undertow deployment
+
+Deploying web actors on top of Underscore is as easy as using one of two Underscore handlers: either `AutoWebActorHandler` or `WebActorHandler`.
+
+The way individual actors are assigned to individual HTTP exchanges is represented by the `WebActorHandler.ActorContext` interface which provides methods for validity check, invalidation, locking, arbitrary data attachment and of course a getter returning a the web actor.
+
+`WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ActorContextProvider` based on a `HttpServerExchange`, so an `ActorContextProvider` instance is the only required construction argument for it; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-undertow`'s' tests for more insight):
+
+~~~ java
+final Actor actor = new MyWebActor();
+actor.spawn();
+// ...
+server = Undertow.builder()
+    .addHttpListener(INET_PORT, "localhost")
+    .setHandler(new WebActorHandler(new WebActorHandler.ActorContextProvider() {
+        @Override
+        public WebActorHandler.ActorContext get(HttpServerExchange xch) {
+            return new WebActorHandler.DefaultActorContextImpl() {
+                @Override
+                public ActorImpl<? extends WebMessage> getActor() {
+                    return actor;
+                }
+            };
+        }
+    })).build();
+
+server.start();
+~~~
+
+`WebActorHandler` needs Undertow's in-memory session handler only for SSE exchanges; by default session management is enabled for all exchanges but it can be disabled in non-SSE cases by setting the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.HttpChannelAdapter.trackSessionOnlyForSSE` system property to `true`.
+
+The actor context duration for the default implementation is 10 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
+
+`AutoWebActorHandler` will additionally scan the classpath for classes with the `WebActor` annotation upon first use then and will automatically create `DefaultActorContextImpl`-based entries by instantiating and starting the appropriate actor (among detected ones) per client session. Its construction requires no arguments but a user-specified classloader and/or a map containing per-class actor construction parameters can be optionally passed in.
+
+Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-undertow`'s tests for more insight):
+
+~~~ java
+server = Undertow.builder()
+        .addHttpListener(INET_PORT, "localhost")
+        .setHandler(new AutoWebActorHandler().build();
+
+server.start();
+~~~
 
 ### Netty deployment
 

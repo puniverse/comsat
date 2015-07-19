@@ -50,7 +50,6 @@ public class MyWebActor extends BasicActor<WebMessage, Void> {
                         case "/ssechannel":
                             msg.getFrom().send(SSE.startSSE(self(), msg).build());
                             break;
-
                     }
                 } // -------- WebSocket/SSE opened --------
                 else if (message instanceof WebStreamOpened) {
