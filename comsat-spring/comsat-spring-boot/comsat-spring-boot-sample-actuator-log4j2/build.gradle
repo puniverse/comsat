@@ -7,6 +7,8 @@ dependencies {
     }
     compile project(":comsat-spring:comsat-spring-boot")
 
+    runtime "org.springframework.boot:spring-boot-starter-tomcat:$springBootVer"
+
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer") {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging' 
     }

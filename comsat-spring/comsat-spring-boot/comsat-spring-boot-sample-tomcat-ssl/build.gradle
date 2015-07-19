@@ -1,10 +1,9 @@
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter:$springBootVer")
-    compile("org.apache.httpcomponents:httpclient:$httpClientVer")
-    compile("org.yaml:snakeyaml:$snakeYamlVer")
+    compile "org.springframework.boot:spring-boot-starter-tomcat:$springBootVer"
+    compile "org.springframework.boot:spring-boot-starter:$springBootVer"
+    compile "org.apache.httpcomponents:httpclient:$httpClientVer"
+    compile "org.yaml:snakeyaml:$snakeYamlVer"
     compile project(":comsat-spring:comsat-spring-boot")
 
-    provided("org.springframework.boot:spring-boot-starter-tomcat:$springBootVer")
-
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVer"
 }

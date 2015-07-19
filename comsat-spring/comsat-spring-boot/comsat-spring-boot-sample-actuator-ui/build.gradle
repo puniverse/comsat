@@ -1,9 +1,11 @@
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-actuator:$springBootVer")
-    compile("org.springframework.boot:spring-boot-starter-freemarker:$springBootVer")
-    compile("org.springframework.boot:spring-boot-starter-security:$springBootVer")
-    compile("org.jolokia:jolokia-core:$jolokiaVer")
+    compile "org.springframework.boot:spring-boot-starter-actuator:$springBootVer"
+    compile "org.springframework.boot:spring-boot-starter-freemarker:$springBootVer"
+    compile "org.springframework.boot:spring-boot-starter-security:$springBootVer"
+    compile "org.jolokia:jolokia-core:$jolokiaVer"
     compile project(":comsat-spring:comsat-spring-boot-security")
 
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
+    runtime "org.springframework.boot:spring-boot-starter-tomcat:$springBootVer"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVer"
 }

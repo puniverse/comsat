@@ -19,13 +19,11 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
-import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.Handle;
-import org.skife.jdbi.v2.IDBI;
-import org.skife.jdbi.v2.TransactionCallback;
-import org.skife.jdbi.v2.TransactionIsolationLevel;
+
+import org.skife.jdbi.v2.*;
 import org.skife.jdbi.v2.exceptions.CallbackFailedException;
 import org.skife.jdbi.v2.tweak.HandleCallback;
+import org.skife.jdbi.v2.tweak.HandleConsumer;
 
 public class FiberDBI implements IDBI {
     private final IDBI jdbi;
@@ -33,7 +31,6 @@ public class FiberDBI implements IDBI {
     /**
      *
      * @param jdbi jdbi based on FiberDataSource
-     * @param es
      */
     public FiberDBI(IDBI jdbi) {
         this.jdbi = jdbi;
@@ -82,6 +79,12 @@ public class FiberDBI implements IDBI {
 
     @Override
     @Suspendable
+    public void withHandle(HandleConsumer callback) throws CallbackFailedException {
+        jdbi.withHandle(callback);
+    }
+
+    @Override
+    @Suspendable
     public <SqlObjectType> SqlObjectType open(Class<SqlObjectType> sqlObjectType) {
         return jdbi.open(sqlObjectType);
     }
@@ -98,13 +101,27 @@ public class FiberDBI implements IDBI {
     }
 
     @Override
+    @Suspendable
     public <ReturnType> ReturnType inTransaction(TransactionCallback<ReturnType> callback) throws CallbackFailedException {
         return jdbi.inTransaction(callback);
     }
 
     @Override
+    @Suspendable
+    public void inTransaction(TransactionConsumer callback) throws CallbackFailedException {
+        jdbi.inTransaction(callback);
+    }
+
+    @Override
+    @Suspendable
     public <ReturnType> ReturnType inTransaction(TransactionIsolationLevel isolation, TransactionCallback<ReturnType> callback) throws CallbackFailedException {
         return jdbi.inTransaction(isolation, callback);
+    }
+
+    @Override
+    @Suspendable
+    public void inTransaction(TransactionIsolationLevel isolation, TransactionConsumer callback) throws CallbackFailedException {
+        jdbi.inTransaction(isolation, callback);
     }
 
     @Override

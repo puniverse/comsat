@@ -1,8 +1,15 @@
+configurations.testRuntime {
+    resolutionStrategy {
+        force "javax.servlet:javax.servlet-api:3.1.0"
+    }
+}
+
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter:$springBootVer")
-    compile("org.springframework.boot:spring-boot-starter-jetty:$springBootVer")
-    compile("org.apache.httpcomponents:httpclient:$httpClientVer")
+    compile "org.apache.httpcomponents:httpclient:$httpClientVer"
+
     compile project(":comsat-spring:comsat-spring-boot")
 
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
+    runtime "org.springframework.boot:spring-boot-starter-jetty:$springBootVer"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVer"
 }

@@ -1,4 +1,4 @@
-configurations.all {
+configurations.testRuntime {
     resolutionStrategy {
         eachDependency {
             if (it.requested.group == 'org.eclipse.jetty') {
@@ -9,11 +9,10 @@ configurations.all {
 }
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter:$springBootVer")
     compile("org.springframework.boot:spring-boot-starter-jetty:$springBootVer") {
         exclude group: 'org.eclipse.jetty.websocket', module: '*'
     }
     compile project(":comsat-spring:comsat-spring-boot")
 
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVer"
 }

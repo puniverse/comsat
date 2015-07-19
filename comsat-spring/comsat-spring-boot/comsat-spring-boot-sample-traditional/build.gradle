@@ -1,9 +1,8 @@
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter:$springBootVer")
+    compile "org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVer"
     compile project(":comsat-spring:comsat-spring-boot")
 
-    provided("org.springframework.boot:spring-boot-starter-tomcat:$springBootVer")
-    provided("org.apache.tomcat.embed:tomcat-embed-jasper:$tomcatVer")
+    runtime "org.springframework.boot:spring-boot-starter-tomcat:$springBootVer"
 
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVer")
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVer"
 }
