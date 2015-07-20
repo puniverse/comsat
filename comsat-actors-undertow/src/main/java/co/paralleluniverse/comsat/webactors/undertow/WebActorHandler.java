@@ -562,6 +562,13 @@ public class WebActorHandler implements HttpHandler {
 					xch.getResponseHeaders().add(new HttpString(h.getKey()), h.getValue());
 			}
 
+			if (message.getContentType() != null) {
+				String ct = message.getContentType();
+				if (message.getCharacterEncoding() != null)
+					ct = ct + "; charset=" + message.getCharacterEncoding().name();
+				xch.getResponseHeaders().add(new HttpString("Content-Type"), ct);
+			}
+
 			// This will copy the request content, which must still be referenceable, doing before the request handler
 			// unallocates it (unfortunately it is explicitly reference-counted in Netty)
 			final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(xch);
