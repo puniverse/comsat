@@ -478,6 +478,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			else
 				res = new DefaultFullHttpResponse(req.getProtocolVersion(), status);
 
+			res.headers().add(CONTENT_LENGTH, message.getContentLength());
+
 			if (message.getCookies() != null) {
 				final ServerCookieEncoder enc = ServerCookieEncoder.STRICT;
 				for (Cookie c : message.getCookies())
@@ -488,10 +490,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 					HttpHeaders.setHeader(res, h.getKey(), h.getValue());
 			}
 
-			if (message.getContentType() != null)
-				HttpHeaders.setHeader(res, CONTENT_TYPE, message.getContentType());
-			if (message.getCharacterEncoding() != null)
-				HttpHeaders.setHeader(res, CONTENT_ENCODING, message.getCharacterEncoding());
+			if (message.getContentType() != null) {
+				String ct = message.getContentType();
+				if (message.getCharacterEncoding() != null)
+					ct = ct + "; charset=" + message.getCharacterEncoding().name();
+				HttpHeaders.setHeader(res, CONTENT_TYPE, ct);
+			}
 
 			// This will copy the request content, which must still be referenceable, doing before the request handler
 			// unallocates it (unfortunately it is explicitly reference-counted in Netty)

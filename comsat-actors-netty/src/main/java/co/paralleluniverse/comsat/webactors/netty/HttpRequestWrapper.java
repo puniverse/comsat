@@ -177,15 +177,13 @@ final class HttpRequestWrapper extends HttpRequest {
 
 	@Override
 	public int getContentLength() {
-		if (length == null) {
-			getHeaders();
-			if (heads != null) {
-				final List<String> contentLength = heads.get(CONTENT_LENGTH);
-				if (contentLength != null && contentLength.size() > 0)
-					length = Integer.parseInt(contentLength.get(0));
-			}
-		}
-		return length;
+		final String stringBody = getStringBody();
+		if (stringBody != null)
+			return stringBody.length();
+		final ByteBuffer bufferBody = getByteBufferBody();
+		if (byteBufferBody != null)
+			return byteBufferBody.remaining();
+		return 0;
 	}
 
 	@Override
