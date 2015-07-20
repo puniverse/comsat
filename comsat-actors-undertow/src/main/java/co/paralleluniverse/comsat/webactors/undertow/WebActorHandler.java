@@ -66,106 +66,6 @@ public class WebActorHandler implements HttpHandler {
 		this.sessionHandler = new SessionAttachmentHandler(sessionManager, sessionConfig);
 	}
 
-	static boolean handlesWithHttp(String uri, Class<?> actorClass) {
-		return match(uri, actorClass).equals("http");
-	}
-
-	static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
-		return match(uri, actorClass).equals("ws");
-	}
-
-	private static void sendHttpResponse(HttpServerExchange xch, int statusCode) {
-		sendHttpResponse(xch, statusCode, (String) null);
-	}
-
-	private static void sendHttpResponse(HttpServerExchange xch, int statusCode, String body) {
-		xch.setResponseCode(statusCode);
-		if (body != null)
-			xch.getResponseSender().send(body);
-		xch.endExchange();
-	}
-
-	private static void sendHttpResponse(HttpServerExchange xch, int statusCode, ByteBuffer body) {
-		xch.setResponseCode(statusCode);
-		if (body != null)
-			xch.getResponseSender().send(body);
-		xch.endExchange();
-	}
-
-	private static String match(String uri, Class<?> actorClass) {
-		if (uri != null && actorClass != null) {
-			for (final Pair<String, String> e : lookupOrInsert(actorClass)) {
-				if (servletMatch(e.getFirst(), uri))
-					return e.getSecond();
-			}
-		}
-		return "";
-	}
-
-	private static List<Pair<String, String>> lookupOrInsert(Class<?> actorClass) {
-		if (actorClass != null) {
-			final List<Pair<String, String>> lookup = classToUrlPatterns.get(actorClass);
-			if (lookup != null)
-				return lookup;
-			return insert(actorClass);
-		}
-		return null;
-	}
-
-	private static List<Pair<String, String>> insert(Class<?> actorClass) {
-		if (actorClass != null) {
-			final WebActor wa = actorClass.getAnnotation(WebActor.class);
-			final List<Pair<String, String>> ret = new ArrayList<>(4);
-			for (String httpP : wa.httpUrlPatterns())
-				addPattern(ret, httpP, "http");
-			for (String wsP : wa.webSocketUrlPatterns())
-				addPattern(ret, wsP, "ws");
-			classToUrlPatterns.put(actorClass, ret);
-			return ret;
-		}
-		return null;
-	}
-
-	private static void addPattern(List<Pair<String, String>> ret, String p, String type) {
-		if (p != null) {
-			@SuppressWarnings("MismatchedQueryAndUpdateOfCollection") final Pair<String, String> entry = new Pair<>(p, type);
-			if (p.endsWith("*") || p.startsWith("*.") || p.equals("/")) // Wildcard -> end
-				ret.add(entry);
-			else // Exact -> beginning
-				ret.add(0, entry);
-		}
-	}
-
-	private static boolean servletMatch(String pattern, String uri) {
-		// As per servlet spec
-		if (pattern != null && uri != null) {
-			if (pattern.startsWith("/") && pattern.endsWith("*"))
-				return uri.startsWith(pattern.substring(0, pattern.length() - 1));
-			if (pattern.startsWith("*."))
-				return uri.endsWith(pattern.substring(2));
-			if (pattern.isEmpty())
-				return uri.equals("/");
-			return pattern.equals("/") || pattern.equals(uri);
-		}
-		return false;
-	}
-
-	private static ByteBuffer toBuffer(ByteBuffer... payload) {
-		if (payload.length == 1) {
-			return payload[0];
-		}
-		int size = (int) Buffers.remaining(payload);
-		if (size == 0) {
-			return Buffers.EMPTY_BYTE_BUFFER;
-		}
-		ByteBuffer buffer = ByteBuffer.allocate(size);
-		for (ByteBuffer buf : payload) {
-			buffer.put(buf);
-		}
-		buffer.flip();
-		return buffer;
-	}
-
 	@Override
 	public void handleRequest(final HttpServerExchange xch) throws Exception {
 		// continueHandler.handleRequest(xch);
@@ -553,6 +453,12 @@ public class WebActorHandler implements HttpHandler {
 				return true;
 			}
 
+			if (message.getRedirectPath() != null) {
+				sendHttpRedirect(xch, message.getRedirectPath());
+				close();
+				return true;
+			}
+
 			if (message.getCookies() != null) {
 				for (Cookie c : message.getCookies())
 					xch.setResponseCookie(newUndertowCookie(c));
@@ -758,5 +664,111 @@ public class WebActorHandler implements HttpHandler {
 		public void close(Throwable t) {
 			close();
 		}
+	}
+
+	protected static boolean handlesWithHttp(String uri, Class<?> actorClass) {
+		return match(uri, actorClass).equals("http");
+	}
+
+	protected static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
+		return match(uri, actorClass).equals("ws");
+	}
+
+	private static void sendHttpResponse(HttpServerExchange xch, int statusCode) {
+		sendHttpResponse(xch, statusCode, (String) null);
+	}
+
+	private static void sendHttpResponse(HttpServerExchange xch, int statusCode, String body) {
+		xch.setResponseCode(statusCode);
+		if (body != null)
+			xch.getResponseSender().send(body);
+		xch.endExchange();
+	}
+
+	private static void sendHttpResponse(HttpServerExchange xch, int statusCode, ByteBuffer body) {
+		xch.setResponseCode(statusCode);
+		if (body != null)
+			xch.getResponseSender().send(body);
+		xch.endExchange();
+	}
+
+	private static void sendHttpRedirect(HttpServerExchange xch, String path) {
+		xch.setResponseCode(StatusCodes.FOUND);
+		xch.getResponseHeaders().add(Headers.LOCATION, xch.getProtocol() + "://" + xch.getHostAndPort() + path);
+		xch.endExchange();
+	}
+
+	private static String match(String uri, Class<?> actorClass) {
+		if (uri != null && actorClass != null) {
+			for (final Pair<String, String> e : lookupOrInsert(actorClass)) {
+				if (servletMatch(e.getFirst(), uri))
+					return e.getSecond();
+			}
+		}
+		return "";
+	}
+
+	private static List<Pair<String, String>> lookupOrInsert(Class<?> actorClass) {
+		if (actorClass != null) {
+			final List<Pair<String, String>> lookup = classToUrlPatterns.get(actorClass);
+			if (lookup != null)
+				return lookup;
+			return insert(actorClass);
+		}
+		return null;
+	}
+
+	private static List<Pair<String, String>> insert(Class<?> actorClass) {
+		if (actorClass != null) {
+			final WebActor wa = actorClass.getAnnotation(WebActor.class);
+			final List<Pair<String, String>> ret = new ArrayList<>(4);
+			for (String httpP : wa.httpUrlPatterns())
+				addPattern(ret, httpP, "http");
+			for (String wsP : wa.webSocketUrlPatterns())
+				addPattern(ret, wsP, "ws");
+			classToUrlPatterns.put(actorClass, ret);
+			return ret;
+		}
+		return null;
+	}
+
+	private static void addPattern(List<Pair<String, String>> ret, String p, String type) {
+		if (p != null) {
+			@SuppressWarnings("MismatchedQueryAndUpdateOfCollection") final Pair<String, String> entry = new Pair<>(p, type);
+			if (p.endsWith("*") || p.startsWith("*.") || p.equals("/")) // Wildcard -> end
+				ret.add(entry);
+			else // Exact -> beginning
+				ret.add(0, entry);
+		}
+	}
+
+	private static boolean servletMatch(String pattern, String uri) {
+		// As per servlet spec
+		if (pattern != null && uri != null) {
+			if (pattern.startsWith("/") && pattern.endsWith("*"))
+				return uri.startsWith(pattern.substring(0, pattern.length() - 1));
+			if (pattern.startsWith("*."))
+				return uri.endsWith(pattern.substring(2));
+			if (pattern.isEmpty())
+				return uri.equals("/");
+			return pattern.equals("/") || pattern.equals(uri);
+		}
+		return false;
+	}
+
+	private static ByteBuffer toBuffer(ByteBuffer... payload) {
+		if (payload.length == 1) {
+			return payload[0];
+		}
+		int size = (int) Buffers.remaining(payload);
+		if (size == 0) {
+			return Buffers.EMPTY_BYTE_BUFFER;
+		}
+		ByteBuffer buffer = ByteBuffer.allocate(size);
+		for (ByteBuffer buf : payload) {
+			buffer.put(buf);
+		}
+		buffer.flip();
+		return buffer;
 	}
 }
