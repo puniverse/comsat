@@ -298,6 +298,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
                     if (msg.getRedirectPath() != null) {
                         response.sendRedirect(msg.getRedirectPath());
+                        ctx.complete(); // Seems to be required only by Tomcat
                         close();
                         return true;
                     }

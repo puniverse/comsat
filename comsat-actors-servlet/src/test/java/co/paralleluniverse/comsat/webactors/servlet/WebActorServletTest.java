@@ -14,11 +14,7 @@
 package co.paralleluniverse.comsat.webactors.servlet;
 
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
-import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
-import co.paralleluniverse.embedded.containers.EmbeddedServer;
-import co.paralleluniverse.embedded.containers.JettyServer;
-import co.paralleluniverse.embedded.containers.TomcatServer;
-import co.paralleluniverse.embedded.containers.UndertowServer;
+import co.paralleluniverse.embedded.containers.*;
 import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +32,7 @@ public class WebActorServletTest extends AbstractWebActorTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-            {JettyServer.class}, 
+            {JettyServer.class},
             {TomcatServer.class},
             {UndertowServer.class},
         });
@@ -47,10 +43,6 @@ public class WebActorServletTest extends AbstractWebActorTest {
     public WebActorServletTest(Class<? extends EmbeddedServer> cls) {
         this.cls = cls;
     }
-
-//    public WebActorServletTest() {
-//        this.cls = JettyServer.class;
-//    }
 
     @Before
     public void setUp() throws Exception {
@@ -83,12 +75,6 @@ public class WebActorServletTest extends AbstractWebActorTest {
                 headers.put("Cookie", Lists.newArrayList(JSESSIONID + '=' + getByName(cookieStore, JSESSIONID)));
             }
         }).build();
-    }
-
-    @Override
-    public boolean isHttpRedirectEnabled() {
-        // TODO investigate why Tomcat crashes with 500 upon (async) redirect
-        return !(embeddedServer instanceof TomcatServer);
     }
 
     private static String getByName(final CookieStore cookieStore, String name) {
