@@ -43,6 +43,9 @@ public class MyWebActor extends BasicActor<WebMessage, Void> {
                         case "/":
                             msg.getFrom().send(HttpResponse.ok(self(), msg, "httpResponse").setContentType("text/html").build());
                             break;
+                        case "/redirect":
+                            msg.getFrom().send(HttpResponse.redirect(msg, "/foo").build());
+                            break;
                         case "/ssepublish":
                             postMessage(new WebDataMessage(self(), msg.getStringBody()));
                             msg.getFrom().send(HttpResponse.ok(self(), msg, "").build());
