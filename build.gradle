@@ -476,6 +476,8 @@ project (':comsat-test-utils') {
         compile "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
         compile "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVer"
 
+        compile "junit:junit:$junitVer"
+
         provided "co.paralleluniverse:quasar-core:$quasarVer"
         provided "co.paralleluniverse:quasar-actors:$quasarVer"
         provided project (':comsat-actors-api')
