@@ -28,13 +28,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,6 +70,7 @@ public class FiberHttpServletTest {
         // end of snippet
         server.addServlet("forward", FiberForwardServlet.class, "/forward");
         server.addServlet("inline", FiberForwardServlet.class, "/inline");
+        server.addServlet("redirect", FiberRedirectServlet.class, "/redirect");
         server.start();
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
@@ -84,7 +89,17 @@ public class FiberHttpServletTest {
             assertEquals("testGet", client.execute(new HttpGet("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
     }
 
-//    @Test
+    @Test
+    public void testRedirect() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 10; i++) {
+            final HttpGet httpGet = new HttpGet("http://localhost:8080/redirect");
+            final CloseableHttpResponse res = HttpClients.custom().disableRedirectHandling().build().execute(httpGet);
+            assertEquals(302, res.getStatusLine().getStatusCode());
+            assertTrue(res.getFirstHeader("Location").getValue().endsWith("/foo"));
+        }
+    }
+
+    //    @Test
     // Fails on jetty after 5-10 iterations
     // Fails on tomcat after 1000-2000 iterations
     // Passes on undertow
@@ -138,6 +153,18 @@ public class FiberHttpServletTest {
             try {
                 Fiber.sleep(100);
                 getServletContext().getRequestDispatcher("/").forward(req, resp);
+            } catch (InterruptedException | SuspendExecution e) {
+            }
+        }
+    }
+
+    public static class FiberRedirectServlet extends FiberHttpServlet {
+        @Override
+        @Suspendable
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            try {
+                Fiber.sleep(100);
+                resp.sendRedirect("/foo");
             } catch (InterruptedException | SuspendExecution e) {
             }
         }
