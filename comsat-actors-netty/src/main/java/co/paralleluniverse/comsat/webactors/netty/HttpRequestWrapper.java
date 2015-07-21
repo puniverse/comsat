@@ -181,8 +181,8 @@ final class HttpRequestWrapper extends HttpRequest {
 		if (stringBody != null)
 			return stringBody.length();
 		final ByteBuffer bufferBody = getByteBufferBody();
-		if (byteBufferBody != null)
-			return byteBufferBody.remaining();
+		if (bufferBody != null)
+			return bufferBody.remaining();
 		return 0;
 	}
 

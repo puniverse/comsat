@@ -478,8 +478,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			else
 				res = new DefaultFullHttpResponse(req.getProtocolVersion(), status);
 
-			res.headers().add(CONTENT_LENGTH, message.getContentLength());
-
 			if (message.getCookies() != null) {
 				final ServerCookieEncoder enc = ServerCookieEncoder.STRICT;
 				for (Cookie c : message.getCookies())
@@ -506,6 +504,18 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 				final String sessionId = UUID.randomUUID().toString();
 				res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
 				startSession(sessionId, actorContext);
+			}
+			if (!sseStarted) {
+				final String stringBody = message.getStringBody();
+				long contentLength = 0l;
+				if (stringBody != null)
+					contentLength = stringBody.getBytes().length;
+				else {
+					final ByteBuffer byteBufferBody = message.getByteBufferBody();
+					if (byteBufferBody != null)
+						contentLength = byteBufferBody.remaining();
+				}
+				res.headers().add(CONTENT_LENGTH, contentLength);
 			}
 			sendHttpResponse(ctx, req, res, !sseStarted);
 
