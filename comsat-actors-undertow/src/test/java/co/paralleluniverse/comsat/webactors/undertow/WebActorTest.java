@@ -16,7 +16,6 @@ package co.paralleluniverse.comsat.webactors.undertow;
 import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorImpl;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
-import co.paralleluniverse.comsat.webactors.MyWebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,7 +30,7 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class WebActorTest extends AbstractWebActorTest {
-  private static final Actor actor = new MyWebActor();
+  private static final Actor actor = new UndertowWebActor();
   static {
     actor.spawn();
   }

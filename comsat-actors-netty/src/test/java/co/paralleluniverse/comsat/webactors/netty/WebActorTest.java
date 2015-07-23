@@ -17,7 +17,6 @@ import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorImpl;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
-import co.paralleluniverse.comsat.webactors.MyWebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,7 +61,7 @@ public class WebActorTest extends AbstractWebActorTest {
 
 		@Override
 		public Class<? extends ActorImpl> getWebActorClass() {
-			return MyWebActor.class;
+			return NettyWebActor.class;
 		}
 	};
 
