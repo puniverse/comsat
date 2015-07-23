@@ -634,7 +634,7 @@ The actor context duration for the default implementation is 10 seconds but it c
 Deploying web actors on top of Netty is as easy as inserting one of two Netty handlers in your pipeline: either `AutoWebActorHandler` or `WebActorHandler`.
 
 `AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and  will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there's no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be passed in.
-    
+
 The only other requirement is that your channel pipeline contains separate `HttpRequestDecoder` and `HttpResponseEncoder` instances rather than a single `HttpServerCodec` because the `HttpResponseEncoder` needs to be dynamically removed when an SSE exchange starts. If you prefer, as an alternative you can pass the name of your installed `HttpResponseEncoder` in `AutoWebActorHandler`'s constructor.
 
 Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-netty`'s tests for further insight):
