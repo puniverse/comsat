@@ -15,6 +15,7 @@ package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorImpl;
+import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.MyWebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
@@ -44,25 +45,33 @@ public class WebActorTest extends AbstractWebActorTest {
 
 	private static final String HTTP_RESPONSE_ENCODER_KEY = "httpResponseEncoder";
 
-	private static final Actor actor = new MyWebActor();
+	private static final Actor actor = new NettyWebActor();
 
-	static {
-		actor.spawn();
-	}
+	private static final WebActorHandler.DefaultWebActorContextImpl context = new WebActorHandler.DefaultWebActorContextImpl() {
+		public final ActorRef<? extends WebMessage> ref;
 
-	private static final WebActorHandler.DefaultActorContextImpl context = new WebActorHandler.DefaultActorContextImpl() {
+		{
+			//noinspection unchecked
+			ref = actor.spawn();
+		}
+
 		@Override
-		public ActorImpl<? extends WebMessage> getActor() {
-			return actor;
+		public ActorRef<? extends WebMessage> getRef() {
+			return ref;
+		}
+
+		@Override
+		public Class<? extends ActorImpl> getWebActorClass() {
+			return MyWebActor.class;
 		}
 	};
 
 	private static final Callable<WebActorHandler> basicWebActorHandlerCreator = new Callable<WebActorHandler>() {
 		@Override
 		public WebActorHandler call() throws Exception {
-			return new WebActorHandler(new WebActorHandler.ActorContextProvider() {
+			return new WebActorHandler(new WebActorHandler.WebActorContextProvider() {
 				@Override
-				public WebActorHandler.ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
+				public WebActorHandler.WebActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
 					return context;
 				}
 			});

@@ -15,9 +15,11 @@ package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorImpl;
+import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.actors.ActorSpec;
 import co.paralleluniverse.common.reflection.AnnotationUtil;
 import co.paralleluniverse.common.reflection.ClassLoaderUtil;
+import co.paralleluniverse.common.util.Pair;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import io.netty.channel.ChannelHandlerContext;
@@ -43,7 +45,7 @@ import java.util.Set;
  * @author circlespainter
  */
 public final class AutoWebActorHandler extends WebActorHandler {
-	private static final AttributeKey<ActorContext> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
+	private static final AttributeKey<WebActorContext> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
 
 	private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
 	private static final List<Class<?>> actorClasses = new ArrayList<>(4);
@@ -65,28 +67,36 @@ public final class AutoWebActorHandler extends WebActorHandler {
 		this(httpResponseEncoderName, null, actorParams);
 	}
 
-	private static ActorContext newActorContext(final ChannelHandlerContext ctx, final FullHttpRequest req, final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-		return new DefaultActorContextImpl() {
-			private ActorImpl<? extends WebMessage> actor;
+	private static WebActorContext newActorContext(final ChannelHandlerContext ctx, final FullHttpRequest req, final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
+		return new DefaultWebActorContextImpl() {
+			private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
+			private ActorRef<? extends WebMessage> actorRef;
+
+			{
+				final Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> p = autoCreateActor(req);
+				if (p != null) {
+					actorRef = p.getFirst();
+					actorClass = p.getSecond();
+				}
+			}
 
 			@Override
-			public ActorImpl<? extends WebMessage> getActor() {
-				if (actor != null)
-					return actor;
-				else
-					return (actor = autoCreateActor(req));
+			public ActorRef<? extends WebMessage> getRef() {
+				return actorRef;
+			}
+
+			@Override
+			public Class<? extends ActorImpl> getWebActorClass() {
+				return actorClass;
 			}
 
 			@SuppressWarnings("unchecked")
-			private ActorImpl<? extends WebMessage> autoCreateActor(FullHttpRequest req) {
+			private Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> autoCreateActor(FullHttpRequest req) {
 				registerActorClasses();
 				final String uri = req.getUri();
 				for (final Class<?> c : actorClasses) {
-					if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c)) {
-						final Actor ret = Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY));
-						ret.spawn();
-						return ret;
-					}
+					if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c))
+						return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>>(Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY)).spawn(), (Class<? extends ActorImpl<? extends WebMessage>>) c);
 				}
 				return null;
 			}
@@ -123,14 +133,14 @@ public final class AutoWebActorHandler extends WebActorHandler {
 	}
 
 	public AutoWebActorHandler(final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-		super(new ActorContextProvider() {
+		super(new WebActorContextProvider() {
 			@Override
-			public ActorContext get(ChannelHandlerContext ctx, final FullHttpRequest req) {
-				final Attribute<ActorContext> s = ctx.attr(SESSION_KEY);
+			public WebActorContext get(ChannelHandlerContext ctx, final FullHttpRequest req) {
+				final Attribute<WebActorContext> s = ctx.attr(SESSION_KEY);
 				if (s.get() == null) {
 					final String sessionId = getSessionId(req);
 					if (sessionId != null) {
-						final ActorContext actorContext = sessions.get(sessionId);
+						final WebActorContext actorContext = sessions.get(sessionId);
 						if (actorContext != null && actorContext.isValid())
 							s.setIfAbsent(actorContext);
 						else

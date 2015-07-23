@@ -60,27 +60,28 @@ import java.util.ArrayList;
  */
 public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	final static String SESSION_COOKIE_KEY = "JSESSIONID";
-	final static Map<String, ActorContext> sessions = new ConcurrentHashMap<>();
+	final static Map<String, WebActorContext> sessions = new ConcurrentHashMap<>();
 
 	private static AtomicReference<Fiber> cleanupFiber = new AtomicReference<>();
 
 	private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
 	private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
 
-	public interface ActorContext {
+	public interface WebActorContext {
 		boolean isValid();
 
 		void invalidate();
 
-		ActorImpl<? extends WebMessage> getActor();
+		ActorRef<? extends WebMessage> getRef();
+		Class<? extends ActorImpl> getWebActorClass();
 
 		ReentrantLock getLock();
 
 		Map<String, Object> getAttachments();
 	}
 
-	public static abstract class DefaultActorContextImpl implements ActorContext {
-		private final static String durationProp = System.getProperty(DefaultActorContextImpl.class.getName() + ".durationMillis");
+	public static abstract class DefaultWebActorContextImpl implements WebActorContext {
+		private final static String durationProp = System.getProperty(DefaultWebActorContextImpl.class.getName() + ".durationMillis");
 		private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000l;
 
 		private final ReentrantLock lock = new ReentrantLock();
@@ -91,7 +92,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 		private boolean valid = true;
 
-		public DefaultActorContextImpl() {
+		public DefaultWebActorContextImpl() {
 			this.created = new Date().getTime();
 		}
 
@@ -121,23 +122,23 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	}
 
 	// @FunctionalInterface
-	public interface ActorContextProvider {
-		ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req);
+	public interface WebActorContextProvider {
+		WebActorContext get(ChannelHandlerContext ctx, FullHttpRequest req);
 	}
 
 	protected static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
 
-	private final ActorContextProvider selector;
+	private final WebActorContextProvider selector;
 	private final String httpResponseEncoderName;
 
 	private WebSocketServerHandshaker handshaker;
 	private WebSocketActorAdapter webSocketActor;
 
-	public WebActorHandler(ActorContextProvider selector) {
+	public WebActorHandler(WebActorContextProvider selector) {
 		this(selector, null);
 	}
 
-	public WebActorHandler(ActorContextProvider selector, String httpResponseEncoderName) {
+	public WebActorHandler(WebActorContextProvider selector, String httpResponseEncoderName) {
 		this.selector = selector;
 		this.httpResponseEncoderName = httpResponseEncoderName;
 	}
@@ -190,7 +191,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			return;
 		}
 
-		final ActorContext actorContext = selector.get(ctx, req);
+		final WebActorContext actorContext = selector.get(ctx, req);
 		assert actorContext != null;
 
 		final ReentrantLock lock = actorContext.getLock();
@@ -199,20 +200,16 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		lock.lock();
 
 		try {
-			ActorImpl<? extends WebMessage> userActor;
 			ActorRef<? extends WebMessage> userActorRef = null;
-			Class userActorClass = null;
 			ActorImpl internalActor = null;
-			if (actorContext.isValid() && actorContext.getActor() != null) {
+			if (actorContext.isValid() && actorContext.getRef() != null) {
 				internalActor = (ActorImpl) actorContext.getAttachments().get(ACTOR_KEY);
-				userActor = actorContext.getActor();
-				userActorRef = userActor.ref();
-				userActorClass = userActor.getClass();
+				userActorRef = actorContext.getRef();
 			}
 
 			final String uri = req.getUri();
 			if (userActorRef != null) {
-				if (handlesWithWebSocket(uri, actorContext.getActor().getClass())) {
+				if (handlesWithWebSocket(uri, actorContext.getWebActorClass())) {
 					if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
 						//noinspection unchecked
 						this.webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
@@ -238,7 +235,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 						});
 					}
 					return;
-				} else if (handlesWithHttp(uri, userActorClass)) {
+				} else if (handlesWithHttp(uri, actorContext.getWebActorClass())) {
 					if (internalActor == null) {
 						//noinspection unchecked
 						internalActor = new HttpActorAdapter(actorContext, (ActorRef<HttpRequest>) userActorRef, httpResponseEncoderName);
@@ -256,7 +253,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), NOT_FOUND));
 	}
 
-	private void addActorToContextAndUnlock(ActorContext actorContext, ActorImpl actor, ReentrantLock lock) {
+	private void addActorToContextAndUnlock(WebActorContext actorContext, ActorImpl actor, ReentrantLock lock) {
 		actorContext.getAttachments().put(ACTOR_KEY, actor);
 		lock.unlock();
 	}
@@ -364,10 +361,10 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 	private static class HttpActorAdapter extends FakeActor<HttpResponse> {
 		final ActorRef<? super HttpRequest> webActor;
-		private final ActorContext actorContext;
+		private final WebActorContext actorContext;
 		private volatile boolean dead;
 
-		public HttpActorAdapter(ActorContext actorContext, ActorRef<? super HttpRequest> webActor, String httpResponseEncoderName) {
+		public HttpActorAdapter(WebActorContext actorContext, ActorRef<? super HttpRequest> webActor, String httpResponseEncoderName) {
 			super(webActor.getName(), new HttpChannelAdapter(actorContext, httpResponseEncoderName));
 
 			this.actorContext = actorContext;
@@ -427,9 +424,9 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		private final static boolean trackSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".trackSessionOnlyForSSE");
 
 		private final String httpResponseEncoderName;
-		private final ActorContext actorContext;
+		private final WebActorContext actorContext;
 
-		public HttpChannelAdapter(ActorContext actorContext, String httpResponseEncoderName) {
+		public HttpChannelAdapter(WebActorContext actorContext, String httpResponseEncoderName) {
 			this.actorContext = actorContext;
 			this.httpResponseEncoderName = httpResponseEncoderName;
 		}
@@ -543,7 +540,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			return true;
 		}
 
-		private static void startSession(String sessionId, ActorContext actorContext) {
+		private static void startSession(String sessionId, WebActorContext actorContext) {
 			sessions.put(sessionId, actorContext);
 
 			if (cleanupFiber.get() == null) {
@@ -551,7 +548,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 					@Override
 					public Void run() throws SuspendExecution, InterruptedException {
 						for (final String sessionId : sessions.keySet()) {
-							final ActorContext s = sessions.get(sessionId);
+							final WebActorContext s = sessions.get(sessionId);
 							if (!s.isValid())
 								sessions.remove(sessionId);
 						}
