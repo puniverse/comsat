@@ -45,7 +45,7 @@ import java.util.Set;
  * @author circlespainter
  */
 public final class AutoWebActorHandler extends WebActorHandler {
-	private static final AttributeKey<WebActorContext> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
+	private static final AttributeKey<Context> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
 
 	private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
 	private static final List<Class<?>> actorClasses = new ArrayList<>(4);
@@ -67,8 +67,43 @@ public final class AutoWebActorHandler extends WebActorHandler {
 		this(httpResponseEncoderName, null, actorParams);
 	}
 
-	private static WebActorContext newActorContext(final ChannelHandlerContext ctx, final FullHttpRequest req, final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-		return new DefaultWebActorContextImpl() {
+	public AutoWebActorHandler(final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
+		super(new WebActorContextProvider() {
+			@Override
+			public Context get(ChannelHandlerContext ctx, final FullHttpRequest req) {
+				final Attribute<Context> s = ctx.attr(SESSION_KEY);
+				if (s.get() == null) {
+					final String sessionId = getSessionId(req);
+					if (sessionId != null) {
+						final Context actorContext = sessions.get(sessionId);
+						if (actorContext != null && actorContext.isValid())
+							s.setIfAbsent(actorContext);
+						else
+							return newActorContext(req, userClassLoader, actorParams);
+					} else
+						s.setIfAbsent(newActorContext(req, userClassLoader, actorParams));
+				}
+				return s.get();
+			}
+
+			private String getSessionId(FullHttpRequest req) {
+				final String cookiesString = req.headers().get(HttpHeaders.Names.COOKIE);
+				if (cookiesString != null) {
+					final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookiesString);
+					if (cookies != null) {
+						for (final Cookie c : cookies) {
+							if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
+								return c.value();
+						}
+					}
+				}
+				return null;
+			}
+		}, httpResponseEncoderName);
+	}
+
+	private static Context newActorContext(final FullHttpRequest req, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
+		return new DefaultContextImpl() {
 			private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
 			private ActorRef<? extends WebMessage> actorRef;
 
@@ -86,7 +121,7 @@ public final class AutoWebActorHandler extends WebActorHandler {
 			}
 
 			@Override
-			public Class<? extends ActorImpl> getWebActorClass() {
+			public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
 				return actorClass;
 			}
 
@@ -130,40 +165,5 @@ public final class AutoWebActorHandler extends WebActorHandler {
 				}
 			}
 		};
-	}
-
-	public AutoWebActorHandler(final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-		super(new WebActorContextProvider() {
-			@Override
-			public WebActorContext get(ChannelHandlerContext ctx, final FullHttpRequest req) {
-				final Attribute<WebActorContext> s = ctx.attr(SESSION_KEY);
-				if (s.get() == null) {
-					final String sessionId = getSessionId(req);
-					if (sessionId != null) {
-						final WebActorContext actorContext = sessions.get(sessionId);
-						if (actorContext != null && actorContext.isValid())
-							s.setIfAbsent(actorContext);
-						else
-							return newActorContext(ctx, req, httpResponseEncoderName, userClassLoader, actorParams);
-					} else
-						s.setIfAbsent(newActorContext(ctx, req, httpResponseEncoderName, userClassLoader, actorParams));
-				}
-				return s.get();
-			}
-
-			private String getSessionId(FullHttpRequest req) {
-				final String cookiesString = req.headers().get(HttpHeaders.Names.COOKIE);
-				if (cookiesString != null) {
-					final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookiesString);
-					if (cookies != null) {
-						for (final Cookie c : cookies) {
-							if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
-								return c.value();
-						}
-					}
-				}
-				return null;
-			}
-		}, httpResponseEncoderName);
 	}
 }

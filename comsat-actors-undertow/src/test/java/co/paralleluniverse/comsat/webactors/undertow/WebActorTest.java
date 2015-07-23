@@ -15,87 +15,95 @@ package co.paralleluniverse.comsat.webactors.undertow;
 
 import co.paralleluniverse.actors.Actor;
 import co.paralleluniverse.actors.ActorImpl;
+import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.Callable;
 import io.undertow.Undertow;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.RequestDumpingHandler;
 import io.undertow.server.session.SessionCookieConfig;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.Callable;
+
 @RunWith(Parameterized.class)
 public class WebActorTest extends AbstractWebActorTest {
-  private static final Actor actor = new UndertowWebActor();
-  static {
-    actor.spawn();
-  }
+	private static final Actor actor = new UndertowWebActor();
+	@SuppressWarnings("unchecked")
+	private static final ActorRef<? extends WebMessage> actorRef = actor.spawn();
 
-  private static final Callable<WebActorHandler> basicWebActorHandlerCreator = new Callable<WebActorHandler>() {
-    @Override
-    public WebActorHandler call() throws Exception {
-      return new WebActorHandler(new WebActorHandler.ActorContextProvider() {
-        @Override
-        public WebActorHandler.ActorContext get(HttpServerExchange xch) {
-          return new WebActorHandler.DefaultActorContextImpl() {
-            @Override
-            public ActorImpl<? extends WebMessage> getActor() {
-              return actor;
-            }
-          };
-        }
-      });
-    }
-  };
+	private static final Callable<WebActorHandler> basicWebActorHandlerCreator = new Callable<WebActorHandler>() {
+		@Override
+		public WebActorHandler call() throws Exception {
+			return new WebActorHandler(new WebActorHandler.ContextProvider() {
+				@Override
+				public WebActorHandler.Context get(HttpServerExchange xch) {
+					return new WebActorHandler.DefaultContextImpl() {
+						@SuppressWarnings("unchecked")
+						@Override
+						public ActorRef<? extends WebMessage> getRef() {
+							return actorRef;
+						}
 
-  private static final Callable<WebActorHandler> autoWebActorHandlerCreator = new Callable<WebActorHandler>() {
-    @Override
-    public WebActorHandler call() throws Exception {
-      return new AutoWebActorHandler();
-    }
-  };
+						@Override
+						public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
+							return UndertowWebActor.class;
+						}
+					};
+				}
+			});
+		}
+	};
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{
-        {basicWebActorHandlerCreator},
-        {autoWebActorHandlerCreator}
-    });
-  }
+	private static final Callable<WebActorHandler> autoWebActorHandlerCreator = new Callable<WebActorHandler>() {
+		@Override
+		public WebActorHandler call() throws Exception {
+			return new AutoWebActorHandler();
+		}
+	};
 
-  private static final int INET_PORT = 8080;
+	@Parameterized.Parameters(name = "{0}")
+	public static Collection<Object[]> data() {
+		return Arrays.asList(new Object[][]{
+				{basicWebActorHandlerCreator},
+				{autoWebActorHandlerCreator}
+		});
+	}
 
-  private final Callable<WebActorHandler> webActorHandlerCreator;
+	private static final int INET_PORT = 8080;
 
-  private Undertow server;
+	private final Callable<WebActorHandler> webActorHandlerCreator;
 
-  public WebActorTest(Callable<WebActorHandler> webActorHandlerCreator) {
-    this.webActorHandlerCreator = webActorHandlerCreator;
-  }
+	private Undertow server;
 
-  @Before
-  public void setUp() throws Exception {
-    server = Undertow.builder()
-            .addHttpListener(INET_PORT, "localhost")
-            .setHandler(new RequestDumpingHandler(webActorHandlerCreator.call())).build();
-    server.start();
+	public WebActorTest(Callable<WebActorHandler> webActorHandlerCreator) {
+		this.webActorHandlerCreator = webActorHandlerCreator;
+	}
 
-    System.out.println("Server is up");
-  }
+	@Before
+	public void setUp() throws Exception {
+		server = Undertow.builder()
+				.addHttpListener(INET_PORT, "localhost")
+				.setHandler(new RequestDumpingHandler(webActorHandlerCreator.call())).build();
+		server.start();
 
-  @After
-  public void tearDown() throws Exception {
-    server.stop();
+		System.out.println("Server is up");
+	}
 
-    System.out.println("Server is down");
-  }
+	@After
+	public void tearDown() throws Exception {
+		server.stop();
 
-  @Override
-  protected String getSessionIdCookieName() {
-    return SessionCookieConfig.DEFAULT_SESSION_ID;
-  }
+		System.out.println("Server is down");
+	}
+
+	@Override
+	protected String getSessionIdCookieName() {
+		return SessionCookieConfig.DEFAULT_SESSION_ID;
+	}
 }

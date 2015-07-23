@@ -45,22 +45,19 @@ public class WebActorTest extends AbstractWebActorTest {
 	private static final String HTTP_RESPONSE_ENCODER_KEY = "httpResponseEncoder";
 
 	private static final Actor actor = new NettyWebActor();
+	@SuppressWarnings("unchecked")
+	private static final ActorRef<? extends WebMessage> actorRef= actor.spawn();
 
-	private static final WebActorHandler.DefaultWebActorContextImpl context = new WebActorHandler.DefaultWebActorContextImpl() {
-		public final ActorRef<? extends WebMessage> ref;
-
-		{
-			//noinspection unchecked
-			ref = actor.spawn();
-		}
+	private static final WebActorHandler.DefaultContextImpl context = new WebActorHandler.DefaultContextImpl() {
+		@SuppressWarnings("unchecked")
 
 		@Override
 		public ActorRef<? extends WebMessage> getRef() {
-			return ref;
+			return actorRef;
 		}
 
 		@Override
-		public Class<? extends ActorImpl> getWebActorClass() {
+		public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
 			return NettyWebActor.class;
 		}
 	};
@@ -70,7 +67,7 @@ public class WebActorTest extends AbstractWebActorTest {
 		public WebActorHandler call() throws Exception {
 			return new WebActorHandler(new WebActorHandler.WebActorContextProvider() {
 				@Override
-				public WebActorHandler.WebActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
+				public WebActorHandler.Context get(ChannelHandlerContext ctx, FullHttpRequest req) {
 					return context;
 				}
 			});
