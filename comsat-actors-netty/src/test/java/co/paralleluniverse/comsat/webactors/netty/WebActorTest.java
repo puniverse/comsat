@@ -76,7 +76,7 @@ public class WebActorTest extends AbstractWebActorTest {
 		}
 	};
 
-	@Parameterized.Parameters(name = "{0}")
+	@Parameterized.Parameters(name = "{index}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 			{basicWebActorHandlerCreator},
