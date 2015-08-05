@@ -190,8 +190,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			return;
 		}
 
+		final String uri = req.getUri();
+
 		final ActorContext actorContext = selector.get(ctx, req);
 		assert actorContext != null;
+		assert actorContext.getActor() != null;
 
 		final ReentrantLock lock = actorContext.getLock();
 		assert lock != null;
@@ -199,18 +202,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		lock.lock();
 
 		try {
-			ActorImpl<? extends WebMessage> userActor;
-			ActorRef<? extends WebMessage> userActorRef = null;
-			Class userActorClass = null;
-			ActorImpl internalActor = null;
-			if (actorContext.isValid() && actorContext.getActor() != null) {
-				internalActor = (ActorImpl) actorContext.getAttachments().get(ACTOR_KEY);
-				userActor = actorContext.getActor();
-				userActorRef = userActor.ref();
-				userActorClass = userActor.getClass();
-			}
+			final ActorImpl<? extends WebMessage> userActor = actorContext.getActor();
+			final ActorRef<? extends WebMessage> userActorRef = userActor.ref();
+			final Class userActorClass = userActor.getClass();
 
-			final String uri = req.getUri();
+			ActorImpl internalActor = (ActorImpl) actorContext.getAttachments().get(ACTOR_KEY);
+
 			if (userActorRef != null) {
 				if (handlesWithWebSocket(uri, actorContext.getActor().getClass())) {
 					if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
