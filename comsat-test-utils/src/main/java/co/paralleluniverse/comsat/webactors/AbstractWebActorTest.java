@@ -78,18 +78,23 @@ public abstract class AbstractWebActorTest {
 	@Test
 	public void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
 		final Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
-		Response resp = client.target("http://localhost:8080/ssechannel").request().get();
-		NewCookie session = resp.getCookies().get(getSessionIdCookieName());
+		final Response resp = client.target("http://localhost:8080/ssechannel").request().get();
+		final NewCookie session = resp.getCookies().get(getSessionIdCookieName());
 		final EventInput eventInput = resp.readEntity(EventInput.class);
 		final SettableFuture<String> res = new SettableFuture<>();
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while (!eventInput.isClosed() && !res.isDone()) {
-					final InboundEvent inboundEvent = eventInput.read();
-					if (inboundEvent == null)
-						break;
-					res.set(inboundEvent.readData(String.class));
+				try {
+					while (!eventInput.isClosed() && !res.isDone()) {
+						final InboundEvent inboundEvent = eventInput.read();
+						if (inboundEvent == null)
+							break;
+						res.set(inboundEvent.readData(String.class));
+					}
+				} catch (Throwable t) {
+					t.printStackTrace();
+					res.setException(t);
 				}
 			}
 		}).start();
