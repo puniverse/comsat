@@ -15,12 +15,14 @@ package co.paralleluniverse.comsat.webactors;
 
 import co.paralleluniverse.strands.SettableFuture;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
@@ -43,10 +45,16 @@ import static org.junit.Assert.assertTrue;
  * @author circlespainter
  */
 public abstract class AbstractWebActorTest {
+	protected final RequestConfig requestConfig;
+
+	protected AbstractWebActorTest() {
+		requestConfig = RequestConfig.custom().setConnectTimeout(10_000).setConnectionRequestTimeout(10_000).build();
+	}
+
 	@Test
 	public void testHttpMsg() throws IOException, InterruptedException, ExecutionException {
 		final HttpGet httpGet = new HttpGet("http://localhost:8080");
-		final CloseableHttpResponse res = HttpClients.createDefault().execute(httpGet);
+		final CloseableHttpResponse res = HttpClients.custom().setDefaultRequestConfig(requestConfig).build().execute(httpGet);
 		assertEquals(200, res.getStatusLine().getStatusCode());
 		assertEquals("text/html", res.getFirstHeader("Content-Type").getValue());
 		assertEquals("12", res.getFirstHeader("Content-Length").getValue());
@@ -56,7 +64,7 @@ public abstract class AbstractWebActorTest {
 	@Test
 	public void testHttpRedirect() throws IOException, InterruptedException, ExecutionException {
 		final HttpGet httpGet = new HttpGet("http://localhost:8080/redirect");
-		final CloseableHttpResponse res = HttpClients.custom().disableRedirectHandling().build().execute(httpGet);
+		final CloseableHttpResponse res = HttpClients.custom().disableRedirectHandling().setDefaultRequestConfig(requestConfig).build().execute(httpGet);
 		final String s = EntityUtils.toString(res.getEntity());
 		System.out.println(s);
 		assertEquals(302, res.getStatusLine().getStatusCode());
@@ -67,7 +75,7 @@ public abstract class AbstractWebActorTest {
 	public void testWebSocketMsg() throws IOException, InterruptedException, ExecutionException, DeploymentException {
 		BasicCookieStore cookieStore = new BasicCookieStore();
 		final HttpGet httpGet = new HttpGet("http://localhost:8080");
-		HttpClients.custom().setDefaultCookieStore(cookieStore).build().execute(httpGet, new BasicResponseHandler());
+		HttpClients.custom().setDefaultRequestConfig(requestConfig).setDefaultCookieStore(cookieStore).build().execute(httpGet, new BasicResponseHandler());
 
 		final SettableFuture<String> res = new SettableFuture<>();
 		try (Session ignored = ContainerProvider.getWebSocketContainer().connectToServer(sendAndGetTextEndPoint("test it", res), getClientEndPointConfig(cookieStore), URI.create("ws://localhost:8080/ws"))) {
@@ -78,6 +86,8 @@ public abstract class AbstractWebActorTest {
 	@Test
 	public void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
 		final Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
+		client.property(ClientProperties.CONNECT_TIMEOUT, 10_000);
+		client.property(ClientProperties.READ_TIMEOUT, 10_000);
 		final Response resp = client.target("http://localhost:8080/ssechannel").request().get();
 		final NewCookie session = resp.getCookies().get(getSessionIdCookieName());
 		final EventInput eventInput = resp.readEntity(EventInput.class);
