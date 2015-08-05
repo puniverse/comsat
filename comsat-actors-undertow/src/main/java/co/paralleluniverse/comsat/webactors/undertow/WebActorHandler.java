@@ -194,7 +194,7 @@ public class WebActorHandler implements HttpHandler {
 					xch.dispatch(); // Start async
 
 					//noinspection ConstantConditions
-					if (internalActor == null) {
+					if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
 						//noinspection unchecked
 						internalActor = new HttpActorAdapter(context, (ActorRef<HttpRequest>) userActorRef);
 						addActorToContextAndUnlock(context, internalActor, lock);
