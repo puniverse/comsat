@@ -131,12 +131,14 @@ public final class AutoWebActorHandler extends WebActorHandler {
 					final String sessionId = getSessionId(req);
 					if (sessionId != null) {
 						final ActorContext actorContext = sessions.get(sessionId);
-						if (actorContext != null && actorContext.isValid())
-							s.setIfAbsent(actorContext);
-						else
-							return newActorContext(ctx, req, httpResponseEncoderName, userClassLoader, actorParams);
-					} else
-						s.setIfAbsent(newActorContext(ctx, req, httpResponseEncoderName, userClassLoader, actorParams));
+						if (actorContext != null && actorContext.isValid()) {
+							s.set(actorContext);
+							return actorContext;
+						}
+					}
+					final ActorContext ac = newActorContext(ctx, req, httpResponseEncoderName, userClassLoader, actorParams);
+					s.set(ac);
+					return ac;
 				}
 				return s.get();
 			}
