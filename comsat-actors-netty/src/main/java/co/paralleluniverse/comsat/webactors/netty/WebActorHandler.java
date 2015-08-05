@@ -542,22 +542,24 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 		private static void startSession(String sessionId, ActorContext actorContext) {
 			sessions.put(sessionId, actorContext);
-
 			if (cleanupFiber.get() == null) {
 				cleanupFiber.set(new Fiber<Void>() {
 					@Override
 					public Void run() throws SuspendExecution, InterruptedException {
-						for (final String sessionId : sessions.keySet()) {
-							final ActorContext s = sessions.get(sessionId);
-							if (!s.isValid())
-								sessions.remove(sessionId);
+						try {
+							for (final String sessionId : sessions.keySet()) {
+								final ActorContext s = sessions.get(sessionId);
+								if (!s.isValid())
+									sessions.remove(sessionId);
+							}
+						} finally {
+							cleanupFiber.set(null);
 						}
-						cleanupFiber.set(null);
 						return null;
 					}
 				}.start());
 			}
-		}
+	}
 
 		private io.netty.handler.codec.http.cookie.Cookie getNettyCookie(Cookie c) {
 			io.netty.handler.codec.http.cookie.Cookie ret = new io.netty.handler.codec.http.cookie.DefaultCookie(c.getName(), c.getValue());
