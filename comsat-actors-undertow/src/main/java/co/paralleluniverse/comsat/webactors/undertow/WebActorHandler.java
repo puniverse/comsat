@@ -137,12 +137,8 @@ public class WebActorHandler implements HttpHandler {
 		lock.lock();
 
 		try {
-			ActorRef<? extends WebMessage> userActorRef = null;
-			ActorImpl internalActor = null;
-			if (context.isValid() && context.getRef() != null) {
-				internalActor = (ActorImpl) context.getAttachments().get(ACTOR_KEY);
-				userActorRef = context.getRef();
-			}
+			final ActorRef<? extends WebMessage> userActorRef = context.getRef();
+			ActorImpl internalActor = (ActorImpl) context.getAttachments().get(ACTOR_KEY);
 
 			final String uri = xch.getRequestURI();
 			if (userActorRef != null) {
