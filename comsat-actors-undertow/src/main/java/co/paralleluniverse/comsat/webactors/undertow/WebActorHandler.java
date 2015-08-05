@@ -52,13 +52,70 @@ import java.util.concurrent.TimeUnit;
  * @author circlespainter
  */
 public class WebActorHandler implements HttpHandler {
-
 	protected static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
-	private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
-	private final SessionAttachmentHandler sessionHandler;
-	private final ActorContextProvider selector;
 
-	public WebActorHandler(ActorContextProvider selector) {
+	// @FunctionalInterface
+	public interface ContextProvider {
+		Context get(HttpServerExchange xch);
+	}
+
+	public interface Context {
+		boolean isValid();
+
+		void invalidate();
+
+		ActorRef<? extends WebMessage> getRef();
+		Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass();
+
+		ReentrantLock getLock();
+
+		Map<String, Object> getAttachments();
+	}
+
+
+	public static abstract class DefaultContextImpl implements Context {
+		private final static String durationProp = System.getProperty(DefaultContextImpl.class.getName() + ".durationMillis");
+		private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000l;
+		final Map<String, Object> attachments = new HashMap<>();
+		private final ReentrantLock lock = new ReentrantLock();
+		private final long created;
+		private boolean valid = true;
+
+		public DefaultContextImpl() {
+			this.created = new Date().getTime();
+		}
+
+		@Override
+		public final void invalidate() {
+			attachments.clear();
+			valid = false;
+		}
+
+		@Override
+		public final boolean isValid() {
+			final boolean ret = valid && (new Date().getTime() - created) <= DURATION;
+			if (!ret)
+				invalidate();
+			return ret;
+		}
+
+		@Override
+		public final Map<String, Object> getAttachments() {
+			return attachments;
+		}
+
+		@Override
+		public final ReentrantLock getLock() {
+			return lock;
+		}
+	}
+
+	private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
+
+	private final SessionAttachmentHandler sessionHandler;
+	private final ContextProvider selector;
+
+	public WebActorHandler(ContextProvider selector) {
 		this.selector = selector;
 		// this.continueHandler = Handlers.httpContinueRead(null);
 		SessionManager sessionManager = new InMemorySessionManager("SESSION_MANAGER");
@@ -71,36 +128,32 @@ public class WebActorHandler implements HttpHandler {
 		// continueHandler.handleRequest(xch);
 		sessionHandler.handleRequest(xch);
 
-		final ActorContext actorContext = selector.get(xch);
-		assert actorContext != null;
+		final Context context = selector.get(xch);
+		assert context != null;
 
-		final ReentrantLock lock = actorContext.getLock();
+		final ReentrantLock lock = context.getLock();
 		assert lock != null;
 
 		lock.lock();
 
 		try {
-			ActorImpl<? extends WebMessage> userActor;
 			ActorRef<? extends WebMessage> userActorRef = null;
-			Class userActorClass = null;
 			ActorImpl internalActor = null;
-			if (actorContext.isValid() && actorContext.getActor() != null) {
-				internalActor = (ActorImpl) actorContext.getAttachments().get(ACTOR_KEY);
-				userActor = actorContext.getActor();
-				userActorRef = userActor.ref();
-				userActorClass = userActor.getClass();
+			if (context.isValid() && context.getRef() != null) {
+				internalActor = (ActorImpl) context.getAttachments().get(ACTOR_KEY);
+				userActorRef = context.getRef();
 			}
 
 			final String uri = xch.getRequestURI();
 			if (userActorRef != null) {
-				if (handlesWithWebSocket(uri, userActorClass)) {
+				if (handlesWithWebSocket(uri, context.getWebActorClass())) {
 					if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
 
 						@SuppressWarnings("unchecked") final ActorRef<WebMessage> userActorRef0 = (ActorRef<WebMessage>) userActorRef;
 						internalActor = new WebSocketActorAdapter(userActorRef0);
 
 						//noinspection unchecked
-						addActorToContextAndUnlock(actorContext, internalActor, lock);
+						addActorToContextAndUnlock(context, internalActor, lock);
 					}
 
 					final WebSocketActorAdapter webSocketActor = (WebSocketActorAdapter) internalActor;
@@ -141,14 +194,14 @@ public class WebActorHandler implements HttpHandler {
 					}).handleRequest(xch);
 
 					return;
-				} else if (handlesWithHttp(uri, userActorClass)) {
+				} else if (handlesWithHttp(uri, context.getWebActorClass())) {
 					xch.dispatch(); // Start async
 
 					//noinspection ConstantConditions
 					if (internalActor == null) {
 						//noinspection unchecked
-						internalActor = new HttpActorAdapter(actorContext, (ActorRef<HttpRequest>) userActorRef);
-						addActorToContextAndUnlock(actorContext, internalActor, lock);
+						internalActor = new HttpActorAdapter(context, (ActorRef<HttpRequest>) userActorRef);
+						addActorToContextAndUnlock(context, internalActor, lock);
 					}
 
 					//noinspection ConstantConditions
@@ -164,63 +217,9 @@ public class WebActorHandler implements HttpHandler {
 		}
 	}
 
-	private void addActorToContextAndUnlock(ActorContext actorContext, ActorImpl actor, ReentrantLock lock) {
-		actorContext.getAttachments().put(ACTOR_KEY, actor);
+	private void addActorToContextAndUnlock(Context context, ActorImpl actor, ReentrantLock lock) {
+		context.getAttachments().put(ACTOR_KEY, actor);
 		lock.unlock();
-	}
-
-	public interface ActorContext {
-		boolean isValid();
-
-		void invalidate();
-
-		ActorImpl<? extends WebMessage> getActor();
-
-		ReentrantLock getLock();
-
-		Map<String, Object> getAttachments();
-	}
-
-	// @FunctionalInterface
-	public interface ActorContextProvider {
-		ActorContext get(HttpServerExchange xch);
-	}
-
-	public static abstract class DefaultActorContextImpl implements ActorContext {
-		private final static String durationProp = System.getProperty(DefaultActorContextImpl.class.getName() + ".durationMillis");
-		private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000l;
-		final Map<String, Object> attachments = new HashMap<>();
-		private final ReentrantLock lock = new ReentrantLock();
-		private final long created;
-		private boolean valid = true;
-
-		public DefaultActorContextImpl() {
-			this.created = new Date().getTime();
-		}
-
-		@Override
-		public final void invalidate() {
-			attachments.clear();
-			valid = false;
-		}
-
-		@Override
-		public final boolean isValid() {
-			final boolean ret = valid && (new Date().getTime() - created) <= DURATION;
-			if (!ret)
-				invalidate();
-			return ret;
-		}
-
-		@Override
-		public final Map<String, Object> getAttachments() {
-			return attachments;
-		}
-
-		@Override
-		public final ReentrantLock getLock() {
-			return lock;
-		}
 	}
 
 	private static class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
@@ -337,13 +336,13 @@ public class WebActorHandler implements HttpHandler {
 
 	private static class HttpActorAdapter extends FakeActor<HttpResponse> {
 		final ActorRef<? super HttpRequest> webActor;
-		private final ActorContext actorContext;
+		private final Context context;
 		private volatile boolean dead;
 
-		public HttpActorAdapter(ActorContext actorContext, ActorRef<? super HttpRequest> webActor) {
-			super(webActor.getName(), new HttpChannelAdapter(actorContext));
+		public HttpActorAdapter(Context context, ActorRef<? super HttpRequest> webActor) {
+			super(webActor.getName(), new HttpChannelAdapter(context));
 
-			this.actorContext = actorContext;
+			this.context = context;
 			this.webActor = webActor;
 			watch(webActor);
 		}
@@ -397,7 +396,7 @@ public class WebActorHandler implements HttpHandler {
 				return;
 			this.dead = true;
 			super.die(cause);
-			actorContext.invalidate();
+			context.invalidate();
 		}
 
 		@Override
@@ -409,19 +408,19 @@ public class WebActorHandler implements HttpHandler {
 	private static class HttpChannelAdapter implements SendPort<HttpResponse> {
 		private final static boolean trackSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".trackSessionOnlyForSSE");
 
-		private final ActorContext actorContext;
+		private final Context context;
 
-		public HttpChannelAdapter(ActorContext actorContext) {
-			this.actorContext = actorContext;
+		public HttpChannelAdapter(Context context) {
+			this.context = context;
 		}
 
-		private static void startSession(HttpServerExchange xch, ActorContext actorContext) {
+		private static void startSession(HttpServerExchange xch, Context context) {
 			SessionManager sm = xch.getAttachment(SessionManager.ATTACHMENT_KEY);
 			SessionConfig sessionConfig = xch.getAttachment(SessionConfig.ATTACHMENT_KEY);
 			Session session = sm.getSession(xch, sessionConfig);
 			if (session == null)
 				session = sm.createSession(xch, sessionConfig);
-			session.setAttribute(ACTOR_KEY, actorContext);
+			session.setAttribute(ACTOR_KEY, context);
 		}
 
 		@Override
@@ -481,7 +480,7 @@ public class WebActorHandler implements HttpHandler {
 
 			final boolean sseStarted = message.shouldStartActor();
 			if (sseStarted || !trackSessionOnlyForSSE)
-				startSession(xch, actorContext);
+				startSession(xch, context);
 
 			if (sseStarted) {
 				try {
