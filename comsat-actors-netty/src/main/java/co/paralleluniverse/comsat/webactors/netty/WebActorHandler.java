@@ -308,7 +308,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		@Override
 		protected void die(Throwable cause) {
 			super.die(cause);
-			ctx.channel().close();
+			ctx.close();
 		}
 
 		@Override
@@ -350,7 +350,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 		@Override
 		public void close() {
-			ctx.channel().close();
+			ctx.close();
 		}
 
 		@Override
@@ -673,7 +673,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 		@Override
 		public void close() {
-			ctx.channel().close();
+			ctx.close();
 		}
 
 		@Override
