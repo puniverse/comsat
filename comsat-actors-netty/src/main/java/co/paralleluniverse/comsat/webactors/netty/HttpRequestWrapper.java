@@ -57,7 +57,6 @@ final class HttpRequestWrapper extends HttpRequest {
 	private ByteBuffer byteBufferBody;
 	private String stringBody;
 	private Charset encoding;
-	private Integer length;
 	private String contentType;
 
 	public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req) {
