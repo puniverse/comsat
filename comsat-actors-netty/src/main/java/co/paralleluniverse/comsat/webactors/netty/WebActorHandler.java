@@ -225,7 +225,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 					}
 					return;
 				} else if (handlesWithHttp(uri, actorContext.getWebActorClass())) {
-					if (internalActor == null) {
+					if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
 						//noinspection unchecked
 						internalActor = new HttpActorAdapter(actorContext, (ActorRef<HttpRequest>) userActorRef, httpResponseEncoderName);
 						addActorToContextAndUnlock(actorContext, internalActor, lock);
