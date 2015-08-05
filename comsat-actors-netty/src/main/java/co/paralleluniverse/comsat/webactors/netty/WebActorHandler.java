@@ -139,7 +139,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		ctx.close();
+		if (ctx.channel().isOpen())
+			ctx.close();
 		log.error("Exception caught", cause);
 	}
 
@@ -149,6 +150,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			handleHttpRequest(ctx, (FullHttpRequest) msg);
 		} else if (msg instanceof WebSocketFrame) {
 			handleWebSocketFrame(ctx, (WebSocketFrame) msg);
+		} else {
+			throw new AssertionError("Unexpected message " + msg);
 		}
 	}
 
@@ -294,7 +297,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		@Override
 		protected void die(Throwable cause) {
 			super.die(cause);
-			ctx.close();
+			if (ctx.channel().isOpen())
+				ctx.close();
 		}
 
 		@Override
@@ -336,7 +340,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 		@Override
 		public void close() {
-			ctx.close();
+			if (ctx.channel().isOpen())
+				ctx.close();
 		}
 
 		@Override
@@ -500,7 +505,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 				}
 				res.headers().add(CONTENT_LENGTH, contentLength);
 			}
-			sendHttpResponse(ctx, req, res, !sseStarted);
+			sendHttpResponse(ctx, req, res);
 
 			if (sseStarted) {
 				if (httpResponseEncoderName != null) {
@@ -642,7 +647,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 		@Override
 		public void close() {
-			ctx.close();
+			if (ctx.channel().isOpen())
+				ctx.close();
 		}
 
 		@Override
@@ -652,7 +658,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	}
 
 	private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
-		sendHttpResponse(ctx, req, res, null);
+		sendHttpResponse(ctx, req, res, false);
 	}
 
 	private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
@@ -675,6 +681,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	private static void writeHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
 		// Send the response and close the connection if necessary.
 		if (!HttpHeaders.isKeepAlive(req) || res.getStatus().code() != 200 || close == null || close) {
+			res.headers().set(CONNECTION, HttpHeaders.Values.CLOSE);
 			ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
 		} else {
 			res.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
