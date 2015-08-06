@@ -20,12 +20,14 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.websocket.*;
@@ -45,30 +47,41 @@ import static org.junit.Assert.assertTrue;
  * @author circlespainter
  */
 public abstract class AbstractWebActorTest {
+	protected static final int DEFAULT_TIMEOUT = 60_000;
+
 	protected final RequestConfig requestConfig;
+	protected int timeout = DEFAULT_TIMEOUT;
 
 	protected AbstractWebActorTest() {
-		requestConfig = RequestConfig.custom().setConnectTimeout(10_000).setConnectionRequestTimeout(10_000).build();
+		requestConfig = RequestConfig.custom()
+			.setConnectTimeout(timeout)
+			.setConnectionRequestTimeout(timeout)
+			.setSocketTimeout(timeout)
+			.build();
 	}
 
 	@Test
 	public void testHttpMsg() throws IOException, InterruptedException, ExecutionException {
 		final HttpGet httpGet = new HttpGet("http://localhost:8080");
-		final CloseableHttpResponse res = HttpClients.custom().setDefaultRequestConfig(requestConfig).build().execute(httpGet);
-		assertEquals(200, res.getStatusLine().getStatusCode());
-		assertEquals("text/html", res.getFirstHeader("Content-Type").getValue());
-		assertEquals("12", res.getFirstHeader("Content-Length").getValue());
-		assertEquals("httpResponse", EntityUtils.toString(res.getEntity()));
+		try (final CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig).build()) {
+			final CloseableHttpResponse res = client.execute(httpGet);
+			assertEquals(200, res.getStatusLine().getStatusCode());
+			assertEquals("text/html", res.getFirstHeader("Content-Type").getValue());
+			assertEquals("12", res.getFirstHeader("Content-Length").getValue());
+			assertEquals("httpResponse", EntityUtils.toString(res.getEntity()));
+		}
 	}
 
 	@Test
 	public void testHttpRedirect() throws IOException, InterruptedException, ExecutionException {
 		final HttpGet httpGet = new HttpGet("http://localhost:8080/redirect");
-		final CloseableHttpResponse res = HttpClients.custom().disableRedirectHandling().setDefaultRequestConfig(requestConfig).build().execute(httpGet);
-		final String s = EntityUtils.toString(res.getEntity());
-		System.out.println(s);
-		assertEquals(302, res.getStatusLine().getStatusCode());
-		assertTrue(res.getFirstHeader("Location").getValue().endsWith("/foo"));
+		try (final CloseableHttpClient client = HttpClients.custom().disableRedirectHandling().setDefaultRequestConfig(requestConfig).build()) {
+			final CloseableHttpResponse res = client.execute(httpGet);
+			final String s = EntityUtils.toString(res.getEntity());
+			System.out.println(s);
+			assertEquals(302, res.getStatusLine().getStatusCode());
+			assertTrue(res.getFirstHeader("Location").getValue().endsWith("/foo"));
+		}
 	}
 
 	@Test
@@ -78,38 +91,49 @@ public abstract class AbstractWebActorTest {
 		HttpClients.custom().setDefaultRequestConfig(requestConfig).setDefaultCookieStore(cookieStore).build().execute(httpGet, new BasicResponseHandler());
 
 		final SettableFuture<String> res = new SettableFuture<>();
-		try (Session ignored = ContainerProvider.getWebSocketContainer().connectToServer(sendAndGetTextEndPoint("test it", res), getClientEndPointConfig(cookieStore), URI.create("ws://localhost:8080/ws"))) {
-			assertEquals("test it", res.get());
+		final WebSocketContainer wsContainer = ContainerProvider.getWebSocketContainer();
+		wsContainer.setAsyncSendTimeout(timeout);
+		wsContainer.setDefaultMaxSessionIdleTimeout(timeout);
+		try (final Session ignored = wsContainer.connectToServer(sendAndGetTextEndPoint("test it", res), getClientEndPointConfig(cookieStore), URI.create("ws://localhost:8080/ws"))) {
+			final String s = res.get();
+			assertEquals("test it", s);
 		}
 	}
 
 	@Test
 	public void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
-		final Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
-		client.property(ClientProperties.CONNECT_TIMEOUT, 10_000);
-		client.property(ClientProperties.READ_TIMEOUT, 10_000);
-		final Response resp = client.target("http://localhost:8080/ssechannel").request().get();
-		final NewCookie session = resp.getCookies().get(getSessionIdCookieName());
-		final EventInput eventInput = resp.readEntity(EventInput.class);
-		final SettableFuture<String> res = new SettableFuture<>();
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					while (!eventInput.isClosed() && !res.isDone()) {
-						final InboundEvent inboundEvent = eventInput.read();
-						if (inboundEvent == null)
-							break;
-						res.set(inboundEvent.readData(String.class));
+		Client client = null;
+		try {
+			client = ClientBuilder.newBuilder().register(SseFeature.class).build();
+			client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
+			client.property(ClientProperties.READ_TIMEOUT, timeout);
+			final Response resp = client.target("http://localhost:8080/ssechannel").request().get();
+			final NewCookie session = resp.getCookies().get(getSessionIdCookieName());
+			final EventInput eventInput = resp.readEntity(EventInput.class);
+			final SettableFuture<String> res = new SettableFuture<>();
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						while (!eventInput.isClosed() && !res.isDone()) {
+							final InboundEvent inboundEvent = eventInput.read();
+							if (inboundEvent == null)
+								break;
+							res.set(inboundEvent.readData(String.class));
+						}
+					} catch (Throwable t) {
+						t.printStackTrace();
+						res.setException(t);
 					}
-				} catch (Throwable t) {
-					t.printStackTrace();
-					res.setException(t);
 				}
-			}
-		}).start();
-		client.target("http://localhost:8080/ssepublish").request().cookie(session).post(Entity.text("test it"));
-		assertEquals("test it", res.get());
+			}).start();
+			client.target("http://localhost:8080/ssepublish").request().cookie(session).post(Entity.text("test it"));
+			final String s = res.get();
+			assertEquals("test it", s);
+		} finally {
+			if (client != null)
+				client.close();
+		}
 	}
 
 	protected abstract String getSessionIdCookieName();

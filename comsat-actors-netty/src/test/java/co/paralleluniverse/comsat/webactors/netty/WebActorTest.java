@@ -124,6 +124,12 @@ public class WebActorTest extends AbstractWebActorTest {
 		System.out.println("Server is up");
 	}
 
+	@Before
+	public void clearSessions() {
+		System.out.println("Clearing sessions");
+		WebActorHandler.sessions.clear();
+	}
+
 	@AfterClass
 	public static void tearDown() throws Exception {
 		ch.channel().close();
