@@ -56,6 +56,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
 	private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
 
+	private final static boolean trackSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".trackSessionOnlyForSSE");
+
 	public interface Context {
 		boolean isValid();
 
@@ -123,6 +125,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	private WebSocketServerHandshaker handshaker;
 	private WebSocketActorAdapter webSocketActor;
 
+	private boolean websocket, readComplete, sseStarted;
+
 	public WebActorHandler(WebActorContextProvider selector) {
 		this(selector, null);
 	}
@@ -135,6 +139,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) {
 		ctx.flush();
+		readComplete = true;
 	}
 
 	@Override
@@ -163,7 +168,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		}
 
 		if (frame instanceof PingWebSocketFrame) {
-			ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
+			ctx.channel().writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
 			return;
 		}
 
@@ -199,9 +204,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
 			if (userActorRef != null) {
 				if (handlesWithWebSocket(uri, actorContext.getWebActorClass())) {
+					websocket = true;
+
 					if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
 						//noinspection unchecked
-						this.webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
+						webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
 						addActorToContextAndUnlock(actorContext, webSocketActor, lock);
 					}
 					// Handshake
@@ -350,7 +357,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		}
 	}
 
-	private static class HttpActorAdapter extends FakeActor<HttpResponse> {
+	private class HttpActorAdapter extends FakeActor<HttpResponse> {
 		final ActorRef<? super HttpRequest> webActor;
 		private final Context actorContext;
 		private volatile boolean dead;
@@ -411,9 +418,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		}
 	}
 
-	private static class HttpChannelAdapter implements SendPort<HttpResponse> {
-		private final static boolean trackSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".trackSessionOnlyForSSE");
-
+	private class HttpChannelAdapter implements SendPort<HttpResponse> {
 		private final String httpResponseEncoderName;
 		private final Context actorContext;
 
@@ -487,7 +492,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			// unallocates it (unfortunately it is explicitly reference-counted in Netty)
 			final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
 
-			final boolean sseStarted = message.shouldStartActor();
+			sseStarted = message.shouldStartActor();
 			if (sseStarted || !trackSessionOnlyForSSE) {
 				final String sessionId = UUID.randomUUID().toString();
 				res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
@@ -531,10 +536,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			return true;
 		}
 
-		private static void startSession(String sessionId, Context actorContext) {
-			sessions.put(sessionId, actorContext);
-		}
-
 		private io.netty.handler.codec.http.cookie.Cookie getNettyCookie(Cookie c) {
 			io.netty.handler.codec.http.cookie.Cookie ret = new io.netty.handler.codec.http.cookie.DefaultCookie(c.getName(), c.getValue());
 			ret.setDomain(c.getDomain());
@@ -557,7 +558,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 	}
 
 	static boolean handlesWithHttp(String uri, Class<?> actorClass) {
-		return match(uri, actorClass).equals("http");
+		return match(uri, actorClass).equals("websocket");
 	}
 
 	static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
@@ -657,11 +658,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		}
 	}
 
-	private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
+	private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
 		sendHttpResponse(ctx, req, res, false);
 	}
 
-	private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
+	private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
 		// Generate an error page if response getStatus code is not OK (200).
 		if (res.getStatus().code() != 200) {
 			final ByteBuf buf = Unpooled.copiedBuffer(res.getStatus().toString(), CharsetUtil.UTF_8);
@@ -672,21 +673,27 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 		writeHttpResponse(ctx, req, res, close);
 	}
 
-	private static void sendHttpRedirect(ChannelHandlerContext ctx, FullHttpRequest req, String newUri) {
+	private void sendHttpRedirect(ChannelHandlerContext ctx, FullHttpRequest req, String newUri) {
 		final FullHttpResponse res = new DefaultFullHttpResponse(req.getProtocolVersion(), FOUND);
 		HttpHeaders.setHeader(res, LOCATION, newUri);
 		writeHttpResponse(ctx, req, res, true);
 	}
 
-	private static void writeHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
+	private void writeHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
 		// Send the response and close the connection if necessary.
 		if (!HttpHeaders.isKeepAlive(req) || res.getStatus().code() != 200 || close == null || close) {
 			res.headers().set(CONNECTION, HttpHeaders.Values.CLOSE);
 			ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
 		} else {
 			res.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-			ctx.writeAndFlush(res);
+			smartWrite(ctx, res);
 		}
+	}
+
+	private ChannelFuture smartWrite(ChannelHandlerContext ctx, Object res) {
+		return !websocket || readComplete || sseStarted ?
+			ctx.writeAndFlush(res) :
+			ctx.write(res);
 	}
 
 	private static String match(String uri, Class<?> actorClass) {
@@ -714,7 +721,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			final WebActor wa = actorClass.getAnnotation(WebActor.class);
 			final List<Pair<String, String>> ret = new ArrayList<>(4);
 			for (String httpP : wa.httpUrlPatterns())
-				addPattern(ret, httpP, "http");
+				addPattern(ret, httpP, "websocket");
 			for (String wsP : wa.webSocketUrlPatterns())
 				addPattern(ret, wsP, "ws");
 			classToUrlPatterns.put(actorClass, ret);
@@ -745,5 +752,9 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 			return pattern.equals("/") || pattern.equals(uri);
 		}
 		return false;
+	}
+
+	private static void startSession(String sessionId, Context actorContext) {
+		sessions.put(sessionId, actorContext);
 	}
 }
