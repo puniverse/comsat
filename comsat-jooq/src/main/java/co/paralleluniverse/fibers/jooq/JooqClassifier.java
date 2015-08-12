@@ -57,6 +57,8 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/impl/RecordDelegate", "operate"},
         {"org/jooq/impl/DSL", "using"},
 
+        {"org/jooq/DSLContext", "fetch.*", "execute.*"},
+
         {"org/jooq/tools/jdbc/JDBCUtils", "dialect", "safeClose"},
         {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
     };
