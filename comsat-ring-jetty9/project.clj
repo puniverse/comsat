@@ -1,4 +1,6 @@
-(defproject co.paralleluniverse/comsat-ring-jetty9 "0.4.0"
+(def quasar-pulsar-version "0.7.2")
+
+(defproject co.paralleluniverse/comsat-ring-jetty9 "0.5.0-SNAPSHOT"
   :description "Comsat integration for the Ring Clojure web framework: Jetty 9 fiber-blocking adapter."
   :url "https://github.com/puniverse/comsat"
   :scm {:name "git" :url "https://github.com/puniverse/comsat"}
@@ -21,9 +23,9 @@
 
      [org.slf4j/slf4j-simple "1.7.12"]
 
-     [co.paralleluniverse/pulsar "0.7.2"]]
+     [co.paralleluniverse/pulsar ~quasar-pulsar-version]]
 
-  :java-agents [[co.paralleluniverse/quasar-core "0.7.2"]]
+  :java-agents [[co.paralleluniverse/quasar-core ~quasar-pulsar-version]]
 
   :profiles
     {:dev {:dependencies [[clj-http "1.1.2"]]}})

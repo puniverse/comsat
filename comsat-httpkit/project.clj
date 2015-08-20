@@ -1,4 +1,6 @@
-(defproject co.paralleluniverse/comsat-httpkit "0.4.0"
+(def quasar-pulsar-version "0.7.2")
+
+(defproject co.paralleluniverse/comsat-httpkit "0.5.0-SNAPSHOT"
   :description "'httpkit' Quasar integration"
 
   :url "https://github.com/puniverse/comsat"
@@ -15,7 +17,7 @@
   :dependencies
     [[org.clojure/clojure "1.6.0"]
      [http-kit "2.1.19"]
-     [co.paralleluniverse/pulsar "0.7.2"]]
+     [co.paralleluniverse/pulsar ~quasar-pulsar-version]]
 
   :profiles {:dev {:dependencies
     [[clj-http "1.1.2"]
@@ -24,5 +26,5 @@
      [ring/ring-jetty-adapter "1.3.2"]
      [ring/ring-core "1.3.2"]]}}
 
-  :java-agents [[co.paralleluniverse/quasar-core "0.7.2"]]
+  :java-agents [[co.paralleluniverse/quasar-core ~quasar-pulsar-version]]
 )
