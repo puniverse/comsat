@@ -46,6 +46,7 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/impl/AbstractBindContext", "bindValue0", "bindInternal"},
         {"org/jooq/impl/AbstractStoreQuery", "accept0"},
         {"org/jooq/impl/AbstractDMLQuery", "accept0"},
+        {"org/jooq/impl/AbstractResultQuery", "getFields"},
 
         {"org/jooq/impl/InsertQueryImpl", "toSQLInsert"},
         {"org/jooq/impl/SelectQueryImpl", "toSQLReference0", "toSQLReferenceLimitDefault"},
@@ -61,6 +62,7 @@ public class JooqClassifier implements SuspendableClassifier {
 
         {"org/jooq/tools/jdbc/JDBCUtils", "dialect", "safeClose"},
         {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
+        {"org/jooq/impl/MetaDataFieldProvider", "init"},
     };
 
     @Override
