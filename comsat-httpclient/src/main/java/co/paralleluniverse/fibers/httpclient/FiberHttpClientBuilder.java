@@ -57,11 +57,11 @@ public class FiberHttpClientBuilder {
     }
 
     /**
-     * Creates Builder with 10 io threads.
+     * Creates Builder with one io thread per processor.
      * @return
      */
     public static FiberHttpClientBuilder create() {
-        return create(10);
+        return create(Runtime.getRuntime().availableProcessors());
     }
 
     /**
