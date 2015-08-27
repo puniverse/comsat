@@ -247,7 +247,7 @@ public class FiberHttpClientBuilder {
         return this;
     }
 
-    public CloseableHttpClient build() {
+    public FiberHttpClient build() {
         final FiberHttpClient res =
             ioreactor != null ?
                 new FiberHttpClient(builder.build(), ioreactor) :
