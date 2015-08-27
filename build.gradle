@@ -44,24 +44,24 @@ subprojects {
     ext.metricsVer      = '3.1.2'
     ext.asmVer          = '5.0.4'
 
-    ext.quasarVer       = '0.7.2'
+    ext.quasarVer       = '0.7.3-SNAPSHOT'
 
-    ext.jettyVer        = '9.2.11.v20150529' // '9.3.0.v20150612' requires JDK8
-    ext.tomcatVer       = '8.0.23'
-    ext.undertowVer     = '1.2.8.Final'
+    ext.jettyVer        = '9.2.13.v20150730' // '9.3.0.v20150612' requires JDK8
+    ext.tomcatVer       = '8.0.26'
+    ext.undertowVer     = '1.2.10.Final'
     ext.nettyVer        = '4.0.30.Final'
 
     ext.osgiVer         = '6.0.0'
     ext.jerseyVer       = '2.19'
-    ext.hk2apiVer       = '2.4.0-b27'
+    ext.hk2apiVer       = '2.4.0-b31'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
     ext.servletVer      = '3.0.1'
     ext.jaxrsVer        = '2.0.1'
     ext.websocketApiVer = '1.0'
 
-    ext.dropwizardVer   = '0.8.2'
-    ext.jdbiVer         = '2.63'
+    ext.dropwizardVer   = '0.8.3'
+    ext.jdbiVer         = '2.63.1'
 
     ext.retrofitVer     = '1.9.0'
     ext.jooqVer         = '3.6.2'
@@ -76,7 +76,7 @@ subprojects {
     ext.httpClientVer          = '4.5'
 
     ext.junitVer               = '4.12'
-    ext.h2Ver                  = '1.4.187'
+    ext.h2Ver                  = '1.4.188'
 
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
     ext.embedMongoVer                   = '1.47.0'
@@ -84,10 +84,11 @@ subprojects {
     // ext.bytemanVer = '3.0.1'
 
     // Spring projects
-    ext.springSecurityVer               = '4.0.1.RELEASE'
-    ext.springVer                       = '4.1.6.RELEASE'
-    ext.springBootVer                   = '1.2.4.RELEASE'
-    ext.aspectjVer                      = '1.8.5'
+    ext.springSecurityVer               = '4.0.2.RELEASE'
+    ext.springVer                       = '4.1.7.RELEASE' // 4.2.0
+    ext.springBootVer                   = '1.2.5.RELEASE'
+    ext.aspectjVer                      = '1.8.6'
+
     ext.commonsLoggingVer               = '1.2'
     ext.commonsBeanUtilsVer             = '1.9.2'
     ext.commonsDigesterVer              = '2.1'

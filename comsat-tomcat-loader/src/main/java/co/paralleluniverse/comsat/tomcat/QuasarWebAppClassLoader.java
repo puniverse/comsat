@@ -76,9 +76,9 @@ public class QuasarWebAppClassLoader extends WebappClassLoader {
     }
 
     @Override
-    protected ResourceEntry findResourceInternal(String name, String path) {
+    protected ResourceEntry findResourceInternal(String name, String path, boolean manifestRequired) {
         initInstrumentor();
-        ResourceEntry entry = super.findResourceInternal(name, path);
+        ResourceEntry entry = super.findResourceInternal(name, path, manifestRequired);
         if (entry != null && path.endsWith(".class") && entry.binaryContent != null) {
             String className = name.substring(0, name.length() - ".class".length());
             try {

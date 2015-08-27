@@ -79,8 +79,8 @@ public class FiberDBI implements IDBI {
 
     @Override
     @Suspendable
-    public void withHandle(HandleConsumer callback) throws CallbackFailedException {
-        jdbi.withHandle(callback);
+    public void useHandle(HandleConsumer callback) throws CallbackFailedException {
+        jdbi.useHandle(callback);
     }
 
     @Override
@@ -108,8 +108,8 @@ public class FiberDBI implements IDBI {
 
     @Override
     @Suspendable
-    public void inTransaction(TransactionConsumer callback) throws CallbackFailedException {
-        jdbi.inTransaction(callback);
+    public void useTransaction(TransactionConsumer callback) throws CallbackFailedException {
+        jdbi.useTransaction(callback);
     }
 
     @Override
@@ -120,8 +120,8 @@ public class FiberDBI implements IDBI {
 
     @Override
     @Suspendable
-    public void inTransaction(TransactionIsolationLevel isolation, TransactionConsumer callback) throws CallbackFailedException {
-        jdbi.inTransaction(isolation, callback);
+    public void useTransaction(TransactionIsolationLevel isolation, TransactionConsumer callback) throws CallbackFailedException {
+        jdbi.useTransaction(isolation, callback);
     }
 
     @Override
