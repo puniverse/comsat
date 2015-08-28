@@ -85,7 +85,7 @@
 <li class="li1">
 <a href="#overview">Overview</a><ul><li>
 <a href="#news" class="cat-link">News</a><ul>
-<li><a href="#tbbd">TBBD</a></li>
+<li><a href="#august-2015">28 August, 2015</a></li>
 <li><a href="#july-1-2015">July 1, 2015</a></li>
 <li><a href="#december-23-2014">December 23, 2014</a></li>
 <li><a href="#july-23-2014">July 23, 2014</a></li>
@@ -149,7 +149,7 @@
 
 <h2 id="news">News</h2>
 
-<h3 id="tbbd"><span class="caps">TBBD</span></h3>
+<h3 id="august-2015">28 August,&nbsp;2015</h3>
 
 <p><span class="caps">COMSAT</span> <a href="https://github.com/puniverse/comsat/releases/tag/v0.5.0"><span class="caps">0.5.0</span></a> has been&nbsp;released.</p>
 
@@ -196,43 +196,110 @@
 </span></code></pre></div>
 <p>The corresponding Gradle dependencies are respectively <code>co.paralleluniverse:quasar-core:0.7.2</code> or, for <span class="caps">JDK8</span>,&nbsp;<code>co.paralleluniverse:quasar-core:0.7.2@jdk8</code>.</p>
 
-<p>Then add the Comsat module relevant to your needs&nbsp;(Maven):</p>
+<p>Then add the following Maven/Gradle&nbsp;dependencies:</p>
 
-<div class="highlight"><pre><code><span id="line-1"><span class="nt">&lt;dependency&gt;</span>
-</span><span id="line-2">    <span class="nt">&lt;groupId&gt;</span>co.paralleluniverse<span class="nt">&lt;/groupId&gt;</span>
-</span><span id="line-3">    <span class="nt">&lt;artifactId&gt;</span>ARTIFACT<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="line-4">    <span class="nt">&lt;version&gt;</span>0.4.0<span class="nt">&lt;/version&gt;</span>
-</span><span id="line-5"><span class="nt">&lt;/dependency&gt;</span>
-</span></code></pre></div>
-<p>The corresponding Gradle dependency is&nbsp;<code>co.paralleluniverse:ARTIFACT:0.4.0</code>.</p>
-
-<p><code>ARTIFACT</code> will be one&nbsp;of:</p>
-
-<ul>
-  <li><code>comsat-servlet</code> – Servlet integration for defining fiber-per-request&nbsp;servlets.</li>
-  <li><code>comsat-ring-jetty9</code> - A fiber-blocking Clojure <a href="https://github.com/ring-clojure/ring">Ring</a> adapter based on Jetty&nbsp;<span class="caps">9.2</span></li>
-  <li><code>comsat-httpkit</code> - <a href="http://www.http-kit.org/client.html"><span class="caps">HTTP</span> Kit</a>-based fiber-blocking <span class="caps">HTTP</span>&nbsp;client.</li>
-  <li><code>comsat-jersey-server</code> – <a href="https://jersey.java.net/">Jersey server</a> integration for defining <span class="caps">REST</span>&nbsp;services.</li>
-  <li><code>comsat-dropwizard</code> – <a href="http://dropwizard.io/">Dropwizard</a> integration including Jersey, ApacheHttpClient and&nbsp;<span class="caps">JDBI.</span></li>
-  <li><code>comsat-spring-webmvc</code> – <a href="http://projects.spring.io/spring-framework/">Spring Framework</a> Web <span class="caps">MVC</span> fiber-blocking controller methods&nbsp;integration.</li>
-  <li><code>comsat-spring-security</code> – <a href="http://projects.spring.io/spring-security/">Spring Security</a> configuration support for&nbsp;fibers.</li>
-  <li><code>comsat-spring-boot</code> – <a href="http://projects.spring.io/spring-boot/">Spring Boot</a> auto-configuration support for Web <span class="caps">MVC</span>&nbsp;controllers.</li>
-  <li><code>comsat-spring-boot-security</code> – auto-configuration support with security for Web <span class="caps">MVC</span>&nbsp;controllers.</li>
-  <li><code>comsat-jax-rs-client</code> – <a href="https://jersey.java.net/documentation/latest/client.html"><span class="caps">JAX</span>-<span class="caps">RS</span> client</a> integration for calling <span class="caps">HTTP</span>&nbsp;services.</li>
-  <li><code>comsat-httpclient</code> – <a href="http://hc.apache.org/httpcomponents-client-ga/">ApacheHttpClient</a> integration for calling <span class="caps">HTTP</span>&nbsp;services.</li>
-  <li><code>comsat-retrofit</code> – <a href="http://square.github.io/retrofit/">Retrofit</a>&nbsp;integration.</li>
-  <li><code>comsat-jdbi</code> – <a href="http://jdbi.org/"><span class="caps">JDBI</span></a> integration for using the <span class="caps">JDBI</span> <span class="caps">API</span> in&nbsp;fibers.</li>
-  <li><code>comsat-jdbc</code> – <span class="caps">JDBC</span> integration for using the <span class="caps">JDBC</span> <span class="caps">API</span> in&nbsp;fibers.</li>
-  <li><code>comsat-jooq</code> – <a href="http://www.jooq.org/">j<span class="caps">OOQ</span></a> integration for using the j<span class="caps">OOQ</span> <span class="caps">API</span> in&nbsp;fibers.</li>
-  <li><code>comsat-mongodb-allanbank</code> – Mongo<span class="caps">DB</span> integration for using the <a href="http://www.allanbank.com/mongodb-async-driver/index.html">allanbank&nbsp;<span class="caps">API</span></a></li>
-  <li><code>comsat-okhttp</code> – <a href="https://github.com/square/okhttp">OkHttp</a> <span class="caps">HTTP</span>+<span class="caps">SPDY</span> client&nbsp;integration.</li>
-  <li><code>comsat-actors-api</code> – The Web Actors&nbsp;<span class="caps">API</span></li>
-  <li><code>comsat-actors-undertow</code> – Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors as <a href="http://undertow.io/">Undertow</a>&nbsp;handlers</li>
-  <li><code>comsat-actors-netty</code> – Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors as <a href="http://netty.io/">Netty</a>&nbsp;handlers</li>
-  <li><code>comsat-actors-servlet</code> – Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors in <span class="caps">J2EE</span> 7 Servlet and WebSocket (<span class="caps">JSR</span>-356) embedded and standalone&nbsp;containers</li>
-  <li><code>comsat-tomcat-loader</code> – Enables using Comsat in a Tomcat container without the need of&nbsp;javaAgent</li>
-  <li><code>comsat-jetty-loader</code> – Enables using Comsat in a Jetty container without the need of&nbsp;javaAgent</li>
-</ul>
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Artifact</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Servlet integration for defining fiber-per-request servlets.</td>
+      <td><code>co.paralleluniverse:comsat-servlet:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td>A fiber-blocking Clojure <a href="https://github.com/ring-clojure/ring">Ring</a> adapter based on Jetty <span class="caps">9.3.</span></td>
+      <td><code>co.paralleluniverse:comsat-ring-jetty9:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://www.http-kit.org/client.html"><span class="caps">HTTP</span> Kit</a>-based fiber-blocking <span class="caps">HTTP</span> client.</td>
+      <td><code>co.paralleluniverse:comsat-httpkit:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://jersey.java.net/">Jersey server</a> integration for defining <span class="caps">REST</span> services.</td>
+      <td><code>co.paralleluniverse:comsat-jersey-server:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://dropwizard.io/">Dropwizard</a> integration including Jersey, ApacheHttpClient and <span class="caps">JDBI.</span></td>
+      <td><code>co.paralleluniverse:comsat-dropwizard:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://projects.spring.io/spring-framework/">Spring Framework</a> Web <span class="caps">MVC</span> fiber-blocking controller methods integration.</td>
+      <td><code>co.paralleluniverse:comsat-spring-webmvc:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://projects.spring.io/spring-boot/">Spring Boot</a> auto-configuration support for Web <span class="caps">MVC</span> controllers.</td>
+      <td><code>co.paralleluniverse:comsat-spring-boot:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://projects.spring.io/spring-security/">Spring Security</a> configuration support for fibers.</td>
+      <td><code>co.paralleluniverse:comsat-spring-security:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://jersey.java.net/documentation/latest/client.html"><span class="caps">JAX</span>-<span class="caps">RS</span> client</a> integration for <span class="caps">HTTP</span> calls with fibers.</td>
+      <td><code>co.paralleluniverse:comsat-jax-rs-client:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://hc.apache.org/httpcomponents-client-ga/">ApacheHttpClient</a> integration for <span class="caps">HTTP</span> calls with fibers.</td>
+      <td><code>co.paralleluniverse:comsat-httpclient:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://square.github.io/retrofit/">Retrofit</a> integration with fibers.</td>
+      <td><code>co.paralleluniverse:comsat-retrofit:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://jdbi.org/"><span class="caps">JDBI</span></a> integration with fibers.</td>
+      <td><code>co.paralleluniverse:comsat-jdbi:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><span class="caps">JDBC</span> integration with fibers.</td>
+      <td><code>co.paralleluniverse:comsat-jdbc:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://www.jooq.org/">j<span class="caps">OOQ</span></a> integration with fibers.</td>
+      <td><code>co.paralleluniverse:comsat-jooq:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td>Mongo<span class="caps">DB</span> fiber-blocking integration for the <a href="http://www.allanbank.com/mongodb-async-driver/index.html">Allanbank <span class="caps">API</span></a>.</td>
+      <td><code>co.paralleluniverse:comsat-mongodb-allanbank:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/square/okhttp">OkHttp</a> <span class="caps">HTTP</span>+<span class="caps">SPDY</span> client integration.</td>
+      <td><code>co.paralleluniverse:comsat-okhttp:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td>The Web Actors <span class="caps">API.</span></td>
+      <td><code>co.paralleluniverse:comsat-actors-api:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td>Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors as <a href="http://undertow.io/">Undertow</a> handlers.</td>
+      <td><code>co.paralleluniverse:comsat-actors-undertow:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td>Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors as <a href="http://netty.io/">Netty</a> handlers.</td>
+      <td><code>co.paralleluniverse:comsat-actors-netty:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td>Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors in <span class="caps">J2EE</span> 7 Servlet and WebSocket (<span class="caps">JSR</span>-356) embedded and standalone containers.</td>
+      <td><code>co.paralleluniverse:comsat-actors-servlet:0.5.0</code></td>
+    </tr>
+    <tr>
+      <td>Use Comsat in the Tomcat servlet container without java agent.</td>
+      <td><code>co.paralleluniverse:comsat-tomcat-loader:0.5.0[:jdk8]</code> (for <span class="caps">JDK</span> 8 optionally add the <code>jdk8</code> classifier)</td>
+    </tr>
+    <tr>
+      <td>Use Comsat in the Jetty servlet container without the java agent.</td>
+      <td><code>co.paralleluniverse:comsat-jetty-loader:0.5.0[:jdk8]</code> (for <span class="caps">JDK</span> 8 optionally add the <code>jdk8</code> classifier)</td>
+    </tr>
+    <tr>
+      <td><a href="http://projects.spring.io/spring-framework/">Spring Framework</a> Web integration allows using fiber-blocking controllers.</td>
+      <td><code>co.paralleluniverse:comsat-spring-web:0.5.0</code></td>
+    </tr>
+  </tbody>
+</table>
 
 <h2 id="examples">Examples</h2>
 
@@ -262,7 +329,7 @@
 
 <h4 id="in-tomcat">In&nbsp;Tomcat</h4>
 
-<p>If you’re using Tomcat as your embedded or standalone Servlet container, a custom class-loader is available for use instead of the Java Agent. You’ll need to put <code>comsat-tomcat-loader-0.4.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-tomcat-loader-0.4.0-jdk8.jar</code>) into Tomcat’s <code>common/lib</code>&nbsp;directory.</p>
+<p>If you’re using Tomcat as your embedded or standalone Servlet container, a custom class-loader is available for use instead of the Java Agent. You’ll need to put <code>comsat-tomcat-loader-0.5.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-tomcat-loader-0.5.0-jdk8.jar</code>) into Tomcat’s <code>common/lib</code>&nbsp;directory.</p>
 
 <p>Then, include the following in your webapp’s&nbsp;<code>META-INF/context.xml</code>:</p>
 
@@ -272,7 +339,7 @@
 
 <h4 id="in-jetty">In&nbsp;Jetty</h4>
 
-<p>If you’re using Jetty as your embedded Servlet container, you have the option to use a custom class-loader instead of the Java agent. You’ll need to put <code>comsat-jetty-loader-0.4.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-jetty-loader-0.4.0-jdk8.jar</code>) into Jetty’s <code>lib</code>&nbsp;directory.</p>
+<p>If you’re using Jetty as your embedded Servlet container, you have the option to use a custom class-loader instead of the Java agent. You’ll need to put <code>comsat-jetty-loader-0.5.0.jar</code> (or, for <span class="caps">JDK8</span>, <code>comsat-jetty-loader-0.5.0-jdk8.jar</code>) into Jetty’s <code>lib</code>&nbsp;directory.</p>
 
 <p>Then, include a <code>&lt;Set name="classLoader"&gt;</code> tag in your webapp’s context&nbsp;xml:</p>
 
@@ -389,7 +456,7 @@
 </span><span id="line-9">
 </span><span id="line-10"><span class="p">(</span><span class="kd">defn </span><span class="nv">run</span> <span class="p">[]</span> <span class="p">(</span><span class="nf">run-jetty</span> <span class="nv">hello-world</span> <span class="p">{</span><span class="ss">:port</span> <span class="mi">8080</span><span class="p">}))</span>
 </span></code></pre></div>
-<p>Just setup Pulsar as described in the <a href="http://docs.paralleluniverse.co/pulsar/#lein">docs</a>, remembering to add the <code>[co.paralleluniverse/comsat-ring-jetty9 "0.4.0"]</code> dependency, and change your <code>use</code> or <code>require</code> clauses&nbsp;slightly:</p>
+<p>Just setup Pulsar as described in the <a href="http://docs.paralleluniverse.co/pulsar/#lein">docs</a>, remembering to add the <code>[co.paralleluniverse/comsat-ring-jetty9 "0.5.0"]</code> dependency, and change your <code>use</code> or <code>require</code> clauses&nbsp;slightly:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="p">(</span><span class="kd">ns </span><span class="nv">myapp.core</span>
 </span><span id="line-2">  <span class="p">(</span><span class="ss">:use</span> <span class="nv">co.paralleluniverse.fiber.ring.jetty9</span><span class="p">)</span>
@@ -547,7 +614,7 @@ For&nbsp;example:</p>
 
 <p>Servlets often make use of <span class="caps">JDBC</span> data sources exposed through <span class="caps">JNDI.</span> If you do that, you can declare a <span class="caps">COMSAT</span> (i.e. a fiber-aware) <span class="caps">JDBC</span> data source through <span class="caps">JNDI</span> that will wrap your native data source. To do so, use the <code>co.paralleluniverse.fibers.jdbc.FiberDataSourceFactory</code> DataSource factory, and pass in the number of threads you’d like <span class="caps">COMSAT</span> to use in the <span class="caps">JDBC</span> worker&nbsp;pool.</p>
 
-<p>In order to do that first you have to include <code>comsat-jdbc-0.4.0.jar</code> in your container’s runtime classpath, by putting it into the container’s <code>lib</code>&nbsp;directory.</p>
+<p>In order to do that first you have to include <code>comsat-jdbc-0.5.0.jar</code> in your container’s runtime classpath, by putting it into the container’s <code>lib</code>&nbsp;directory.</p>
 
 <p>If you’re using <code>TOMCAT</code>, the following example is a snippet of <code>META-INF/context.xml</code> that will declare a DataSource under the <code>jdbc/fiberdb</code> name, which wraps a native <span class="caps">DB</span> declared under the <code>jdbc/globalds</code>&nbsp;name:</p>
 
