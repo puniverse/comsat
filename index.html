@@ -85,6 +85,7 @@
 <li class="li1">
 <a href="#overview">Overview</a><ul><li>
 <a href="#news" class="cat-link">News</a><ul>
+<li><a href="#tbbd">TBBD</a></li>
 <li><a href="#july-1-2015">July 1, 2015</a></li>
 <li><a href="#december-23-2014">December 23, 2014</a></li>
 <li><a href="#july-23-2014">July 23, 2014</a></li>
@@ -122,7 +123,9 @@
 </li>
 <li>
 <a href="#web-actors" class="cat-link">Web Actors</a><ul>
-<li><a href="#deployment">Deployment</a></li>
+<li><a href="#undertow-deployment">Undertow deployment</a></li>
+<li><a href="#netty-deployment">Netty deployment</a></li>
+<li><a href="#servlet-deployment">Servlet deployment</a></li>
 <li><a href="#basic-operation">Basic Operation</a></li>
 <li><a href="#http-rest-services">HTTP (REST Services)</a></li>
 <li><a href="#sse">SSE</a></li>
@@ -145,6 +148,10 @@
 <p>Comsat does provide one new <span class="caps">API</span> that you may choose to use: Web Actors. Web actors let you define a Quasar actor that receives and responds to <span class="caps">HTTP</span> requests and web socket messages. The Web Actors <span class="caps">API</span> is rather minimal, and is intended to do one job and do it well: simplify two-way communication between your server and the&nbsp;client.</p>
 
 <h2 id="news">News</h2>
+
+<h3 id="tbbd"><span class="caps">TBBD</span></h3>
+
+<p><span class="caps">COMSAT</span> <a href="https://github.com/puniverse/comsat/releases/tag/v0.5.0"><span class="caps">0.5.0</span></a> has been&nbsp;released.</p>
 
 <h3 id="july-1-2015">July 1,&nbsp;2015</h3>
 
@@ -219,10 +226,12 @@
   <li><code>comsat-jooq</code> – <a href="http://www.jooq.org/">j<span class="caps">OOQ</span></a> integration for using the j<span class="caps">OOQ</span> <span class="caps">API</span> in&nbsp;fibers.</li>
   <li><code>comsat-mongodb-allanbank</code> – Mongo<span class="caps">DB</span> integration for using the <a href="http://www.allanbank.com/mongodb-async-driver/index.html">allanbank&nbsp;<span class="caps">API</span></a></li>
   <li><code>comsat-okhttp</code> – <a href="https://github.com/square/okhttp">OkHttp</a> <span class="caps">HTTP</span>+<span class="caps">SPDY</span> client&nbsp;integration.</li>
-  <li><code>comsat-actors-api</code> – the Web Actors&nbsp;<span class="caps">API</span></li>
-  <li><code>comsat-actors-servlet</code> – Enables <span class="caps">HTTP</span> and WebSocket (<span class="caps">JSR</span>-356) usage through Web Actors&nbsp;<span class="caps">API</span></li>
-  <li><code>comsat-tomcat-loader</code> – Enables using Comsat in Tomcat container without the need of&nbsp;javaAgent</li>
-  <li><code>comsat-jetty-loader</code> – Enables using Comsat in Jetty container without the need of&nbsp;javaAgent</li>
+  <li><code>comsat-actors-api</code> – The Web Actors&nbsp;<span class="caps">API</span></li>
+  <li><code>comsat-actors-undertow</code> – Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors as <a href="http://undertow.io/">Undertow</a>&nbsp;handlers</li>
+  <li><code>comsat-actors-netty</code> – Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors as <a href="http://netty.io/">Netty</a>&nbsp;handlers</li>
+  <li><code>comsat-actors-servlet</code> – Deploy <span class="caps">HTTP</span>, <span class="caps">SSE</span> and WebSocket Web Actors in <span class="caps">J2EE</span> 7 Servlet and WebSocket (<span class="caps">JSR</span>-356) embedded and standalone&nbsp;containers</li>
+  <li><code>comsat-tomcat-loader</code> – Enables using Comsat in a Tomcat container without the need of&nbsp;javaAgent</li>
+  <li><code>comsat-jetty-loader</code> – Enables using Comsat in a Jetty container without the need of&nbsp;javaAgent</li>
 </ul>
 
 <h2 id="examples">Examples</h2>
@@ -781,13 +790,135 @@ For&nbsp;example:</p>
 </span></code></pre></div>
 <h2 id="web-actors">Web&nbsp;Actors</h2>
 
-<p>Web Actors are <a href="http://puniverse.github.io/quasar/manual/actors.html">Quasar actors</a> that receive and respond to messages from web clients. Web actors support <span class="caps">HTTP</span>, WebSocket and <span class="caps">SSE</span> (Server-Sent Events) messages, and are a convenient, efficient, and natural method for implementing the backend for interactive web&nbsp;applications.</p>
+<p>Web Actors are <a href="http://puniverse.github.io/quasar/manual/actors.html">Quasar actors</a> that receive and respond to messages from web clients. Web actors support <span class="caps">HTTP</span>, WebSocket and <span class="caps">SSE</span> (Server-Sent Events) messages and are a convenient, efficient, and natural method to implement backends for interactive web&nbsp;applications.</p>
 
-<h3 id="deployment">Deployment</h3>
+<p>Web Actors are deployed on a web server. Currently they can be deployed in any Java<span class="caps">EE</span> 7 servlet container, as an <a href="http://underscore.io/">Underscore</a> handler and as a <a href="http://netty.io/">Netty</a>&nbsp;handler.</p>
 
-<p>WebActors are implemented on top of a web server. Currently, they can be deployed be deployed in any Java<span class="caps">EE</span> 7 servlet container, but we are working on supporting deploying them on top of <a href="http://netty.io/">Netty</a> and <a href="http://undertow.io/">Undertow</a>.</p>
+<h3 id="undertow-deployment">Undertow&nbsp;deployment</h3>
 
-<p>A web actor is attached to a web session. It can be spawned and attached manually (say, after the user logs in and the session is authenticated). The manual attachment <span class="caps">API</span> unfortunately is container dependent. A web actor can also be spawned and attached automatically by letting <span class="caps">COMSAT</span> spawn and attach a web actor to every newly created session and this method will be described below. Because a web actor consumes very few resources, spawning them automatically is sufficient in all but the most extreme&nbsp;circumstances.</p>
+<p>Deploying web actors on top of Underscore is as easy as using one of two Underscore handlers: either <code>AutoWebActorHandler</code> or&nbsp;<code>WebActorHandler</code>.</p>
+
+<p><code>AutoWebActorHandler</code> will automatically scan the classpath for classes with the <code>@WebActor</code> annotation upon first use and will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there’s no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be&nbsp;provided.</p>
+
+<p>Here’s an example server setup using <code>AutoWebActorHandler</code> without construction arguments (have a look at <code>comsat-actors-undertow</code>’s tests for more&nbsp;insight):</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="n">server</span> <span class="o">=</span> <span class="n">Undertow</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+</span><span id="line-2">        <span class="o">.</span><span class="na">addHttpListener</span><span class="o">(</span><span class="n">INET_PORT</span><span class="o">,</span> <span class="s">&quot;localhost&quot;</span><span class="o">)</span>
+</span><span id="line-3">        <span class="o">.</span><span class="na">setHandler</span><span class="o">(</span><span class="k">new</span> <span class="nf">AutoWebActorHandler</span><span class="o">().</span><span class="na">build</span><span class="o">();</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="n">server</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span></code></pre></div>
+<p>The way individual web actor references are assigned to individual <span class="caps">HTTP</span> exchanges is represented by the <code>WebActorHandler.Context</code> interface, which provides both the web actor reference and its implementation class in order to match incoming requests’ URLs against its <code>@WebActor</code>&nbsp;annotation.</p>
+
+<p><code>WebActorHandler</code> delegates session lookup (or creation) to a developer-supplied <code>ContextProvider</code> which is the only required constructor argument; here’s an example server setup using <code>WebActorHandler</code> and delegating all exchanges to a single actor (have a look at <code>comsat-actors-undertow</code>’s’ tests for further&nbsp;insight):</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="kd">final</span> <span class="n">Actor</span> <span class="n">actor</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">MyWebActor</span><span class="o">();</span>
+</span><span id="line-2"><span class="kd">final</span> <span class="n">MActorRef</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">WebMessage</span><span class="o">&gt;</span> <span class="n">actorRef</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="na">spawn</span><span class="o">();</span>
+</span><span id="line-3"><span class="c1">// ...</span>
+</span><span id="line-4"><span class="n">server</span> <span class="o">=</span> <span class="n">Undertow</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+</span><span id="line-5">    <span class="o">.</span><span class="na">addHttpListener</span><span class="o">(</span><span class="mi">8080</span><span class="o">,</span> <span class="s">&quot;localhost&quot;</span><span class="o">)</span>
+</span><span id="line-6">    <span class="o">.</span><span class="na">setHandler</span><span class="o">(</span><span class="k">new</span> <span class="nf">WebActorHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">WebActorHandler</span><span class="o">.</span><span class="na">ContextProvider</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-7">        <span class="nd">@Override</span>
+</span><span id="line-8">        <span class="kd">public</span> <span class="n">WebActorHandler</span><span class="o">.</span><span class="na">ActorContext</span> <span class="nf">get</span><span class="o">(</span><span class="n">HttpServerExchange</span> <span class="n">xch</span><span class="o">)</span> <span class="o">{</span>
+</span><span id="line-9">            <span class="k">return</span> <span class="k">new</span> <span class="n">WebActorHandler</span><span class="o">.</span><span class="na">DefaultContextImpl</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-10">                <span class="nd">@Override</span>
+</span><span id="line-11">                <span class="kd">public</span> <span class="n">ActorRef</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">WebMessage</span><span class="o">&gt;</span> <span class="nf">getRef</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-12">                    <span class="k">return</span> <span class="n">actorRef</span><span class="o">;</span>
+</span><span id="line-13">                <span class="o">}</span>
+</span><span id="line-14">
+</span><span id="line-15">                <span class="nd">@Override</span>
+</span><span id="line-16">                <span class="kd">public</span> <span class="n">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">ActorImpl</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">WebMessage</span><span class="o">&gt;&gt;</span> <span class="nf">getWebActorClass</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-17">                    <span class="k">return</span> <span class="n">MyWebActor</span><span class="o">.</span><span class="na">class</span><span class="o">;</span>
+</span><span id="line-18">                <span class="o">}</span>
+</span><span id="line-19">            <span class="o">};</span>
+</span><span id="line-20">        <span class="o">}</span>
+</span><span id="line-21">    <span class="o">})).</span><span class="na">build</span><span class="o">();</span>
+</span><span id="line-22">
+</span><span id="line-23"><span class="n">server</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span></code></pre></div>
+<p><code>WebActorHandler</code> needs Undertow’s in-memory session handler only for <span class="caps">SSE</span> exchanges; by default session management is enabled for all exchanges but it can be disabled in non-<span class="caps">SSE</span> cases by setting the <code>co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.HttpChannelAdapter.trackSessionOnlyForSSE</code> system property to&nbsp;<code>true</code>.</p>
+
+<p>The actor context duration for the default implementation is 10 seconds but it can be configured through the <code>co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis</code> system&nbsp;property.</p>
+
+<h3 id="netty-deployment">Netty&nbsp;deployment</h3>
+
+<p>Deploying web actors on top of Netty is as easy as inserting one of two Netty handlers in your pipeline: either <code>AutoWebActorHandler</code> or&nbsp;<code>WebActorHandler</code>.</p>
+
+<p><code>AutoWebActorHandler</code> will automatically scan the classpath for classes with the <code>@WebActor</code> annotation upon first use and  will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there’s no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be passed&nbsp;in.</p>
+
+<p>The only other requirement is that your channel pipeline contains separate <code>HttpRequestDecoder</code> and <code>HttpResponseEncoder</code> instances rather than a single <code>HttpServerCodec</code> because the <code>HttpResponseEncoder</code> needs to be dynamically removed when an <span class="caps">SSE</span> exchange starts. If you prefer, as an alternative you can pass the name of your installed <code>HttpResponseEncoder</code> in <code>AutoWebActorHandler</code>’s&nbsp;constructor.</p>
+
+<p>Here’s an example server setup using <code>AutoWebActorHandler</code> without construction arguments (have a look at <code>comsat-actors-netty</code>’s tests for further&nbsp;insight):</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="kd">final</span> <span class="n">NioEventLoopGroup</span> <span class="n">bossGroup</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">NioEventLoopGroup</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span id="line-2"><span class="kd">final</span> <span class="n">NioEventLoopGroup</span> <span class="n">workerGroup</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">NioEventLoopGroup</span><span class="o">();</span>
+</span><span id="line-3"><span class="kd">final</span> <span class="n">ServerBootstrap</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">ServerBootstrap</span><span class="o">();</span>
+</span><span id="line-4"><span class="n">b</span><span class="o">.</span><span class="na">group</span><span class="o">(</span><span class="n">bossGroup</span><span class="o">,</span> <span class="n">workerGroup</span><span class="o">)</span>
+</span><span id="line-5">    <span class="o">.</span><span class="na">channel</span><span class="o">(</span><span class="n">NioServerSocketChannel</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span id="line-6">    <span class="o">.</span><span class="na">handler</span><span class="o">(</span><span class="k">new</span> <span class="nf">LoggingHandler</span><span class="o">(</span><span class="n">LogLevel</span><span class="o">.</span><span class="na">INFO</span><span class="o">))</span>
+</span><span id="line-7">    <span class="o">.</span><span class="na">childHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">ChannelInitializer</span><span class="o">&lt;</span><span class="n">SocketChannel</span><span class="o">&gt;()</span> <span class="o">{</span>
+</span><span id="line-8">        <span class="nd">@Override</span>
+</span><span id="line-9">        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initChannel</span><span class="o">(</span><span class="n">SocketChannel</span> <span class="n">ch</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span id="line-10">            <span class="n">ChannelPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">ch</span><span class="o">.</span><span class="na">pipeline</span><span class="o">();</span>
+</span><span id="line-11">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">HttpRequestDecoder</span><span class="o">());</span>
+</span><span id="line-12">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">HttpResponseEncoder</span><span class="o">());</span>
+</span><span id="line-13">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">HttpObjectAggregator</span><span class="o">(</span><span class="mi">65536</span><span class="o">));</span>
+</span><span id="line-14">
+</span><span id="line-15">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">AutoWebActorHandler</span><span class="o">());</span>
+</span><span id="line-16">        <span class="o">}</span>
+</span><span id="line-17">    <span class="o">});</span>
+</span><span id="line-18">
+</span><span id="line-19"><span class="kd">final</span> <span class="n">ChannelFuture</span> <span class="n">ch</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="n">INET_PORT</span><span class="o">).</span><span class="na">sync</span><span class="o">();</span>
+</span></code></pre></div>
+<p>The way individual web actor references are assigned to individual <span class="caps">HTTP</span> exchanges is represented by the <code>WebActorHandler.Context</code> interface, which provides both the web actor reference and its implementation class in order to match incoming requests’ URLs against its <code>@WebActor</code>&nbsp;annotation.</p>
+
+<p><code>WebActorHandler</code> delegates context lookup (or creation) to a developer-supplied <code>ContextProvider</code> which is is the only required constructor argument; here’s an example server setup using <code>WebActorHandler</code> and delegating all exchanges to a single actor (have a look at <code>comsat-actors-netty</code>’s’ tests for further&nbsp;insight):</p>
+
+<div class="highlight"><pre><code><span id="line-1"><span class="kd">final</span> <span class="n">MyWebActor</span> <span class="n">actor</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">MyWebActor</span><span class="o">();</span>
+</span><span id="line-2"><span class="kd">final</span> <span class="n">MActorRef</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">WebMessage</span><span class="o">&gt;</span> <span class="n">actorRef</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="na">spawn</span><span class="o">();</span>
+</span><span id="line-3"><span class="c1">// ...</span>
+</span><span id="line-4"><span class="kd">final</span> <span class="n">NioEventLoopGroup</span> <span class="n">bossGroup</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">NioEventLoopGroup</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span id="line-5"><span class="kd">final</span> <span class="n">NioEventLoopGroup</span> <span class="n">workerGroup</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">NioEventLoopGroup</span><span class="o">();</span>
+</span><span id="line-6"><span class="kd">final</span> <span class="n">ServerBootstrap</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">ServerBootstrap</span><span class="o">();</span>
+</span><span id="line-7"><span class="n">b</span><span class="o">.</span><span class="na">group</span><span class="o">(</span><span class="n">bossGroup</span><span class="o">,</span> <span class="n">workerGroup</span><span class="o">)</span>
+</span><span id="line-8">    <span class="o">.</span><span class="na">channel</span><span class="o">(</span><span class="n">NioServerSocketChannel</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span id="line-9">    <span class="o">.</span><span class="na">handler</span><span class="o">(</span><span class="k">new</span> <span class="nf">LoggingHandler</span><span class="o">(</span><span class="n">LogLevel</span><span class="o">.</span><span class="na">INFO</span><span class="o">))</span>
+</span><span id="line-10">    <span class="o">.</span><span class="na">childHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">ChannelInitializer</span><span class="o">&lt;</span><span class="n">SocketChannel</span><span class="o">&gt;()</span> <span class="o">{</span>
+</span><span id="line-11">        <span class="nd">@Override</span>
+</span><span id="line-12">        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initChannel</span><span class="o">(</span><span class="n">SocketChannel</span> <span class="n">ch</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span id="line-13">            <span class="n">ChannelPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">ch</span><span class="o">.</span><span class="na">pipeline</span><span class="o">();</span>
+</span><span id="line-14">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">HttpRequestDecoder</span><span class="o">());</span>
+</span><span id="line-15">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">HttpResponseEncoder</span><span class="o">());</span>
+</span><span id="line-16">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">HttpObjectAggregator</span><span class="o">(</span><span class="mi">65536</span><span class="o">));</span>
+</span><span id="line-17">
+</span><span id="line-18">            <span class="n">pipeline</span><span class="o">.</span><span class="na">addLast</span><span class="o">(</span><span class="k">new</span> <span class="nf">WebActorHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">WebActorHandler</span><span class="o">.</span><span class="na">ActorContextProvider</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-19">                <span class="nd">@Override</span>
+</span><span id="line-20">                <span class="kd">public</span> <span class="n">WebActorHandler</span><span class="o">.</span><span class="na">ActorContext</span> <span class="nf">get</span><span class="o">(</span><span class="n">ChannelHandlerContext</span> <span class="n">ctx</span><span class="o">,</span> <span class="n">FullHttpRequest</span> <span class="n">req</span><span class="o">)</span> <span class="o">{</span>
+</span><span id="line-21">                    <span class="k">return</span> <span class="k">new</span> <span class="n">WebActorHandler</span><span class="o">.</span><span class="na">DefaultActorContextImpl</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-22">                        <span class="nd">@Override</span>
+</span><span id="line-23">                        <span class="kd">public</span> <span class="n">ActorRef</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">WebMessage</span><span class="o">&gt;</span> <span class="nf">getRef</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-24">                            <span class="k">return</span> <span class="n">actorRef</span><span class="o">;</span>
+</span><span id="line-25">                        <span class="o">}</span>
+</span><span id="line-26">                    
+</span><span id="line-27">                        <span class="nd">@Override</span>
+</span><span id="line-28">                        <span class="kd">public</span> <span class="n">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">ActorImpl</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">WebMessage</span><span class="o">&gt;&gt;</span> <span class="nf">getWebActorClass</span><span class="o">()</span> <span class="o">{</span>
+</span><span id="line-29">                            <span class="k">return</span> <span class="n">MyWebActor</span><span class="o">.</span><span class="na">class</span><span class="o">;</span>
+</span><span id="line-30">                        <span class="o">}</span>
+</span><span id="line-31">                    <span class="o">};</span>
+</span><span id="line-32">                <span class="o">}</span>
+</span><span id="line-33">            <span class="o">}));</span>
+</span><span id="line-34">        <span class="o">}</span>
+</span><span id="line-35">    <span class="o">});</span>
+</span><span id="line-36">
+</span><span id="line-37"><span class="kd">final</span> <span class="n">ChannelFuture</span> <span class="n">ch</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="mi">8080</span><span class="o">).</span><span class="na">sync</span><span class="o">();</span>
+</span></code></pre></div>
+<p><code>WebActorHandler</code> needs cookie-based client session tracking only for <span class="caps">SSE</span> exchanges; by default it is enabled for all exchanges but it can be disabled in non-<span class="caps">SSE</span> cases through the <code>co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.trackSessionOnlyForSSE</code> system&nbsp;property.</p>
+
+<p>Session duration for the default implementation is 10 seconds but it can be configured through the <code>co.paralleluniverse.comsat.webactors.netty.WebActorHandler.DefaultContextImpl.durationMillis</code> system&nbsp;property.</p>
+
+<h3 id="servlet-deployment">Servlet&nbsp;deployment</h3>
+
+<p>A web actor is attached to a servlet web session. It can be spawned and attached manually (say, after the user logs in and the session is authenticated). The manual attachment <span class="caps">API</span> unfortunately is container dependent. A web actor can also be spawned and attached automatically by letting <span class="caps">COMSAT</span> spawn and attach a web actor to every newly created session and this method will be described below. Because a web actor consumes very few resources, spawning them automatically is sufficient in all but the most extreme&nbsp;circumstances.</p>
 
 <p>For automatic deployment, all you have to do is define an actor class (one that extends <code>BasicActor</code> or <code>Actor</code>), and annotate it with the <a href="/comsat/javadoc/co/paralleluniversecomsat/webactors/WebActor.html"><code>WebActor</code></a> annotation. For&nbsp;example:</p>
 

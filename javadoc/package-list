@@ -2,6 +2,7 @@ co.paralleluniverse.comsat.jetty
 co.paralleluniverse.comsat.tomcat
 co.paralleluniverse.comsat.webactors
 co.paralleluniverse.comsat.webactors.servlet
+co.paralleluniverse.comsat.webactors.undertow
 co.paralleluniverse.embedded.containers
 co.paralleluniverse.embedded.db
 co.paralleluniverse.examples.test
