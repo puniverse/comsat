@@ -22,7 +22,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.5.0-SNAPSHOT"
+    version             = "0.5.0"
     status              = "integration"
     description         = "Fibers services for web"
 
@@ -44,7 +44,7 @@ subprojects {
     ext.metricsVer      = '3.1.2'
     ext.asmVer          = '5.0.4'
 
-    ext.quasarVer       = '0.7.3-SNAPSHOT'
+    ext.quasarVer       = '0.7.3'
 
     ext.jettyVer        = '9.2.13.v20150730' // '9.3.0.v20150612' requires JDK8
     ext.tomcatVer       = '8.0.26'
