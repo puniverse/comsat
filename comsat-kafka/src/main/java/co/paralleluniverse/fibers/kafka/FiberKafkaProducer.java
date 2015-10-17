@@ -25,9 +25,9 @@ import java.util.concurrent.Future;
 
 public class FiberKafkaProducer<K, V> implements Producer<K, V> {
 
-    private final KafkaProducer<K, V> producer;
+    private final Producer<K, V> producer;
 
-    public FiberKafkaProducer(KafkaProducer<K, V> producer) {
+    public FiberKafkaProducer(Producer<K, V> producer) {
         this.producer = producer;
     }
 
