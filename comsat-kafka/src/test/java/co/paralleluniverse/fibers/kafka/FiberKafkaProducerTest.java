@@ -33,21 +33,23 @@ public class FiberKafkaProducerTest {
 
     @Before
     public void setUp() {
-        mockProducer = new MockProducer();
+        mockProducer = new MockProducer(false);
         fiberProducer = new FiberKafkaProducer<>(mockProducer);
     }
 
     @Test
     public void testSuccessfulSendWithoutCallback() throws ExecutionException, InterruptedException {
         Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+        Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+
+        mockProducer.completeNext();
         RecordMetadata recordMetadata = f.get();
 
         assertEquals("Topic", recordMetadata.topic());
         assertEquals(0, recordMetadata.offset());
         assertEquals(0, recordMetadata.partition());
 
-        Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(),
-                "Value".getBytes()));
+        mockProducer.completeNext();
         RecordMetadata recordMetadata2 = f2.get();
 
         assertEquals("Topic", recordMetadata2.topic());
@@ -66,6 +68,17 @@ public class FiberKafkaProducerTest {
 
             }
         });
+        final AtomicReference<RecordMetadata> callbackMetadata2 = new AtomicReference<>(null);
+        Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(),
+                "Value".getBytes()), new Callback() {
+            @Override
+            public void onCompletion(RecordMetadata metadata, Exception exception) {
+                callbackMetadata2.set(metadata);
+
+            }
+        });
+
+        mockProducer.completeNext();
         RecordMetadata recordMetadata = f.get();
 
         assertEquals("Topic", recordMetadata.topic());
@@ -76,15 +89,7 @@ public class FiberKafkaProducerTest {
         assertEquals(0, callbackMetadata.get().offset());
         assertEquals(0, callbackMetadata.get().partition());
 
-        final AtomicReference<RecordMetadata> callbackMetadata2 = new AtomicReference<>(null);
-        Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(),
-                "Value".getBytes()), new Callback() {
-            @Override
-            public void onCompletion(RecordMetadata metadata, Exception exception) {
-                callbackMetadata2.set(metadata);
-
-            }
-        });
+        mockProducer.completeNext();
         RecordMetadata recordMetadata2 = f2.get();
 
         assertEquals("Topic", recordMetadata2.topic());
@@ -94,5 +99,41 @@ public class FiberKafkaProducerTest {
         assertEquals("Topic", callbackMetadata2.get().topic());
         assertEquals(1, callbackMetadata2.get().offset());
         assertEquals(0, callbackMetadata2.get().partition());
+    }
+
+    @Test
+    public void testErrorSendWithoutCallback() throws ExecutionException, InterruptedException {
+        RuntimeException exception = new RuntimeException("Error");
+        Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+        mockProducer.errorNext(exception);
+
+        try {
+            f.get();
+        } catch (ExecutionException e) {
+            assertEquals(exception, e.getCause());
+        }
+    }
+
+    @Test
+    public void testErrorSendWithCallback() throws ExecutionException, InterruptedException {
+        RuntimeException exception = new RuntimeException("Error");
+        final AtomicReference<Exception> exceptionReference = new AtomicReference<>(null);
+
+        Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value"
+                .getBytes()), new Callback() {
+            @Override
+            public void onCompletion(RecordMetadata metadata, Exception exception) {
+                exceptionReference.set(exception);
+            }
+        });
+        mockProducer.errorNext(exception);
+
+        try {
+            f.get();
+        } catch (ExecutionException e) {
+            assertEquals(exception, e.getCause());
+        }
+
+        assertEquals(exception, exceptionReference.get());
     }
 }
