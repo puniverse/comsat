@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.kafka;
 
+import co.paralleluniverse.strands.SettableFuture;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
@@ -32,12 +33,14 @@ public class FiberKafkaProducer<K, V> implements Producer<K, V> {
 
     @Override
     public Future<RecordMetadata> send(ProducerRecord<K, V> record) {
-        return null;
+        return send(record, null);
     }
 
     @Override
     public Future<RecordMetadata> send(ProducerRecord<K, V> record, Callback callback) {
-        return null;
+        SettableFuture<RecordMetadata> future = new SettableFuture<>();
+        producer.send(record, new CallbackWrapper(future, callback));
+        return future;
     }
 
     @Override
@@ -53,5 +56,28 @@ public class FiberKafkaProducer<K, V> implements Producer<K, V> {
     @Override
     public void close() {
         producer.close();
+    }
+
+    private static class CallbackWrapper implements Callback {
+
+        private final SettableFuture<RecordMetadata> future;
+        private final Callback callback;
+
+        public CallbackWrapper(SettableFuture<RecordMetadata> future, Callback callback) {
+            this.future = future;
+            this.callback = callback;
+        }
+
+        @Override
+        public void onCompletion(RecordMetadata metadata, Exception exception) {
+            if (metadata != null) {
+                future.set(metadata);
+            } else {
+                future.setException(exception);
+            }
+            if (callback != null) {
+                callback.onCompletion(metadata, exception);
+            }
+        }
     }
 }
