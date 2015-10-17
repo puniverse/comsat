@@ -15,7 +15,6 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'idea'
 
     sourceCompatibility = '1.7'
     targetCompatibility = '1.7'
@@ -209,10 +208,6 @@ subprojects {
         main.compileClasspath = main.compileClasspath + configurations.provided
         test.compileClasspath = test.compileClasspath + configurations.provided
         test.runtimeClasspath = test.runtimeClasspath + configurations.provided
-    }
-
-    plugins.withType(IdeaPlugin) {
-        idea.module.scopes.PROVIDED.plus = [ configurations.provided ]
     }
 
     defaultTasks 'install'
@@ -440,7 +435,6 @@ project (':comsat-okhttp') {
 project (':comsat-kafka') {
     dependencies {
         compile "org.apache.kafka:kafka-clients:0.8.2.2"
-        testCompile project(':comsat-test-utils')
     }
 }
 
