@@ -13,9 +13,11 @@
  */
 package co.paralleluniverse.fibers.kafka;
 
-public class Client {
+import org.junit.Test;
 
-    public static boolean thing() {
-        return true;
+public class FiberKafkaProducerTest {
+
+    @Test
+    public void testThing() {
     }
 }
