@@ -33,22 +33,22 @@ public class FiberKafkaConsumer<K, V> implements Consumer<K, V> {
 
     @Override
     public void subscribe(String... topics) {
-
+        consumer.subscribe(topics);
     }
 
     @Override
     public void subscribe(TopicPartition... partitions) {
-
+        consumer.subscribe(partitions);
     }
 
     @Override
     public void unsubscribe(String... topics) {
-
+        consumer.subscribe(topics);
     }
 
     @Override
     public void unsubscribe(TopicPartition... partitions) {
-
+        consumer.unsubscribe(partitions);
     }
 
     @Override
@@ -68,22 +68,22 @@ public class FiberKafkaConsumer<K, V> implements Consumer<K, V> {
 
     @Override
     public void seek(Map<TopicPartition, Long> offsets) {
-
+        consumer.seek(offsets);
     }
 
     @Override
     public Map<TopicPartition, Long> position(Collection<TopicPartition> partitions) {
-        return null;
+        return consumer.position(partitions);
     }
 
     @Override
     public Map<TopicPartition, Long> committed(Collection<TopicPartition> partitions) {
-        return null;
+        return consumer.committed(partitions);
     }
 
     @Override
     public Map<TopicPartition, Long> offsetsBeforeTime(long timestamp, Collection<TopicPartition> partitions) {
-        return null;
+        return consumer.offsetsBeforeTime(timestamp, partitions);
     }
 
     @Override
