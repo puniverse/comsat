@@ -42,12 +42,12 @@ public class FiberKafkaProducer<K, V> implements Producer<K, V> {
 
     @Override
     public List<PartitionInfo> partitionsFor(String topic) {
-        return null;
+        return producer.partitionsFor(topic);
     }
 
     @Override
     public Map<MetricName, ? extends Metric> metrics() {
-        return null;
+        return producer.metrics();
     }
 
     @Override
