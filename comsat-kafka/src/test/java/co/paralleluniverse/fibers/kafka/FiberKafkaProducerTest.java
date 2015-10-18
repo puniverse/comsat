@@ -13,6 +13,9 @@
  */
 package co.paralleluniverse.fibers.kafka;
 
+import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.strands.SuspendableRunnable;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -22,9 +25,12 @@ import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class FiberKafkaProducerTest {
 
@@ -38,23 +44,31 @@ public class FiberKafkaProducerTest {
     }
 
     @Test
-    public void testSuccessfulSendWithoutCallback() throws ExecutionException, InterruptedException {
-        Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
-        Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+    public void testSuccessfulSendWithoutCallback() throws InterruptedException, TimeoutException, ExecutionException {
+        Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+                Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+                try {
+                    mockProducer.completeNext();
+                    RecordMetadata recordMetadata = f.get();
 
-        mockProducer.completeNext();
-        RecordMetadata recordMetadata = f.get();
+                    assertEquals("Topic", recordMetadata.topic());
+                    assertEquals(0, recordMetadata.offset());
+                    assertEquals(0, recordMetadata.partition());
 
-        assertEquals("Topic", recordMetadata.topic());
-        assertEquals(0, recordMetadata.offset());
-        assertEquals(0, recordMetadata.partition());
-
-        mockProducer.completeNext();
-        RecordMetadata recordMetadata2 = f2.get();
-
-        assertEquals("Topic", recordMetadata2.topic());
-        assertEquals(1, recordMetadata2.offset());
-        assertEquals(0, recordMetadata2.partition());
+                    mockProducer.completeNext();
+                    RecordMetadata recordMetadata2 = f2.get();
+                    assertEquals("Topic", recordMetadata2.topic());
+                    assertEquals(1, recordMetadata2.offset());
+                    assertEquals(0, recordMetadata2.partition());
+                } catch (ExecutionException e) {
+                    fail();
+                }
+            }
+        });
+        fiber.start().join(5000, TimeUnit.MILLISECONDS);
     }
 
     @Test
