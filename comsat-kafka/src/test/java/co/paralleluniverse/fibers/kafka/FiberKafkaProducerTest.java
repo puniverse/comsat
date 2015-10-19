@@ -23,10 +23,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
@@ -36,30 +33,33 @@ public class FiberKafkaProducerTest {
 
     private MockProducer mockProducer;
     private FiberKafkaProducer<byte[], byte[]> fiberProducer;
+    private CountDownLatch sendCompleteLatch;
 
     @Before
     public void setUp() {
         mockProducer = new MockProducer(false);
         fiberProducer = new FiberKafkaProducer<>(mockProducer);
+        sendCompleteLatch = new CountDownLatch(1);
     }
 
     @Test
     public void testSuccessfulSendWithoutCallback() throws InterruptedException, TimeoutException, ExecutionException {
+
         Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
                 Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+                sendCompleteLatch.countDown();
                 try {
-                    mockProducer.completeNext();
                     RecordMetadata recordMetadata = f.get();
 
                     assertEquals("Topic", recordMetadata.topic());
                     assertEquals(0, recordMetadata.offset());
                     assertEquals(0, recordMetadata.partition());
 
-                    mockProducer.completeNext();
                     RecordMetadata recordMetadata2 = f2.get();
+
                     assertEquals("Topic", recordMetadata2.topic());
                     assertEquals(1, recordMetadata2.offset());
                     assertEquals(0, recordMetadata2.partition());
@@ -68,86 +68,141 @@ public class FiberKafkaProducerTest {
                 }
             }
         });
-        fiber.start().join(5000, TimeUnit.MILLISECONDS);
+        fiber.start();
+
+        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
+        mockProducer.completeNext();
+        mockProducer.completeNext();
+
+        fiber.join(5000, TimeUnit.MILLISECONDS);
     }
 
     @Test
-    public void testSuccessfulSendWithCallback() throws ExecutionException, InterruptedException {
-        final AtomicReference<RecordMetadata> callbackMetadata = new AtomicReference<>(null);
-        Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value"
-                .getBytes()), new Callback() {
+    public void testSuccessfulSendWithCallback() throws ExecutionException, InterruptedException, TimeoutException {
+        Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
             @Override
-            public void onCompletion(RecordMetadata metadata, Exception exception) {
-                callbackMetadata.set(metadata);
+            public void run() throws SuspendExecution, InterruptedException {
+                final CountDownLatch callbackCompleteLatch = new CountDownLatch(2);
 
+                final AtomicReference<RecordMetadata> callbackMetadata = new AtomicReference<>(null);
+                final AtomicReference<RecordMetadata> callbackMetadata2 = new AtomicReference<>(null);
+
+                Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()),
+                        new Callback() {
+                            @Override
+                            public void onCompletion(RecordMetadata metadata, Exception exception) {
+                                callbackMetadata.set(metadata);
+                                callbackCompleteLatch.countDown();
+
+                            }
+                        });
+                Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()),
+                        new Callback() {
+                            @Override
+                            public void onCompletion(RecordMetadata metadata, Exception exception) {
+                                callbackMetadata2.set(metadata);
+                                callbackCompleteLatch.countDown();
+
+                            }
+                        });
+                sendCompleteLatch.countDown();
+                callbackCompleteLatch.await();
+
+                try {
+                    RecordMetadata recordMetadata = f.get();
+
+                    assertEquals("Topic", recordMetadata.topic());
+                    assertEquals(0, recordMetadata.offset());
+                    assertEquals(0, recordMetadata.partition());
+
+                    assertEquals("Topic", callbackMetadata.get().topic());
+                    assertEquals(0, callbackMetadata.get().offset());
+                    assertEquals(0, callbackMetadata.get().partition());
+
+                    RecordMetadata recordMetadata2 = f2.get();
+
+                    assertEquals("Topic", recordMetadata2.topic());
+                    assertEquals(1, recordMetadata2.offset());
+                    assertEquals(0, recordMetadata2.partition());
+
+                    assertEquals("Topic", callbackMetadata2.get().topic());
+                    assertEquals(1, callbackMetadata2.get().offset());
+                    assertEquals(0, callbackMetadata2.get().partition());
+                } catch (ExecutionException e) {
+                    fail();
+                }
             }
         });
-        final AtomicReference<RecordMetadata> callbackMetadata2 = new AtomicReference<>(null);
-        Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(),
-                "Value".getBytes()), new Callback() {
-            @Override
-            public void onCompletion(RecordMetadata metadata, Exception exception) {
-                callbackMetadata2.set(metadata);
+        fiber.start();
 
-            }
-        });
-
+        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
         mockProducer.completeNext();
-        RecordMetadata recordMetadata = f.get();
-
-        assertEquals("Topic", recordMetadata.topic());
-        assertEquals(0, recordMetadata.offset());
-        assertEquals(0, recordMetadata.partition());
-
-        assertEquals("Topic", callbackMetadata.get().topic());
-        assertEquals(0, callbackMetadata.get().offset());
-        assertEquals(0, callbackMetadata.get().partition());
-
         mockProducer.completeNext();
-        RecordMetadata recordMetadata2 = f2.get();
 
-        assertEquals("Topic", recordMetadata2.topic());
-        assertEquals(1, recordMetadata2.offset());
-        assertEquals(0, recordMetadata2.partition());
-
-        assertEquals("Topic", callbackMetadata2.get().topic());
-        assertEquals(1, callbackMetadata2.get().offset());
-        assertEquals(0, callbackMetadata2.get().partition());
+        fiber.join(5000, TimeUnit.MILLISECONDS);
     }
 
     @Test
-    public void testErrorSendWithoutCallback() throws ExecutionException, InterruptedException {
-        RuntimeException exception = new RuntimeException("Error");
-        Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+    public void testErrorSendWithoutCallback() throws ExecutionException, InterruptedException, TimeoutException {
+        final RuntimeException exception = new RuntimeException("Error");
+
+        Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
+                sendCompleteLatch.countDown();
+                try {
+                    f.get();
+                    fail("Send should have failed.");
+                } catch (ExecutionException e) {
+                    assertEquals(exception, e.getCause());
+                }
+            }
+        });
+        fiber.start();
+
+        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
         mockProducer.errorNext(exception);
 
-        try {
-            f.get();
-        } catch (ExecutionException e) {
-            assertEquals(exception, e.getCause());
-        }
+        fiber.join(5000, TimeUnit.MILLISECONDS);
     }
 
     @Test
-    public void testErrorSendWithCallback() throws ExecutionException, InterruptedException {
-        RuntimeException exception = new RuntimeException("Error");
+    public void testErrorSendWithCallback() throws ExecutionException, InterruptedException, TimeoutException {
+        final RuntimeException exception = new RuntimeException("Error");
         final AtomicReference<Exception> exceptionReference = new AtomicReference<>(null);
 
-        Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value"
-                .getBytes()), new Callback() {
+        Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
             @Override
-            public void onCompletion(RecordMetadata metadata, Exception exception) {
-                exceptionReference.set(exception);
+            public void run() throws SuspendExecution, InterruptedException {
+                final CountDownLatch callbackCompleteLatch = new CountDownLatch(1);
+
+                Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()),
+                        new Callback() {
+                            @Override
+                            public void onCompletion(RecordMetadata metadata, Exception exception) {
+                                exceptionReference.set(exception);
+                                callbackCompleteLatch.countDown();
+                            }
+                        });
+
+                sendCompleteLatch.countDown();
+                callbackCompleteLatch.await();
+                try {
+                    f.get();
+                    fail("Send should have failed.");
+                } catch (ExecutionException e) {
+                    assertEquals(exception, e.getCause());
+                }
+
+                assertEquals(exception, exceptionReference.get());
             }
         });
+        fiber.start();
+
+        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
         mockProducer.errorNext(exception);
 
-        try {
-            f.get();
-        } catch (ExecutionException e) {
-            assertEquals(exception, e.getCause());
-        }
-
-        assertEquals(exception, exceptionReference.get());
+        fiber.join(5000, TimeUnit.MILLISECONDS);
     }
 }
