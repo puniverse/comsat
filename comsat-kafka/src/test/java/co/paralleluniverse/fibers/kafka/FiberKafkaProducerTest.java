@@ -33,24 +33,25 @@ public class FiberKafkaProducerTest {
 
     private MockProducer mockProducer;
     private FiberKafkaProducer<byte[], byte[]> fiberProducer;
-    private CountDownLatch sendCompleteLatch;
+    private co.paralleluniverse.strands.concurrent.Phaser phaser;
 
     @Before
     public void setUp() {
         mockProducer = new MockProducer(false);
         fiberProducer = new FiberKafkaProducer<>(mockProducer);
-        sendCompleteLatch = new CountDownLatch(1);
+        phaser = new co.paralleluniverse.strands.concurrent.Phaser(1);
     }
 
     @Test
     public void testSuccessfulSendWithoutCallback() throws InterruptedException, TimeoutException, ExecutionException {
 
+        phaser.register();
         Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
                 Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
-                sendCompleteLatch.countDown();
+                phaser.arrive();
                 try {
                     RecordMetadata recordMetadata = f.get();
 
@@ -70,7 +71,7 @@ public class FiberKafkaProducerTest {
         });
         fiber.start();
 
-        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
+        phaser.arriveAndAwaitAdvance();
         mockProducer.completeNext();
         mockProducer.completeNext();
 
@@ -79,10 +80,10 @@ public class FiberKafkaProducerTest {
 
     @Test
     public void testSuccessfulSendWithCallback() throws ExecutionException, InterruptedException, TimeoutException {
+        phaser.register();
         Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
-                final CountDownLatch callbackCompleteLatch = new CountDownLatch(2);
 
                 final AtomicReference<RecordMetadata> callbackMetadata = new AtomicReference<>(null);
                 final AtomicReference<RecordMetadata> callbackMetadata2 = new AtomicReference<>(null);
@@ -92,8 +93,6 @@ public class FiberKafkaProducerTest {
                             @Override
                             public void onCompletion(RecordMetadata metadata, Exception exception) {
                                 callbackMetadata.set(metadata);
-                                callbackCompleteLatch.countDown();
-
                             }
                         });
                 Future<RecordMetadata> f2 = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()),
@@ -101,12 +100,10 @@ public class FiberKafkaProducerTest {
                             @Override
                             public void onCompletion(RecordMetadata metadata, Exception exception) {
                                 callbackMetadata2.set(metadata);
-                                callbackCompleteLatch.countDown();
-
                             }
                         });
-                sendCompleteLatch.countDown();
-                callbackCompleteLatch.await();
+                phaser.arriveAndAwaitAdvance();
+                phaser.arriveAndAwaitAdvance();
 
                 try {
                     RecordMetadata recordMetadata = f.get();
@@ -135,9 +132,10 @@ public class FiberKafkaProducerTest {
         });
         fiber.start();
 
-        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
+        phaser.arriveAndAwaitAdvance();
         mockProducer.completeNext();
         mockProducer.completeNext();
+        phaser.arrive();
 
         fiber.join(5000, TimeUnit.MILLISECONDS);
     }
@@ -146,11 +144,12 @@ public class FiberKafkaProducerTest {
     public void testErrorSendWithoutCallback() throws ExecutionException, InterruptedException, TimeoutException {
         final RuntimeException exception = new RuntimeException("Error");
 
+        phaser.register();
         Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 Future<RecordMetadata> f = fiberProducer.send(new ProducerRecord<>("Topic", "Key".getBytes(), "Value".getBytes()));
-                sendCompleteLatch.countDown();
+                phaser.arrive();
                 try {
                     f.get();
                     fail("Send should have failed.");
@@ -161,7 +160,7 @@ public class FiberKafkaProducerTest {
         });
         fiber.start();
 
-        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
+        phaser.arriveAndAwaitAdvance();
         mockProducer.errorNext(exception);
 
         fiber.join(5000, TimeUnit.MILLISECONDS);
@@ -172,6 +171,7 @@ public class FiberKafkaProducerTest {
         final RuntimeException exception = new RuntimeException("Error");
         final AtomicReference<Exception> exceptionReference = new AtomicReference<>(null);
 
+        phaser.register();
         Fiber<Void> fiber = new Fiber<>(new SuspendableRunnable() {
             @Override
             public void run() throws SuspendExecution, InterruptedException {
@@ -186,8 +186,9 @@ public class FiberKafkaProducerTest {
                             }
                         });
 
-                sendCompleteLatch.countDown();
-                callbackCompleteLatch.await();
+                phaser.arriveAndAwaitAdvance();
+                phaser.arriveAndAwaitAdvance();
+
                 try {
                     f.get();
                     fail("Send should have failed.");
@@ -200,8 +201,9 @@ public class FiberKafkaProducerTest {
         });
         fiber.start();
 
-        sendCompleteLatch.await(5000, TimeUnit.MILLISECONDS);
+        phaser.arriveAndAwaitAdvance();
         mockProducer.errorNext(exception);
+        phaser.arrive();
 
         fiber.join(5000, TimeUnit.MILLISECONDS);
     }
