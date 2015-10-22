@@ -214,7 +214,7 @@ subprojects {
 
     classes {
         doFirst{
-            println "Excuting scanSuspendables..."
+            println "Executing scanSuspendables..."
             ant.taskdef(
                 name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
                 classpath: "build/classes/main:build/resources/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
