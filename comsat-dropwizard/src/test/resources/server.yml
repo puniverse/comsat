@@ -16,12 +16,13 @@ httpClient:
 # snippet db
 database:
     driverClass: 
-        co.paralleluniverse.fibers.jdbc.FiberDriver
+        org.h2.Driver
     url:    
-        jdbc:fiber:h2:./build/h2testdb
+        jdbc:h2:./build/h2testdb
+# end of snippet
+
 # for mysql use url such as this
 #        jdbc:fiber:mysql://localhost:3306/testjdbi?zeroDateTimeBehavior=convertToNull
-# end of snippet
 
     properties:
         charSet: UTF-8
