@@ -771,17 +771,15 @@ For&nbsp;example:</p>
 </span><span id="line-2">    <span class="l-Scalar-Plain">maxConnectionsPerRoute</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">9999</span>
 </span><span id="line-3">    <span class="l-Scalar-Plain">maxConnections</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">9999</span>
 </span></code></pre></div>
-<p>You should also increase <code>maxConnections</code>. The <span class="caps">DB</span> configuration will look like&nbsp;this:</p>
+<p>You should also increase <code>maxConnections</code>. The <span class="caps">DB</span> configuration will won’t&nbsp;change:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="l-Scalar-Plain">database</span><span class="p-Indicator">:</span>
 </span><span id="line-2">    <span class="l-Scalar-Plain">driverClass</span><span class="p-Indicator">:</span> 
-</span><span id="line-3">        <span class="l-Scalar-Plain">co.paralleluniverse.fibers.jdbc.FiberDriver</span>
+</span><span id="line-3">        <span class="l-Scalar-Plain">org.h2.Driver</span>
 </span><span id="line-4">    <span class="l-Scalar-Plain">url</span><span class="p-Indicator">:</span>    
-</span><span id="line-5">        <span class="l-Scalar-Plain">jdbc:fiber:h2:./build/h2testdb</span>
-</span><span id="line-6"><span class="c1"># for mysql use url such as this</span>
-</span><span id="line-7"><span class="c1">#        jdbc:fiber:mysql://localhost:3306/testjdbi?zeroDateTimeBehavior=convertToNull</span>
+</span><span id="line-5">        <span class="l-Scalar-Plain">jdbc:h2:./build/h2testdb</span>
 </span></code></pre></div>
-<p>The <code>driverClass</code> will be <code>co.paralleluniverse.fibers.jdbc.FiberDriver</code>. The <code>url</code> will be your real datasource’s with the addition of the ‘fiber:’ prefix, and as usual you should include the <span class="caps">DB</span> driver in your runtime&nbsp;classpath.</p>
+<p>As usual you should include the <span class="caps">DB</span> driver in your runtime&nbsp;classpath.</p>
 
 <p>As for the&nbsp;code:</p>
 
