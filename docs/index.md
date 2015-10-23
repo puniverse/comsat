@@ -501,13 +501,13 @@ The number of concurrent threads needed for the `comsat-dropwizard` container wi
 {% include_snippet httpclient ./comsat-dropwizard/src/test/resources/server.yml %}
 ~~~
 
-You should also increase `maxConnections`. The DB configuration will won't change:
+You should also increase `maxConnections`.
+
+The DB configuration will be as usual (and, as usual, you should include the DB driver in your runtime classpath):
 
 ~~~ yaml
 {% include_snippet db ./comsat-dropwizard/src/test/resources/server.yml %}
 ~~~
-
-As usual you should include the DB driver in your runtime classpath.
 
 As for the code:
 
