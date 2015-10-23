@@ -771,7 +771,9 @@ For&nbsp;example:</p>
 </span><span id="line-2">    <span class="l-Scalar-Plain">maxConnectionsPerRoute</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">9999</span>
 </span><span id="line-3">    <span class="l-Scalar-Plain">maxConnections</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">9999</span>
 </span></code></pre></div>
-<p>You should also increase <code>maxConnections</code>. The <span class="caps">DB</span> configuration will won’t&nbsp;change:</p>
+<p>You should also increase&nbsp;<code>maxConnections</code>.</p>
+
+<p>The <span class="caps">DB</span> configuration will be as usual (and, as usual, you should include the <span class="caps">DB</span> driver in your runtime&nbsp;classpath):</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="l-Scalar-Plain">database</span><span class="p-Indicator">:</span>
 </span><span id="line-2">    <span class="l-Scalar-Plain">driverClass</span><span class="p-Indicator">:</span> 
@@ -779,8 +781,6 @@ For&nbsp;example:</p>
 </span><span id="line-4">    <span class="l-Scalar-Plain">url</span><span class="p-Indicator">:</span>    
 </span><span id="line-5">        <span class="l-Scalar-Plain">jdbc:h2:./build/h2testdb</span>
 </span></code></pre></div>
-<p>As usual you should include the <span class="caps">DB</span> driver in your runtime&nbsp;classpath.</p>
-
 <p>As for the&nbsp;code:</p>
 
 <div class="highlight"><pre><code><span id="line-1"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyDropwizardApp</span> <span class="kd">extends</span> <span class="n">FiberApplication</span><span class="o">&lt;</span><span class="n">MyConfig</span><span class="o">&gt;</span> <span class="o">{</span>
