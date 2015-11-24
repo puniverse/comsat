@@ -16,3 +16,5 @@ org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$
 org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher$1.run
 org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke
 org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory$1.invoke
+org.glassfish.jersey.servlet.WebComponent.service
+org.glassfish.jersey.servlet.WebComponent.serviceImpl
