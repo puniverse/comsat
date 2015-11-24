@@ -454,7 +454,7 @@ project (':comsat-retrofit') {
     }
 }
 
-project (':comsat-servlet') {
+project (':comsat-servlet') { // TODO Check seemingly harmless exceptions during tests
     dependencies {
         testCompile project(':comsat-test-utils')
     }

@@ -1,3 +1,4 @@
+// TODO Add full integration tests based on Cargo
 sourceSets {
     jdk7 {
         java {
