@@ -16,28 +16,14 @@
 
 package com.squareup.okhttp;
 
-import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
+import co.paralleluniverse.fibers.okhttp.test.utils.FiberOkHttpClientTestWrapper;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import co.paralleluniverse.fibers.okhttp.test.utils.original.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
-import okio.Buffer;
-import okio.BufferedSink;
-import okio.GzipSink;
-import okio.Okio;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,6 +49,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.GzipSink;
+import okio.Okio;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static org.junit.Assert.assertEquals;
@@ -81,23 +79,18 @@ public final class UrlConnectionCacheTest {
     }
   };
 
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
+  @Rule public MockWebServer server = new MockWebServer();
+  @Rule public MockWebServer server2 = new MockWebServer();
+  @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
-  @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
-  @Rule public MockWebServerRule serverRule = new MockWebServerRule();
-  @Rule public MockWebServerRule server2Rule = new MockWebServerRule();
-
-  private final OkUrlFactory client = new OkUrlFactory(new FiberOkHttpClient());
-  private MockWebServer server;
-  private MockWebServer server2;
+  private final SSLContext sslContext = SslContextBuilder.localhost();
+  private final OkUrlFactory client = new OkUrlFactory(new FiberOkHttpClientTestWrapper());
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
-    server = serverRule.get();
     server.setProtocolNegotiationEnabled(false);
-    server2 = server2Rule.get();
-    cache = new Cache(cacheRule.getRoot(), Integer.MAX_VALUE);
+    cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     client.client().setCache(cache);
     CookieHandler.setDefault(cookieManager);
   }
@@ -105,6 +98,7 @@ public final class UrlConnectionCacheTest {
   @After public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
     CookieHandler.setDefault(null);
+    cache.delete();
   }
 
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
@@ -1593,6 +1587,7 @@ public final class UrlConnectionCacheTest {
 
     HttpURLConnection connection = client.open(server.getUrl("/"));
     assertEquals("A", connection.getHeaderField(""));
+    assertEquals("body", readAscii(connection));
   }
 
   /**
@@ -1646,7 +1641,7 @@ public final class UrlConnectionCacheTest {
     writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE);
+    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
     client.client().setCache(cache);
 
     HttpURLConnection connection = client.open(url);
@@ -1656,7 +1651,7 @@ public final class UrlConnectionCacheTest {
   }
 
   private void writeFile(File directory, String file, String content) throws IOException {
-    BufferedSink sink = Okio.buffer(Okio.sink(new File(directory, file)));
+    BufferedSink sink = Okio.buffer(fileSystem.sink(new File(directory, file)));
     sink.writeUtf8(content);
     sink.close();
   }

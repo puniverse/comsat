@@ -1,32 +1,29 @@
 /*
- * COMSAT
- * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
- *
- * This program and the accompanying materials are dual-licensed under
- * either the terms of the Eclipse Public License v1.0 as published by
- * the Eclipse Foundation
- *
- *   or (per the licensee's choosing)
- *
- * under the terms of the GNU Lesser General Public License version 3.0
- * as published by the Free Software Foundation.
- */
-/*
- * Based on the corresponding class in okhttp-tests.
  * Copyright (C) 2011 The Android Open Source Project
- * Licensed under the Apache License, Version 2.0 (the "License").
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package com.squareup.okhttp;
 
-import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
-import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtil;
+import co.paralleluniverse.fibers.okhttp.test.utils.FiberOkHttpClientTestWrapper;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import co.paralleluniverse.fibers.okhttp.test.utils.original.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieHandler;
@@ -34,7 +31,6 @@ import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
-import java.net.URL;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
@@ -61,10 +57,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import java.util.concurrent.ExecutionException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -80,23 +74,18 @@ public final class CacheTest {
     }
   };
 
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
+  @Rule public MockWebServer server = new MockWebServer();
+  @Rule public MockWebServer server2 = new MockWebServer();
+  @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
-  @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
-  @Rule public MockWebServerRule serverRule = new MockWebServerRule();
-  @Rule public MockWebServerRule server2Rule = new MockWebServerRule();
-
-  private final FiberOkHttpClient client = new FiberOkHttpClient();
-  private MockWebServer server;
-  private MockWebServer server2;
+  private final SSLContext sslContext = SslContextBuilder.localhost();
+  private final OkHttpClient client = new FiberOkHttpClientTestWrapper();
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
-    server = serverRule.get();
     server.setProtocolNegotiationEnabled(false);
-    server2 = server2Rule.get();
-    cache = new Cache(cacheRule.getRoot(), Integer.MAX_VALUE);
+    cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     client.setCache(cache);
     CookieHandler.setDefault(cookieManager);
   }
@@ -104,6 +93,7 @@ public final class CacheTest {
   @After public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
     CookieHandler.setDefault(null);
+    cache.delete();
   }
 
   /**
@@ -184,9 +174,9 @@ public final class CacheTest {
     server.start();
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals(responseCode, response.code());
 
     // Exhaust the content stream.
@@ -202,15 +192,15 @@ public final class CacheTest {
     server.shutdown(); // tearDown() isn't sufficient; this test starts multiple servers
   }
 
-  @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException, InterruptedException, ExecutionException {
+  @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {
     testResponseCaching(TransferKind.FIXED_LENGTH);
   }
 
-  @Test public void responseCachingAndInputStreamSkipWithChunkedEncoding() throws IOException, InterruptedException, ExecutionException {
+  @Test public void responseCachingAndInputStreamSkipWithChunkedEncoding() throws IOException {
     testResponseCaching(TransferKind.CHUNKED);
   }
 
-  @Test public void responseCachingAndInputStreamSkipWithNoLengthHeaders() throws IOException, InterruptedException, ExecutionException {
+  @Test public void responseCachingAndInputStreamSkipWithNoLengthHeaders() throws IOException {
     testResponseCaching(TransferKind.END_OF_STREAM);
   }
 
@@ -218,7 +208,7 @@ public final class CacheTest {
    * Skipping bytes in the input stream caused ResponseCache corruption.
    * http://code.google.com/p/android/issues/detail?id=8175
    */
-  private void testResponseCaching(TransferKind transferKind) throws IOException, InterruptedException, ExecutionException {
+  private void testResponseCaching(TransferKind transferKind) throws IOException {
     MockResponse mockResponse = new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -227,8 +217,8 @@ public final class CacheTest {
     server.enqueue(mockResponse);
 
     // Make sure that calling skip() doesn't omit bytes from the cache.
-    Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Request request = new Request.Builder().url(server.url("/")).build();
+    Response response1 = client.newCall(request).execute();
 
     BufferedSource in1 = response1.body().source();
     assertEquals("I love ", in1.readUtf8("I love ".length()));
@@ -239,7 +229,7 @@ public final class CacheTest {
     assertEquals(1, cache.getWriteSuccessCount());
     assertEquals(0, cache.getWriteAbortCount());
 
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response2 = client.newCall(request).execute();
     BufferedSource in2 = response2.body().source();
     assertEquals("I love puppies but hate spiders",
         in2.readUtf8("I love puppies but hate spiders".length()));
@@ -254,7 +244,7 @@ public final class CacheTest {
     assertEquals(1, cache.getHitCount());
   }
 
-  @Test public void secureResponseCaching() throws IOException, InterruptedException, ExecutionException {
+  @Test public void secureResponseCaching() throws IOException {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -264,8 +254,8 @@ public final class CacheTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
-    Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Request request = new Request.Builder().url(server.url("/")).build();
+    Response response1 = client.newCall(request).execute();
     BufferedSource in = response1.body().source();
     assertEquals("ABC", in.readUtf8());
 
@@ -276,8 +266,8 @@ public final class CacheTest {
     Principal peerPrincipal = response1.handshake().peerPrincipal();
     Principal localPrincipal = response1.handshake().localPrincipal();
 
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request)); // Cached!
-    assertEquals("ABC", response2.body().source().readUtf8());
+    Response response2 = client.newCall(request).execute(); // Cached!
+    assertEquals("ABC", response2.body().string());
 
     assertEquals(2, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
@@ -303,11 +293,11 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("DEF"));
 
-    Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Request request = new Request.Builder().url(server.url("/")).build();
+    Response response1 = client.newCall(request).execute();
     assertEquals("ABC", response1.body().string());
 
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request)); // Cached!
+    Response response2 = client.newCall(request).execute(); // Cached!
     assertEquals("ABC", response2.body().string());
 
     assertEquals(4, cache.getRequestCount()); // 2 requests + 2 redirects
@@ -325,30 +315,30 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("DEF"));
 
-    Request request1 = new Request.Builder().url(server.getUrl("/foo")).build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
+    Request request1 = new Request.Builder().url(server.url("/foo")).build();
+    Response response1 = client.newCall(request1).execute();
     assertEquals("ABC", response1.body().string());
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", recordedRequest1.getRequestLine());
     assertEquals(0, recordedRequest1.getSequenceNumber());
 
-    Request request2 = new Request.Builder().url(server.getUrl("/bar")).build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
+    Request request2 = new Request.Builder().url(server.url("/bar")).build();
+    Response response2 = client.newCall(request2).execute();
     assertEquals("ABC", response2.body().string());
     RecordedRequest recordedRequest2 = server.takeRequest();
     assertEquals("GET /bar HTTP/1.1", recordedRequest2.getRequestLine());
     assertEquals(1, recordedRequest2.getSequenceNumber());
 
     // an unrelated request should reuse the pooled connection
-    Request request3 = new Request.Builder().url(server.getUrl("/baz")).build();
-    Response response3 = FiberOkHttpUtil.executeInFiber(client.newCall(request3));
+    Request request3 = new Request.Builder().url(server.url("/baz")).build();
+    Response response3 = client.newCall(request3).execute();
     assertEquals("DEF", response3.body().string());
     RecordedRequest recordedRequest3 = server.takeRequest();
     assertEquals("GET /baz HTTP/1.1", recordedRequest3.getRequestLine());
     assertEquals(2, recordedRequest3.getSequenceNumber());
   }
 
-  @Test public void secureResponseCachingAndRedirects() throws IOException, InterruptedException, ExecutionException {
+  @Test public void secureResponseCachingAndRedirects() throws IOException {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -365,12 +355,12 @@ public final class CacheTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
-    Response response1 = get(server.getUrl("/"));
+    Response response1 = get(server.url("/"));
     assertEquals("ABC", response1.body().string());
     assertNotNull(response1.handshake().cipherSuite());
 
     // Cached!
-    Response response2 = get(server.getUrl("/"));
+    Response response2 = get(server.url("/"));
     assertEquals("ABC", response2.body().string());
     assertNotNull(response2.handshake().cipherSuite());
 
@@ -387,7 +377,7 @@ public final class CacheTest {
    *
    * https://github.com/square/okhttp/issues/214
    */
-  @Test public void secureResponseCachingAndProtocolRedirects() throws IOException, InterruptedException, ExecutionException {
+  @Test public void secureResponseCachingAndProtocolRedirects() throws IOException {
     server2.useHttps(sslContext.getSocketFactory(), false);
     server2.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -400,16 +390,16 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
-        .addHeader("Location: " + server2.getUrl("/")));
+        .addHeader("Location: " + server2.url("/")));
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
-    Response response1 = get(server.getUrl("/"));
+    Response response1 = get(server.url("/"));
     assertEquals("ABC", response1.body().string());
 
     // Cached!
-    Response response2 = get(server.getUrl("/"));
+    Response response2 = get(server.url("/"));
     assertEquals("ABC", response2.body().string());
 
     assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
@@ -454,7 +444,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("c"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("a", get(url).body().string());
     assertEquals("a", get(url).body().string());
   }
@@ -468,16 +458,16 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("b"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("a", get(url).body().string());
     assertEquals("b", get(url).body().string());
   }
 
-  @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException, InterruptedException, ExecutionException {
+  @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
     testServerPrematureDisconnect(TransferKind.FIXED_LENGTH);
   }
 
-  @Test public void serverDisconnectsPrematurelyWithChunkedEncoding() throws IOException, InterruptedException, ExecutionException {
+  @Test public void serverDisconnectsPrematurelyWithChunkedEncoding() throws IOException {
     testServerPrematureDisconnect(TransferKind.CHUNKED);
   }
 
@@ -487,14 +477,14 @@ public final class CacheTest {
     // indicates the end of the data stream.
   }
 
-  private void testServerPrematureDisconnect(TransferKind transferKind) throws IOException, InterruptedException, ExecutionException {
+  private void testServerPrematureDisconnect(TransferKind transferKind) throws IOException {
     MockResponse mockResponse = new MockResponse();
     transferKind.setBody(mockResponse, "ABCDE\nFGHIJKLMNOPQRSTUVWXYZ", 16);
     server.enqueue(truncateViolently(mockResponse, 16));
     server.enqueue(new MockResponse()
         .setBody("Request #2"));
 
-    BufferedSource bodySource = get(server.getUrl("/")).body().source();
+    BufferedSource bodySource = get(server.url("/")).body().source();
     assertEquals("ABCDE", bodySource.readUtf8Line());
     try {
       bodySource.readUtf8Line();
@@ -506,25 +496,25 @@ public final class CacheTest {
 
     assertEquals(1, cache.getWriteAbortCount());
     assertEquals(0, cache.getWriteSuccessCount());
-    Response response = get(server.getUrl("/"));
+    Response response = get(server.url("/"));
     assertEquals("Request #2", response.body().string());
     assertEquals(1, cache.getWriteAbortCount());
     assertEquals(1, cache.getWriteSuccessCount());
   }
 
-  @Test public void clientPrematureDisconnectWithContentLengthHeader() throws IOException, InterruptedException, ExecutionException {
+  @Test public void clientPrematureDisconnectWithContentLengthHeader() throws IOException {
     testClientPrematureDisconnect(TransferKind.FIXED_LENGTH);
   }
 
-  @Test public void clientPrematureDisconnectWithChunkedEncoding() throws IOException, InterruptedException, ExecutionException {
+  @Test public void clientPrematureDisconnectWithChunkedEncoding() throws IOException {
     testClientPrematureDisconnect(TransferKind.CHUNKED);
   }
 
-  @Test public void clientPrematureDisconnectWithNoLengthHeaders() throws IOException, InterruptedException, ExecutionException {
+  @Test public void clientPrematureDisconnectWithNoLengthHeaders() throws IOException {
     testClientPrematureDisconnect(TransferKind.END_OF_STREAM);
   }
 
-  private void testClientPrematureDisconnect(TransferKind transferKind) throws IOException, InterruptedException, ExecutionException {
+  private void testClientPrematureDisconnect(TransferKind transferKind) throws IOException {
     // Setting a low transfer speed ensures that stream discarding will time out.
     MockResponse mockResponse = new MockResponse()
         .throttleBody(6, 1, TimeUnit.SECONDS);
@@ -533,7 +523,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("Request #2"));
 
-    Response response1 = get(server.getUrl("/"));
+    Response response1 = get(server.url("/"));
     BufferedSource in = response1.body().source();
     assertEquals("ABCDE", in.readUtf8(5));
     in.close();
@@ -545,7 +535,7 @@ public final class CacheTest {
 
     assertEquals(1, cache.getWriteAbortCount());
     assertEquals(0, cache.getWriteSuccessCount());
-    Response response2 = get(server.getUrl("/"));
+    Response response2 = get(server.url("/"));
     assertEquals("Request #2", response2.body().string());
     assertEquals(1, cache.getWriteAbortCount());
     assertEquals(1, cache.getWriteSuccessCount());
@@ -561,7 +551,7 @@ public final class CacheTest {
         .addHeader("Date: " + formatDate(-5, TimeUnit.SECONDS))
         .setBody("A"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Response response1 = get(url);
     assertEquals("A", response1.body().string());
 
@@ -592,8 +582,8 @@ public final class CacheTest {
         .addHeader("Date: " + formatDate(-5, TimeUnit.DAYS))
         .setBody("A"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    Response response = get(server.getUrl("/"));
+    assertEquals("A", get(server.url("/")).body().string());
+    Response response = get(server.url("/"));
     assertEquals("A", response.body().string());
     assertEquals("113 HttpURLConnection \"Heuristic expiration\"", response.header("Warning"));
   }
@@ -606,7 +596,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/?foo=bar");
+    HttpUrl url = server.url("/").newBuilder().addQueryParameter("foo", "bar").build();
     assertEquals("A", get(url).body().string());
     assertEquals("B", get(url).body().string());
   }
@@ -730,13 +720,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .addHeader("X-Response-ID: 2"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
 
     Request request = new Request.Builder()
         .url(url)
         .method(requestMethod, requestBodyOrNull(requestMethod))
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response1 = client.newCall(request).execute();
     response1.body().close();
     assertEquals("1", response1.header("X-Response-ID"));
 
@@ -779,7 +769,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("C"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
 
     assertEquals("A", get(url).body().string());
 
@@ -787,7 +777,7 @@ public final class CacheTest {
         .url(url)
         .method(requestMethod, requestBodyOrNull(requestMethod))
         .build();
-    Response invalidate = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response invalidate = client.newCall(request).execute();
     assertEquals("B", invalidate.body().string());
 
     assertEquals("C", get(url).body().string());
@@ -806,7 +796,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("C"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
 
     assertEquals("A", get(url).body().string());
 
@@ -814,7 +804,7 @@ public final class CacheTest {
         .url(url)
         .method("POST", requestBodyOrNull("POST"))
         .build();
-    Response invalidate = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response invalidate = client.newCall(request).execute();
     assertEquals("B", invalidate.body().string());
 
     assertEquals("C", get(url).body().string());
@@ -895,13 +885,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("BB"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
 
     Request request = new Request.Builder()
         .url(url)
         .header("Range", "bytes=1000-1001")
         .build();
-    Response range = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response range = client.newCall(request).execute();
     assertEquals("AA", range.body().string());
 
     assertEquals("BB", get(url).body().string());
@@ -916,7 +906,7 @@ public final class CacheTest {
         .setBody("B")
         .addHeader("Last-Modified: " + formatDate(-4, TimeUnit.HOURS)));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
 
     assertEquals("A", get(url).body().string());
     assertEquals("A", get(url).body().string());
@@ -931,16 +921,16 @@ public final class CacheTest {
         .setBody("B"));
 
     Request request1 = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .cacheControl(new CacheControl.Builder().noStore().build())
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
+    Response response1 = client.newCall(request1).execute();
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
+    Response response2 = client.newCall(request2).execute();
     assertEquals("B", response2.body().string());
   }
 
@@ -968,9 +958,9 @@ public final class CacheTest {
     // At least three request/response pairs are required because after the first request is cached
     // a different execution path might be taken. Thus modifications to the cache applied during
     // the second request might not be visible until another request is performed.
-    assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
-    assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
-    assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
   }
 
   @Test public void notModifiedSpecifiesEncoding() throws Exception {
@@ -985,9 +975,9 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("DEFDEFDEF"));
 
-    assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
-    assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
-    assertEquals("DEFDEFDEF", get(server.getUrl("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("DEFDEFDEF", get(server.url("/")).body().string());
   }
 
   /** https://github.com/square/okhttp/issues/947 */
@@ -1000,8 +990,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("FAIL"));
 
-    assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
-    assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
   }
 
   @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
@@ -1016,8 +1006,8 @@ public final class CacheTest {
     pool.evictAll();
     client.setConnectionPool(pool);
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     assertEquals(1, client.getConnectionPool().getConnectionCount());
   }
 
@@ -1027,7 +1017,7 @@ public final class CacheTest {
         .addHeader("Expires: " + formatDate(-2, TimeUnit.HOURS)));
   }
 
-  @Test public void requestMaxAge() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestMaxAge() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
@@ -1036,17 +1026,17 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "max-age=30")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("B", response.body().string());
   }
 
-  @Test public void requestMinFresh() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestMinFresh() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=60")
@@ -1054,17 +1044,17 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "min-fresh=120")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("B", response.body().string());
   }
 
-  @Test public void requestMaxStale() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestMaxStale() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=120")
@@ -1072,18 +1062,18 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "max-stale=180")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("A", response.body().string());
     assertEquals("110 HttpURLConnection \"Response is stale\"", response.header("Warning"));
   }
 
-  @Test public void requestMaxStaleDirectiveWithNoValue() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestMaxStaleDirectiveWithNoValue() throws IOException {
     // Add a stale response to the cache.
     server.enqueue(new MockResponse()
         .setBody("A")
@@ -1092,19 +1082,19 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
 
     // With max-stale, we'll return that stale response.
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "max-stale")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("A", response.body().string());
     assertEquals("110 HttpURLConnection \"Response is stale\"", response.header("Warning"));
   }
 
-  @Test public void requestMaxStaleNotHonoredWithMustRevalidate() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestMaxStaleNotHonoredWithMustRevalidate() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=120, must-revalidate")
@@ -1112,24 +1102,24 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "max-stale=180")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("B", response.body().string());
   }
 
-  @Test public void requestOnlyIfCachedWithNoResponseCached() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestOnlyIfCachedWithNoResponseCached() throws IOException {
     // (no responses enqueued)
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
     assertEquals(1, cache.getRequestCount());
@@ -1137,36 +1127,36 @@ public final class CacheTest {
     assertEquals(0, cache.getHitCount());
   }
 
-  @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("A", response.body().string());
     assertEquals(2, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
     assertEquals(1, cache.getHitCount());
   }
 
-  @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(-1, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
     assertEquals(2, cache.getRequestCount());
@@ -1174,16 +1164,16 @@ public final class CacheTest {
     assertEquals(0, cache.getHitCount());
   }
 
-  @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException, InterruptedException, ExecutionException {
+  @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
     assertEquals(2, cache.getRequestCount());
@@ -1200,13 +1190,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     Request request = new Request.Builder()
         .url(url)
         .header("Cache-Control", "no-cache")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("B", response.body().string());
   }
 
@@ -1219,13 +1209,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     Request request = new Request.Builder()
         .url(url)
         .header("Pragma", "no-cache")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("B", response.body().string());
   }
 
@@ -1257,14 +1247,14 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
 
     Request request = new Request.Builder()
         .url(url)
         .header(conditionName, conditionValue)
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, response.code());
     assertEquals("", response.body().string());
 
@@ -1293,8 +1283,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
 
     // The first request has no conditions.
     RecordedRequest request1 = server.takeRequest();
@@ -1310,10 +1300,10 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("If-Modified-Since", formatDate(-24, TimeUnit.HOURS))
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, response.code());
     assertEquals("", response.body().string());
   }
@@ -1325,12 +1315,12 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request request = new Request.Builder()
         .url(url)
         .header("Authorization", "password")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("A", response.body().string());
     assertEquals("A", get(url).body().string());
   }
@@ -1343,8 +1333,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/foo")).body().string());
-    assertEquals("B", get(server.getUrl("/bar")).body().string());
+    assertEquals("A", get(server.url("/foo")).body().string());
+    assertEquals("B", get(server.url("/bar")).body().string());
   }
 
   @Test public void connectionIsReturnedToPoolAfterConditionalSuccess() throws Exception {
@@ -1357,9 +1347,9 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/a")).body().string());
-    assertEquals("A", get(server.getUrl("/a")).body().string());
-    assertEquals("B", get(server.getUrl("/b")).body().string());
+    assertEquals("A", get(server.url("/a")).body().string());
+    assertEquals("A", get(server.url("/a")).body().string());
+    assertEquals("B", get(server.url("/b")).body().string());
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
@@ -1376,12 +1366,12 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("C"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     assertEquals(1, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
     assertEquals(0, cache.getHitCount());
-    assertEquals("B", get(server.getUrl("/")).body().string());
-    assertEquals("C", get(server.getUrl("/")).body().string());
+    assertEquals("B", get(server.url("/")).body().string());
+    assertEquals("C", get(server.url("/")).body().string());
     assertEquals(3, cache.getRequestCount());
     assertEquals(3, cache.getNetworkCount());
     assertEquals(0, cache.getHitCount());
@@ -1397,12 +1387,12 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     assertEquals(1, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
     assertEquals(0, cache.getHitCount());
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     assertEquals(3, cache.getRequestCount());
     assertEquals(3, cache.getNetworkCount());
     assertEquals(2, cache.getHitCount());
@@ -1413,12 +1403,12 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=60")
         .setBody("A"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     assertEquals(1, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
     assertEquals(0, cache.getHitCount());
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     assertEquals(3, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
     assertEquals(2, cache.getHitCount());
@@ -1432,19 +1422,19 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request frRequest = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response frResponse = FiberOkHttpUtil.executeInFiber(client.newCall(frRequest));
+    Response frResponse = client.newCall(frRequest).execute();
     assertEquals("A", frResponse.body().string());
 
     Request enRequest = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
-    Response enResponse = FiberOkHttpUtil.executeInFiber(client.newCall(enRequest));
+    Response enResponse = client.newCall(enRequest).execute();
     assertEquals("B", enResponse.body().string());
   }
 
@@ -1456,18 +1446,18 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request request = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response1 = client.newCall(request).execute();
     assertEquals("A", response1.body().string());
     Request request1 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
+    Response response2 = client.newCall(request1).execute();
     assertEquals("A", response2.body().string());
   }
 
@@ -1479,8 +1469,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
   }
 
   @Test public void varyMatchesAddedRequestHeaderField() throws Exception {
@@ -1491,12 +1481,11 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
-        .header("Foo", "bar")
+        .url(server.url("/")).header("Foo", "bar")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("B", response.body().string());
   }
 
@@ -1509,12 +1498,11 @@ public final class CacheTest {
         .setBody("B"));
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
-        .header("Foo", "bar")
+        .url(server.url("/")).header("Foo", "bar")
         .build();
-    Response fooresponse = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response fooresponse = client.newCall(request).execute();
     assertEquals("A", fooresponse.body().string());
-    assertEquals("B", get(server.getUrl("/")).body().string());
+    assertEquals("B", get(server.url("/")).body().string());
   }
 
   @Test public void varyFieldsAreCaseInsensitive() throws Exception {
@@ -1525,18 +1513,18 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request request = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response1 = client.newCall(request).execute();
     assertEquals("A", response1.body().string());
     Request request1 = new Request.Builder()
         .url(url)
         .header("accept-language", "fr-CA")
         .build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response2 = client.newCall(request1).execute();
     assertEquals("A", response2.body().string());
   }
 
@@ -1549,14 +1537,14 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request request = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response1 = client.newCall(request).execute();
     assertEquals("A", response1.body().string());
     Request request1 = new Request.Builder()
         .url(url)
@@ -1564,7 +1552,7 @@ public final class CacheTest {
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response2 = client.newCall(request1).execute();
     assertEquals("A", response2.body().string());
   }
 
@@ -1577,14 +1565,14 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request frRequest = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response frResponse = FiberOkHttpUtil.executeInFiber(client.newCall(frRequest));
+    Response frResponse = client.newCall(frRequest).execute();
     assertEquals("A", frResponse.body().string());
     Request enRequest = new Request.Builder()
         .url(url)
@@ -1592,7 +1580,7 @@ public final class CacheTest {
         .header("Accept-Charset", "UTF-8")
         .header("Accept-Encoding", "identity")
         .build();
-    Response enResponse = FiberOkHttpUtil.executeInFiber(client.newCall(enRequest));
+    Response enResponse = client.newCall(enRequest).execute();
     assertEquals("B", enResponse.body().string());
   }
 
@@ -1604,13 +1592,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request request1 = new Request.Builder()
         .url(url)
         .addHeader("Accept-Language", "fr-CA, fr-FR")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
+    Response response1 = client.newCall(request1).execute();
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
@@ -1618,7 +1606,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "fr-CA, fr-FR")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
+    Response response2 = client.newCall(request2).execute();
     assertEquals("A", response2.body().string());
   }
 
@@ -1630,13 +1618,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request request1 = new Request.Builder()
         .url(url)
         .addHeader("Accept-Language", "fr-CA, fr-FR")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
+    Response response1 = client.newCall(request1).execute();
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
@@ -1644,20 +1632,20 @@ public final class CacheTest {
         .addHeader("Accept-Language", "fr-CA")
         .addHeader("Accept-Language", "en-US")
         .build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
+    Response response2 = client.newCall(request2).execute();
     assertEquals("B", response2.body().string());
   }
 
   @Test public void varyAsterisk() throws Exception {
-    server.enqueue( new MockResponse()
+    server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: *")
         .setBody("A"));
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    assertEquals("B", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
+    assertEquals("B", get(server.url("/")).body().string());
   }
 
   @Test public void varyAndHttps() throws Exception {
@@ -1672,19 +1660,19 @@ public final class CacheTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     Request request1 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
-    Response response1 = FiberOkHttpUtil.executeInFiber(client.newCall(request1));
+    Response response1 = client.newCall(request1).execute();
     assertEquals("A", response1.body().string());
 
     Request request2 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
-    Response response2 = FiberOkHttpUtil.executeInFiber(client.newCall(request2));
+    Response response2 = client.newCall(request2).execute();
     assertEquals("A", response2.body().string());
   }
 
@@ -1698,7 +1686,7 @@ public final class CacheTest {
         .addHeader("Set-Cookie: a=SECOND; domain=" + server.getCookieDomain() + ";")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     assertCookies(url, "a=FIRST");
     assertEquals("A", get(url).body().string());
@@ -1715,11 +1703,11 @@ public final class CacheTest {
         .addHeader("Allow: GET, HEAD, PUT")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    Response response1 = get(server.getUrl("/"));
+    Response response1 = get(server.url("/"));
     assertEquals("A", response1.body().string());
     assertEquals("GET, HEAD", response1.header("Allow"));
 
-    Response response2 = get(server.getUrl("/"));
+    Response response2 = get(server.url("/"));
     assertEquals("A", response2.body().string());
     assertEquals("GET, HEAD, PUT", response2.header("Allow"));
   }
@@ -1734,11 +1722,11 @@ public final class CacheTest {
         .addHeader("Transfer-Encoding: none")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    Response response1 = get(server.getUrl("/"));
+    Response response1 = get(server.url("/"));
     assertEquals("A", response1.body().string());
     assertEquals("identity", response1.header("Transfer-Encoding"));
 
-    Response response2 = get(server.getUrl("/"));
+    Response response2 = get(server.url("/"));
     assertEquals("A", response2.body().string());
     assertEquals("identity", response2.header("Transfer-Encoding"));
   }
@@ -1752,11 +1740,11 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    Response response1 = get(server.getUrl("/"));
+    Response response1 = get(server.url("/"));
     assertEquals("A", response1.body().string());
     assertEquals("199 test danger", response1.header("Warning"));
 
-    Response response2 = get(server.getUrl("/"));
+    Response response2 = get(server.url("/"));
     assertEquals("A", response2.body().string());
     assertEquals(null, response2.header("Warning"));
   }
@@ -1770,18 +1758,18 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    Response response1 = get(server.getUrl("/"));
+    Response response1 = get(server.url("/"));
     assertEquals("A", response1.body().string());
     assertEquals("299 test danger", response1.header("Warning"));
 
-    Response response2 = get(server.getUrl("/"));
+    Response response2 = get(server.url("/"));
     assertEquals("A", response2.body().string());
     assertEquals("299 test danger", response2.header("Warning"));
   }
 
-  public void assertCookies(URL url, String... expectedCookies) throws Exception {
+  public void assertCookies(HttpUrl url, String... expectedCookies) throws Exception {
     List<String> actualCookies = new ArrayList<>();
-    for (HttpCookie cookie : cookieManager.getCookieStore().get(url.toURI())) {
+    for (HttpCookie cookie : cookieManager.getCookieStore().get(url.uri())) {
       actualCookies.add(cookie.toString());
     }
     assertEquals(Arrays.asList(expectedCookies), actualCookies);
@@ -1789,10 +1777,10 @@ public final class CacheTest {
 
   @Test public void doNotCachePartialResponse() throws Exception  {
     assertNotCached(new MockResponse()
-            .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
-            .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
-            .addHeader("Content-Range: bytes 100-100/200")
-            .addHeader("Cache-Control: max-age=60"));
+        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
+        .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
+        .addHeader("Content-Range: bytes 100-100/200")
+        .addHeader("Cache-Control: max-age=60"));
   }
 
   @Test public void conditionalHitUpdatesCache() throws Exception {
@@ -1808,40 +1796,39 @@ public final class CacheTest {
         .setBody("B"));
 
     // cache miss; seed the cache
-    Response response1 = get(server.getUrl("/a"));
+    Response response1 = get(server.url("/a"));
     assertEquals("A", response1.body().string());
     assertEquals(null, response1.header("Allow"));
 
     // conditional cache hit; update the cache
-    Response response2 = get(server.getUrl("/a"));
+    Response response2 = get(server.url("/a"));
     assertEquals(HttpURLConnection.HTTP_OK, response2.code());
     assertEquals("A", response2.body().string());
     assertEquals("GET, HEAD", response2.header("Allow"));
 
     // full cache hit
-    Response response3 = get(server.getUrl("/a"));
+    Response response3 = get(server.url("/a"));
     assertEquals("A", response3.body().string());
     assertEquals("GET, HEAD", response3.header("Allow"));
 
     assertEquals(2, server.getRequestCount());
   }
 
-  @Test public void responseSourceHeaderCached() throws IOException, InterruptedException, ExecutionException {
+  @Test public void responseSourceHeaderCached() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
+    assertEquals("A", get(server.url("/")).body().string());
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
-        .header("Cache-Control", "only-if-cached")
+        .url(server.url("/")).header("Cache-Control", "only-if-cached")
         .build();
-    Response response = FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    Response response = client.newCall(request).execute();
     assertEquals("A", response.body().string());
   }
 
-  @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException, InterruptedException, ExecutionException {
+  @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=30")
@@ -1851,12 +1838,12 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    Response response = get(server.getUrl("/"));
+    assertEquals("A", get(server.url("/")).body().string());
+    Response response = get(server.url("/"));
     assertEquals("B", response.body().string());
   }
 
-  @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException, InterruptedException, ExecutionException {
+  @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Cache-Control: max-age=0")
@@ -1864,16 +1851,16 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(304));
 
-    assertEquals("A", get(server.getUrl("/")).body().string());
-    Response response = get(server.getUrl("/"));
+    assertEquals("A", get(server.url("/")).body().string());
+    Response response = get(server.url("/"));
     assertEquals("A", response.body().string());
   }
 
-  @Test public void responseSourceHeaderFetched() throws IOException, InterruptedException, ExecutionException {
+  @Test public void responseSourceHeaderFetched() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A"));
 
-    Response response = get(server.getUrl("/"));
+    Response response = get(server.url("/"));
     assertEquals("A", response.body().string());
   }
 
@@ -1885,8 +1872,9 @@ public final class CacheTest {
         .setHeaders(headers.build())
         .setBody("body"));
 
-    Response response = get(server.getUrl("/"));
+    Response response = get(server.url("/"));
     assertEquals("A", response.header(""));
+    assertEquals("body", response.body().string());
   }
 
   /**
@@ -1903,7 +1891,7 @@ public final class CacheTest {
         .clearHeaders()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     String urlKey = Util.md5Hex(url.toString());
     String entryMetadata = ""
         + "" + url + "\n"
@@ -1940,7 +1928,7 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE);
+    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
     client.setCache(cache);
 
     Response response = get(url);
@@ -1956,7 +1944,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     client.getCache().evictAll();
     assertEquals(0, client.getCache().getSize());
@@ -1971,7 +1959,7 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     // Seed the cache.
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
 
     final AtomicReference<String> ifNoneMatch = new AtomicReference<>();
@@ -1993,7 +1981,7 @@ public final class CacheTest {
         .setBody("A"));
 
     // Seed the cache.
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
 
     // Confirm the interceptor isn't exercised.
@@ -2009,17 +1997,17 @@ public final class CacheTest {
     // Put some responses in the cache.
     server.enqueue(new MockResponse()
         .setBody("a"));
-    URL urlA = server.getUrl("/a");
+    HttpUrl urlA = server.url("/a");
     assertEquals("a", get(urlA).body().string());
 
     server.enqueue(new MockResponse()
         .setBody("b"));
-    URL urlB = server.getUrl("/b");
+    HttpUrl urlB = server.url("/b");
     assertEquals("b", get(urlB).body().string());
 
     server.enqueue(new MockResponse()
         .setBody("c"));
-    URL urlC = server.getUrl("/c");
+    HttpUrl urlC = server.url("/c");
     assertEquals("c", get(urlC).body().string());
 
     // Confirm the iterator returns those responses...
@@ -2045,7 +2033,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .setBody("a"));
-    URL url = server.getUrl("/a");
+    HttpUrl url = server.url("/a");
     assertEquals("a", get(url).body().string());
 
     // Remove it with iteration.
@@ -2063,7 +2051,7 @@ public final class CacheTest {
     // Put a response in the cache.
     server.enqueue(new MockResponse()
         .setBody("a"));
-    URL url = server.getUrl("/a");
+    HttpUrl url = server.url("/a");
     assertEquals("a", get(url).body().string());
 
     Iterator<String> i = cache.urls();
@@ -2079,7 +2067,7 @@ public final class CacheTest {
     // Put a response in the cache.
     server.enqueue(new MockResponse()
         .setBody("a"));
-    URL url = server.getUrl("/a");
+    HttpUrl url = server.url("/a");
     assertEquals("a", get(url).body().string());
 
     Iterator<String> i = cache.urls();
@@ -2098,7 +2086,7 @@ public final class CacheTest {
     // Put a response in the cache.
     server.enqueue(new MockResponse()
         .setBody("a"));
-    URL url = server.getUrl("/a");
+    HttpUrl url = server.url("/a");
     assertEquals("a", get(url).body().string());
 
     // The URL will remain available if hasNext() returned true...
@@ -2117,7 +2105,7 @@ public final class CacheTest {
     // Put a response in the cache.
     server.enqueue(new MockResponse()
         .setBody("a"));
-    URL url = server.getUrl("/a");
+    HttpUrl url = server.url("/a");
     assertEquals("a", get(url).body().string());
 
     Iterator<String> i = cache.urls();
@@ -2132,16 +2120,41 @@ public final class CacheTest {
     }
   }
 
-  private Response get(URL url) throws IOException, InterruptedException, ExecutionException {
+  /** Test https://github.com/square/okhttp/issues/1712. */
+  @Test public void conditionalMissUpdatesCache() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v2")
+        .setBody("B"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+
+    HttpUrl url = server.url("/");
+    assertEquals("A", get(url).body().string());
+    assertEquals("A", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+
+    assertEquals(null, server.takeRequest().getHeader("If-None-Match"));
+    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+    assertEquals("v2", server.takeRequest().getHeader("If-None-Match"));
+  }
+
+  private Response get(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
         .url(url)
         .build();
-    return FiberOkHttpUtil.executeInFiber(client.newCall(request));
+    return client.newCall(request).execute();
   }
 
 
   private void writeFile(File directory, String file, String content) throws IOException {
-    BufferedSink sink = Okio.buffer(Okio.sink(new File(directory, file)));
+    BufferedSink sink = Okio.buffer(fileSystem.sink(new File(directory, file)));
     sink.writeUtf8(content);
     sink.close();
   }
@@ -2166,7 +2179,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     assertEquals("B", get(url).body().string());
   }
@@ -2185,7 +2198,7 @@ public final class CacheTest {
         .setStatus("HTTP/1.1 200 C-OK")
         .setBody("C"));
 
-    URL valid = server.getUrl("/valid");
+    HttpUrl valid = server.url("/valid");
     Response response1 = get(valid);
     assertEquals("A", response1.body().string());
     assertEquals(HttpURLConnection.HTTP_OK, response1.code());
@@ -2195,7 +2208,7 @@ public final class CacheTest {
     assertEquals(HttpURLConnection.HTTP_OK, response2.code());
     assertEquals("A-OK", response2.message());
 
-    URL invalid = server.getUrl("/invalid");
+    HttpUrl invalid = server.url("/invalid");
     Response response3 = get(invalid);
     assertEquals("B", response3.body().string());
     assertEquals(HttpURLConnection.HTTP_OK, response3.code());
@@ -2213,7 +2226,7 @@ public final class CacheTest {
     server.enqueue(response.setBody("A"));
     server.enqueue(response.setBody("B"));
 
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     assertEquals("A", get(url).body().string());
   }

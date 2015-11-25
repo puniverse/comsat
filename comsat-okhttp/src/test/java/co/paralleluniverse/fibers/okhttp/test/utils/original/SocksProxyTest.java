@@ -1,22 +1,19 @@
 /*
- * COMSAT
- * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014 Square, Inc.
  *
- * This program and the accompanying materials are dual-licensed under
- * either the terms of the Eclipse Public License v1.0 as published by
- * the Eclipse Foundation
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   or (per the licensee's choosing)
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * under the terms of the GNU Lesser General Public License version 3.0
- * as published by the Free Software Foundation.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-/*
- * Based on the corresponding class in okhttp-tests.
- * Copyright 2015 Square, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License").
- */
-package co.paralleluniverse.fibers.okhttp;
+package co.paralleluniverse.fibers.okhttp.test.utils.original;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -54,15 +51,15 @@ public final class SocksProxyTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
 
-    OkHttpClient client = new FiberOkHttpClient()
+    OkHttpClient client = new OkHttpClient()
         .setProxy(socksProxy.proxy());
 
-    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response1 = FiberOkHttpUtil.executeInFiber((FiberOkHttpClient) client, request1);
+    Request request1 = new Request.Builder().url(server.url("/")).build();
+    Response response1 = client.newCall(request1).execute();
     assertEquals("abc", response1.body().string());
 
-    Request request2 = new Request.Builder().url(server.getUrl("/")).build();
-    Response response2 = FiberOkHttpUtil.executeInFiber((FiberOkHttpClient) client, request2);
+    Request request2 = new Request.Builder().url(server.url("/")).build();
+    Response response2 = client.newCall(request2).execute();
     assertEquals("def", response2.body().string());
 
     // The HTTP calls should share a single connection.
@@ -82,11 +79,11 @@ public final class SocksProxyTest {
       }
     };
 
-    OkHttpClient client = new FiberOkHttpClient()
+    OkHttpClient client = new OkHttpClient()
         .setProxySelector(proxySelector);
 
-    Request request = new Request.Builder().url(server.getUrl("/")).build();
-    Response response = FiberOkHttpUtil.executeInFiber((FiberOkHttpClient) client, request);
+    Request request = new Request.Builder().url(server.url("/")).build();
+    Response response = client.newCall(request).execute();
     assertEquals("abc", response.body().string());
 
     assertEquals(1, socksProxy.connectionCount());

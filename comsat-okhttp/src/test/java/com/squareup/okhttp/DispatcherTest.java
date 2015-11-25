@@ -1,25 +1,7 @@
-/*
- * COMSAT
- * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
- *
- * This program and the accompanying materials are dual-licensed under
- * either the terms of the Eclipse Public License v1.0 as published by
- * the Eclipse Foundation
- *
- *   or (per the licensee's choosing)
- *
- * under the terms of the GNU Lesser General Public License version 3.0
- * as published by the Free Software Foundation.
- */
-/*
- * Based on the corresponding class in okhttp-tests.
- * Copyright 2014 Square, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License").
- */
 package com.squareup.okhttp;
 
-import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
-import co.paralleluniverse.fibers.okhttp.RecordingCallback;
+import co.paralleluniverse.fibers.okhttp.test.utils.FiberOkHttpClientTestWrapper;
+import co.paralleluniverse.fibers.okhttp.test.utils.original.RecordingCallback;
 import com.squareup.okhttp.Call.AsyncCall;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +19,7 @@ public final class DispatcherTest {
   RecordingExecutor executor = new RecordingExecutor();
   RecordingCallback callback = new RecordingCallback();
   Dispatcher dispatcher = new Dispatcher(executor);
-  OkHttpClient client = new FiberOkHttpClient().setDispatcher(dispatcher);
+  OkHttpClient client = new FiberOkHttpClientTestWrapper().setDispatcher(dispatcher);
 
   @Before public void setUp() throws Exception {
     dispatcher.setMaxRequests(20);

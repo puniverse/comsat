@@ -1,22 +1,19 @@
 /*
- * COMSAT
- * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014 Square, Inc.
  *
- * This program and the accompanying materials are dual-licensed under
- * either the terms of the Eclipse Public License v1.0 as published by
- * the Eclipse Foundation
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   or (per the licensee's choosing)
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * under the terms of the GNU Lesser General Public License version 3.0
- * as published by the Free Software Foundation.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-/*
- * Based on the corresponding class in okhttp-tests.
- * Copyright 2014 Square, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License").
- */
-package co.paralleluniverse.fibers.okhttp;
+package co.paralleluniverse.fibers.okhttp.test.utils.original;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -39,41 +36,37 @@ public class DelegatingSocketFactory extends SocketFactory {
   @Override
   public Socket createSocket() throws IOException {
     Socket socket = delegate.createSocket();
-    configureSocket(socket);
-    return socket;
+    return configureSocket(socket);
   }
 
   @Override
   public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
     Socket socket = delegate.createSocket(host, port);
-    configureSocket(socket);
-    return socket;
+    return configureSocket(socket);
   }
 
   @Override
   public Socket createSocket(String host, int port, InetAddress localAddress, int localPort)
       throws IOException, UnknownHostException {
     Socket socket = delegate.createSocket(host, port, localAddress, localPort);
-    configureSocket(socket);
-    return socket;
+    return configureSocket(socket);
   }
 
   @Override
   public Socket createSocket(InetAddress host, int port) throws IOException {
     Socket socket = delegate.createSocket(host, port);
-    configureSocket(socket);
-    return socket;
+    return configureSocket(socket);
   }
 
   @Override
   public Socket createSocket(InetAddress host, int port, InetAddress localAddress, int localPort)
       throws IOException {
     Socket socket = delegate.createSocket(host, port, localAddress, localPort);
-    configureSocket(socket);
-    return socket;
+    return configureSocket(socket);
   }
 
-  protected void configureSocket(Socket socket) throws IOException {
+  protected Socket configureSocket(Socket socket) throws IOException {
     // No-op by default.
+    return socket;
   }
 }

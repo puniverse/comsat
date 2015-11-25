@@ -1,49 +1,35 @@
 /*
- * COMSAT
- * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014 Square, Inc.
  *
- * This program and the accompanying materials are dual-licensed under
- * either the terms of the Eclipse Public License v1.0 as published by
- * the Eclipse Foundation
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   or (per the licensee's choosing)
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * under the terms of the GNU Lesser General Public License version 3.0
- * as published by the Free Software Foundation.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-/*
- * Based on the corresponding class in okhttp-tests.
- * Copyright 2014 Square, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License").
- */
-package co.paralleluniverse.fibers.okhttp;
+package co.paralleluniverse.fibers.okhttp.test;
 
-import com.squareup.okhttp.Address;
-import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.Dispatcher;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
-import com.squareup.okhttp.ResponseBody;
+import co.paralleluniverse.fibers.okhttp.test.utils.FiberOkHttpClientTestWrapper;
+import co.paralleluniverse.fibers.okhttp.test.utils.original.RecordingCallback;
+import com.squareup.okhttp.*;
 import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -52,6 +38,7 @@ import okio.GzipSink;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -60,16 +47,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
-import org.junit.Ignore;
 
 public final class InterceptorTest {
-  @Rule public MockWebServerRule server = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
 
-  private FiberOkHttpClient client = new FiberOkHttpClient();
+  private OkHttpClient client = new FiberOkHttpClientTestWrapper();
   private RecordingCallback callback = new RecordingCallback();
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
-    server.get().shutdown(); // Accept no connections.
+    server.shutdown(); // Accept no connections.
 
     Request request = new Request.Builder()
         .url("https://localhost:1/")
@@ -89,11 +75,12 @@ public final class InterceptorTest {
       }
     });
 
-    Response response = FiberOkHttpUtil.executeInFiber(client, request);
+    Response response = client.newCall(request).execute();
     assertSame(interceptorResponse, response);
   }
 
-  @Ignore @Test public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
+  @Ignore
+  @Test public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
     Interceptor interceptor = new Interceptor() {
@@ -103,18 +90,19 @@ public final class InterceptorTest {
             .protocol(Protocol.HTTP_1_1)
             .code(200)
             .message("Intercepted!")
-            .body(ResponseBody.create(MediaType.parse("text/plain; charset=utf-8"), "abc"))
+            .body(ResponseBody.create(MediaType.parse("text/plain; charset=utf-8"),
+  "abc"))
             .build();
       }
     };
     client.networkInterceptors().add(interceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
-      FiberOkHttpUtil.executeInFiber(client, request);
+      client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
@@ -122,7 +110,8 @@ public final class InterceptorTest {
     }
   }
 
-  @Ignore @Test public void networkInterceptorsCannotCallProceedMultipleTimes() throws Exception {
+  @Ignore
+  @Test public void networkInterceptorsCannotCallProceedMultipleTimes() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
@@ -135,11 +124,11 @@ public final class InterceptorTest {
     client.networkInterceptors().add(interceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
-      FiberOkHttpUtil.executeInFiber(client, request);
+      client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
@@ -147,7 +136,8 @@ public final class InterceptorTest {
     }
   }
 
-  @Ignore @Test public void networkInterceptorsCannotChangeServerAddress() throws Exception {
+  @Ignore
+  @Test public void networkInterceptorsCannotChangeServerAddress() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
 
     Interceptor interceptor = new Interceptor() {
@@ -156,18 +146,18 @@ public final class InterceptorTest {
         String sameHost = address.getUriHost();
         int differentPort = address.getUriPort() + 1;
         return chain.proceed(chain.request().newBuilder()
-            .url(new URL("http://" + sameHost + ":" + differentPort + "/"))
+            .url(HttpUrl.parse("http://" + sameHost + ":" + differentPort + "/"))
             .build());
       }
     };
     client.networkInterceptors().add(interceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
-      FiberOkHttpUtil.executeInFiber(client, request);
+      client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
       assertEquals("network interceptor " + interceptor + " must retain the same host and port",
@@ -187,9 +177,9 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
-    FiberOkHttpUtil.executeInFiber(client, request);
+    client.newCall(request).execute();
   }
 
   @Test public void networkInterceptorsObserveNetworkHeaders() throws Exception {
@@ -202,7 +192,7 @@ public final class InterceptorTest {
         // The network request has everything: User-Agent, Host, Accept-Encoding.
         Request networkRequest = chain.request();
         assertNotNull(networkRequest.header("User-Agent"));
-        assertEquals(server.get().getHostName() + ":" + server.get().getPort(),
+        assertEquals(server.getHostName() + ":" + server.getPort(),
             networkRequest.header("Host"));
         assertNotNull(networkRequest.header("Accept-Encoding"));
 
@@ -214,7 +204,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     // No extra headers in the application's request.
@@ -223,9 +213,38 @@ public final class InterceptorTest {
     assertNull(request.header("Accept-Encoding"));
 
     // No extra headers in the application's response.
-    Response response = FiberOkHttpUtil.executeInFiber(client, request);
+    Response response = client.newCall(request).execute();
     assertNull(request.header("Content-Encoding"));
     assertEquals("abcabcabc", response.body().string());
+  }
+
+  @Test public void networkInterceptorsCanChangeRequestMethodFromGetToPost() throws Exception {
+    server.enqueue(new MockResponse());
+
+    client.networkInterceptors().add(new Interceptor() {
+      @Override
+      public Response intercept(Chain chain) throws IOException {
+        Request originalRequest = chain.request();
+        MediaType mediaType = MediaType.parse("text/plain");
+        RequestBody body = RequestBody.create(mediaType, "abc");
+        return chain.proceed(originalRequest.newBuilder()
+            .method("POST", body)
+            .header("Content-Type", mediaType.toString())
+            .header("Content-Length", Long.toString(body.contentLength()))
+            .build());
+      }
+    });
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .get()
+        .build();
+
+    client.newCall(request).execute();
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals("abc", recordedRequest.getBody().readUtf8());
   }
 
   @Test public void applicationInterceptorsRewriteRequestToServer() throws Exception {
@@ -250,12 +269,12 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .addHeader("Original-Header", "foo")
         .method("PUT", RequestBody.create(MediaType.parse("text/plain"), "abc"))
         .build();
 
-    FiberOkHttpUtil.executeInFiber(client, request);
+    client.newCall(request).execute();
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("ABC", recordedRequest.getBody().readUtf8());
@@ -288,10 +307,10 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
-    Response response = FiberOkHttpUtil.executeInFiber(client, request);
+    Response response = client.newCall(request).execute();
     assertEquals("ABC", response.body().string());
     assertEquals("yep", response.header("OkHttp-Intercepted"));
     assertEquals("foo", response.header("Original-Header"));
@@ -332,10 +351,10 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
-    Response response = FiberOkHttpUtil.executeInFiber(client, request);
+    Response response = client.newCall(request).execute();
     assertEquals(Arrays.asList("Cupcake", "Donut"),
         response.headers("Response-Interceptor"));
 
@@ -365,11 +384,11 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(request.url())
+    callback.await(request.httpUrl())
         .assertCode(200)
         .assertHeader("OkHttp-Intercepted", "yep");
   }
@@ -386,10 +405,10 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
-    Response response = FiberOkHttpUtil.executeInFiber(client, request);
+    Response response = client.newCall(request).execute();
     assertEquals(response.body().string(), "b");
   }
 
@@ -402,14 +421,9 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         if (chain.request().url().getPath().equals("/b")) {
           Request requestA = new Request.Builder()
-              .url(server.getUrl("/a"))
+              .url(server.url("/a"))
               .build();
-          Response responseA = null;
-            try {
-                responseA = FiberOkHttpUtil.executeInFiber(client, requestA);
-            } catch (InterruptedException ex) {
-                throw new AssertionError(ex);
-            }
+          Response responseA = client.newCall(requestA).execute();
           assertEquals("a", responseA.body().string());
         }
 
@@ -418,9 +432,9 @@ public final class InterceptorTest {
     });
 
     Request requestB = new Request.Builder()
-        .url(server.getUrl("/b"))
+        .url(server.url("/b"))
         .build();
-    Response responseB = FiberOkHttpUtil.executeInFiber(client, requestB);
+    Response responseB = client.newCall(requestB).execute();
     assertEquals("b", responseB.body().string());
   }
 
@@ -433,13 +447,13 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         if (chain.request().url().getPath().equals("/b")) {
           Request requestA = new Request.Builder()
-              .url(server.getUrl("/a"))
+              .url(server.url("/a"))
               .build();
 
           try {
             RecordingCallback callbackA = new RecordingCallback();
             client.newCall(requestA).enqueue(callbackA);
-            callbackA.await(requestA.url()).assertBody("a");
+            callbackA.await(requestA.httpUrl()).assertBody("a");
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -450,11 +464,11 @@ public final class InterceptorTest {
     });
 
     Request requestB = new Request.Builder()
-        .url(server.getUrl("/b"))
+        .url(server.url("/b"))
         .build();
     RecordingCallback callbackB = new RecordingCallback();
     client.newCall(requestB).enqueue(callbackB);
-    callbackB.await(requestB.url()).assertBody("b");
+    callbackB.await(requestB.httpUrl()).assertBody("b");
   }
 
   @Ignore @Test public void applicationkInterceptorThrowsRuntimeExceptionSynchronous() throws Exception {
@@ -480,26 +494,18 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
-      FiberOkHttpUtil.executeInFiber(client, request);
+      client.newCall(request).execute();
       fail();
     } catch (RuntimeException expected) {
       assertEquals("boom!", expected.getMessage());
     }
   }
 
-  @Test public void applicationInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
-    interceptorThrowsRuntimeExceptionAsynchronous(client.interceptors());
-  }
-
-  @Test public void networkInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
-    interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
-  }
-
-  @Test public void networkInterceptorModifiedRequestIsReturned() throws IOException, InterruptedException, ExecutionException {
+  @Test public void networkInterceptorModifiedRequestIsReturned() throws IOException {
     server.enqueue(new MockResponse());
 
     Interceptor modifyHeaderInterceptor = new Interceptor() {
@@ -513,14 +519,22 @@ public final class InterceptorTest {
     client.networkInterceptors().add(modifyHeaderInterceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("User-Agent", "user request")
         .build();
 
-    Response response = FiberOkHttpUtil.executeInFiber(client, request);
+    Response response = client.newCall(request).execute();
     assertNotNull(response.request().header("User-Agent"));
     assertEquals("user request", response.request().header("User-Agent"));
     assertEquals("intercepted request", response.networkResponse().request().header("User-Agent"));
+  }
+
+  @Test public void applicationInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.interceptors());
+  }
+
+  @Test public void networkInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
   }
 
   /**
@@ -541,11 +555,62 @@ public final class InterceptorTest {
     client.setDispatcher(new Dispatcher(executor));
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
     client.newCall(request).enqueue(callback);
 
     assertEquals("boom!", executor.takeException().getMessage());
+  }
+
+  @Ignore @Test public void applicationInterceptorReturnsNull() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        chain.proceed(chain.request());
+        return null;
+      }
+    };
+    client.interceptors().add(interceptor);
+
+    ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
+    client.setDispatcher(new Dispatcher(executor));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("application interceptor " + interceptor
+          + " returned null", expected.getMessage());
+    }
+  }
+
+  @Ignore @Test public void networkInterceptorReturnsNull() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        chain.proceed(chain.request());
+        return null;
+      }
+    };
+    client.networkInterceptors().add(interceptor);
+
+    ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
+    client.setDispatcher(new Dispatcher(executor));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("network interceptor " + interceptor + " returned null", expected.getMessage());
+    }
   }
 
   private RequestBody uppercase(final RequestBody original) {
