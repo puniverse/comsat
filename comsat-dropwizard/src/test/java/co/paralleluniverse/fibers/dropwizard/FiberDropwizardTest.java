@@ -28,6 +28,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class FiberDropwizardTest {
+    private static final int TIMEOUT = 10_000; // ms
+    public static final String SERVER_BASE_URL = "http://localhost:8080";
+
     @BeforeClass
     public static void setUpClass() throws InterruptedException, IOException {
         Thread t = new Thread(new Runnable() {
@@ -36,20 +39,19 @@ public class FiberDropwizardTest {
             public void run() {
                 try {
                     new MyDropwizardApp().run(new String[]{"server", Resources.getResource("server.yml").getPath()});
-                } catch (Exception ex) {
-                }
+                } catch (final Exception ignored) {}
             }
         });
         t.setDaemon(true);
         t.start();
-        waitUrlAvailable("http://localhost:8080");
+        waitUrlAvailable(SERVER_BASE_URL);
     }
     private CloseableHttpClient client;
 
     @Before
     public void setUp() throws Exception {
         this.client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
-                .setSocketTimeout(5000).setConnectTimeout(5000).setConnectionRequestTimeout(5000)
+                .setSocketTimeout(TIMEOUT).setConnectTimeout(TIMEOUT).setConnectionRequestTimeout(TIMEOUT)
                 .build()).build();
     }
 
@@ -61,25 +63,25 @@ public class FiberDropwizardTest {
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertTrue(client.execute(new HttpGet("http://localhost:8080/?name=foo"), BASIC_RESPONSE_HANDLER).contains("foo"));
+            assertTrue(client.execute(new HttpGet(SERVER_BASE_URL + "/?name=foo"), BASIC_RESPONSE_HANDLER).contains("foo"));
     }
 
     @Test
     public void testHttp() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertTrue(client.execute(new HttpGet("http://localhost:8080/http?name=bar"), BASIC_RESPONSE_HANDLER).contains("bar"));
+            assertTrue(client.execute(new HttpGet(SERVER_BASE_URL + "/http?name=bar"), BASIC_RESPONSE_HANDLER).contains("bar"));
     }
 
     @Test
-    public void testFluentAPI() throws IOException, InterruptedException, Exception {
+    public void testFluentAPI() throws IOException, InterruptedException {
         for (int i = 0; i < 10; i++)
-            assertEquals("37", client.execute(new HttpGet("http://localhost:8080/fluent?id=37"), BASIC_RESPONSE_HANDLER));
+            assertEquals("37", client.execute(new HttpGet(SERVER_BASE_URL + "/fluent?id=37"), BASIC_RESPONSE_HANDLER));
     }
 
     @Test
-    public void testDao() throws IOException, InterruptedException, Exception {
+    public void testDao() throws Exception {
         for (int i = 0; i < 10; i++)
-            assertEquals("name37", client.execute(new HttpGet("http://localhost:8080/dao?id=37"), BASIC_RESPONSE_HANDLER));
+            assertEquals("name37", client.execute(new HttpGet(SERVER_BASE_URL + "/dao?id=37"), BASIC_RESPONSE_HANDLER));
     }
     private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
 
@@ -89,8 +91,7 @@ public class FiberDropwizardTest {
             try {
                 if (HttpClients.createDefault().execute(new HttpGet(url)).getStatusLine().getStatusCode() > -100)
                     break;
-            } catch (HttpHostConnectException ex) {
-            }
+            } catch (final HttpHostConnectException ignored) {}
         }
     }
 
