@@ -64,7 +64,7 @@ subprojects {
     ext.jdbiVer         = '2.63.1'
 
     ext.retrofitVer     = '1.9.0'
-    ext.jooqVer         = '3.6.0'
+    ext.jooqVer         = '3.6.4'
     ext.slf4jApiVer     = '1.7.13'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '18.0'
