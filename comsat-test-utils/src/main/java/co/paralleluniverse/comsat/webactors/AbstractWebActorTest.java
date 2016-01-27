@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2015-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -27,7 +27,6 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.websocket.*;

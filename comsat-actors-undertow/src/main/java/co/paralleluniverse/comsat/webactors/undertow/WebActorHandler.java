@@ -348,7 +348,7 @@ public class WebActorHandler implements HttpHandler {
 
 		void service(final HttpServerExchange xch) throws SuspendExecution {
 			if (isDone()) {
-				@SuppressWarnings("ThrowableResultOfMethodCallIgnored") Throwable deathCause = getDeathCause();
+				@SuppressWarnings("ThrowableResultOfMethodCallIgnored") final Throwable deathCause = getDeathCause();
 				if (deathCause != null)
 					sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + deathCause.getMessage());
 				else
