@@ -15,6 +15,7 @@ package co.paralleluniverse.embedded.containers;
 
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.RequestLimit;
 import io.undertow.servlet.Servlets;
@@ -27,7 +28,6 @@ import java.util.Collections;
 import javax.servlet.DispatcherType;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContextListener;
-import org.xnio.ByteBufferSlicePool;
 import org.xnio.OptionMap;
 import org.xnio.Options;
 import org.xnio.Xnio;
@@ -109,7 +109,7 @@ public class UndertowServer extends AbstractEmbeddedServer {
                 }
             }
         };
-        final ServerWebSocketContainer wsc = new ServerWebSocketContainer(ci, worker, new ByteBufferSlicePool(100, 100), new CompositeThreadSetupAction(Collections.EMPTY_LIST), false, false);
+        final ServerWebSocketContainer wsc = new ServerWebSocketContainer(ci, worker, new DefaultByteBufferPool(true, 100), new CompositeThreadSetupAction(Collections.EMPTY_LIST), false, false);
         final FilterInfo fi = new FilterInfo("filter", JsrWebSocketFilter.class);
         fi.setAsyncSupported(true);
         deployment
