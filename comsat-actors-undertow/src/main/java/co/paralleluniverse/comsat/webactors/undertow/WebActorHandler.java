@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2015-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -25,6 +25,7 @@ import co.paralleluniverse.strands.SuspendableRunnable;
 import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
 import co.paralleluniverse.strands.concurrent.ReentrantLock;
+import com.google.common.base.Charsets;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -33,6 +34,7 @@ import io.undertow.server.session.*;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.StatusCodes;
+import io.undertow.util.StringReadChannelListener;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.*;
 import io.undertow.websockets.spi.WebSocketHttpExchange;
@@ -42,6 +44,7 @@ import org.xnio.ChannelListeners;
 import org.xnio.channels.StreamSinkChannel;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -353,17 +356,28 @@ public class WebActorHandler implements HttpHandler {
 				return;
 			}
 
-			new Fiber(new SuspendableRunnable() {
+			final String charset = xch.getRequestCharset();
+			final StringReadChannelListener l = new StringReadChannelListener(xch.getConnection().getBufferPool()) {
 				@Override
-				public void run() throws SuspendExecution, InterruptedException {
-					try {
-						final ByteBuffer buf = new FiberReadChannelListener(xch.getConnection().getBufferPool(), xch.getRequestChannel()).run();
-						webActor.send(new HttpRequestWrapper(ref(), xch, buf));
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
+				protected void stringDone(final String s) {
+					new Fiber(new SuspendableRunnable() {
+						@Override
+						public void run() throws SuspendExecution, InterruptedException {
+							try {
+								webActor.send(new HttpRequestWrapper(ref(), xch, ByteBuffer.wrap(charset != null ? s.getBytes(charset) : s.getBytes(Charsets.ISO_8859_1.name()))));
+							} catch (final UnsupportedEncodingException ex) {
+								throw new RuntimeException(ex);
+							}
+						}
+					}).start();
 				}
-			}).start();
+
+				@Override
+				protected void error(IOException e) {
+					throw new RuntimeException(e);
+				}
+			};
+			l.setup(xch.getRequestChannel());
 		}
 
 		@Override
