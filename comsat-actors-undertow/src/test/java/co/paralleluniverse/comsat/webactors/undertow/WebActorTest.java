@@ -18,10 +18,14 @@ import co.paralleluniverse.actors.ActorImpl;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
+import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import io.undertow.Undertow;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.RequestDumpingHandler;
+import io.undertow.server.session.InMemorySessionManager;
+import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.server.session.SessionCookieConfig;
+import io.undertow.server.session.SessionManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -87,12 +91,19 @@ public class WebActorTest extends AbstractWebActorTest {
 
 	@Before
 	public void setUp() throws Exception {
+		final SessionManager sessionManager =
+			new InMemorySessionManager("SESSION_MANAGER", 1, true);
+		final SessionCookieConfig sessionConfig = new SessionCookieConfig();
+		sessionConfig.setMaxAge(60);
+		final SessionAttachmentHandler sessionAttachmentHandler =
+			new SessionAttachmentHandler(sessionManager, sessionConfig);
 		server = Undertow.builder()
 				.addHttpListener(INET_PORT, "localhost")
-				.setHandler(new RequestDumpingHandler(webActorHandlerCreator.call())).build();
+				.setHandler(new RequestDumpingHandler(sessionAttachmentHandler.setNext(webActorHandlerCreator.call()))).build();
 		server.start();
+		AbstractEmbeddedServer.waitUrlAvailable("http://localhost:" + INET_PORT);
 
-		System.out.println("Server is up");
+		System.err.println("Server is up");
 	}
 
 	@After
