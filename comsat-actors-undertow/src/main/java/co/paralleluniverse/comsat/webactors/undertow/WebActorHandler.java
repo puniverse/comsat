@@ -31,10 +31,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.CookieImpl;
 import io.undertow.server.session.*;
-import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
-import io.undertow.util.StatusCodes;
-import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.*;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.*;
 import io.undertow.websockets.spi.WebSocketHttpExchange;
@@ -78,7 +75,7 @@ public class WebActorHandler implements HttpHandler {
 
 	public static abstract class DefaultContextImpl implements Context {
 		private final static String durationProp = System.getProperty(DefaultContextImpl.class.getName() + ".durationMillis");
-		private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000l;
+		private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000L;
 		final Map<String, Object> attachments = new HashMap<>();
 		private final ReentrantLock lock = new ReentrantLock();
 		private final long created;
@@ -128,6 +125,7 @@ public class WebActorHandler implements HttpHandler {
 
 	@Override
 	public void handleRequest(final HttpServerExchange xch) throws Exception {
+	public final void handleRequest(final HttpServerExchange xch) throws Exception {
 		// continueHandler.handleRequest(xch);
 		sessionHandler.handleRequest(xch);
 
@@ -156,7 +154,6 @@ public class WebActorHandler implements HttpHandler {
 					}
 
 					final WebSocketActorAdapter webSocketActor = (WebSocketActorAdapter) internalActor;
-					final ActorRef userActorRef0 = userActorRef;
 
 					// Handle with websocket
 					Handlers.websocket(new WebSocketConnectionCallback() {
@@ -183,10 +180,12 @@ public class WebActorHandler implements HttpHandler {
 									@Override
 									public void run() throws SuspendExecution, InterruptedException {
 										//noinspection unchecked
-										userActorRef0.send(new WebSocketOpened(webSocketActor.ref()));
+										((ActorRef) userActorRef).send(new WebSocketOpened(webSocketActor.ref()));
 									}
 								});
-							} catch (InterruptedException | ExecutionException e) {
+							} catch (final InterruptedException | ExecutionException e) {
+								UndertowLogger.ROOT_LOGGER.error("Exception while sending `WebSocketOpened` message to actor", e);
+
 								throw new RuntimeException(e);
 							}
 						}
@@ -221,7 +220,7 @@ public class WebActorHandler implements HttpHandler {
 		lock.unlock();
 	}
 
-	private static class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
+	private static final class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
 		final ActorRef<? super WebMessage> webActor;
 		private final WebSocketChannelAdapter channelAdapter;
 
@@ -234,12 +233,12 @@ public class WebActorHandler implements HttpHandler {
 			watch(webActor);
 		}
 
-		void setChannel(WebSocketChannel channel) {
+		final void setChannel(WebSocketChannel channel) {
 			this.channel = channel;
 			this.channelAdapter.channel = channel;
 		}
 
-		void onMessage(BufferedBinaryMessage message) {
+		final void onMessage(BufferedBinaryMessage message) {
 			try {
 				webActor.send(new WebDataMessage(ref(), toBuffer(message.getData().getResource()).duplicate()));
 			} catch (SuspendExecution ex) {
@@ -247,7 +246,7 @@ public class WebActorHandler implements HttpHandler {
 			}
 		}
 
-		void onMessage(BufferedTextMessage message) {
+		final void onMessage(BufferedTextMessage message) {
 			try {
 				webActor.send(new WebDataMessage(ref(), message.getData()));
 			} catch (SuspendExecution ex) {
@@ -256,7 +255,7 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		protected WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
+		protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
 			if (m instanceof ExitMessage) {
 				ExitMessage em = (ExitMessage) m;
 				if (em.getActor() != null && em.getActor().equals(webActor))
@@ -266,51 +265,52 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		protected void throwIn(RuntimeException e) {
+		protected final void throwIn(RuntimeException e) {
 			die(e);
 		}
 
 		@Override
-		public void interrupt() {
+		public final void interrupt() {
 			die(new InterruptedException());
 		}
 
 		@Override
-		protected void die(Throwable cause) {
+		protected final void die(Throwable cause) {
 			super.die(cause);
 			try {
 				channel.sendClose();
-			} catch (IOException e) {
+			} catch (final IOException e) {
+				UndertowLogger.ROOT_LOGGER.error("Exception while closing websocket channel during actor death", e);
 				throw new RuntimeException(e);
 			}
 		}
 
 		@Override
-		public String toString() {
+		public final String toString() {
 			return "WebSocketActor{" + "webActor=" + webActor + '}';
 		}
 	}
 
-	private static class WebSocketChannelAdapter implements SendPort<WebDataMessage> {
+	private static final class WebSocketChannelAdapter implements SendPort<WebDataMessage> {
 		WebSocketChannel channel;
 
 		@Override
-		public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
+		public final void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
 			trySend(message);
 		}
 
 		@Override
-		public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+		public final boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
 			return trySend(message);
 		}
 
 		@Override
-		public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
+		public final boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
 			return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
 		}
 
 		@Override
-		public boolean trySend(WebDataMessage message) {
+		public final boolean trySend(WebDataMessage message) {
 			if (!message.isBinary())
 				WebSockets.sendText(message.getStringBody(), channel, null);
 			else
@@ -373,7 +373,8 @@ public class WebActorHandler implements HttpHandler {
 				}
 
 				@Override
-				protected void error(IOException e) {
+				protected final void error(IOException e) {
+					UndertowLogger.ROOT_LOGGER.error("Exception while reading HTTP request", e);
 					throw new RuntimeException(e);
 				}
 			};
@@ -381,7 +382,7 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		protected HttpResponse handleLifecycleMessage(LifecycleMessage m) {
+               protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
 			if (m instanceof ExitMessage) {
 				ExitMessage em = (ExitMessage) m;
 				if (em.getActor() != null && em.getActor().equals(webActor))
@@ -391,12 +392,12 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		protected void throwIn(RuntimeException e) {
+		protected final void throwIn(RuntimeException e) {
 			die(e);
 		}
 
 		@Override
-		protected void interrupt() {
+		protected final void interrupt() {
 			die(new InterruptedException());
 		}
 
@@ -410,7 +411,7 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		public String toString() {
+               public final String toString() {
 			return "HttpActorAdapter{" + "webActor=" + webActor + '}';
 		}
 	}
@@ -434,23 +435,23 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
+		public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
 			trySend(message);
 		}
 
 		@Override
-		public boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+		public final boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
 			send(message);
 			return true;
 		}
 
 		@Override
-		public boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
+		public final boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
 			return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
 		}
 
 		@Override
-		public boolean trySend(final HttpResponse message) {
+		public final boolean trySend(final HttpResponse message) {
 			final HttpRequestWrapper undertowRequest = (HttpRequestWrapper) message.getRequest();
 			final HttpServerExchange xch = undertowRequest.xch;
 
@@ -509,7 +510,8 @@ public class WebActorHandler implements HttpHandler {
 											handleSSEStart(httpStreamActorAdapter, message, channel);
 										}
 									});
-								} catch (InterruptedException | ExecutionException e) {
+								} catch (final InterruptedException | ExecutionException e) {
+									UndertowLogger.ROOT_LOGGER.error("Exception while handling SSE start response event", e);
 									throw new RuntimeException(e);
 								}
 							}
@@ -518,7 +520,8 @@ public class WebActorHandler implements HttpHandler {
 					} else {
 						handleSSEStart(httpStreamActorAdapter, message, sink);
 					}
-				} catch (Exception e) {
+				} catch (final Exception e) {
+					UndertowLogger.ROOT_LOGGER.error("Exception while sending SSE start response", e);
 					throw new RuntimeException(e);
 				}
 			} else {
@@ -551,29 +554,29 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		public void close() {
+               public final void close() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public void close(Throwable t) {
+               public final void close(Throwable t) {
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	private static class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
+	private static final class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
 		private final HttpStreamChannelAdapter channelAdapter;
 
 		private volatile boolean dead;
 
-		public HttpStreamActorAdapter(HttpServerExchange xch) {
+		HttpStreamActorAdapter(HttpServerExchange xch) {
 			super(xch.toString(), new HttpStreamChannelAdapter(xch));
 			((HttpStreamChannelAdapter) (SendPort) mailbox()).actor = this;
 			this.channelAdapter = (HttpStreamChannelAdapter) (SendPort) mailbox();
 		}
 
 		@Override
-		protected WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
+		protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
 			if (m instanceof ShutdownMessage) {
 				die(null);
 			}
@@ -581,17 +584,17 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		protected void throwIn(RuntimeException e) {
+		protected final void throwIn(RuntimeException e) {
 			die(e);
 		}
 
 		@Override
-		public void interrupt() {
+		public final void interrupt() {
 			die(new InterruptedException());
 		}
 
 		@Override
-		protected void die(Throwable cause) {
+		protected final void die(Throwable cause) {
 			if (dead)
 				return;
 			this.dead = true;
@@ -600,7 +603,7 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		public String toString() {
+		public final String toString() {
 			return "HttpStreamActorAdapter{request + " + getName() + "}";
 		}
 
@@ -609,32 +612,29 @@ public class WebActorHandler implements HttpHandler {
 		}
 	}
 
-	private static class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
+       private static final class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
 		final HttpServerExchange xch;
 
 		HttpStreamActorAdapter actor;
 		StreamSinkChannel channel;
 
-		public HttpStreamChannelAdapter(HttpServerExchange xch) {
+		HttpStreamChannelAdapter(HttpServerExchange xch) {
 			this.xch = xch;
 		}
 
 		@Override
-		@Suspendable
-		public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
+		public final void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
 			trySend(message);
 		}
 
 		@Override
-		@Suspendable
-		public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+		public final boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
 			send(message);
 			return true;
 		}
 
 		@Override
-		@Suspendable
-		public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
+		public final boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
 			return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
 		}
 
@@ -665,12 +665,12 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		public void close() {
+		public final void close() {
 			xch.endExchange();
 		}
 
 		@Override
-		public void close(Throwable t) {
+		public final void close(Throwable t) {
 			close();
 		}
 	}
@@ -688,21 +688,21 @@ public class WebActorHandler implements HttpHandler {
 	}
 
 	private static void sendHttpResponse(HttpServerExchange xch, int statusCode, String body) {
-		xch.setResponseCode(statusCode);
+		xch.setStatusCode(statusCode);
 		if (body != null)
 			xch.getResponseSender().send(body);
 		xch.endExchange();
 	}
 
 	private static void sendHttpResponse(HttpServerExchange xch, int statusCode, ByteBuffer body) {
-		xch.setResponseCode(statusCode);
+		xch.setStatusCode(statusCode);
 		if (body != null)
 			xch.getResponseSender().send(body);
 		xch.endExchange();
 	}
 
 	private static void sendHttpRedirect(HttpServerExchange xch, String path) {
-		xch.setResponseCode(StatusCodes.FOUND);
+		xch.setStatusCode(StatusCodes.FOUND);
 		xch.getResponseHeaders().add(Headers.LOCATION, xch.getProtocol() + "://" + xch.getHostAndPort() + path);
 		xch.endExchange();
 	}

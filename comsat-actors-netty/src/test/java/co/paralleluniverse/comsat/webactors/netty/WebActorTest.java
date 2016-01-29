@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
+import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -121,7 +122,9 @@ public class WebActorTest extends AbstractWebActorTest {
 
 		ch = b.bind(INET_PORT).sync();
 
-		System.out.println("Server is up");
+		AbstractEmbeddedServer.waitUrlAvailable("http://localhost:" + INET_PORT);
+
+		System.err.println("Server is up");
 	}
 
 	@Before
