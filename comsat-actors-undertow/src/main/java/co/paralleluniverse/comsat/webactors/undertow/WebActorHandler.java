@@ -15,22 +15,19 @@ package co.paralleluniverse.comsat.webactors.undertow;
 
 import co.paralleluniverse.actors.*;
 import co.paralleluniverse.common.util.Pair;
-import co.paralleluniverse.common.util.SystemProperties;
 import co.paralleluniverse.comsat.webactors.*;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
 import co.paralleluniverse.strands.concurrent.ReentrantLock;
-import com.google.common.base.Charsets;
 import io.undertow.Handlers;
+import io.undertow.UndertowLogger;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.CookieImpl;
-import io.undertow.server.session.*;
 import io.undertow.util.*;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.*;
@@ -41,7 +38,6 @@ import org.xnio.ChannelListeners;
 import org.xnio.channels.StreamSinkChannel;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -61,8 +57,6 @@ public class WebActorHandler implements HttpHandler {
 
 	public interface Context {
 		boolean isValid();
-
-		void invalidate();
 
 		ActorRef<? extends WebMessage> getRef();
 		Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass();
@@ -85,8 +79,7 @@ public class WebActorHandler implements HttpHandler {
 			this.created = new Date().getTime();
 		}
 
-		@Override
-		public final void invalidate() {
+		private void invalidate() {
 			attachments.clear();
 			valid = false;
 		}
@@ -112,22 +105,16 @@ public class WebActorHandler implements HttpHandler {
 
 	private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
 
-	private final SessionAttachmentHandler sessionHandler;
 	private final ContextProvider selector;
 
 	public WebActorHandler(ContextProvider selector) {
 		this.selector = selector;
 		// this.continueHandler = Handlers.httpContinueRead(null);
-		SessionManager sessionManager = new InMemorySessionManager("SESSION_MANAGER");
-		SessionCookieConfig sessionConfig = new SessionCookieConfig();
-		this.sessionHandler = new SessionAttachmentHandler(sessionManager, sessionConfig);
 	}
 
 	@Override
-	public void handleRequest(final HttpServerExchange xch) throws Exception {
 	public final void handleRequest(final HttpServerExchange xch) throws Exception {
 		// continueHandler.handleRequest(xch);
-		sessionHandler.handleRequest(xch);
 
 		final Context context = selector.get(xch);
 		assert context != null;
@@ -154,6 +141,8 @@ public class WebActorHandler implements HttpHandler {
 					}
 
 					final WebSocketActorAdapter webSocketActor = (WebSocketActorAdapter) internalActor;
+
+					xch.dispatch(); // Start async
 
 					// Handle with websocket
 					Handlers.websocket(new WebSocketConnectionCallback() {
@@ -193,17 +182,15 @@ public class WebActorHandler implements HttpHandler {
 
 					return;
 				} else if (handlesWithHttp(uri, context.getWebActorClass())) {
-					xch.dispatch(); // Start async
-
 					//noinspection ConstantConditions
 					if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
 						//noinspection unchecked
-						internalActor = new HttpActorAdapter(context, (ActorRef<HttpRequest>) userActorRef);
+						internalActor = HttpActorAdapter.INSTANCE;
 						addActorToContextAndUnlock(context, internalActor, lock);
 					}
 
-					//noinspection ConstantConditions
-					((HttpActorAdapter) internalActor).service(xch);
+					//noinspection unchecked
+					((HttpActorAdapter) internalActor).service(xch, (ActorRef<? super HttpRequest>) userActorRef);
 					return;
 				}
 			}
@@ -230,7 +217,6 @@ public class WebActorHandler implements HttpHandler {
 			super(webActor.getName(), new WebSocketChannelAdapter());
 			this.channelAdapter = (WebSocketChannelAdapter) (SendPort) mailbox();
 			this.webActor = webActor;
-			watch(webActor);
 		}
 
 		final void setChannel(WebSocketChannel channel) {
@@ -319,34 +305,30 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		public void close() {
+		public final void close() {
 			try {
 				channel.sendClose();
-			} catch (IOException e) {
+			} catch (final IOException e) {
+				UndertowLogger.ROOT_LOGGER.error("Exception while closing websocket channel", e);
+
 				throw new RuntimeException(e);
 			}
 		}
 
 		@Override
-		public void close(Throwable t) {
+		public final void close(Throwable t) {
 			close();
 		}
 	}
 
-	private static class HttpActorAdapter extends FakeActor<HttpResponse> {
-		final ActorRef<? super HttpRequest> webActor;
-		private final Context context;
-		private volatile boolean dead;
+	private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
+		static HttpActorAdapter INSTANCE = new HttpActorAdapter();
 
-		public HttpActorAdapter(Context context, ActorRef<? super HttpRequest> webActor) {
-			super(webActor.getName(), new HttpChannelAdapter(context));
-
-			this.context = context;
-			this.webActor = webActor;
-			watch(webActor);
+		private HttpActorAdapter() {
+			super("HttpActorAdapter", HttpChannelAdapter.INSTANCE);
 		}
 
-		void service(final HttpServerExchange xch) throws SuspendExecution {
+		final void service(final HttpServerExchange xch, final ActorRef<? super HttpRequest> userActor) throws SuspendExecution {
 			if (isDone()) {
 				@SuppressWarnings("ThrowableResultOfMethodCallIgnored") final Throwable deathCause = getDeathCause();
 				if (deathCause != null)
@@ -356,20 +338,12 @@ public class WebActorHandler implements HttpHandler {
 				return;
 			}
 
-			final String charset = xch.getRequestCharset();
-			final StringReadChannelListener l = new StringReadChannelListener(xch.getConnection().getBufferPool()) {
+			final ByteArrayReadChannelListener l = new ByteArrayReadChannelListener(xch.getConnection().getByteBufferPool()) {
 				@Override
-				protected void stringDone(final String s) {
-					new Fiber(new SuspendableRunnable() {
-						@Override
-						public void run() throws SuspendExecution, InterruptedException {
-							try {
-								webActor.send(new HttpRequestWrapper(ref(), xch, ByteBuffer.wrap(charset != null ? s.getBytes(charset) : s.getBytes(Charsets.ISO_8859_1.name()))));
-							} catch (final UnsupportedEncodingException ex) {
-								throw new RuntimeException(ex);
-							}
-						}
-					}).start();
+				protected final void byteArrayDone(final byte[] ba) {
+					xch.dispatch(); // Start async
+
+					new Fiber(new RequestSendingFiber(ref(), userActor, xch, ba)).start();
 				}
 
 				@Override
@@ -382,12 +356,7 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-               protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
-			if (m instanceof ExitMessage) {
-				ExitMessage em = (ExitMessage) m;
-				if (em.getActor() != null && em.getActor().equals(webActor))
-					die(em.getCause());
-			}
+		protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
 			return null;
 		}
 
@@ -402,37 +371,35 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		protected void die(Throwable cause) {
-			if (dead)
-				return;
-			this.dead = true;
-			super.die(cause);
-			context.invalidate();
+		public final String toString() {
+			return "HttpActorAdapter";
 		}
 
-		@Override
-               public final String toString() {
-			return "HttpActorAdapter{" + "webActor=" + webActor + '}';
+		private static final class RequestSendingFiber implements SuspendableRunnable {
+			private final ActorRef from;
+			private final ActorRef<? super HttpRequest> userActor;
+			private final HttpServerExchange xch;
+			private final byte[] ba;
+
+			public RequestSendingFiber(ActorRef from, ActorRef<? super HttpRequest> userActor, HttpServerExchange xch, byte[] ba) {
+				this.from = from;
+				this.userActor = userActor;
+				this.xch = xch;
+				this.ba = ba;
+			}
+
+			@Override
+            public final void run() throws SuspendExecution, InterruptedException {
+				//noinspection unchecked
+				userActor.send(new HttpRequestWrapper(from, xch, ByteBuffer.wrap(ba)));
+            }
 		}
 	}
 
-	private static class HttpChannelAdapter implements SendPort<HttpResponse> {
-		private final static boolean trackSessionOnlyForSSE = SystemProperties.isEmptyOrTrue(HttpChannelAdapter.class.getName() + ".trackSessionOnlyForSSE");
+	private static final class HttpChannelAdapter implements SendPort<HttpResponse> {
+		static HttpChannelAdapter INSTANCE = new HttpChannelAdapter();
 
-		private final Context context;
-
-		public HttpChannelAdapter(Context context) {
-			this.context = context;
-		}
-
-		private static void startSession(HttpServerExchange xch, Context context) {
-			SessionManager sm = xch.getAttachment(SessionManager.ATTACHMENT_KEY);
-			SessionConfig sessionConfig = xch.getAttachment(SessionConfig.ATTACHMENT_KEY);
-			Session session = sm.getSession(xch, sessionConfig);
-			if (session == null)
-				session = sm.createSession(xch, sessionConfig);
-			session.setAttribute(ACTOR_KEY, context);
-		}
+		private HttpChannelAdapter() {}
 
 		@Override
 		public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
@@ -490,9 +457,6 @@ public class WebActorHandler implements HttpHandler {
 			final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(xch);
 
 			final boolean sseStarted = message.shouldStartActor();
-			if (sseStarted || !trackSessionOnlyForSSE)
-				startSession(xch, context);
-
 			if (sseStarted) {
 				try {
 					xch.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/event-stream; charset=UTF-8");
@@ -554,13 +518,13 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-               public final void close() {
-			throw new UnsupportedOperationException();
+		public final void close() {
+			// Stateless, single-instance HTTP write port, nothing to do
 		}
 
 		@Override
-               public final void close(Throwable t) {
-			throw new UnsupportedOperationException();
+		public final void close(Throwable t) {
+			UndertowLogger.ROOT_LOGGER.error("Exception while closing HTTP adapter", t);
 		}
 	}
 
@@ -607,19 +571,24 @@ public class WebActorHandler implements HttpHandler {
 			return "HttpStreamActorAdapter{request + " + getName() + "}";
 		}
 
-		public void setChannel(StreamSinkChannel channel) {
-			this.channelAdapter.channel = channel;
+		public final void setChannel(StreamSinkChannel channel) {
+			this.channelAdapter.setChannel(channel);
 		}
 	}
 
-       private static final class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
-		final HttpServerExchange xch;
+	private static final class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
+		private final HttpServerExchange xch;
+
+		private StreamSinkChannel channel;
 
 		HttpStreamActorAdapter actor;
-		StreamSinkChannel channel;
 
 		HttpStreamChannelAdapter(HttpServerExchange xch) {
 			this.xch = xch;
+		}
+
+		public final void setChannel(StreamSinkChannel channel) {
+			this.channel = channel;
 		}
 
 		@Override
@@ -639,28 +608,19 @@ public class WebActorHandler implements HttpHandler {
 		}
 
 		@Override
-		@Suspendable
-		public boolean trySend(final WebDataMessage res) {
-			try {
-				final String stringBody = res.getStringBody();
-				final String charset = xch.getRequestCharset();
-				try {
-					if (stringBody != null) {
-						if (charset != null)
-							new FiberWriteChannelListener(stringBody, Charset.forName(charset), channel).run();
-						else
-							new FiberWriteChannelListener(stringBody, channel).run();
-					} else {
-						new FiberWriteChannelListener(res.getByteBufferBody(), channel).run();
-					}
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			} catch (SuspendExecution e) {
-				throw new AssertionError(e);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
+		public final boolean trySend(final WebDataMessage res) {
+			final String stringBody = res.getStringBody();
+			final String charset = xch.getRequestCharset();
+			final StringWriteChannelListener l;
+			if (stringBody != null) {
+				if (charset != null)
+					l = new StringWriteChannelListener(stringBody, Charset.forName(charset));
+				else
+					l = new StringWriteChannelListener(stringBody);
+			} else {
+				l = new StringWriteChannelListener(res.getByteBufferBody());
 			}
+			l.setup(channel);
 			return true;
 		}
 

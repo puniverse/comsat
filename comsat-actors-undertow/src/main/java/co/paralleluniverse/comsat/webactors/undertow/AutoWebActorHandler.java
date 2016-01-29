@@ -22,9 +22,7 @@ import co.paralleluniverse.comsat.webactors.WebMessage;
 import io.undertow.UndertowLogger;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.Session;
-import io.undertow.server.session.SessionConfig;
-import io.undertow.server.session.SessionManager;
-import io.undertow.util.AttachmentKey;
+import io.undertow.util.Sessions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,111 +36,132 @@ import java.util.Map;
  * @author circlespainter
  */
 public final class AutoWebActorHandler extends WebActorHandler {
-	private static final AttachmentKey<Context> SESSION_KEY = AttachmentKey.create(Context.class);
+    private static final List<Class<?>> actorClasses = new ArrayList<>(4);
+    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
-	private static final List<Class<?>> actorClasses = new ArrayList<>(4);
-	private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    public AutoWebActorHandler() {
+        this(null, null);
+    }
 
-	public AutoWebActorHandler() {
-		this(null, null);
-	}
+    public AutoWebActorHandler(ClassLoader userClassLoader) {
+        this(userClassLoader, null);
+    }
 
-	public AutoWebActorHandler(ClassLoader userClassLoader) {
-		this(userClassLoader, null);
-	}
+    public AutoWebActorHandler(Map<Class<?>, Object[]> actorParams) {
+        this(null, actorParams);
+    }
 
-	public AutoWebActorHandler(Map<Class<?>, Object[]> actorParams) {
-		this(null, actorParams);
-	}
+    public AutoWebActorHandler(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
+        super(new AutoContextProvider(actorParams, userClassLoader));
+    }
 
-	public AutoWebActorHandler(final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-		super(new ContextProvider() {
-			@Override
-			public Context get(final HttpServerExchange xch) {
-				Context s = xch.getAttachment(SESSION_KEY);
-				if (s == null) {
-					final Session session = getSession(xch);
+    private static final class AutoActorContext extends DefaultContextImpl {
+        private final Map<Class<?>, Object[]> actorParams;
+        private final ClassLoader userClassLoader;
 
-					if (session != null) {
-						final Context context = (Context) session.getAttribute(ACTOR_KEY);
-						if (context != null && context.isValid())
-							xch.putAttachment(SESSION_KEY, s = context);
-						else
-							xch.putAttachment(SESSION_KEY, s = 	new DefaultContextImpl() {
-								private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
-								private ActorRef<? extends WebMessage> actorRef;
+        private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
+        private ActorRef<? extends WebMessage> actorRef;
 
-								{
-									final Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> p = autoCreateActor(xch);
-									if (p != null) {
-										actorRef = p.getFirst();
-										actorClass = p.getSecond();
-									}
-								}
+        public AutoActorContext(HttpServerExchange xch, Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
+            this.actorParams = actorParams;
+            this.userClassLoader = userClassLoader;
 
-								@Override
-								public ActorRef<? extends WebMessage> getRef() {
-									return actorRef;
-								}
+            final Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> p =
+                autoCreateActor(xch);
+            if (p != null) {
+                actorRef = p.getFirst();
+                actorClass = p.getSecond();
+            }
+        }
 
-								@Override
-								public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
-									return actorClass;
-								}
+        @Override
+        public final ActorRef<? extends WebMessage> getRef() {
+            return actorRef;
+        }
 
-								@SuppressWarnings("unchecked")
-								private Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> autoCreateActor(HttpServerExchange xch) {
-									registerActorClasses();
-									final String uri = xch.getRequestURI();
-									for (final Class<?> c : actorClasses) {
-										if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c))
-											return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>>(Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY)).spawn(), (Class<? extends ActorImpl<? extends WebMessage>>) c);
-									}
-									return null;
-								}
+        @Override
+        public final Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
+            return actorClass;
+        }
 
-								private synchronized void registerActorClasses() {
-									if (actorClasses.isEmpty()) {
-										try {
-											final ClassLoader classLoader = userClassLoader != null ? userClassLoader : this.getClass().getClassLoader();
-											ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
-												@Override
-												public void visit(String resource, URL url, ClassLoader cl) {
-													if (!ClassLoaderUtil.isClassFile(resource))
-														return;
-													final String className = ClassLoaderUtil.resourceToClass(resource);
-													try (InputStream is = cl.getResourceAsStream(resource)) {
-														if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
-															registerWebActor(cl.loadClass(className));
-													} catch (IOException | ClassNotFoundException e) {
-														UndertowLogger.ROOT_LOGGER.error("Exception while scanning class " + className + " for WebActor annotation", e);
-														throw new RuntimeException(e);
-													}
-												}
+        @SuppressWarnings("unchecked")
+        private Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> autoCreateActor(HttpServerExchange xch) {
+            registerActorClasses();
 
-												private void registerWebActor(Class<?> c) {
-													actorClasses.add(c);
-												}
-											});
-										} catch (IOException e) {
-											UndertowLogger.ROOT_LOGGER.error("IOException while scanning classes for WebActor annotation", e);									}
-									}
-								}
-							}
-						);
-					}
-				}
-				return s;
-			}
+            final String uri = xch.getRequestURI();
 
-			private Session getSession(HttpServerExchange xch) {
-				final SessionManager sm = xch.getAttachment(SessionManager.ATTACHMENT_KEY);
-				final SessionConfig sessionConfig = xch.getAttachment(SessionConfig.ATTACHMENT_KEY);
-				final Session session = sm.getSession(xch, sessionConfig);
-				if (session == null)
-					return sm.createSession(xch, sessionConfig);
-				return session;
-			}
-		});
-	}
+            for (final Class<?> c : actorClasses) {
+                if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c))
+                    return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>>(
+                        Actor.newActor(new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY)).spawn(),
+                        (Class<? extends ActorImpl<? extends WebMessage>>) c
+                    );
+            }
+
+            return null;
+        }
+
+        private synchronized void registerActorClasses() {
+            if (actorClasses.isEmpty()) {
+                try {
+                    final ClassLoader classLoader = userClassLoader != null ? userClassLoader : this.getClass().getClassLoader();
+                    ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
+                        @Override
+                        public final void visit(String resource, URL url, ClassLoader cl) {
+                            if (!ClassLoaderUtil.isClassFile(resource))
+                                return;
+                            final String className = ClassLoaderUtil.resourceToClass(resource);
+                            try (final InputStream is = cl.getResourceAsStream(resource)) {
+                                if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
+                                    registerWebActor(cl.loadClass(className));
+                            } catch (final IOException | ClassNotFoundException e) {
+                                UndertowLogger.ROOT_LOGGER.error("Exception while scanning class " + className + " for WebActor annotation", e);
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                        private void registerWebActor(Class<?> c) {
+                            actorClasses.add(c);
+                        }
+                    });
+                } catch (final IOException e) {
+                    UndertowLogger.ROOT_LOGGER.error("IOException while scanning classes for WebActor annotation", e);
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    private static class AutoContextProvider implements ContextProvider {
+        private final Map<Class<?>, Object[]> actorParams;
+        private final ClassLoader userClassLoader;
+
+        public AutoContextProvider(Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
+            this.actorParams = actorParams;
+            this.userClassLoader = userClassLoader;
+        }
+
+        @Override
+        public final Context get(final HttpServerExchange xch) {
+            Context context;
+            Session session = null;
+            try {
+                session = Sessions.getOrCreateSession(xch);
+            } catch (final IllegalStateException ignored) {} // No session handler
+
+            if (session != null) {
+                context = (Context) session.getAttribute(ACTOR_KEY);
+                if (context == null || !context.isValid())
+                    session.setAttribute(ACTOR_KEY, context = newContext(xch));
+            } else {
+                context = newContext(xch);
+            }
+
+            return context;
+        }
+
+        private Context newContext(final HttpServerExchange xch) {
+            return new AutoActorContext(xch, actorParams, userClassLoader);
+        }
+    }
 }
