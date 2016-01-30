@@ -1,4 +1,4 @@
-(def quasar-pulsar-version "0.7.3")
+(def quasar-pulsar-version "0.7.4")
 
 (defproject co.paralleluniverse/comsat-ring-jetty9 "0.5.1-SNAPSHOT"
   :description "Comsat integration for the Ring Clojure web framework: Jetty 9 fiber-blocking adapter."
@@ -19,7 +19,7 @@
      [ring/ring-devel "1.4.0"]
      [ring/ring-servlet "1.4.0"]
 
-     [org.eclipse.jetty/jetty-server "9.3.2.v20150730"]
+     [org.eclipse.jetty/jetty-server "9.3.6.v20151106"]
 
      [org.slf4j/slf4j-simple "1.7.12"]
 
