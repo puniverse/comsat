@@ -567,11 +567,11 @@ If you prefer using auto-configuration, it is enough to use the `FiberSpringBoot
 
 Web Actors are [Quasar actors](http://puniverse.github.io/quasar/manual/actors.html) that receive and respond to messages from web clients. Web actors support HTTP, WebSocket and SSE (Server-Sent Events) messages and are a convenient, efficient, and natural method to implement backends for interactive web applications.
 
-Web Actors are deployed on a web server. Currently they can be deployed in any JavaEE 7 servlet container, as an [Underscore](http://underscore.io/) handler and as a [Netty](http://netty.io/) handler.
+Web Actors are deployed on a web server. Currently they can be deployed in any JavaEE 7 servlet container, as an [Undertow](http://undertow.io/) handler and as a [Netty](http://netty.io/) handler.
 
 ### Undertow deployment
 
-Deploying web actors on top of Underscore is as easy as using one of two Underscore handlers: either `AutoWebActorHandler` or `WebActorHandler`.
+Deploying web actors on top of Undertow is as easy as using one of two Underscore handlers: either `AutoWebActorHandler` or `WebActorHandler`.
 
 `AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there's no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be provided.
 
