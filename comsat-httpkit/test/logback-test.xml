@@ -1,4 +1,5 @@
 <!-- for jetty -->
+
 <configuration scan="false">
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
