@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -70,16 +70,16 @@ public class TomcatLoaderTest {
     }
 
     @Test
-    public void testGetDeployedWar() throws IOException, InterruptedException, Exception {
+    public void testGetDeployedWar() throws Exception {
         for (int i = 0; i < 10; i++) {
-            String result = client.execute(new HttpGet("http://localhost:8080/"), BASIC_RESPONSE_HANDLER);
+            final String result = client.execute(new HttpGet("http://localhost:8080/"), BASIC_RESPONSE_HANDLER);
             assertTrue(result.contains("h2testdb"));
         }
     }
 
     private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
     public static void registerDB(final Tomcat tomcat, final String name, final String driver, final String url) {
-        ContextResource dbDsRes = new ContextResource();
+        final ContextResource dbDsRes = new ContextResource();
         dbDsRes.setName(name);
         dbDsRes.setAuth("Container");
         dbDsRes.setType("javax.sql.DataSource");
@@ -95,23 +95,23 @@ public class TomcatLoaderTest {
         tomcat.getServer().getGlobalNamingResources().addResource(dbDsRes);
     }
 
-    public static void loadWars(final Tomcat tomcat, String baseDir, String warDir, String path) throws ServletException {
-        File webapps = new File(baseDir + "/webapps");
+    public static void loadWars(final Tomcat tomcat, String baseDir, String warDir, String path) throws ServletException, IOException {
+        final File webapps = new File(baseDir + "/webapps");
+        //noinspection ResultOfMethodCallIgnored
         FileUtils.deleteRecursive(webapps);
         webapps.mkdirs();
         tomcat.setBaseDir(baseDir);
 
         // scan for the first war
+        //noinspection ConstantConditions
         for (final File fileEntry : new File(warDir).listFiles()) {
             System.out.println("Found: " + fileEntry.getName());
             if (fileEntry.getName().endsWith(".war")) {
-                String war = fileEntry.getName().substring(0, fileEntry.getName().length() - ".war".length());
+                final String war = fileEntry.getName().substring(0, fileEntry.getName().length() - ".war".length());
                 System.out.println("Loading WAR: " + war + " to: http://localhost:8080" + path);
                 tomcat.addWebapp(path, fileEntry.getAbsolutePath());
                 break;
             }
         }
     }
-
-
 }

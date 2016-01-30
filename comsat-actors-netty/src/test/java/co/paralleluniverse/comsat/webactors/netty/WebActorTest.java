@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2015-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -39,6 +39,9 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+/**
+ * @author circlespainter
+ */
 @RunWith(Parameterized.class)
 public class WebActorTest extends AbstractWebActorTest {
 	private static final int INET_PORT = 8080;
