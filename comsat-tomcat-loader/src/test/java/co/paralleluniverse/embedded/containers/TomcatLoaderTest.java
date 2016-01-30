@@ -16,8 +16,6 @@ package co.paralleluniverse.embedded.containers;
 import io.undertow.util.FileUtils;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
 import javax.servlet.ServletException;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.http.client.config.RequestConfig;
@@ -30,27 +28,12 @@ import org.junit.After;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
 public class TomcatLoaderTest {
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-            //            {JettyServer.class},
-            {TomcatServer.class}, //            {UndertowServer.class},
-        });
-    }
-    private final Class<? extends EmbeddedServer> cls;
 //    private EmbeddedServer instance;
     private CloseableHttpClient client;
     private Tomcat tomcat;
-
-    public TomcatLoaderTest(Class<? extends EmbeddedServer> cls) {
-        this.cls = cls;
-    }
 
     @Before
     public void setUp() throws Exception {
@@ -97,8 +80,8 @@ public class TomcatLoaderTest {
 
     public static void loadWars(final Tomcat tomcat, String baseDir, String warDir, String path) throws ServletException, IOException {
         final File webapps = new File(baseDir + "/webapps");
+        FileUtils.deleteRecursive(webapps.toPath());
         //noinspection ResultOfMethodCallIgnored
-        FileUtils.deleteRecursive(webapps);
         webapps.mkdirs();
         tomcat.setBaseDir(baseDir);
 

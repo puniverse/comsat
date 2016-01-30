@@ -18,6 +18,8 @@ import co.paralleluniverse.actors.ActorImpl;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -93,16 +95,19 @@ public class WebActorTest extends AbstractWebActorTest {
 		});
 	}
 
-	private static ChannelFuture ch;
-	private static NioEventLoopGroup group;
-	private static Callable<WebActorHandler> webActorHandlerCreatorInEffect;
+	private ChannelFuture ch;
+	private NioEventLoopGroup group;
+	private Callable<WebActorHandler> webActorHandlerCreatorInEffect;
 
 	public WebActorTest(Callable<WebActorHandler> webActorHandlerCreator) {
 		webActorHandlerCreatorInEffect = webActorHandlerCreator;
 	}
 
-	@BeforeClass
-	public static void setUp() throws Exception {
+	@Before
+	public void setUp() throws InterruptedException, IOException {
+		System.out.println("Clearing sessions");
+		WebActorHandler.sessions.clear();
+
 		group = new NioEventLoopGroup();
 		final ServerBootstrap b = new ServerBootstrap();
 		b.group(group)
@@ -130,14 +135,8 @@ public class WebActorTest extends AbstractWebActorTest {
 		System.err.println("Server is up");
 	}
 
-	@Before
-	public void clearSessions() {
-		System.out.println("Clearing sessions");
-		WebActorHandler.sessions.clear();
-	}
-
-	@AfterClass
-	public static void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		ch.channel().close();
 		group.shutdownGracefully().sync();
 
