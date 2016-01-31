@@ -571,7 +571,7 @@ Web Actors are deployed on a web server. Currently they can be deployed in any J
 
 ### Undertow deployment
 
-Deploying web actors on top of Undertow is as easy as using one of two Underscore handlers: either `AutoWebActorHandler` or `WebActorHandler`.
+Deploying web actors on top of Undertow is as easy as using one of two Undertow handlers: either `AutoWebActorHandler` or `WebActorHandler`.
 
 `AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there's no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be provided.
 
