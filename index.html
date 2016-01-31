@@ -857,11 +857,11 @@ For&nbsp;example:</p>
 
 <p>Web Actors are <a href="http://puniverse.github.io/quasar/manual/actors.html">Quasar actors</a> that receive and respond to messages from web clients. Web actors support <span class="caps">HTTP</span>, WebSocket and <span class="caps">SSE</span> (Server-Sent Events) messages and are a convenient, efficient, and natural method to implement backends for interactive web&nbsp;applications.</p>
 
-<p>Web Actors are deployed on a web server. Currently they can be deployed in any Java<span class="caps">EE</span> 7 servlet container, as an <a href="http://underscore.io/">Underscore</a> handler and as a <a href="http://netty.io/">Netty</a>&nbsp;handler.</p>
+<p>Web Actors are deployed on a web server. Currently they can be deployed in any Java<span class="caps">EE</span> 7 servlet container, as an <a href="http://undertow.io/">Undertow</a> handler and as a <a href="http://netty.io/">Netty</a>&nbsp;handler.</p>
 
 <h3 id="undertow-deployment">Undertow&nbsp;deployment</h3>
 
-<p>Deploying web actors on top of Underscore is as easy as using one of two Underscore handlers: either <code>AutoWebActorHandler</code> or&nbsp;<code>WebActorHandler</code>.</p>
+<p>Deploying web actors on top of Undertow is as easy as using one of two Underscore handlers: either <code>AutoWebActorHandler</code> or&nbsp;<code>WebActorHandler</code>.</p>
 
 <p><code>AutoWebActorHandler</code> will automatically scan the classpath for classes with the <code>@WebActor</code> annotation upon first use and will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there’s no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be&nbsp;provided.</p>
 
