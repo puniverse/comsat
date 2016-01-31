@@ -1,4 +1,4 @@
-(def quasar-pulsar-version "0.7.3")
+(def quasar-pulsar-version "0.7.4")
 
 (defproject co.paralleluniverse/comsat-httpkit "0.6.0-SNAPSHOT"
   :description "'httpkit' Quasar integration"
