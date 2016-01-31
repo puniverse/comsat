@@ -19,4 +19,5 @@ org.glassfish.jersey.server.ApplicationHandler.handle
 org.glassfish.jersey.servlet.internal.ResponseWriter.failure
 org.glassfish.jersey.servlet.internal.ResponseWriter.rethrow
 org.glassfish.jersey.servlet.WebComponent.service
+org.glassfish.jersey.servlet.WebComponent.serviceImpl
 org.glassfish.jersey.servlet.ServletContainer.service

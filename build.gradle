@@ -46,69 +46,68 @@ subprojects {
 
     ext.quasarVer       = '0.7.4'
 
-    ext.jettyVer        = '9.2.13.v20150730' // '9.3.0.v20150612' requires JDK8
-    ext.tomcatVer       = '8.0.26'
+    ext.jettyVer        = '9.2.14.v20151106' // '9.3.x' requires JDK8
+    ext.tomcatVer       = '8.0.28'
     ext.undertowVer     = '1.3.15.Final'
     ext.nettyVer        = '4.0.33.Final'
 
     ext.osgiVer         = '6.0.0'
-    ext.jerseyVer       = '2.19'
-    ext.hk2apiVer       = '2.4.0-b31'
+    ext.jerseyVer       = '2.22.1'
+    ext.hk2apiVer       = '2.4.0-b34'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
     ext.servletVer      = '3.0.1'
     ext.jaxrsVer        = '2.0.1'
     ext.websocketApiVer = '1.0'
 
-    ext.dropwizardVer   = '0.8.3'
+    ext.dropwizardVer   = '0.9.1'
     ext.jdbiVer         = '2.63.1'
 
     ext.retrofitVer     = '1.9.0'
-    ext.jooqVer         = '3.6.2'
-    ext.slf4jApiVer     = '1.7.12'
+    ext.jooqVer         = '3.6.4'
+    ext.slf4jApiVer     = '1.7.13'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '18.0'
 
-    ext.okhttpVer       = '2.4.0'
+    ext.okhttpVer       = '2.6.0'
 
-    ext.apacheAsyncClientVer   = '4.1'
-    ext.httpCoreVer            = '4.4.1'
-    ext.httpClientVer          = '4.5'
+    ext.apacheAsyncClientVer   = '4.1.1'
+    ext.httpCoreVer            = '4.4.4'
+    ext.httpClientVer          = '4.5.1'
 
     ext.junitVer               = '4.12'
-    ext.h2Ver                  = '1.4.188'
+    ext.h2Ver                  = '1.4.190'
 
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
-    ext.embedMongoVer                   = '1.47.0'
+    ext.embedMongoVer                   = '1.47.0' // TODO Upgrade and troubleshoot
 
     // ext.bytemanVer = '3.0.1'
 
     // Spring projects
-    ext.springSecurityVer               = '4.0.2.RELEASE'
-    ext.springVer                       = '4.1.7.RELEASE' // 4.2.0
-    ext.springBootVer                   = '1.2.5.RELEASE'
-    ext.aspectjVer                      = '1.8.6'
+    ext.springSecurityVer               = '4.0.3.RELEASE'
+    ext.springVer                       = '4.2.3.RELEASE'
+    ext.springBootVer                   = '1.3.0.RELEASE' // TODO check for more tests
+    ext.aspectjVer                      = '1.8.7'
 
     ext.commonsLoggingVer               = '1.2'
     ext.commonsBeanUtilsVer             = '1.9.2'
     ext.commonsDigesterVer              = '2.1'
-    ext.commonsCollectionsVer           = '3.2.1'
+    ext.commonsCollectionsVer           = '3.2.2'
     ext.velocityVer                     = '1.7'
     ext.hamcrestVer                     = '1.3'
     ext.jspVer                          = '2.2.0.v201112011158'
-    ext.jqueryVer                       = '2.1.3'
-    ext.snakeYamlVer                    = '1.15'
+    ext.jqueryVer                       = '2.1.4'
+    ext.snakeYamlVer                    = '1.16'
     ext.javaxELVer                      = '3.0.1-b05'
     ext.thymeleafVer                    = '2.1.4.RELEASE'
-    ext.hibernateValidatorVer           = '5.1.3.Final'
-    ext.jbossLoggingVer                 = '3.1.4.GA'
+    ext.hibernateValidatorVer           = '5.2.2.Final'
+    ext.jbossLoggingVer                 = '3.3.0.Final'
 
     ext.jstlVer                         = '1.2'
-    ext.h2Ver                           = '1.4.186'
-    ext.jolokiaVer                      = '1.2.3'
-    ext.hsqlVer                         = '2.3.2'
-    ext.bootstrapVer                    = '3.0.3'
-    ext.hibernateVer                    = '4.3.8.Final'
+    ext.jolokiaVer                      = '1.3.2'
+    ext.hsqlVer                         = '2.3.3'
+    ext.bootstrapVer                    = '3.3.5'
+    ext.hibernateVer                    = '4.3.11.Final'
 
     configurations.all {
         resolutionStrategy {
@@ -432,6 +431,12 @@ project (':comsat-okhttp') {
     }
 }
 
+project (':comsat-kafka') {
+    dependencies {
+        compile "org.apache.kafka:kafka-clients:0.8.2.2"
+    }
+}
+
 project (':comsat-retrofit') {
     dependencies {
         compile "com.squareup.retrofit:retrofit:$retrofitVer"
@@ -449,7 +454,7 @@ project (':comsat-retrofit') {
     }
 }
 
-project (':comsat-servlet') {
+project (':comsat-servlet') { // TODO Check seemingly harmless exceptions during tests
     dependencies {
         testCompile project(':comsat-test-utils')
     }
