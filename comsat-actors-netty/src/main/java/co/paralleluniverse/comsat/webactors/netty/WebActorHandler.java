@@ -16,6 +16,7 @@ package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.*;
 import co.paralleluniverse.common.util.Pair;
+import co.paralleluniverse.common.util.SystemProperties;
 import co.paralleluniverse.comsat.webactors.*;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
@@ -144,6 +145,9 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     protected final static Map<String, Context> sessions = Collections.synchronizedMap(new WeakHashMap<String, Context>());
     protected final static String TRACK_SESSION_PROP = HttpChannelAdapter.class.getName() + ".trackSession";
     protected final static String trackSession = System.getProperty(TRACK_SESSION_PROP, "sse");
+
+    protected final static String OMIT_DATE_HEADER_PROP = HttpChannelAdapter.class.getName() + ".omitDateHeader";
+    protected final static Boolean omitDateHeader = SystemProperties.isEmptyOrTrue(OMIT_DATE_HEADER_PROP);
 
     private static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
 
@@ -656,6 +660,9 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static void writeHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
+        if (!omitDateHeader && !res.headers().contains(DefaultHttpHeaders.Names.DATE))
+            DefaultHttpHeaders.addDateHeader(res, DefaultHttpHeaders.Names.DATE, new Date());
+
         // Send the response and close the connection if necessary.
         if (!HttpHeaders.isKeepAlive(req) || res.getStatus().code() != 200 || close == null || close) {
             res.headers().set(CONNECTION, HttpHeaders.Values.CLOSE);
