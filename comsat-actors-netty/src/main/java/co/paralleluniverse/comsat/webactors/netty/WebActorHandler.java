@@ -466,10 +466,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 HttpHeaders.setHeader(res, CONTENT_TYPE, ct);
             }
 
-            // This will copy the request content, which must still be referenceable, doing before the request handler
-            // unallocates it (unfortunately it is explicitly reference-counted in Netty)
-            final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
-
             final boolean sseStarted = message.shouldStartActor();
             if (trackSession(sseStarted)) {
                 final String sessionId = UUID.randomUUID().toString();
@@ -488,6 +484,14 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 }
                 res.headers().add(CONTENT_LENGTH, contentLength);
             }
+
+            final HttpStreamActorAdapter httpStreamActorAdapter;
+            if (sseStarted)
+                // This will copy the request content, which must still be referenceable, doing before the request handler
+                // unallocates it (unfortunately it is explicitly reference-counted in Netty)
+                httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
+            else
+                httpStreamActorAdapter = null;
 
             sendHttpResponse(ctx, req, res, false);
 
