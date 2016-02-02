@@ -397,8 +397,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static class HttpChannelAdapter implements SendPort<HttpResponse> {
-        private final Context actorContext;
         private final String httpResponseEncoderName;
+        private Context actorContext;
 
         public HttpChannelAdapter(Context actorContext, String httpResponseEncoderName) {
             this.actorContext = actorContext;
@@ -527,12 +527,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final void close() {
-            throw new UnsupportedOperationException();
+            actorContext = null;
         }
 
         @Override
         public final void close(Throwable t) {
-            throw new UnsupportedOperationException();
+            log.error("Exception while closing HTTP adapter", t);
         }
     }
 
