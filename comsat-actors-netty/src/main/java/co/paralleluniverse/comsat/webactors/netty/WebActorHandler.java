@@ -190,24 +190,24 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         final String uri = req.getUri();
 
-        final Context actorContext = selector.get(ctx, req);
-        assert actorContext != null;
+        final Context actorCtx = selector.get(ctx, req);
+        assert actorCtx != null;
 
-        final ReentrantLock lock = actorContext.getLock();
+        final ReentrantLock lock = actorCtx.getLock();
         assert lock != null;
 
         lock.lock();
 
         try {
-            final ActorRef<? extends WebMessage> userActorRef = actorContext.getRef();
-            ActorImpl internalActor = (ActorImpl) actorContext.getAttachments().get(ACTOR_KEY);
+            final ActorRef<? extends WebMessage> userActorRef = actorCtx.getRef();
+            ActorImpl internalActor = (ActorImpl) actorCtx.getAttachments().get(ACTOR_KEY);
 
             if (userActorRef != null) {
-                if (handlesWithWebSocket(uri, actorContext.getWebActorClass())) {
+                if (handlesWithWebSocket(uri, actorCtx.getWebActorClass())) {
                     if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
                         //noinspection unchecked
                         webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
-                        addActorToContextAndUnlock(actorContext, webSocketActor, lock);
+                        addActorToContextAndUnlock(actorCtx, webSocketActor, lock);
                     }
                     // Handshake
                     final WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(uri, null, true);
@@ -229,11 +229,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                         });
                     }
                     return;
-                } else if (handlesWithHttp(uri, actorContext.getWebActorClass())) {
+                } else if (handlesWithHttp(uri, actorCtx.getWebActorClass())) {
                     if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
                         //noinspection unchecked
-                        internalActor = new HttpActorAdapter(actorContext, httpResponseEncoderName);
-                        addActorToContextAndUnlock(actorContext, internalActor, lock);
+                        internalActor = new HttpActorAdapter(actorCtx, httpResponseEncoderName);
+                        addActorToContextAndUnlock(actorCtx, internalActor, lock);
                     }
                     //noinspection unchecked
                     ((HttpActorAdapter) internalActor).service(ctx, req, (ActorRef<HttpRequest>) userActorRef);
@@ -383,7 +383,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         private void service(ChannelHandlerContext ctx, FullHttpRequest req, ActorRef<? super HttpRequest> webActor) throws SuspendExecution {
             if (isDone()) {
-                @SuppressWarnings("ThrowableResultOfMethodCallIgnored") Throwable deathCause = getDeathCause();
+                @SuppressWarnings("ThrowableResultOfMethodCallIgnored") final Throwable deathCause = getDeathCause();
                 if (deathCause != null)
                     sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + deathCause.getMessage()).getBytes())), false);
                 else
@@ -525,12 +525,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         @Override
-        public void close() {
+        public final void close() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void close(Throwable t) {
+        public final void close(Throwable t) {
             throw new UnsupportedOperationException();
         }
     }
