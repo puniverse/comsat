@@ -60,11 +60,12 @@ public class WebActorHandler implements HttpHandler {
 
         ActorRef<? extends WebMessage> getRef();
 
-        Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass();
-
         ReentrantLock getLock();
 
         Map<String, Object> getAttachments();
+
+        boolean handlesWithWebSocket(String uri);
+        boolean handlesWithHttp(String uri);
     }
 
     public static abstract class DefaultContextImpl implements Context {
@@ -130,7 +131,7 @@ public class WebActorHandler implements HttpHandler {
 
             final String uri = xch.getRequestURI();
             if (userActorRef != null) {
-                if (handlesWithWebSocket(uri, context.getWebActorClass())) {
+                if (context.handlesWithWebSocket(uri)) {
                     if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
 
                         @SuppressWarnings("unchecked") final ActorRef<WebMessage> userActorRef0 = (ActorRef<WebMessage>) userActorRef;
@@ -181,7 +182,7 @@ public class WebActorHandler implements HttpHandler {
                     }).handleRequest(xch);
 
                     return;
-                } else if (handlesWithHttp(uri, context.getWebActorClass())) {
+                } else if (context.handlesWithHttp(uri)) {
                     //noinspection ConstantConditions
                     if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
                         //noinspection unchecked
@@ -649,14 +650,6 @@ public class WebActorHandler implements HttpHandler {
         }
     }
 
-    static boolean handlesWithHttp(String uri, Class<?> actorClass) {
-        return match(uri, actorClass).equals("http");
-    }
-
-    static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
-        return match(uri, actorClass).equals("ws");
-    }
-
     static void sendHttpResponse(HttpServerExchange xch, int statusCode) {
         sendHttpResponse(xch, statusCode, (String) null);
     }
@@ -679,6 +672,14 @@ public class WebActorHandler implements HttpHandler {
         xch.setStatusCode(StatusCodes.FOUND);
         xch.getResponseHeaders().add(Headers.LOCATION, xch.getProtocol() + "://" + xch.getHostAndPort() + path);
         xch.endExchange();
+    }
+
+    static boolean handlesWithHttp(String uri, Class<?> actorClass) {
+        return match(uri, actorClass).equals("http");
+    }
+
+    static boolean handlesWithWebSocket(String uri, Class<?> actorClass) {
+        return match(uri, actorClass).equals("ws");
     }
 
     private static String match(String uri, Class<?> actorClass) {

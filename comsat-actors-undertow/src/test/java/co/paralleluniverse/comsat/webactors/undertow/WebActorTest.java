@@ -53,13 +53,18 @@ public class WebActorTest extends AbstractWebActorTest {
 					return new WebActorHandler.DefaultContextImpl() {
 						@SuppressWarnings("unchecked")
 						@Override
-						public ActorRef<? extends WebMessage> getRef() {
+						public final ActorRef<? extends WebMessage> getRef() {
 							return actorRef;
 						}
 
 						@Override
-						public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
-							return UndertowWebActor.class;
+						public final boolean handlesWithWebSocket(String uri) {
+							return uri.startsWith("/ws");
+						}
+
+						@Override
+						public final boolean handlesWithHttp(String uri) {
+							return !handlesWithWebSocket(uri);
 						}
 					};
 				}

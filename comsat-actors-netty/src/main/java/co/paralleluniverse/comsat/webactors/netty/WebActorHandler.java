@@ -61,11 +61,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         ActorRef<? extends WebMessage> getRef();
 
-        Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass();
-
         ReentrantLock getLock();
 
         Map<String, Object> getAttachments();
+
+        boolean handlesWithHttp(String uri);
+        boolean handlesWithWebSocket(String uri);
     }
 
     public static abstract class DefaultContextImpl implements Context {
@@ -203,7 +204,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             ActorImpl internalActor = (ActorImpl) actorCtx.getAttachments().get(ACTOR_KEY);
 
             if (userActorRef != null) {
-                if (handlesWithWebSocket(uri, actorCtx.getWebActorClass())) {
+                if (actorCtx.handlesWithWebSocket(uri)) {
                     if (internalActor == null || !(internalActor instanceof WebSocketActorAdapter)) {
                         //noinspection unchecked
                         webSocketActor = new WebSocketActorAdapter(ctx, (ActorRef<? super WebMessage>) userActorRef);
@@ -229,7 +230,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                         });
                     }
                     return;
-                } else if (handlesWithHttp(uri, actorCtx.getWebActorClass())) {
+                } else if (actorCtx.handlesWithHttp(uri)) {
                     if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
                         //noinspection unchecked
                         internalActor = new HttpActorAdapter(actorCtx, httpResponseEncoderName);

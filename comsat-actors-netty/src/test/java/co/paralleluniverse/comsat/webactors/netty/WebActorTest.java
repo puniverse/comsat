@@ -63,8 +63,13 @@ public class WebActorTest extends AbstractWebActorTest {
         }
 
         @Override
-        public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
-            return NettyWebActor.class;
+        public final boolean handlesWithWebSocket(String uri) {
+            return uri.startsWith("/ws");
+        }
+
+        @Override
+        public final boolean handlesWithHttp(String uri) {
+            return !handlesWithWebSocket(uri);
         }
     };
 

@@ -146,8 +146,13 @@ public final class AutoWebActorHandler extends WebActorHandler {
         }
 
         @Override
-        public final Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
-            return actorClass;
+        public final boolean handlesWithHttp(String uri) {
+            return WebActorHandler.handlesWithHttp(uri, actorClass);
+        }
+
+        @Override
+        public final boolean handlesWithWebSocket(String uri) {
+            return WebActorHandler.handlesWithWebSocket(uri, actorClass);
         }
 
         @SuppressWarnings("unchecked")
@@ -155,7 +160,7 @@ public final class AutoWebActorHandler extends WebActorHandler {
             registerActorClasses();
             final String uri = req.getUri();
             for (final Class<?> c : actorClasses) {
-                if (handlesWithHttp(uri, c) || handlesWithWebSocket(uri, c))
+                if (WebActorHandler.handlesWithHttp(uri, c) || WebActorHandler.handlesWithWebSocket(uri, c))
                     return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>>(
                         Actor.newActor(
                             new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY)
