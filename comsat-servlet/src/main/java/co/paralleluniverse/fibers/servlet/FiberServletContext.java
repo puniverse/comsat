@@ -108,16 +108,22 @@ class FiberServletContext implements ServletContext {
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public Servlet getServlet(String name) throws ServletException {
         return sc.getServlet(name);
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public Enumeration<Servlet> getServlets() {
         return sc.getServlets();
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public Enumeration<String> getServletNames() {
         return sc.getServletNames();
     }
@@ -128,6 +134,8 @@ class FiberServletContext implements ServletContext {
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void log(Exception exception, String msg) {
         sc.log(exception, msg);
     }
@@ -308,6 +316,7 @@ class FiberServletContext implements ServletContext {
     }
 
     @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object obj) {
         return sc.equals(obj);
     }

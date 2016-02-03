@@ -57,6 +57,7 @@ class FiberServletConfig implements ServletConfig {
     }
 
     @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object obj) {
         return scon.equals(obj);
     }

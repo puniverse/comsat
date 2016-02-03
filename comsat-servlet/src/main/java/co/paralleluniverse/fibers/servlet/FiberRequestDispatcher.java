@@ -37,7 +37,7 @@ class FiberRequestDispatcher implements RequestDispatcher {
 
     @Override
     public void forward(ServletRequest request, final ServletResponse response) throws ServletException, IOException {
-        ServletRequest baseReq = ((FiberServletRequest) request).getReq();
+        final ServletRequest baseReq = ((FiberServletRequest) request).getReq();
         if (baseReq != ac.getRequest() || response != ac.getResponse())
             throw new UnsupportedOperationException("Changing the request or the response in forward is not yet supported from fiber servlet");
         response.reset();

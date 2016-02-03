@@ -168,6 +168,8 @@ public class FiberServletRequest implements ServletRequest {
     }
 
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public String getRealPath(String path) {
         return req.getRealPath(path);
     }
@@ -233,6 +235,7 @@ public class FiberServletRequest implements ServletRequest {
     }
 
     @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object obj) {
         return req.equals(obj);
     }
