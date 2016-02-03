@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -38,6 +38,9 @@ import javax.servlet.http.HttpServletResponse;
  * @author circlespainter
  */
 public class FiberHttpServlet extends HttpServlet {
+    private static final String timeoutS = System.getProperty(FiberHttpServlet.class.getName() + ".asyncTimeout");
+    private static final Long timeout = timeoutS != null ? Long.parseLong(timeoutS) : 120000L;
+
     private static final long serialVersionUID = 1L;
     
     private static final String FIBER_ASYNC_REQUEST_EXCEPTION = "co.paralleluniverse.fibers.servlet.exception";
