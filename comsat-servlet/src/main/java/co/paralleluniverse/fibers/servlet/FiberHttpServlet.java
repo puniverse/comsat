@@ -85,6 +85,8 @@ public class FiberHttpServlet extends HttpServlet {
 
     @Override
     public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+
         this.contextAD = new FiberServletContext(config.getServletContext(), currentAsyncContext);
 
         final String ss = config.getInitParameter("stack-size");
@@ -110,8 +112,6 @@ public class FiberHttpServlet extends HttpServlet {
         final String disableTF = config.getInitParameter(PROP_DISABLE_TOMCAT_ASYNC_FIXES);
         if (disableTF != null)
             disableTomcatAsyncFixes = disableTomcatAsyncFixesGlobal != null ? disableTomcatAsyncFixesGlobal : !isTomcat(config);
-
-        this.init();
     }
 
     protected final void setStackSize(int stackSize) {
