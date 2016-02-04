@@ -165,7 +165,7 @@ The full testsuite can be run with `gradle build`.
 
 ### Servlets
 
-Comsat supports the Servlet 3.x specification (Java EE 6) and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each on a separate [fiber](http://puniverse.github.io/quasar/manual/core.html#fibers). Calls to other web services or to a database are fiber- rather than thread-blocking. As a result, Comsat can serve many thousands of concurrent requests with only a handful of OS threads. You, on the other hand, don't need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat implementations.
+Comsat supports the Servlet 3.x specification (Java EE 6) and enables you to write servlets that can scale to many concurrent visitors, even if servicing each requests takes a very long time, or requires calling many other services. Under the hood, Comsat does this by turning each servlet request into an asynchronous request, and then services each on a separate [fiber](http://puniverse.github.io/quasar/manual/core.html#fibers). Calls to other web services or to a database can be fiber- rather than thread-blocking. As a result, Comsat can serve many thousands of concurrent requests with only a handful of OS threads. You, on the other hand, don't need to adopt a cumbersome asynchronous programming model. You can write the servlet code as you normally would, making synchronous (fiber-blocking) calls, provided that you use Comsat implementations.
 
 To write a Comsat (fiber-per-request) servlet, simply extend [`FiberHttpServlet`]({{javadoc}}/fibers/servlet/FiberHttpServlet.html) rather than the usual `javax.servlet.HttpServlet`, and either annotate it with `@WebServlet`, declare it in `web.xml` or use the programmatic [initializer API](http://docs.oracle.com/javaee/6/api/javax/servlet/ServletContainerInitializer.html). Note how the `service` and all the `doXXX` methods are [suspendable](http://puniverse.github.io/quasar/manual/core.html#fibers) since they're annotated with `@Suspendable`, although they don't declare throwing `SuspendExecution` in order to retain full servlet API compatibility.
 
@@ -178,11 +178,24 @@ Example:
 ~~~ java
 {% include_snippet FiberHttpServlet example ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
 ~~~
+
 Then you can simply add it as a regular servlet to you favorite servlet containter, e.g. for embedded Jetty:
 
 ~~~ java
 {% include_snippet servlet registration ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
 ~~~
+
+Some options can be configured globally via system properties or per-servlet through standard servlet configuration attributes:
+
+ * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.asyncTimeout` (ms): defines the asynchronous request's timeout (default = 120 seconds).
+ * The following features are enabled by default and they can add up to 8% overhead:
+   * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableSyncExceptions`: if present or `true` as a system property or if `true` as a servlet config option it will disable the translation of exceptions to standard synchronous server exceptions via `dispatch`.
+   * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableSyncForward`: if present or `true` as a system property or if `true` as a servlet config option it will disable the translation of async forward requests to standard synchronous forwards.
+ * The following workarounds are enabled by default only when running in their specific servlet container and they can add up to 3% overhead:
+   * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableJettyAsyncFixes`
+   * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableTomcatAsyncFixes`
+
+"Overhead" here means "percentage of execution time" and it has been measured in benchmarks with no request processing (immediate response) and `localhost` network.
 
 To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html).
 
@@ -578,14 +591,19 @@ Deploying web actors on top of Undertow is as easy as using one of two Undertow 
 Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-undertow`'s tests for more insight):
 
 ~~~ java
-server = Undertow.builder()
-        .addHttpListener(INET_PORT, "localhost")
-        .setHandler(new AutoWebActorHandler().build();
+final SessionManager sessionManager = new InMemorySessionManager("SESSION_MANAGER", 1, true);
+final SessionCookieConfig sessionConfig = new SessionCookieConfig();
+sessionConfig.setMaxAge(60);
+final SessionAttachmentHandler sessionAttachmentHandler =
+    new SessionAttachmentHandler(sessionManager, sessionConfig);
+
+server = Undertow.builder().addHttpListener(INET_PORT, "localhost")
+     .setHandler(sessionAttachmentHandler.setNext(new AutoWebActorHandler())).build();
 
 server.start();
 ~~~
 
-The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides both the web actor reference and its implementation class in order to match incoming requests' URLs against its `@WebActor` annotation.
+The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides the web actor reference and URL matching logic.
 
 `WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ContextProvider` which is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-undertow`'s' tests for further insight):
 
@@ -605,8 +623,13 @@ server = Undertow.builder()
                 }
 
                 @Override
-                public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
-                    return MyWebActor.class;
+                public final boolean handlesWithWebSocket(String uri) {
+                   return uri.startsWith("/ws");
+                }
+
+                @Override
+                public final boolean handlesWithHttp(String uri) {
+                    return !handlesWithWebSocket(uri);
                 }
             };
         }
@@ -615,9 +638,9 @@ server = Undertow.builder()
 server.start();
 ~~~
 
-`WebActorHandler` needs Undertow's in-memory session handler only for SSE exchanges; by default session management is enabled for all exchanges but it can be disabled in non-SSE cases by setting the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.HttpChannelAdapter.trackSessionOnlyForSSE` system property to `true`.
+`WebActorHandler` assumes the same actor will manage a whole SSE session.
 
-The actor context duration for the default implementation is 10 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
+The actor context validity is 10 seconds by default but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
 
 ### Netty deployment
 
@@ -625,7 +648,7 @@ Deploying web actors on top of Netty is as easy as inserting one of two Netty ha
 
 `AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and  will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there's no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be passed in.
 
-The only other requirement is that your channel pipeline contains separate `HttpRequestDecoder` and `HttpResponseEncoder` instances rather than a single `HttpServerCodec` because the `HttpResponseEncoder` needs to be dynamically removed when an SSE exchange starts. If you prefer, as an alternative you can pass the name of your installed `HttpResponseEncoder` in `AutoWebActorHandler`'s constructor.
+The only other requirement is that your channel pipeline contains separate `HttpRequestDecoder` and `HttpResponseEncoder` instances rather than a single `HttpServerCodec` because the `HttpResponseEncoder` needs to be dynamically removed when an SSE exchange starts. If you prefer, as an alternative you can pass to `AutoWebActorHandler`'s constructor the name of the installed `HttpResponseEncoder`.
 
 Here's an example server setup using `AutoWebActorHandler` without construction arguments (have a look at `comsat-actors-netty`'s tests for further insight):
 
@@ -651,7 +674,7 @@ b.group(bossGroup, workerGroup)
 final ChannelFuture ch = b.bind(INET_PORT).sync();
 ~~~
 
-The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides both the web actor reference and its implementation class in order to match incoming requests' URLs against its `@WebActor` annotation.
+The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides which provides the web actor reference and URL matching logic..
 
 `WebActorHandler` delegates context lookup (or creation) to a developer-supplied `ContextProvider` which is is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty`'s' tests for further insight):
 
@@ -683,8 +706,13 @@ b.group(bossGroup, workerGroup)
                         }
                     
                         @Override
-                        public Class<? extends ActorImpl<? extends WebMessage>> getWebActorClass() {
-                            return MyWebActor.class;
+                        public final boolean handlesWithWebSocket(String uri) {
+                            return uri.startsWith("/ws");
+                        }
+
+                        @Override
+                        public final boolean handlesWithHttp(String uri) {
+                            return !handlesWithWebSocket(uri);
                         }
                     };
                 }
@@ -695,7 +723,9 @@ b.group(bossGroup, workerGroup)
 final ChannelFuture ch = b.bind(8080).sync();
 ~~~
 
-`WebActorHandler` needs cookie-based client session tracking only for SSE exchanges; by default it is enabled for all exchanges but it can be disabled in non-SSE cases through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.trackSessionOnlyForSSE` system property.
+`WebActorHandler` needs cookie-based client session tracking only for SSE exchanges and by default it is enabled for them but it can be disabled in non-SSE cases through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.trackSession` system property (legal values are `sse` and `always`).
+
+The Netty WebActor backend will always include the `Date` header by default but this behaviour can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.omitDateHeader` system property
 
 Session duration for the default implementation is 10 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.DefaultContextImpl.durationMillis` system property.
 
