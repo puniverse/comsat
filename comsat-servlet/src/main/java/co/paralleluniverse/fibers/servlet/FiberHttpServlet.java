@@ -105,11 +105,11 @@ public class FiberHttpServlet extends HttpServlet {
 
         final String disableJF = config.getInitParameter(PROP_DISABLE_JETTY_ASYNC_FIXES);
         if (disableJF != null)
-            disableJettyAsyncFixes = disableJettyAsyncFixesGlobal;
+            disableJettyAsyncFixes = disableJettyAsyncFixesGlobal != null ? disableJettyAsyncFixesGlobal : !isJetty(config);
 
         final String disableTF = config.getInitParameter(PROP_DISABLE_TOMCAT_ASYNC_FIXES);
         if (disableTF != null)
-            disableTomcatAsyncFixes = disableTomcatAsyncFixesGlobal;
+            disableTomcatAsyncFixes = disableTomcatAsyncFixesGlobal != null ? disableTomcatAsyncFixesGlobal : !isTomcat(config);
 
         this.init();
     }
@@ -196,20 +196,6 @@ public class FiberHttpServlet extends HttpServlet {
         }
     }
 
-    private static Boolean getBoolean(String propName) {
-        final String disableJettyAsyncFixesGlobalS = System.getProperty(propName);
-        if (disableJettyAsyncFixesGlobalS != null) {
-            Boolean b = null;
-            if (Boolean.TRUE.toString().equals(disableJettyAsyncFixesGlobalS))
-                b = true;
-            else if (Boolean.FALSE.toString().equals(disableJettyAsyncFixesGlobalS))
-                b = false;
-            return b;
-        } else {
-            return null;
-        }
-    }
-
     @Suspendable
     final void exec(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
         if (!disableSyncExceptions) {
@@ -243,6 +229,14 @@ public class FiberHttpServlet extends HttpServlet {
         ac.complete();
     }
 
+    private static boolean isJetty(ServletConfig config) {
+        return config.getClass().getName().startsWith("org.eclipse.jetty.");
+    }
+
+    private static boolean isTomcat(ServletConfig config) {
+        return config.getClass().getName().startsWith("org.apache.tomcat.");
+    }
+
     private static Long getLong(String propName) {
         final String asyncTimeoutS = System.getProperty(propName);
         if (asyncTimeoutS != null) {
@@ -252,6 +246,20 @@ public class FiberHttpServlet extends HttpServlet {
             } catch (final NumberFormatException ignored) {
             }
             return l;
+        } else {
+            return null;
+        }
+    }
+
+    private static Boolean getBoolean(String propName) {
+        final String disableJettyAsyncFixesGlobalS = System.getProperty(propName);
+        if (disableJettyAsyncFixesGlobalS != null) {
+            Boolean b = null;
+            if (Boolean.TRUE.toString().equals(disableJettyAsyncFixesGlobalS))
+                b = true;
+            else if (Boolean.FALSE.toString().equals(disableJettyAsyncFixesGlobalS))
+                b = false;
+            return b;
         } else {
             return null;
         }
