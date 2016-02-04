@@ -38,15 +38,27 @@ import javax.servlet.http.HttpServletResponse;
  * @author circlespainter
  */
 public class FiberHttpServlet extends HttpServlet {
-    private static final String timeoutS = System.getProperty(FiberHttpServlet.class.getName() + ".asyncTimeout");
-    static final Long timeout = timeoutS != null ? Long.parseLong(timeoutS) : 120000L;
+    private static final String PROP_ASYNC_TIMEOUT = FiberHttpServlet.class.getName() + ".asyncTimeout";
+    static final Long asyncTimeout;
 
-    static final boolean debugBypassToRegularJFP = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".debug.bypassToRegularFJP");
+    public static final String PROP_DEBUG_BYPASS_TO_REGULAR_FJP = FiberHttpServlet.class.getName() + ".debug.bypassToRegularFJP";
+    static final boolean debugBypassToRegularJFPGlobal = SystemProperties.isEmptyOrTrue(PROP_DEBUG_BYPASS_TO_REGULAR_FJP);
 
-    static final boolean disableSyncExceptionsEmulation = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableSyncExceptionsEmulation");
-    static final boolean disableSyncForwardEmulation = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableSyncForwardEmulation");
-    static final boolean disableJettyAsyncFixes = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableJettyAsyncFixes");
-    static final boolean disableTomcatAsyncFixes = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableTomcatAsyncFixes");
+    public static final String PROP_DISABLE_SYNC_EXCEPTIONS = FiberHttpServlet.class.getName() + ".disableSyncExceptions";
+    static final boolean disableSyncExceptionsGlobal = SystemProperties.isEmptyOrTrue(PROP_DISABLE_SYNC_EXCEPTIONS);
+    public static final String PROP_DISABLE_SYNC_FORWARD = FiberHttpServlet.class.getName() + ".disableSyncForward";
+    static final boolean disableSyncForwardGlobal = SystemProperties.isEmptyOrTrue(PROP_DISABLE_SYNC_FORWARD);
+
+    public static final String PROP_DISABLE_JETTY_ASYNC_FIXES = FiberHttpServlet.class.getName() + ".disableJettyAsyncFixes";
+    static final Boolean disableJettyAsyncFixesGlobal;
+    public static final String PROP_DISABLE_TOMCAT_ASYNC_FIXES = FiberHttpServlet.class.getName() + ".disableTomcatAsyncFixes";
+    static final Boolean disableTomcatAsyncFixesGlobal;
+
+    static {
+        asyncTimeout = getLong(PROP_ASYNC_TIMEOUT);
+        disableJettyAsyncFixesGlobal = getBoolean(PROP_DISABLE_JETTY_ASYNC_FIXES);
+        disableTomcatAsyncFixesGlobal = getBoolean(PROP_DISABLE_TOMCAT_ASYNC_FIXES);
+    }
 
     private static final long serialVersionUID = 1L;
 
@@ -60,33 +72,44 @@ public class FiberHttpServlet extends HttpServlet {
 
     private ForkJoinPool fjp = new ForkJoinPool();
 
-    public FiberHttpServlet() {
-        System.err.println("Async timeout: " + timeout);
-        System.err.println("Debug mode, bypass to regular JFP: " + debugBypassToRegularJFP);
-        System.err.println("Disable sync exceptions emulation: " + disableSyncExceptionsEmulation);
-        System.err.println("Disable sync redirects emulation: " + disableSyncForwardEmulation);
-        System.err.println("Disable Jetty async fixes: " + disableJettyAsyncFixes);
-    }
+    boolean debugBypassToRegularJFP, disableSyncExceptions, disableSyncForward, disableJettyAsyncFixes, disableTomcatAsyncFixes;
 
     /**
-     * @inheritDoc
-     *
      * @return Wrapped version of the ServletContext initiated by {@link #init(javax.servlet.ServletConfig) }
+     * @inheritDoc
      */
     @Override
     public ServletContext getServletContext() {
-        return
-            !FiberHttpServlet.disableSyncForwardEmulation ?
-                contextAD : super.getServletContext();
+        return disableSyncForward ? super.getServletContext() : contextAD;
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         this.contextAD = new FiberServletContext(config.getServletContext(), currentAsyncContext);
 
-        final String sss = config.getInitParameter("stack-size");
-        if (sss != null)
-            stackSize = Integer.parseInt(sss);
+        final String ss = config.getInitParameter("stack-size");
+        if (ss != null)
+            stackSize = Integer.parseInt(ss);
+
+        final String debugByPassToJFP = config.getInitParameter(PROP_DEBUG_BYPASS_TO_REGULAR_FJP);
+        if (debugByPassToJFP != null)
+            debugBypassToRegularJFP = debugBypassToRegularJFPGlobal;
+
+        final String disableSE = config.getInitParameter(PROP_DISABLE_SYNC_EXCEPTIONS);
+        if (disableSE != null)
+            disableSyncExceptions = disableSyncExceptionsGlobal;
+
+        final String disableSF = config.getInitParameter(PROP_DISABLE_SYNC_FORWARD);
+        if (disableSF != null)
+            disableSyncForward = disableSyncForwardGlobal;
+
+        final String disableJF = config.getInitParameter(PROP_DISABLE_JETTY_ASYNC_FIXES);
+        if (disableJF != null)
+            disableJettyAsyncFixes = disableJettyAsyncFixesGlobal;
+
+        final String disableTF = config.getInitParameter(PROP_DISABLE_TOMCAT_ASYNC_FIXES);
+        if (disableTF != null)
+            disableTomcatAsyncFixes = disableTomcatAsyncFixesGlobal;
 
         this.init();
     }
@@ -99,43 +122,10 @@ public class FiberHttpServlet extends HttpServlet {
         return stackSize;
     }
 
-    @Suspendable
-    static void exec(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
-        if (!disableSyncExceptionsEmulation) {
-            try {
-                exec0(servlet, ac, request, response);
-            } catch (final ServletException | IOException ex) {
-                // Multi-catch above seems to break ASM during instrumentation in some circumstances
-                // seemingly tied to structured class-loading, as in standalone servlet containers
-                servlet.log("Exception in servlet's fiber, dispatching to container", ex);
-                request.setAttribute(FIBER_ASYNC_REQUEST_EXCEPTION, ex);
-                if (!disableSyncForwardEmulation)
-                    servlet.currentAsyncContext.set(null);
-                ac.dispatch();
-            }
-        } else {
-            try {
-                exec0(servlet, ac, request, response);
-            } catch (final Throwable t) {
-                servlet.log("Error during pool-based execution", t);
-                ((HttpServletResponse) ac.getResponse()).setStatus(500);
-                ac.complete();
-            }
-        }
-    }
-
-    private static void exec0(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // TODO: check if ac has expired
-        if (!disableSyncForwardEmulation)
-            servlet.currentAsyncContext.set(ac);
-        servlet.service(request, response);
-        ac.complete();
-    }
-
     @Override
     @Suspendable
     final public void service(final ServletRequest req, ServletResponse res) throws ServletException, IOException {
-        if (!disableSyncExceptionsEmulation && DispatcherType.ASYNC.equals(req.getDispatcherType())) {
+        if (!disableSyncExceptions && DispatcherType.ASYNC.equals(req.getDispatcherType())) {
             final Throwable ex = (Throwable) req.getAttribute(FIBER_ASYNC_REQUEST_EXCEPTION);
             if (ex != null)
                 throw new ServletException(ex);
@@ -144,8 +134,8 @@ public class FiberHttpServlet extends HttpServlet {
         final HttpServletRequest request;
         final HttpServletResponse response;
         try {
-             request = (HttpServletRequest) req;
-             response = (HttpServletResponse) res;
+            request = (HttpServletRequest) req;
+            response = (HttpServletResponse) res;
         } catch (final ClassCastException cce) {
             throw new ServletException("Unsupported non-HTTP request or response detected");
         }
@@ -155,12 +145,12 @@ public class FiberHttpServlet extends HttpServlet {
 
         final AsyncContext ac = req.startAsync();
 
-        if (timeout != null)
-            ac.setTimeout(timeout); // TODO: config
+        if (asyncTimeout != null)
+            ac.setTimeout(asyncTimeout);
 
         final HttpServletRequest r =
             !disableJettyAsyncFixes ?
-                new FiberHttpServletRequest(request) :
+                new FiberHttpServletRequest(this, request) :
                 request;
         if (debugBypassToRegularJFP)
             fjp.execute(new ServletRunnable(this, ac, r, response));
@@ -183,7 +173,7 @@ public class FiberHttpServlet extends HttpServlet {
 
         @Override
         public final void run() throws SuspendExecution, InterruptedException {
-            exec(servlet, ac, request, response);
+            servlet.exec(servlet, ac, request, response);
         }
     }
 
@@ -202,7 +192,68 @@ public class FiberHttpServlet extends HttpServlet {
 
         @Override
         public final void run() {
-            exec(servlet, ac, request, response);
+            servlet.exec(servlet, ac, request, response);
+        }
+    }
+
+    private static Boolean getBoolean(String propName) {
+        final String disableJettyAsyncFixesGlobalS = System.getProperty(propName);
+        if (disableJettyAsyncFixesGlobalS != null) {
+            Boolean b = null;
+            if (Boolean.TRUE.toString().equals(disableJettyAsyncFixesGlobalS))
+                b = true;
+            else if (Boolean.FALSE.toString().equals(disableJettyAsyncFixesGlobalS))
+                b = false;
+            return b;
+        } else {
+            return null;
+        }
+    }
+
+    @Suspendable
+    final void exec(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
+        if (!disableSyncExceptions) {
+            try {
+                exec0(servlet, ac, request, response);
+            } catch (final ServletException | IOException ex) {
+                // Multi-catch above seems to break ASM during instrumentation in some circumstances
+                // seemingly tied to structured class-loading, as in standalone servlet containers
+                servlet.log("Exception in servlet's fiber, dispatching to container", ex);
+                request.setAttribute(FIBER_ASYNC_REQUEST_EXCEPTION, ex);
+                if (!disableSyncForward)
+                    servlet.currentAsyncContext.set(null);
+                ac.dispatch();
+            }
+        } else {
+            try {
+                exec0(servlet, ac, request, response);
+            } catch (final Throwable t) {
+                servlet.log("Error during pool-based execution", t);
+                ((HttpServletResponse) ac.getResponse()).setStatus(500);
+                ac.complete();
+            }
+        }
+    }
+
+    private void exec0(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // TODO: check if ac has expired
+        if (!disableSyncForward)
+            servlet.currentAsyncContext.set(ac);
+        servlet.service(request, response);
+        ac.complete();
+    }
+
+    private static Long getLong(String propName) {
+        final String asyncTimeoutS = System.getProperty(propName);
+        if (asyncTimeoutS != null) {
+            Long l = null;
+            try {
+                l = Long.parseLong(asyncTimeoutS);
+            } catch (final NumberFormatException ignored) {
+            }
+            return l;
+        } else {
+            return null;
         }
     }
 }

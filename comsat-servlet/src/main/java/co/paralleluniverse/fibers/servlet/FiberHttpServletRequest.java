@@ -33,8 +33,8 @@ public class FiberHttpServletRequest extends FiberServletRequest implements Http
     private final String servletPath;
     private final String pathInfo;
 
-    public FiberHttpServletRequest(javax.servlet.http.HttpServletRequest req) {
-        super(req);
+    public FiberHttpServletRequest(FiberHttpServlet servlet, javax.servlet.http.HttpServletRequest req) {
+        super(servlet, req);
         // Jetty (what about other containers?) nullifies the following values in the request
         // when the service method returns. If we want to access them in an async context (in
         // the fiber), we need to capture them.

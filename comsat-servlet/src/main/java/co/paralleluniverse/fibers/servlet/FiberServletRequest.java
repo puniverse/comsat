@@ -28,8 +28,10 @@ import javax.servlet.*;
 public class FiberServletRequest implements ServletRequest {
     private final ServletRequest req;
     private final ServletContext servletContext;
+    private final FiberHttpServlet servlet;
 
-    public FiberServletRequest(ServletRequest req) {
+    public FiberServletRequest(FiberHttpServlet servlet, ServletRequest req) {
+        this.servlet = servlet;
         this.req = req;
         // Jetty (what about other containers?) nullifies the following values in the request
         // when the service method returns. If we want to access them in an async context (in
@@ -39,7 +41,7 @@ public class FiberServletRequest implements ServletRequest {
 
     @Override
     public RequestDispatcher getRequestDispatcher(String path) {
-        if (!FiberHttpServlet.disableSyncForwardEmulation)
+        if (!servlet.disableSyncForward)
             return new FiberRequestDispatcher(path, req.getAsyncContext());
         else
             return req.getRequestDispatcher(path);
