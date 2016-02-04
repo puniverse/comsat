@@ -56,7 +56,6 @@ public class WebActorTest extends AbstractWebActorTest {
 
     private static final WebActorHandler.DefaultContextImpl context = new WebActorHandler.DefaultContextImpl() {
         @SuppressWarnings("unchecked")
-
         @Override
         public ActorRef<? extends WebMessage> getRef() {
             return actorRef;
