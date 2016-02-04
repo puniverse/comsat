@@ -47,12 +47,12 @@ class FiberServletContext implements ServletContext {
     }
 
     @Override
-    public FiberRequestDispatcher getRequestDispatcher(String path) {
+    public RequestDispatcher getRequestDispatcher(String path) {
         return new FiberRequestDispatcher(path, ac.get());
     }
 
     @Override
-    public FiberServletContext getContext(String uripath) {
+    public ServletContext getContext(String uripath) {
         return new FiberServletContext(sc.getContext(uripath), ac);
     }
 

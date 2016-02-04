@@ -1,3 +1,4 @@
+javax.servlet.http.HttpServlet.service
 javax.servlet.http.HttpServlet.doGet
 javax.servlet.http.HttpServlet.doPost
 javax.servlet.http.HttpServlet.doHead

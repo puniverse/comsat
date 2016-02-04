@@ -19,12 +19,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 
 /**
  *
@@ -43,8 +38,11 @@ public class FiberServletRequest implements ServletRequest {
     }
 
     @Override
-    public FiberRequestDispatcher getRequestDispatcher(String path) {
-        return new FiberRequestDispatcher(path, req.getAsyncContext());
+    public RequestDispatcher getRequestDispatcher(String path) {
+        if (!FiberHttpServlet.disableSyncForwardEmulation)
+            return new FiberRequestDispatcher(path, req.getAsyncContext());
+        else
+            return req.getRequestDispatcher(path);
     }
 
     javax.servlet.ServletRequest getReq() {

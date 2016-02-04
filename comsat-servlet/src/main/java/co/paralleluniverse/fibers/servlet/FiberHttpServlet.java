@@ -13,13 +13,13 @@
  */
 package co.paralleluniverse.fibers.servlet;
 
+import co.paralleluniverse.common.util.SystemProperties;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.ResourceBundle;
+import java.util.concurrent.ForkJoinPool;
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletConfig;
@@ -39,7 +39,14 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class FiberHttpServlet extends HttpServlet {
     private static final String timeoutS = System.getProperty(FiberHttpServlet.class.getName() + ".asyncTimeout");
-    private static final Long timeout = timeoutS != null ? Long.parseLong(timeoutS) : 120000L;
+    static final Long timeout = timeoutS != null ? Long.parseLong(timeoutS) : 120000L;
+
+    static final boolean debugBypassToRegularJFP = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".debug.bypassToRegularFJP");
+
+    static final boolean disableSyncExceptionsEmulation = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableSyncExceptionsEmulation");
+    static final boolean disableSyncForwardEmulation = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableSyncForwardEmulation");
+    static final boolean disableJettyAsyncFixes = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableJettyAsyncFixes");
+    static final boolean disableTomcatAsyncFixes = SystemProperties.isEmptyOrTrue(FiberHttpServlet.class.getName() + ".disableTomcatAsyncFixes");
 
     private static final long serialVersionUID = 1L;
 
@@ -49,17 +56,16 @@ public class FiberHttpServlet extends HttpServlet {
 
     private int stackSize = -1;
 
-    private transient FiberServletConfig configAD;
     private transient FiberServletContext contextAD;
 
-    /**
-     * @inheritDoc
-     *
-     * @return Wrapped version of the ServletConfig initiated by {@link #init(javax.servlet.ServletConfig) }
-     */
-    @Override
-    public final ServletConfig getServletConfig() {
-        return configAD;
+    private ForkJoinPool fjp = new ForkJoinPool();
+
+    public FiberHttpServlet() {
+        System.err.println("Async timeout: " + timeout);
+        System.err.println("Debug mode, bypass to regular JFP: " + debugBypassToRegularJFP);
+        System.err.println("Disable sync exceptions emulation: " + disableSyncExceptionsEmulation);
+        System.err.println("Disable sync redirects emulation: " + disableSyncForwardEmulation);
+        System.err.println("Disable Jetty async fixes: " + disableJettyAsyncFixes);
     }
 
     /**
@@ -69,13 +75,14 @@ public class FiberHttpServlet extends HttpServlet {
      */
     @Override
     public ServletContext getServletContext() {
-        return contextAD;
+        return
+            !FiberHttpServlet.disableSyncForwardEmulation ?
+                contextAD : super.getServletContext();
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         this.contextAD = new FiberServletContext(config.getServletContext(), currentAsyncContext);
-        this.configAD = new FiberServletConfig(config, contextAD);
 
         final String sss = config.getInitParameter("stack-size");
         if (sss != null)
@@ -92,127 +99,110 @@ public class FiberHttpServlet extends HttpServlet {
         return stackSize;
     }
 
-    @Override
     @Suspendable
-    final public void service(final ServletRequest req, ServletResponse res) throws ServletException, IOException {
-        if (DispatcherType.ASYNC.equals(req.getDispatcherType())) {
-            final Throwable ex = (Throwable) req.getAttribute(FIBER_ASYNC_REQUEST_EXCEPTION);
-            if (ex != null) {
-                log("Being dispatched exception produced in fiber; now in container's thread, wrapping in ServletException and throwing", ex);
-                throw new ServletException(ex);
-            }
-        }
-
-        if (!(req instanceof HttpServletRequest
-            && res instanceof HttpServletResponse)) {
-            throw new ServletException("Only HTTP is supported, but detected non-HTTP request or response");
-        }
-
-        final HttpServletRequest request = (HttpServletRequest) req;
-        final HttpServletResponse response = (HttpServletResponse) res;
-
-        req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
-        final AsyncContext ac = req.startAsync();
-        if (timeout != null)
-            ac.setTimeout(timeout); // TODO: config
-
-        final FiberHttpServletRequest srad = new FiberHttpServletRequest(request);
-        new Fiber(null, stackSize, new ServletSuspendableRunnable(this, ac, srad, response, req, request)).start();
-    }
-
-    private static final ResourceBundle lStrings = ResourceBundle.getBundle("javax.servlet.http.LocalStrings");
-    private static final String errMsg = lStrings.getString("http.method_not_implemented");
-
-    @Suspendable
-    @Override
-    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        final String method = req.getMethod();
-
-        if ("GET".equals(method)) {
-            long lastModified = getLastModified(req);
-            if (lastModified == -1) {
-                // servlet doesn't support if-modified-since, no reason
-                // to go through further expensive logic
-                doGet(req, resp);
-            } else {
-                long ifModifiedSince = req.getDateHeader("If-Modified-Since");
-                if (ifModifiedSince < lastModified) {
-                    // If the servlet mod time is later, call doGet()
-                    // Round down to the nearest second for a proper compare
-                    // A ifModifiedSince of -1 will always be less
-                    maybeSetLastModified(resp, lastModified);
-                    doGet(req, resp);
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-                }
-            }
-        } else if ("HEAD".equals(method)) {
-            long lastModified = getLastModified(req);
-            maybeSetLastModified(resp, lastModified);
-            doHead(req, resp);
-        } else if ("POST".equals(method)) {
-            doPost(req, resp);
-        } else if ("PUT".equals(method)) {
-            doPut(req, resp);
-        } else if ("DELETE".equals(method)) {
-            doDelete(req, resp);
-        } else if ("OPTIONS".equals(method)) {
-            doOptions(req, resp);
-        } else if ("TRACE".equals(method)) {
-            doTrace(req, resp);
-        } else {//
-            // Note that this means NO servlet supports whatever
-            // method was requested, anywhere on this server.
-            final Object[] errArgs = new Object[1];
-            errArgs[0] = method;
-            final String err = MessageFormat.format(errMsg, errArgs);
-            resp.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED, err);
-        }
-    }
-
-    private static final String HEADER_LASTMOD = "Last-Modified";
-
-    private void maybeSetLastModified(HttpServletResponse resp, long lastModified) {
-        if (resp.containsHeader(HEADER_LASTMOD))
-            return;
-        if (lastModified >= 0)
-            resp.setDateHeader(HEADER_LASTMOD, lastModified);
-    }
-
-    private final static class ServletSuspendableRunnable implements SuspendableRunnable {
-        private final AsyncContext ac;
-        private final FiberHttpServletRequest srad;
-        private final HttpServletResponse response;
-        private final ServletRequest req;
-        private final HttpServletRequest request;
-        private final FiberHttpServlet servlet;
-
-        public ServletSuspendableRunnable(FiberHttpServlet servlet, AsyncContext ac, FiberHttpServletRequest srad, HttpServletResponse response, ServletRequest req, HttpServletRequest request) {
-            this.servlet = servlet;
-            this.ac = ac;
-            this.srad = srad;
-            this.response = response;
-            this.req = req;
-            this.request = request;
-        }
-
-        @Override
-        public final void run() throws SuspendExecution, InterruptedException {
+    static void exec(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
+        if (!disableSyncExceptionsEmulation) {
             try {
-                // TODO: check if ac has expired
-                servlet.currentAsyncContext.set(ac);
-                servlet.service(srad, response);
-                if (req.isAsyncStarted())
-                    ac.complete();
+                exec0(servlet, ac, request, response);
             } catch (final ServletException | IOException ex) {
                 // Multi-catch above seems to break ASM during instrumentation in some circumstances
                 // seemingly tied to structured class-loading, as in standalone servlet containers
                 servlet.log("Exception in servlet's fiber, dispatching to container", ex);
                 request.setAttribute(FIBER_ASYNC_REQUEST_EXCEPTION, ex);
-                servlet.currentAsyncContext.set(null);
-                if (req.isAsyncStarted())
-                    ac.dispatch();
+                if (!disableSyncForwardEmulation)
+                    servlet.currentAsyncContext.set(null);
+                ac.dispatch();
             }
+        } else {
+            try {
+                exec0(servlet, ac, request, response);
+            } catch (final Throwable t) {
+                servlet.log("Error during pool-based execution", t);
+                ((HttpServletResponse) ac.getResponse()).setStatus(500);
+                ac.complete();
+            }
+        }
+    }
+
+    private static void exec0(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // TODO: check if ac has expired
+        if (!disableSyncForwardEmulation)
+            servlet.currentAsyncContext.set(ac);
+        servlet.service(request, response);
+        ac.complete();
+    }
+
+    @Override
+    @Suspendable
+    final public void service(final ServletRequest req, ServletResponse res) throws ServletException, IOException {
+        if (!disableSyncExceptionsEmulation && DispatcherType.ASYNC.equals(req.getDispatcherType())) {
+            final Throwable ex = (Throwable) req.getAttribute(FIBER_ASYNC_REQUEST_EXCEPTION);
+            if (ex != null)
+                throw new ServletException(ex);
+        }
+
+        final HttpServletRequest request;
+        final HttpServletResponse response;
+        try {
+             request = (HttpServletRequest) req;
+             response = (HttpServletResponse) res;
+        } catch (final ClassCastException cce) {
+            throw new ServletException("Unsupported non-HTTP request or response detected");
+        }
+
+        if (!disableTomcatAsyncFixes)
+            req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
+
+        final AsyncContext ac = req.startAsync();
+
+        if (timeout != null)
+            ac.setTimeout(timeout); // TODO: config
+
+        final HttpServletRequest r =
+            !disableJettyAsyncFixes ?
+                new FiberHttpServletRequest(request) :
+                request;
+        if (debugBypassToRegularJFP)
+            fjp.execute(new ServletRunnable(this, ac, r, response));
+        else
+            new Fiber(null, stackSize, new ServletSuspendableRunnable(this, ac, r, response)).start();
+    }
+
+    private final static class ServletSuspendableRunnable implements SuspendableRunnable {
+        private final AsyncContext ac;
+        private final HttpServletRequest request;
+        private final HttpServletResponse response;
+        private final FiberHttpServlet servlet;
+
+        public ServletSuspendableRunnable(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
+            this.servlet = servlet;
+            this.ac = ac;
+            this.request = request;
+            this.response = response;
+        }
+
+        @Override
+        public final void run() throws SuspendExecution, InterruptedException {
+            exec(servlet, ac, request, response);
+        }
+    }
+
+    private static class ServletRunnable implements Runnable {
+        private final FiberHttpServlet servlet;
+        private final AsyncContext ac;
+        private final HttpServletRequest request;
+        private final HttpServletResponse response;
+
+        public ServletRunnable(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
+            this.servlet = servlet;
+            this.ac = ac;
+            this.request = request;
+            this.response = response;
+        }
+
+        @Override
+        public final void run() {
+            exec(servlet, ac, request, response);
         }
     }
 }

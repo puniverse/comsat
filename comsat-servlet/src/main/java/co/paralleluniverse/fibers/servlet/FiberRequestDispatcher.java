@@ -37,6 +37,8 @@ class FiberRequestDispatcher implements RequestDispatcher {
 
     @Override
     public void forward(ServletRequest request, final ServletResponse response) throws ServletException, IOException {
+        if (ac == null)
+            throw new UnsupportedOperationException("Sync forward emulation is disabled");
         final ServletRequest baseReq = ((FiberServletRequest) request).getReq();
         if (baseReq != ac.getRequest() || response != ac.getResponse())
             throw new UnsupportedOperationException("Changing the request or the response in forward is not yet supported from fiber servlet");
