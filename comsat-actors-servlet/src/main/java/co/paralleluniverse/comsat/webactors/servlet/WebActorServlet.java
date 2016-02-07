@@ -169,8 +169,8 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         private final ActorRef<? super HttpRequest> webActor;
         private volatile boolean dead;
 
-        public HttpActor(HttpSession session, ActorRef<? super HttpRequest> webActor) {
-            super(session.toString(), new HttpChannel());
+        public HttpActor(HttpSession session, ActorRef<? super HttpRequest> userActor) {
+            super(session.toString(), HttpChannel.INSTANCE);
 
             this.session = session;
             this.webActor = webActor;
@@ -242,8 +242,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
     private static final class HttpChannel implements SendPort<HttpResponse> {
         private HttpChannel() {}
 
-        HttpChannel() {
-        }
+        final static HttpChannel INSTANCE = new HttpChannel();
 
         @Override
         public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
