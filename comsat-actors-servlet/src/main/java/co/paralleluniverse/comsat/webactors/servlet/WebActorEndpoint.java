@@ -48,15 +48,15 @@ public final class WebActorEndpoint extends Endpoint {
     public final void onOpen(Session session, EndpointConfig config) {
         if (this.config == null)
             this.config = config;
-        ActorRef webActor = getHttpSessionActor(config).getUserActor();
+        final ActorRef webActor = getHttpSessionActor(config).getUserActor();
         if (webActor != null) {
             //noinspection unchecked
-            WebSocketActor wsa = attachWebActor(session, config, webActor);
+            final WebSocketActor wsa = attachWebActor(session, config, webActor);
             wsa.onOpen();
         } else {
             try {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "session actor not found"));
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 getHttpSession(config).getServletContext().log("IOException", ex);
             }
         }
@@ -69,7 +69,7 @@ public final class WebActorEndpoint extends Endpoint {
     static WebSocketActor attachWebActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> actor) {
         if (session.getUserProperties().containsKey(ACTOR_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
-        WebSocketActor wsa = new WebSocketActor(session, httpSession, actor);
+        final WebSocketActor wsa = new WebSocketActor(session, httpSession, actor);
         session.getUserProperties().put(ACTOR_KEY, wsa);
         return wsa;
     }
@@ -89,7 +89,7 @@ public final class WebActorEndpoint extends Endpoint {
     }
 
     private static HttpActor getHttpSessionActor(EndpointConfig config) {
-        HttpSession httpSession = getHttpSession(config);
+        final HttpSession httpSession = getHttpSession(config);
         if (httpSession == null)
             throw new RuntimeException("HttpSession hasn't been embedded by the EndPoint Configurator.");
         return (HttpActor) httpSession.getAttribute(ACTOR_KEY);
@@ -113,20 +113,20 @@ public final class WebActorEndpoint extends Endpoint {
 
             session.addMessageHandler(new MessageHandler.Whole<ByteBuffer>() {
                 @Override
-                public void onMessage(final ByteBuffer message) {
+                public final void onMessage(final ByteBuffer message) {
                     try {
                         WebSocketActor.this.webActor.send(new WebDataMessage(WebSocketActor.this.ref(), message));
-                    } catch (SuspendExecution ex) {
+                    } catch (final SuspendExecution ex) {
                         throw new AssertionError(ex);
                     }
                 }
             });
             session.addMessageHandler(new MessageHandler.Whole<String>() {
                 @Override
-                public void onMessage(final String message) {
+                public final void onMessage(final String message) {
                     try {
                         WebSocketActor.this.webActor.send(new WebDataMessage(WebSocketActor.this.ref(), message));
-                    } catch (SuspendExecution ex) {
+                    } catch (final SuspendExecution ex) {
                         throw new AssertionError(ex);
                     }
                 }
@@ -137,7 +137,7 @@ public final class WebActorEndpoint extends Endpoint {
             try {
                 FiberUtil.runInFiber(new SuspendableRunnable() {
                     @Override
-                    public void run() throws SuspendExecution, InterruptedException {
+                    public final void run() throws SuspendExecution, InterruptedException {
                         webActor.send(new WebSocketOpened(WebSocketActor.this.ref()));
                     }
                 });

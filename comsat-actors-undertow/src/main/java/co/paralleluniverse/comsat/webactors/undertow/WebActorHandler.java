@@ -78,11 +78,11 @@ public class WebActorHandler implements HttpHandler {
         private boolean valid = true;
 
         public DefaultContextImpl() {
-            this.created = new Date().getTime();
+            created = new Date().getTime();
         }
 
         @Override
-        public void invalidate() {
+        public final void invalidate() {
             attachments.clear();
             valid = false;
         }
@@ -150,17 +150,17 @@ public class WebActorHandler implements HttpHandler {
                     // Handle with websocket
                     Handlers.websocket(new WebSocketConnectionCallback() {
                         @Override
-                        public void onConnect(WebSocketHttpExchange exchange, WebSocketChannel channel) {
+                        public final void onConnect(WebSocketHttpExchange exchange, WebSocketChannel channel) {
                             webSocketActor.setChannel(channel);
 
                             channel.getReceiveSetter().set(new AbstractReceiveListener() {
                                 @Override
-                                protected void onFullBinaryMessage(WebSocketChannel channel, BufferedBinaryMessage message) throws IOException {
+                                protected final void onFullBinaryMessage(WebSocketChannel channel, BufferedBinaryMessage message) throws IOException {
                                     webSocketActor.onMessage(message);
                                 }
 
                                 @Override
-                                protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) throws IOException {
+                                protected final void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) throws IOException {
                                     webSocketActor.onMessage(message);
                                 }
                             });
@@ -170,7 +170,7 @@ public class WebActorHandler implements HttpHandler {
                             try {
                                 FiberUtil.runInFiber(new SuspendableRunnable() {
                                     @Override
-                                    public void run() throws SuspendExecution, InterruptedException {
+                                    public final void run() throws SuspendExecution, InterruptedException {
                                         //noinspection unchecked
                                         ((ActorRef) userActorRef).send(new WebSocketOpened(webSocketActor.ref()));
                                     }
@@ -211,25 +211,26 @@ public class WebActorHandler implements HttpHandler {
     }
 
     private static final class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
-        final ActorRef<? super WebMessage> webActor;
-        private final WebSocketChannelAdapter channelAdapter;
+        ActorRef<? super WebMessage> userActor;
+
+        private WebSocketChannelAdapter adapter;
 
         private WebSocketChannel channel;
 
-        public WebSocketActorAdapter(ActorRef<? super WebMessage> webActor) {
-            super(webActor.getName(), new WebSocketChannelAdapter());
-            this.channelAdapter = (WebSocketChannelAdapter) (SendPort) mailbox();
-            this.webActor = webActor;
+        public WebSocketActorAdapter(ActorRef<? super WebMessage> userActor) {
+            super(userActor.getName(), new WebSocketChannelAdapter());
+            adapter = (WebSocketChannelAdapter) (SendPort) mailbox();
+            this.userActor = userActor;
         }
 
         final void setChannel(WebSocketChannel channel) {
             this.channel = channel;
-            this.channelAdapter.channel = channel;
+            this.adapter.channel = channel;
         }
 
         final void onMessage(BufferedBinaryMessage message) {
             try {
-                webActor.send(new WebDataMessage(ref(), toBuffer(message.getData().getResource()).duplicate()));
+                userActor.send(new WebDataMessage(ref(), toBuffer(message.getData().getResource()).duplicate()));
             } catch (final SuspendExecution ex) {
                 throw new AssertionError(ex);
             }
@@ -237,7 +238,7 @@ public class WebActorHandler implements HttpHandler {
 
         final void onMessage(BufferedTextMessage message) {
             try {
-                webActor.send(new WebDataMessage(ref(), message.getData()));
+                userActor.send(new WebDataMessage(ref(), message.getData()));
             } catch (final SuspendExecution ex) {
                 throw new AssertionError(ex);
             }
@@ -247,7 +248,7 @@ public class WebActorHandler implements HttpHandler {
         protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
             if (m instanceof ExitMessage) {
                 final ExitMessage em = (ExitMessage) m;
-                if (em.getActor() != null && em.getActor().equals(webActor))
+                if (em.getActor() != null && em.getActor().equals(userActor))
                     die(em.getCause());
             }
             return null;
@@ -333,10 +334,11 @@ public class WebActorHandler implements HttpHandler {
 
         HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext) {
             super("HttpActorAdapter", HttpChannelAdapter.INSTANCE);
+            super("HttpActorAdapter", actorContext.watch() ? new HttpChannelAdapter() : HttpChannelAdapter.INSTANCE);
 
             watch(userActor);
             this.userActor = userActor;
-            this.context = actorContext;
+            context = actorContext;
         }
 
         final void service(final HttpServerExchange xch) throws SuspendExecution {
@@ -379,7 +381,7 @@ public class WebActorHandler implements HttpHandler {
                 context.invalidate();
             } catch (final Exception ignored) {}
 
-            // Ensure to release references to server objects
+            // Ensure to release references
             userActor = null;
             context = null;
             xch = null;
@@ -572,31 +574,33 @@ public class WebActorHandler implements HttpHandler {
 
         @Override
         public final void close() {
-            // Stateless, single-instance HTTP write port, nothing to do
+            if (actor != null)
+                actor.die(null);
         }
 
         @Override
         public final void close(Throwable t) {
             UndertowLogger.ROOT_LOGGER.error("Exception while closing HTTP adapter", t);
+            if (actor != null)
+                actor.die(t);
         }
     }
 
     private static final class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
-        private final HttpStreamChannelAdapter channelAdapter;
+        private HttpStreamChannelAdapter adapter;
 
         private volatile boolean dead;
 
         HttpStreamActorAdapter(HttpServerExchange xch) {
             super(xch.toString(), new HttpStreamChannelAdapter(xch));
-            ((HttpStreamChannelAdapter) (SendPort) mailbox()).actor = this;
-            this.channelAdapter = (HttpStreamChannelAdapter) (SendPort) mailbox();
+            adapter = (HttpStreamChannelAdapter) (SendPort) mailbox();
+            adapter.actor = this;
         }
 
         @Override
         protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
-            if (m instanceof ShutdownMessage) {
+            if (m instanceof ShutdownMessage)
                 die(null);
-            }
             return null;
         }
 
@@ -614,9 +618,11 @@ public class WebActorHandler implements HttpHandler {
         protected final void die(Throwable cause) {
             if (dead)
                 return;
-            this.dead = true;
+            dead = true;
             mailbox().close();
             super.die(cause);
+
+            adapter = null;
         }
 
         @Override
@@ -625,7 +631,7 @@ public class WebActorHandler implements HttpHandler {
         }
 
         public final void setChannel(StreamSinkChannel channel) {
-            this.channelAdapter.setChannel(channel);
+            adapter.setChannel(channel);
         }
     }
 

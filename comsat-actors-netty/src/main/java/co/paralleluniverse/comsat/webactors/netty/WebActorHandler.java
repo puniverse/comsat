@@ -37,7 +37,6 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import io.netty.handler.codec.http.websocketx.*;
-import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -80,7 +79,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         private boolean valid = true;
 
         public DefaultContextImpl() {
-            this.created = new Date().getTime();
+            created = new Date().getTime();
         }
 
         @Override
@@ -218,7 +217,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                     if (handshaker == null) {
                         WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
                     } else {
-                        @SuppressWarnings("unchecked") final ActorRef<WebMessage> userActorRef0 = (ActorRef<WebMessage>) webSocketActor.webActor;
+                        @SuppressWarnings("unchecked") final ActorRef<WebMessage> userActorRef0 = (ActorRef<WebMessage>) webSocketActor.userActor;
                         handshaker.handshake(ctx.channel(), req).addListener(new GenericFutureListener<ChannelFuture>() {
                             @Override
                             public void operationComplete(ChannelFuture future) throws Exception {
@@ -257,14 +256,14 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static final class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
-        final ActorRef<? super WebMessage> webActor;
-        private final ChannelHandlerContext ctx;
+        ActorRef<? super WebMessage> userActor;
 
-        public WebSocketActorAdapter(ChannelHandlerContext ctx, ActorRef<? super WebMessage> webActor) {
-            super(webActor.getName(), new WebSocketChannelAdapter(ctx));
+        private ChannelHandlerContext ctx;
+
+        public WebSocketActorAdapter(ChannelHandlerContext ctx, ActorRef<? super WebMessage> userActor) {
             this.ctx = ctx;
-            this.webActor = webActor;
-            watch(webActor);
+            this.userActor = userActor;
+            watch(userActor);
         }
 
         @Override
@@ -274,12 +273,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final String toString() {
-            return "WebSocketActorAdapter{" + "userActor=" + webActor + '}';
+            return "WebSocketActorAdapter{" + "userActor=" + userActor + '}';
         }
 
         private void onMessage(final ByteBuffer message) {
             try {
-                webActor.send(new WebDataMessage(ref(), message));
+                userActor.send(new WebDataMessage(ref(), message));
             } catch (SuspendExecution ex) {
                 throw new AssertionError(ex);
             }
@@ -287,7 +286,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         private void onMessage(final String message) {
             try {
-                webActor.send(new WebDataMessage(ref(), message));
+                userActor.send(new WebDataMessage(ref(), message));
             } catch (SuspendExecution ex) {
                 throw new AssertionError(ex);
             }
@@ -297,7 +296,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
             if (m instanceof ExitMessage) {
                 ExitMessage em = (ExitMessage) m;
-                if (em.getActor() != null && em.getActor().equals(webActor))
+                if (em.getActor() != null && em.getActor().equals(userActor))
                     die(em.getCause());
             }
             return null;
@@ -313,6 +312,10 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             super.die(cause);
             if (ctx.channel().isOpen())
                 ctx.close();
+
+            // Ensure to release server references
+            userActor = null;
+            ctx = null;
         }
     }
 
@@ -389,7 +392,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         private void handleDeath(Throwable cause) {
-            @SuppressWarnings("ThrowableResultOfMethodCallIgnored") final Throwable deathCause = getDeathCause();
             if (cause != null)
                 sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + cause.getMessage()).getBytes())), false);
             else

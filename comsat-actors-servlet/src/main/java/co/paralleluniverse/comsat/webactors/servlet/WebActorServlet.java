@@ -365,9 +365,8 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
         @Override
         protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
-            if (m instanceof ShutdownMessage) {
+            if (m instanceof ShutdownMessage)
                 die(null);
-            }
             return null;
         }
 
@@ -427,7 +426,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             try {
                 ServletOutputStream os = writeBody(message, response, false);
                 os.flush();
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 actor.die(ex);
                 return false;
             }
