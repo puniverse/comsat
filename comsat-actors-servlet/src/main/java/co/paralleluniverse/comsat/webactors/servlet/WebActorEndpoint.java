@@ -106,6 +106,9 @@ public final class WebActorEndpoint extends Endpoint {
 
         public WebSocketActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> webActor) {
             super(session.toString(), new WebSocketChannel(session, httpSession));
+
+            ((WebSocketChannel) (SendPort) getMailbox()).actor = this;
+
             this.session = session;
             this.httpSession = httpSession;
             this.webActor = webActor;
@@ -201,6 +204,8 @@ public final class WebActorEndpoint extends Endpoint {
         private final Session session;
         private final HttpSession httpSession;
 
+        WebSocketActor actor;
+
         public WebSocketChannel(Session session, HttpSession httpSession) {
             this.session = session;
             this.httpSession = httpSession;
@@ -237,13 +242,18 @@ public final class WebActorEndpoint extends Endpoint {
         public final void close() {
             try {
                 session.close();
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 httpSession.getServletContext().log("IOException on close", ex);
+            } finally {
+                if (actor != null)
+                    actor.die(null);
             }
         }
 
         @Override
         public final void close(Throwable t) {
+            if (actor != null)
+                actor.die(t);
             close();
         }
     }

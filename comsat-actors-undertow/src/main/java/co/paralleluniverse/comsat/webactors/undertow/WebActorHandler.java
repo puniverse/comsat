@@ -67,6 +67,8 @@ public class WebActorHandler implements HttpHandler {
 
         boolean handlesWithWebSocket(String uri);
         boolean handlesWithHttp(String uri);
+
+        boolean watch();
     }
 
     public static abstract class DefaultContextImpl implements Context {
@@ -103,6 +105,11 @@ public class WebActorHandler implements HttpHandler {
         @Override
         public final ReentrantLock getLock() {
             return lock;
+        }
+
+        @Override
+        public boolean watch() {
+            return true;
         }
     }
 
@@ -220,7 +227,9 @@ public class WebActorHandler implements HttpHandler {
         public WebSocketActorAdapter(ActorRef<? super WebMessage> userActor) {
             super(userActor.getName(), new WebSocketChannelAdapter());
             adapter = (WebSocketChannelAdapter) (SendPort) mailbox();
+            adapter.actor = this;
             this.userActor = userActor;
+            watch(userActor);
         }
 
         final void setChannel(WebSocketChannel channel) {
@@ -269,20 +278,28 @@ public class WebActorHandler implements HttpHandler {
             super.die(cause);
             try {
                 channel.sendClose();
+
             } catch (final IOException e) {
                 UndertowLogger.ROOT_LOGGER.error("Exception while closing websocket channel during actor death", e);
                 throw new RuntimeException(e);
+            } finally {
+                // Ensure to release server references
+                adapter = null;
+                userActor = null;
+                channel = null;
             }
         }
 
         @Override
         public final String toString() {
-            return "WebSocketActor{" + "userActor=" + webActor + '}';
+            return "WebSocketActor{" + "userActor=" + userActor + '}';
         }
     }
 
     private static final class WebSocketChannelAdapter implements SendPort<WebDataMessage> {
         WebSocketChannel channel;
+
+        WebSocketActorAdapter actor;
 
         @Override
         public final void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
@@ -314,13 +331,17 @@ public class WebActorHandler implements HttpHandler {
                 channel.sendClose();
             } catch (final IOException e) {
                 UndertowLogger.ROOT_LOGGER.error("Exception while closing websocket channel", e);
-
                 throw new RuntimeException(e);
+            } finally {
+                if (actor != null)
+                    actor.die(null);
             }
         }
 
         @Override
         public final void close(Throwable t) {
+            if (actor != null)
+                actor.die(t);
             close();
         }
     }
@@ -331,18 +352,23 @@ public class WebActorHandler implements HttpHandler {
 
         private volatile boolean dead;
         private volatile HttpServerExchange xch;
+        private volatile Object watchToken;
 
         HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext) {
-            super("HttpActorAdapter", HttpChannelAdapter.INSTANCE);
             super("HttpActorAdapter", actorContext.watch() ? new HttpChannelAdapter() : HttpChannelAdapter.INSTANCE);
 
-            watch(userActor);
+            if (actorContext.watch())
+                ((HttpChannelAdapter) (SendPort) getMailbox()).actor = this;
+
             this.userActor = userActor;
             context = actorContext;
         }
 
         final void service(final HttpServerExchange xch) throws SuspendExecution {
             this.xch = xch;
+
+            if (context.watch())
+                watchToken = watch(userActor);
 
             if (isDone()) {
                 handleDeath(getDeathCause());
@@ -357,6 +383,13 @@ public class WebActorHandler implements HttpHandler {
                 sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
             else
                 sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated");
+        }
+
+        final void unwatch() {
+            if (watchToken != null && userActor != null) {
+                unwatch(userActor, watchToken);
+                watchToken = null;
+            }
         }
 
         @Override
@@ -382,7 +415,9 @@ public class WebActorHandler implements HttpHandler {
             } catch (final Exception ignored) {}
 
             // Ensure to release references
+            unwatch();
             userActor = null;
+            watchToken = null;
             context = null;
             xch = null;
         }
@@ -452,8 +487,9 @@ public class WebActorHandler implements HttpHandler {
     private static final class HttpChannelAdapter implements SendPort<HttpResponse> {
         static final HttpChannelAdapter INSTANCE = new HttpChannelAdapter();
 
-        private HttpChannelAdapter() {
-        }
+        private HttpActorAdapter actor;
+
+        HttpChannelAdapter() {}
 
         @Override
         public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
@@ -473,86 +509,91 @@ public class WebActorHandler implements HttpHandler {
 
         @Override
         public final boolean trySend(final HttpResponse message) {
-            final HttpRequestWrapper undertowRequest = (HttpRequestWrapper) message.getRequest();
-            final HttpServerExchange xch = undertowRequest.xch;
+            try {
+                final HttpRequestWrapper undertowRequest = (HttpRequestWrapper) message.getRequest();
+                final HttpServerExchange xch = undertowRequest.xch;
 
-            final int status = message.getStatus();
+                final int status = message.getStatus();
 
-            if (status >= 400 && status < 600) {
-                sendHttpResponse(xch, status);
-                close();
-                return true;
-            }
-
-            if (message.getRedirectPath() != null) {
-                sendHttpRedirect(xch, message.getRedirectPath());
-                close();
-                return true;
-            }
-
-            if (message.getCookies() != null) {
-                for (final Cookie c : message.getCookies())
-                    xch.setResponseCookie(newUndertowCookie(c));
-            }
-            final HeaderMap heads = xch.getResponseHeaders();
-            if (message.getHeaders() != null) {
-                for (final String k : message.getHeaders().keys())
-                    heads.putAll(new HttpString(k), message.getHeaderValues(k));
-            }
-
-            if (message.getContentType() != null) {
-                String ct = message.getContentType();
-                if (message.getCharacterEncoding() != null)
-                    ct = ct + "; charset=" + message.getCharacterEncoding().name();
-                xch.getResponseHeaders().add(Headers.CONTENT_TYPE, ct);
-            }
-
-            final boolean sseStarted = message.shouldStartActor();
-            if (sseStarted) {
-                try {
-                    xch.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/event-stream; charset=UTF-8");
-                    xch.setPersistent(false);
-
-                    final StreamSinkChannel sink = xch.getResponseChannel();
-                    // This will copy the request content, which must still be referenceable, doing before the request handler
-                    // unallocates it (unfortunately it is explicitly reference-counted in Netty)
-                    final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(xch);
-
-                    if (!sink.flush()) {
-                        sink.getWriteSetter().set(ChannelListeners.flushingChannelListener(new ChannelListener<StreamSinkChannel>() {
-                            @Override
-                            public void handleEvent(final StreamSinkChannel channel) {
-                                try {
-                                    FiberUtil.runInFiber(new SuspendableRunnable() {
-                                        @Override
-                                        public void run() throws SuspendExecution, InterruptedException {
-                                            handleSSEStart(httpStreamActorAdapter, message, channel);
-                                        }
-                                    });
-                                } catch (final InterruptedException | ExecutionException e) {
-                                    UndertowLogger.ROOT_LOGGER.error("Exception while handling SSE start response event", e);
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }, null));
-                        sink.resumeWrites();
-                    } else {
-                        handleSSEStart(httpStreamActorAdapter, message, sink);
-                    }
-                } catch (final Exception e) {
-                    UndertowLogger.ROOT_LOGGER.error("Exception while sending SSE start response", e);
-                    throw new RuntimeException(e);
-                }
-            } else {
-                if (message.getStringBody() != null)
-                    sendHttpResponse(xch, status, message.getStringBody());
-                else if (message.getByteBufferBody() != null)
-                    sendHttpResponse(xch, status, message.getByteBufferBody());
-                else
+                if (status >= 400 && status < 600) {
                     sendHttpResponse(xch, status);
-            }
+                    close();
+                    return true;
+                }
 
-            return true;
+                if (message.getRedirectPath() != null) {
+                    sendHttpRedirect(xch, message.getRedirectPath());
+                    close();
+                    return true;
+                }
+
+                if (message.getCookies() != null) {
+                    for (final Cookie c : message.getCookies())
+                        xch.setResponseCookie(newUndertowCookie(c));
+                }
+                final HeaderMap heads = xch.getResponseHeaders();
+                if (message.getHeaders() != null) {
+                    for (final String k : message.getHeaders().keys())
+                        heads.putAll(new HttpString(k), message.getHeaderValues(k));
+                }
+
+                if (message.getContentType() != null) {
+                    String ct = message.getContentType();
+                    if (message.getCharacterEncoding() != null)
+                        ct = ct + "; charset=" + message.getCharacterEncoding().name();
+                    xch.getResponseHeaders().add(Headers.CONTENT_TYPE, ct);
+                }
+
+                final boolean sseStarted = message.shouldStartActor();
+                if (sseStarted) {
+                    try {
+                        xch.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/event-stream; charset=UTF-8");
+                        xch.setPersistent(false);
+
+                        final StreamSinkChannel sink = xch.getResponseChannel();
+                        // This will copy the request content, which must still be referenceable, doing before the request handler
+                        // unallocates it (unfortunately it is explicitly reference-counted in Netty)
+                        final HttpStreamActorAdapter httpStreamActorAdapter = new HttpStreamActorAdapter(xch);
+
+                        if (!sink.flush()) {
+                            sink.getWriteSetter().set(ChannelListeners.flushingChannelListener(new ChannelListener<StreamSinkChannel>() {
+                                @Override
+                                public final void handleEvent(final StreamSinkChannel channel) {
+                                    try {
+                                        FiberUtil.runInFiber(new SuspendableRunnable() {
+                                            @Override
+                                            public void run() throws SuspendExecution, InterruptedException {
+                                                handleSSEStart(httpStreamActorAdapter, message, channel);
+                                            }
+                                        });
+                                    } catch (final InterruptedException | ExecutionException e) {
+                                        UndertowLogger.ROOT_LOGGER.error("Exception while handling SSE start response event", e);
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            }, null));
+                            sink.resumeWrites();
+                        } else {
+                            handleSSEStart(httpStreamActorAdapter, message, sink);
+                        }
+                    } catch (final Exception e) {
+                        UndertowLogger.ROOT_LOGGER.error("Exception while sending SSE start response", e);
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    if (message.getStringBody() != null)
+                        sendHttpResponse(xch, status, message.getStringBody());
+                    else if (message.getByteBufferBody() != null)
+                        sendHttpResponse(xch, status, message.getByteBufferBody());
+                    else
+                        sendHttpResponse(xch, status);
+                }
+
+                return true;
+            } finally {
+                if (actor != null)
+                    actor.unwatch();
+            }
         }
 
         private void handleSSEStart(HttpStreamActorAdapter httpStreamActorAdapter, HttpResponse message, StreamSinkChannel channel) throws SuspendExecution {
@@ -686,10 +727,14 @@ public class WebActorHandler implements HttpHandler {
         @Override
         public final void close() {
             xch.endExchange();
+            if (actor != null)
+                actor.die(null);
         }
 
         @Override
         public final void close(Throwable t) {
+            if (actor != null)
+                actor.die(t);
             close();
         }
     }

@@ -171,13 +171,15 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         private volatile boolean dead;
         private volatile AsyncContext asyncCtx;
         private volatile HttpServletResponse resp;
+        private volatile Object watchToken;
 
         public HttpActor(HttpSession session, ActorRef<? super HttpRequest> userActor) {
-            super(session.toString(), HttpChannel.INSTANCE);
+            super(session.toString(), new HttpChannel());
+
+            ((HttpChannel) (SendPort) getMailbox()).actor = this;
 
             this.session = session;
             this.userActor = userActor;
-            watch(userActor);
         }
 
         ActorRef<? super HttpRequest> getUserActor() {
@@ -185,6 +187,8 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         }
 
         final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            watchToken = watch(userActor);
+
             this.resp = resp;
 
             if (isDone()) {
@@ -200,6 +204,11 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             } catch (final SuspendExecution ex) {
                 req.getServletContext().log("Exception: ", ex);
             }
+        }
+
+        private void unwatch() {
+            if (watchToken != null && userActor != null)
+                unwatch(userActor, watchToken);
         }
 
         private void handleDeath(Throwable cause) throws IOException {
@@ -248,6 +257,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             } catch (final Exception ignored) {}
 
             // Ensure to release references to server objects
+            unwatch(userActor, watchToken);
             userActor = null;
             session = null;
             asyncCtx = null;
@@ -261,9 +271,9 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
     }
 
     private static final class HttpChannel implements SendPort<HttpResponse> {
-        private HttpChannel() {}
+        private HttpActor actor;
 
-        final static HttpChannel INSTANCE = new HttpChannel();
+        HttpChannel() {}
 
         @Override
         public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
@@ -283,75 +293,82 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
         @Override
         public final boolean trySend(HttpResponse msg) {
-            final HttpServletRequest request = ((ServletHttpRequest) msg.getRequest()).request;
-            if (!request.isAsyncStarted())
-                return false;
-
-            final AsyncContext ctx = request.getAsyncContext();
-            final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
             try {
-                if (!response.isCommitted()) {
-                    if (msg.getCookies() != null) {
-                        for (final Cookie wc : msg.getCookies())
-                            response.addCookie(getServletCookie(wc));
-                    }
-                    if (msg.getHeaders() != null) {
-                        for (final Map.Entry<String, String> h : msg.getHeaders().entries())
-                            response.addHeader(h.getKey(), h.getValue());
-                    }
-                }
+                final HttpServletRequest request = ((ServletHttpRequest) msg.getRequest()).request;
+                if (!request.isAsyncStarted())
+                    return false;
 
-                if (msg.getStatus() >= 400 && msg.getStatus() < 600) {
-                    //noinspection ThrowableResultOfMethodCallIgnored
-                    response.sendError(msg.getStatus(), msg.getError() != null ? msg.getError().toString() : null);
-                    ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+                final AsyncContext ctx = request.getAsyncContext();
+                final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
+                try {
+                    if (!response.isCommitted()) {
+                        if (msg.getCookies() != null) {
+                            for (final Cookie wc : msg.getCookies())
+                                response.addCookie(getServletCookie(wc));
+                        }
+                        if (msg.getHeaders() != null) {
+                            for (final Map.Entry<String, String> h : msg.getHeaders().entries())
+                                response.addHeader(h.getKey(), h.getValue());
+                        }
+                    }
+
+                    if (msg.getStatus() >= 400 && msg.getStatus() < 600) {
+                        //noinspection ThrowableResultOfMethodCallIgnored
+                        response.sendError(msg.getStatus(), msg.getError() != null ? msg.getError().toString() : null);
+                        ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+                        return true;
+                    }
+
+                    if (msg.getRedirectPath() != null) {
+                        response.sendRedirect(msg.getRedirectPath());
+                        ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+                        return true;
+                    }
+
+                    if (!response.isCommitted()) {
+                        response.setStatus(msg.getStatus());
+
+                        if (msg.getContentType() != null)
+                            response.setContentType(msg.getContentType());
+                        if (msg.getCharacterEncoding() != null)
+                            response.setCharacterEncoding(msg.getCharacterEncoding().name());
+                    }
+                    final ServletOutputStream out = writeBody(msg, response, !msg.shouldStartActor());
+                    out.flush(); // commits the response
+
+                    if (msg.shouldStartActor()) {
+                        try {
+                            msg.getFrom().send(new HttpStreamOpened(new HttpStreamActor(request, response).ref(), msg));
+                        } catch (final SuspendExecution e) {
+                            throw new AssertionError(e);
+                        }
+                    } else {
+                        out.close();
+                        ctx.complete();
+                    }
                     return true;
-                }
-
-                if (msg.getRedirectPath() != null) {
-                    response.sendRedirect(msg.getRedirectPath());
-                    ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
-                    return true;
-                }
-
-                if (!response.isCommitted()) {
-                    response.setStatus(msg.getStatus());
-
-                    if (msg.getContentType() != null)
-                        response.setContentType(msg.getContentType());
-                    if (msg.getCharacterEncoding() != null)
-                        response.setCharacterEncoding(msg.getCharacterEncoding().name());
-                }
-                final ServletOutputStream out = writeBody(msg, response, !msg.shouldStartActor());
-                out.flush(); // commits the response
-
-                if (msg.shouldStartActor()) {
-                    try {
-                        msg.getFrom().send(new HttpStreamOpened(new HttpStreamActor(request, response).ref(), msg));
-                    } catch (final SuspendExecution e) {
-                        throw new AssertionError(e);
-                    }
-                } else {
-                    out.close();
+                } catch (final IOException ex) {
+                    getServletContext().log("IOException", ex);
                     ctx.complete();
+                    return false;
                 }
-                return true;
-            } catch (final IOException ex) {
-                request.getServletContext().log("IOException", ex);
-                ctx.complete();
-                return false;
+            } finally {
+                if (actor != null)
+                    actor.unwatch();
             }
         }
 
         @Override
         public final void close() {
-            // Single-instance and request-response/stateless, no effect
+            if (actor != null)
+                actor.die(null);
         }
 
         @Override
         public final void close(Throwable t) {
-            // TODO: log
-            t.printStackTrace(System.err);
+            t.printStackTrace(System.err); // TODO: log
+            if (actor != null)
+                actor.die(t);
         }
     }
 
@@ -397,8 +414,9 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
     private static final class HttpStreamChannel implements SendPort<WebDataMessage> {
         HttpStreamActor actor;
-        final AsyncContext ctx;
-        final HttpServletResponse response;
+
+        AsyncContext ctx;
+        HttpServletResponse response;
 
         public HttpStreamChannel(AsyncContext ctx, HttpServletResponse response) {
             this.ctx = ctx;
@@ -427,7 +445,8 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                 ServletOutputStream os = writeBody(message, response, false);
                 os.flush();
             } catch (final IOException ex) {
-                actor.die(ex);
+                if (actor != null)
+                    actor.die(ex);
                 return false;
             }
             return true;
@@ -444,11 +463,19 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                 }
                 ctx.complete();
             } catch (final Exception ignored) {
+            } finally {
+                if (actor != null)
+                    actor.die(null);
+                actor = null;
+                ctx = null;
+                response = null;
             }
         }
 
         @Override
         public void close(Throwable t) {
+            if (actor != null)
+                actor.die(t);
             close();
         }
     }

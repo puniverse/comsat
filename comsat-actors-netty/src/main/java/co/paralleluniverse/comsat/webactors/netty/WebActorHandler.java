@@ -67,6 +67,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         boolean handlesWithHttp(String uri);
         boolean handlesWithWebSocket(String uri);
+
+        boolean watch();
     }
 
     public static abstract class DefaultContextImpl implements Context {
@@ -104,6 +106,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         @Override
         public final ReentrantLock getLock() {
             return lock;
+        }
+
+        @Override
+        public boolean watch() {
+            return true;
         }
     }
 
@@ -261,6 +268,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         private ChannelHandlerContext ctx;
 
         public WebSocketActorAdapter(ChannelHandlerContext ctx, ActorRef<? super WebMessage> userActor) {
+            super(userActor.getName(), new WebSocketChannelAdapter(ctx));
+            ((WebSocketChannelAdapter) (SendPort) getMailbox()).actor = this;
             this.ctx = ctx;
             this.userActor = userActor;
             watch(userActor);
@@ -322,6 +331,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     private static final class WebSocketChannelAdapter implements SendPort<WebDataMessage> {
         private final ChannelHandlerContext ctx;
 
+        WebSocketActorAdapter actor;
+
         public WebSocketChannelAdapter(ChannelHandlerContext ctx) {
             this.ctx = ctx;
         }
@@ -354,10 +365,14 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         public final void close() {
             if (ctx.channel().isOpen())
                 ctx.close();
+            if (actor != null)
+                actor.die(null);
         }
 
         @Override
         public final void close(Throwable t) {
+            if (actor != null)
+                actor.die(t);
             close();
         }
     }
@@ -370,16 +385,22 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         private volatile ChannelHandlerContext ctx;
         private volatile FullHttpRequest req;
+        private volatile Object watchToken;
 
         HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext, String httpResponseEncoderName) {
             super("HttpActorAdapter", new HttpChannelAdapter(actorContext, httpResponseEncoderName));
 
-            watch(userActor);
+            if (actorContext.watch())
+                ((HttpChannelAdapter) (SendPort) getMailbox()).actor = this;
+
             this.userActor = userActor;
             this.context = actorContext;
         }
 
         final void service(ChannelHandlerContext ctx, FullHttpRequest req) throws SuspendExecution {
+            if (context.watch())
+                watchToken = watch(userActor);
+
             this.ctx = ctx;
             this.req = req;
 
@@ -389,6 +410,13 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             userActor.send(new HttpRequestWrapper(ref(), ctx, req));
+        }
+
+        final void unwatch() {
+            if (watchToken != null && userActor != null) {
+                unwatch(userActor, watchToken);
+                watchToken = null;
+            }
         }
 
         private void handleDeath(Throwable cause) {
@@ -421,7 +449,9 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             } catch (final Exception ignored) {}
 
             // Ensure to release references to server objects
+            unwatch();
             userActor = null;
+            watchToken = null;
             context = null;
             ctx = null;
             req = null;
@@ -444,7 +474,10 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static final class HttpChannelAdapter implements SendPort<HttpResponse> {
+        HttpActorAdapter actor;
+
         private final String httpResponseEncoderName;
+
         private Context actorContext;
 
         public HttpChannelAdapter(Context actorContext, String httpResponseEncoderName) {
@@ -470,100 +503,104 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final boolean trySend(HttpResponse message) {
-            final HttpRequestWrapper nettyRequest = (HttpRequestWrapper) message.getRequest();
-            final FullHttpRequest req = nettyRequest.req;
-            final ChannelHandlerContext ctx = nettyRequest.ctx;
+            try {
+                final HttpRequestWrapper nettyRequest = (HttpRequestWrapper) message.getRequest();
+                final FullHttpRequest req = nettyRequest.req;
+                final ChannelHandlerContext ctx = nettyRequest.ctx;
 
-            final HttpResponseStatus status = HttpResponseStatus.valueOf(message.getStatus());
+                final HttpResponseStatus status = HttpResponseStatus.valueOf(message.getStatus());
 
-            if (message.getStatus() >= 400 && message.getStatus() < 600) {
-                sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), status), false);
-                close();
-                return true;
-            }
-
-            if (message.getRedirectPath() != null) {
-                sendHttpRedirect(ctx, req, message.getRedirectPath());
-                close();
-                return true;
-            }
-
-            FullHttpResponse res;
-            if (message.getStringBody() != null)
-                res = new DefaultFullHttpResponse(req.getProtocolVersion(), status, Unpooled.wrappedBuffer(message.getStringBody().getBytes()));
-            else if (message.getByteBufferBody() != null)
-                res = new DefaultFullHttpResponse(req.getProtocolVersion(), status, Unpooled.wrappedBuffer(message.getByteBufferBody()));
-            else
-                res = new DefaultFullHttpResponse(req.getProtocolVersion(), status);
-
-            if (message.getCookies() != null) {
-                final ServerCookieEncoder enc = ServerCookieEncoder.STRICT;
-                for (final Cookie c : message.getCookies())
-                    HttpHeaders.setHeader(res, COOKIE, enc.encode(getNettyCookie(c)));
-            }
-            if (message.getHeaders() != null) {
-                for (final Map.Entry<String, String> h : message.getHeaders().entries())
-                    HttpHeaders.setHeader(res, h.getKey(), h.getValue());
-            }
-
-            if (message.getContentType() != null) {
-                String ct = message.getContentType();
-                if (message.getCharacterEncoding() != null)
-                    ct = ct + "; charset=" + message.getCharacterEncoding().name();
-                HttpHeaders.setHeader(res, CONTENT_TYPE, ct);
-            }
-
-            final boolean sseStarted = message.shouldStartActor();
-            if (trackSession(sseStarted)) {
-                final String sessionId = UUID.randomUUID().toString();
-                res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
-                startSession(sessionId, actorContext);
-            }
-            if (!sseStarted) {
-                final String stringBody = message.getStringBody();
-                long contentLength = 0L;
-                if (stringBody != null)
-                    contentLength = stringBody.getBytes().length;
-                else {
-                    final ByteBuffer byteBufferBody = message.getByteBufferBody();
-                    if (byteBufferBody != null)
-                        contentLength = byteBufferBody.remaining();
+                if (message.getStatus() >= 400 && message.getStatus() < 600) {
+                    sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), status), false);
+                    close();
+                    return true;
                 }
-                res.headers().add(CONTENT_LENGTH, contentLength);
-            }
 
-            final HttpStreamActorAdapter httpStreamActorAdapter;
-            if (sseStarted)
-                // This will copy the request content, which must still be referenceable, doing before the request handler
-                // unallocates it (unfortunately it is explicitly reference-counted in Netty)
-                httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
-            else
-                httpStreamActorAdapter = null;
+                if (message.getRedirectPath() != null) {
+                    sendHttpRedirect(ctx, req, message.getRedirectPath());
+                    close();
+                    return true;
+                }
 
-            sendHttpResponse(ctx, req, res, false);
+                FullHttpResponse res;
+                if (message.getStringBody() != null)
+                    res = new DefaultFullHttpResponse(req.getProtocolVersion(), status, Unpooled.wrappedBuffer(message.getStringBody().getBytes()));
+                else if (message.getByteBufferBody() != null)
+                    res = new DefaultFullHttpResponse(req.getProtocolVersion(), status, Unpooled.wrappedBuffer(message.getByteBufferBody()));
+                else
+                    res = new DefaultFullHttpResponse(req.getProtocolVersion(), status);
 
-            if (sseStarted) {
-                if (httpResponseEncoderName != null) {
-                    ctx.pipeline().remove(httpResponseEncoderName);
-                } else {
-                    final ChannelPipeline pl = ctx.pipeline();
-                    final List<String> handlerKeysToBeRemoved = new ArrayList<>();
-                    for (final Map.Entry<String, ChannelHandler> e : pl) {
-                        if (e.getValue() instanceof HttpResponseEncoder)
-                            handlerKeysToBeRemoved.add(e.getKey());
+                if (message.getCookies() != null) {
+                    final ServerCookieEncoder enc = ServerCookieEncoder.STRICT;
+                    for (final Cookie c : message.getCookies())
+                        HttpHeaders.setHeader(res, COOKIE, enc.encode(getNettyCookie(c)));
+                }
+                if (message.getHeaders() != null) {
+                    for (final Map.Entry<String, String> h : message.getHeaders().entries())
+                        HttpHeaders.setHeader(res, h.getKey(), h.getValue());
+                }
+
+                if (message.getContentType() != null) {
+                    String ct = message.getContentType();
+                    if (message.getCharacterEncoding() != null)
+                        ct = ct + "; charset=" + message.getCharacterEncoding().name();
+                    HttpHeaders.setHeader(res, CONTENT_TYPE, ct);
+                }
+
+                final boolean sseStarted = message.shouldStartActor();
+                if (trackSession(sseStarted)) {
+                    final String sessionId = UUID.randomUUID().toString();
+                    res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
+                    startSession(sessionId, actorContext);
+                }
+                if (!sseStarted) {
+                    final String stringBody = message.getStringBody();
+                    long contentLength = 0L;
+                    if (stringBody != null)
+                        contentLength = stringBody.getBytes().length;
+                    else {
+                        final ByteBuffer byteBufferBody = message.getByteBufferBody();
+                        if (byteBufferBody != null)
+                            contentLength = byteBufferBody.remaining();
                     }
-                    for (final String k : handlerKeysToBeRemoved)
-                        pl.remove(k);
+                    res.headers().add(CONTENT_LENGTH, contentLength);
                 }
 
-                try {
-                    message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
-                } catch (SuspendExecution e) {
-                    throw new AssertionError(e);
+                final HttpStreamActorAdapter httpStreamActorAdapter;
+                if (sseStarted)
+                    // This will copy the request content, which must still be referenceable, doing before the request handler
+                    // unallocates it (unfortunately it is explicitly reference-counted in Netty)
+                    httpStreamActorAdapter = new HttpStreamActorAdapter(ctx, req);
+                else
+                    httpStreamActorAdapter = null;
+
+                sendHttpResponse(ctx, req, res, false);
+
+                if (sseStarted) {
+                    if (httpResponseEncoderName != null) {
+                        ctx.pipeline().remove(httpResponseEncoderName);
+                    } else {
+                        final ChannelPipeline pl = ctx.pipeline();
+                        final List<String> handlerKeysToBeRemoved = new ArrayList<>();
+                        for (final Map.Entry<String, ChannelHandler> e : pl) {
+                            if (e.getValue() instanceof HttpResponseEncoder)
+                                handlerKeysToBeRemoved.add(e.getKey());
+                        }
+                        for (final String k : handlerKeysToBeRemoved)
+                            pl.remove(k);
+                    }
+
+                    try {
+                        message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
+                    } catch (SuspendExecution e) {
+                        throw new AssertionError(e);
+                    }
                 }
+
+                return true;
+            } finally {
+                actor.unwatch();
             }
-
-            return true;
         }
 
         private io.netty.handler.codec.http.cookie.Cookie getNettyCookie(Cookie c) {
@@ -578,12 +615,16 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final void close() {
+            if (actor != null)
+                actor.die(null);
             actorContext = null;
         }
 
         @Override
         public final void close(Throwable t) {
             log.error("Exception while closing HTTP adapter", t);
+            if (actor != null)
+                actor.die(t);
         }
     }
 
@@ -608,6 +649,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         public HttpStreamActorAdapter(final ChannelHandlerContext ctx, final FullHttpRequest req) {
             super(req.toString(), new HttpStreamChannelAdapter(ctx, req));
+            ((HttpStreamChannelAdapter) (SendPort) getMailbox()).actor = this;
         }
 
         @Override
@@ -646,6 +688,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     private static final class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
         private final Charset encoding;
         private final ChannelHandlerContext ctx;
+
+        HttpStreamActorAdapter actor;
 
         public HttpStreamChannelAdapter(ChannelHandlerContext ctx, FullHttpRequest req) {
             this.ctx = ctx;
@@ -686,10 +730,14 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         public final void close() {
             if (ctx.channel().isOpen())
                 ctx.close();
+            if (actor != null)
+                actor.die(null);
         }
 
         @Override
         public final void close(Throwable t) {
+            if (actor != null)
+                actor.die(t);
             close();
         }
     }
