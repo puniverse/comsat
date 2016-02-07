@@ -310,7 +310,7 @@ project (':comsat-actors-servlet') {
         provided "co.paralleluniverse:quasar-core:$quasarVer"
 
         testCompile project(':comsat-test-utils')
-        testRuntime "ch.qos.logback:logback-classic:1.1.3"
+//        testRuntime "ch.qos.logback:logback-classic:1.1.3" // Exceeds Travis limit
     }
 }
 
