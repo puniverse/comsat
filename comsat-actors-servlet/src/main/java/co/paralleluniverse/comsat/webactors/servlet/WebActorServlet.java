@@ -165,48 +165,64 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
     }
 
     static final class HttpActor extends FakeActor<HttpResponse> {
-        private final HttpSession session;
-        private final ActorRef<? super HttpRequest> webActor;
+        private HttpSession session;
+        private ActorRef<? super HttpRequest> userActor;
+
         private volatile boolean dead;
+        private volatile AsyncContext asyncCtx;
+        private volatile HttpServletResponse resp;
 
         public HttpActor(HttpSession session, ActorRef<? super HttpRequest> userActor) {
             super(session.toString(), HttpChannel.INSTANCE);
 
             this.session = session;
-            this.webActor = webActor;
-            watch(webActor);
+            this.userActor = userActor;
+            watch(userActor);
+        }
+
+        ActorRef<? super HttpRequest> getUserActor() {
+            return userActor;
         }
 
         final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            this.resp = resp;
+
             if (isDone()) {
-                Throwable deathCause = getDeathCause();
                 req.getSession().removeAttribute(ACTOR_KEY);
-                if (deathCause != null)
-                    resp.sendError(500, "Actor is dead because of " + deathCause.getMessage());
-                else
-                    resp.sendError(500, "Actor is finised.");
+                handleDeath(getDeathCause());
                 return;
             }
 
             req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
-            req.startAsync();
+            this.asyncCtx = req.startAsync();
             try {
-                webActor.send(new ServletHttpRequest(ref(), req, resp));
+                userActor.send(new ServletHttpRequest(ref(), req, resp));
             } catch (final SuspendExecution ex) {
                 req.getServletContext().log("Exception: ", ex);
             }
         }
 
-        ActorRef<? super HttpRequest> getWebActor() {
-            return webActor;
+        private void handleDeath(Throwable cause) throws IOException {
+            if (cause != null)
+                resp.sendError(500, "Actor is dead because of " + cause.getMessage());
+            else
+                resp.sendError(500, "Actor has terminated.");
+            if (asyncCtx != null)
+                asyncCtx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
         }
 
         @Override
         protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
             if (m instanceof ExitMessage) {
                 final ExitMessage em = (ExitMessage) m;
-                if (em.getActor() != null && em.getActor().equals(webActor))
+                if (em.getActor() != null && em.getActor().equals(userActor)) {
+                    try {
+                        handleDeath(em.getCause());
+                    } catch (final IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     die(em.getCause());
+                }
             }
             return null;
         }
@@ -231,6 +247,11 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                 session.invalidate();
             } catch (final Exception ignored) {}
 
+            // Ensure to release references to server objects
+            userActor = null;
+            session = null;
+            asyncCtx = null;
+            resp = null;
         }
 
         @Override
