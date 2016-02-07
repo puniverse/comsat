@@ -57,6 +57,7 @@ public class WebActorHandler implements HttpHandler {
 
     public interface Context {
         boolean isValid();
+        void invalidate();
 
         ActorRef<? extends WebMessage> getRef();
 
@@ -80,7 +81,8 @@ public class WebActorHandler implements HttpHandler {
             this.created = new Date().getTime();
         }
 
-        private void invalidate() {
+        @Override
+        public void invalidate() {
             attachments.clear();
             valid = false;
         }
@@ -186,12 +188,12 @@ public class WebActorHandler implements HttpHandler {
                     //noinspection ConstantConditions
                     if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
                         //noinspection unchecked
-                        internalActor = HttpActorAdapter.INSTANCE;
+                        internalActor = new HttpActorAdapter((ActorRef<? super HttpRequest>) userActorRef, context);
                         addActorToContextAndUnlock(context, internalActor, lock);
                     }
 
                     //noinspection unchecked
-                    ((HttpActorAdapter) internalActor).service(xch, (ActorRef<? super HttpRequest>) userActorRef);
+                    ((HttpActorAdapter) internalActor).service(xch);
                     return;
                 }
             }
@@ -323,28 +325,64 @@ public class WebActorHandler implements HttpHandler {
     }
 
     private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
-        static final HttpActorAdapter INSTANCE = new HttpActorAdapter();
+        private ActorRef<? super HttpRequest> userActor;
+        private Context context;
 
-        private HttpActorAdapter() {
+        private volatile boolean dead;
+        private volatile HttpServerExchange xch;
+
+        HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext) {
             super("HttpActorAdapter", HttpChannelAdapter.INSTANCE);
+
+            watch(userActor);
+            this.userActor = userActor;
+            this.context = actorContext;
         }
 
-        final void service(final HttpServerExchange xch, final ActorRef<? super HttpRequest> userActor) throws SuspendExecution {
+        final void service(final HttpServerExchange xch) throws SuspendExecution {
+            this.xch = xch;
+
             if (isDone()) {
-                @SuppressWarnings("ThrowableResultOfMethodCallIgnored") final Throwable deathCause = getDeathCause();
-                if (deathCause != null)
-                    sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + deathCause.getMessage());
-                else
-                    sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has finished");
+                handleDeath(getDeathCause());
                 return;
             }
 
             new HttpByteArrayReadChannelListener(ref(), xch, userActor).setup(xch.getRequestChannel());
         }
 
+        private void handleDeath(Throwable cause) {
+            if (cause != null)
+                sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
+            else
+                sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated");
+        }
+
         @Override
         protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
+            if (m instanceof ExitMessage) {
+                final ExitMessage em = (ExitMessage) m;
+                if (em.getActor() != null && em.getActor().equals(userActor)) {
+                    handleDeath(em.getCause());
+                    die(em.getCause());
+                }
+            }
             return null;
+        }
+
+        @Override
+        protected void die(Throwable cause) {
+            if (dead)
+                return;
+            dead = true;
+            super.die(cause);
+            try {
+                context.invalidate();
+            } catch (final Exception ignored) {}
+
+            // Ensure to release references to server objects
+            userActor = null;
+            context = null;
+            xch = null;
         }
 
         @Override
@@ -359,7 +397,7 @@ public class WebActorHandler implements HttpHandler {
 
         @Override
         public final String toString() {
-            return "HttpActorAdapter";
+            return "HttpActorAdapter{" + userActor + "}";
         }
 
         private static final class RequestSending implements SuspendableRunnable {
