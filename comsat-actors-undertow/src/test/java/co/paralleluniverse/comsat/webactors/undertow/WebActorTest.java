@@ -14,7 +14,6 @@
 package co.paralleluniverse.comsat.webactors.undertow;
 
 import co.paralleluniverse.actors.Actor;
-import co.paralleluniverse.actors.ActorImpl;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
@@ -27,13 +26,17 @@ import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.server.session.SessionCookieConfig;
 import io.undertow.server.session.SessionManager;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author circlespainter
@@ -71,6 +74,14 @@ public class WebActorTest extends AbstractWebActorTest {
 			});
 		}
 	};
+
+	@Override
+	@Test
+	public final void testDie() throws IOException, InterruptedException, ExecutionException {
+		Assume.assumeTrue(webActorHandlerCreatorInEffect == autoWebActorHandlerCreator);
+
+		super.testDie();
+	}
 
 	private static final Callable<WebActorHandler> autoWebActorHandlerCreator = new Callable<WebActorHandler>() {
 		@Override

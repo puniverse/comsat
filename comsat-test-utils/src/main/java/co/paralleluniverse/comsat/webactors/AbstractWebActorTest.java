@@ -72,6 +72,25 @@ public abstract class AbstractWebActorTest {
 	}
 
 	@Test
+	public final void testHttpNotFound() throws IOException, InterruptedException, ExecutionException {
+		final HttpGet httpGet = new HttpGet("http://localhost:8080/notfound");
+		try (final CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig).build()) {
+			final CloseableHttpResponse res = client.execute(httpGet);
+			assertEquals(404, res.getStatusLine().getStatusCode());
+		}
+	}
+
+	@Test
+	public void testDie() throws IOException, InterruptedException, ExecutionException {
+		final HttpGet httpGet = new HttpGet("http://localhost:8080/die");
+		try (final CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig).build()) {
+			final CloseableHttpResponse res = client.execute(httpGet);
+			assertEquals(500, res.getStatusLine().getStatusCode());
+			assertTrue(EntityUtils.toString(res.getEntity()).contains("die"));
+		}
+	}
+
+	@Test
 	public final void testHttpRedirect() throws IOException, InterruptedException, ExecutionException {
 		final HttpGet httpGet = new HttpGet("http://localhost:8080/redirect");
 		try (final CloseableHttpClient client = HttpClients.custom().disableRedirectHandling().setDefaultRequestConfig(requestConfig).build()) {

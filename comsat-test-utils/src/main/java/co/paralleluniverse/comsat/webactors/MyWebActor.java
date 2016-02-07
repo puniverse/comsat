@@ -43,6 +43,11 @@ public class MyWebActor extends BasicActor<WebMessage, Void> {
                         case "/":
                             msg.getFrom().send(HttpResponse.ok(self(), msg, "httpResponse").setContentType("text/html").build());
                             break;
+                        case "/notfound":
+                            msg.getFrom().send(HttpResponse.error(self(), msg, 404, "Not found").setContentType("text/plain").build());
+                            break;
+                        case "/die":
+                            throw new RuntimeException("die");
                         case "/redirect":
                             msg.getFrom().send(HttpResponse.redirect(msg, "/foo").build());
                             break;

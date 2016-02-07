@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import io.netty.bootstrap.ServerBootstrap;
@@ -137,6 +138,14 @@ public class WebActorTest extends AbstractWebActorTest {
         AbstractEmbeddedServer.waitUrlAvailable("http://localhost:" + INET_PORT);
 
         System.err.println("Server is up");
+    }
+
+    @Override
+    @Test
+    public final void testDie() throws IOException, InterruptedException, ExecutionException {
+        Assume.assumeTrue(webActorHandlerCreatorInEffect == autoWebActorHandlerCreator);
+
+        super.testDie();
     }
 
     @After
