@@ -348,7 +348,8 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                     }
                     return true;
                 } catch (final IOException ex) {
-                    getServletContext().log("IOException", ex);
+                    if (request.getServletContext() != null)
+                        request.getServletContext().log("IOException", ex);
                     ctx.complete();
                     return false;
                 }
