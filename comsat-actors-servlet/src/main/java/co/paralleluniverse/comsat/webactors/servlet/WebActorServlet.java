@@ -345,12 +345,13 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
         @Override
         public final void close() {
-            throw new UnsupportedOperationException();
+            // Single-instance and request-response/stateless, no effect
         }
 
         @Override
         public final void close(Throwable t) {
-            throw new UnsupportedOperationException();
+            // TODO: log
+            t.printStackTrace(System.err);
         }
     }
 
