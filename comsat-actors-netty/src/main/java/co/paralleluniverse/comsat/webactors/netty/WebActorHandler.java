@@ -693,13 +693,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res, Boolean close) {
-        // Generate an error page if response getStatus code is not OK (200).
-        if (res.getStatus().code() != 200) {
-            final ByteBuf buf = Unpooled.copiedBuffer(res.getStatus().toString(), CharsetUtil.UTF_8);
-            res.content().writeBytes(buf);
-            buf.release();
-            HttpHeaders.setContentLength(res, res.content().readableBytes());
-        }
         writeHttpResponse(ctx, req, res, close);
     }
 
