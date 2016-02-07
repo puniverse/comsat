@@ -58,6 +58,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
     public interface Context {
         boolean isValid();
+        void invalidate();
 
         ActorRef<? extends WebMessage> getRef();
 
@@ -82,7 +83,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             this.created = new Date().getTime();
         }
 
-        private void invalidate() {
+        @Override
+        public void invalidate() {
             attachments.clear();
             valid = false;
         }
@@ -233,11 +235,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 } else if (actorCtx.handlesWithHttp(uri)) {
                     if (internalActor == null || !(internalActor instanceof HttpActorAdapter)) {
                         //noinspection unchecked
-                        internalActor = new HttpActorAdapter(actorCtx, httpResponseEncoderName);
+                        internalActor = new HttpActorAdapter((ActorRef<HttpRequest>) userActorRef, actorCtx, httpResponseEncoderName);
                         addActorToContextAndUnlock(actorCtx, internalActor, lock);
                     }
                     //noinspection unchecked
-                    ((HttpActorAdapter) internalActor).service(ctx, req, (ActorRef<HttpRequest>) userActorRef);
+                    ((HttpActorAdapter) internalActor).service(ctx, req);
                     return;
                 }
             }
@@ -358,13 +360,69 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
-        public HttpActorAdapter(Context actorContext, String httpResponseEncoderName) {
+        private ActorRef<? super HttpRequest> userActor;
+        private Context context;
+
+        private volatile boolean dead;
+
+        private volatile ChannelHandlerContext ctx;
+        private volatile FullHttpRequest req;
+
+        HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext, String httpResponseEncoderName) {
             super("HttpActorAdapter", new HttpChannelAdapter(actorContext, httpResponseEncoderName));
+
+            watch(userActor);
+            this.userActor = userActor;
+            this.context = actorContext;
+        }
+
+        final void service(ChannelHandlerContext ctx, FullHttpRequest req) throws SuspendExecution {
+            this.ctx = ctx;
+            this.req = req;
+
+            if (isDone()) {
+                handleDeath(getDeathCause());
+                return;
+            }
+
+            userActor.send(new HttpRequestWrapper(ref(), ctx, req));
+        }
+
+        private void handleDeath(Throwable cause) {
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored") final Throwable deathCause = getDeathCause();
+            if (cause != null)
+                sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + cause.getMessage()).getBytes())), false);
+            else
+                sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor has terminated.").getBytes())), false);
         }
 
         @Override
         protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
+            if (m instanceof ExitMessage) {
+                final ExitMessage em = (ExitMessage) m;
+                if (em.getActor() != null && em.getActor().equals(userActor)) {
+                    handleDeath(em.getCause());
+                    die(em.getCause());
+                }
+            }
             return null;
+        }
+
+        @Override
+        protected void die(Throwable cause) {
+            if (dead)
+                return;
+            dead = true;
+            super.die(cause);
+            try {
+                context.invalidate();
+            } catch (final Exception ignored) {}
+
+            // Ensure to release references to server objects
+            userActor = null;
+            context = null;
+            ctx = null;
+            req = null;
         }
 
         @Override
@@ -379,20 +437,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final String toString() {
-            return "HttpActorAdapter";
-        }
-
-        private void service(ChannelHandlerContext ctx, FullHttpRequest req, ActorRef<? super HttpRequest> webActor) throws SuspendExecution {
-            if (isDone()) {
-                @SuppressWarnings("ThrowableResultOfMethodCallIgnored") final Throwable deathCause = getDeathCause();
-                if (deathCause != null)
-                    sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + deathCause.getMessage()).getBytes())), false);
-                else
-                    sendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor has finished.").getBytes())), false);
-                return;
-            }
-
-            webActor.send(new HttpRequestWrapper(ref(), ctx, req));
+            return "HttpActorAdapter{" + userActor + "}";
         }
     }
 
