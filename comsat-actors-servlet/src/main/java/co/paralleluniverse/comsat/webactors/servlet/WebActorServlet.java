@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -31,10 +31,7 @@ import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
@@ -52,98 +49,105 @@ import javax.servlet.http.HttpSessionListener;
  * A servlet that forwards requests to a web actor.
  */
 @WebListener
-public class WebActorServlet extends HttpServlet implements HttpSessionListener {
+public final class WebActorServlet extends HttpServlet implements HttpSessionListener {
     static final String ACTOR_KEY = "co.paralleluniverse.actor";
     static final String ACTOR_CLASS_PARAM = "actor";
     static final String ACTOR_PARAM_PREFIX = "actorParam";
+
     private String redirectPath = null;
     private String actorClassName = null;
     private String[] actorParams = null;
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public final void init(ServletConfig config) throws ServletException {
         super.init(config);
-        Enumeration<String> initParameterNames = config.getInitParameterNames();
-        SortedMap<Integer, String> map = new TreeMap<>();
+        final Enumeration<String> initParameterNames = config.getInitParameterNames();
+        final SortedMap<Integer, String> map = new TreeMap<>();
         while (initParameterNames.hasMoreElements()) {
-            String name = initParameterNames.nextElement();
+            final String name = initParameterNames.nextElement();
             if (name.equals("redirectNoSessionPath"))
                 setRedirectNoSessionPath(config.getInitParameter(name));
             else if (name.equals(ACTOR_CLASS_PARAM))
                 setActorClassName(config.getInitParameter(name));
             else if (name.startsWith(ACTOR_PARAM_PREFIX)) {
                 try {
-                    int num = Integer.parseInt(name.substring("actorParam".length()));
+                    final int num = Integer.parseInt(name.substring("actorParam".length()));
                     map.put(num, config.getInitParameter(name));
-                } catch (NumberFormatException nfe) {
+                } catch (final NumberFormatException nfe) {
                     getServletContext().log("Wrong actor parameter number: ", nfe);
                 }
 
             }
         }
-        actorParams = map.values().toArray(new String[0]);
+        final Collection<String> values = map.values();
+        actorParams = values.toArray(new String[values.size()]);
     }
 
-    public WebActorServlet setRedirectNoSessionPath(String path) {
+    public final WebActorServlet setRedirectNoSessionPath(String path) {
         this.redirectPath = path;
         return this;
     }
 
-    public WebActorServlet setActorClassName(String className) {
+    public final WebActorServlet setActorClassName(String className) {
         this.actorClassName = className;
         return this;
     }
 
     static <T> ActorRef<T> attachWebActor(HttpSession session, ActorRef<T> actor) {
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (session) {
             Object oldActor;
             if ((oldActor = session.getAttribute(ACTOR_KEY)) != null)
+                //noinspection unchecked
                 return (ActorRef<T>) oldActor;
+            //noinspection unchecked
             session.setAttribute(ACTOR_KEY, new HttpActor(session, (ActorRef<HttpRequest>) actor));
             return actor;
         }
     }
 
     static boolean isWebActorAttached(HttpSession session) {
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (session) {
             return (session.getAttribute(ACTOR_KEY) != null);
         }
     }
 
     static HttpActor getHttpActor(HttpSession session) {
-        Object actor = session.getAttribute(ACTOR_KEY);
+        final Object actor = session.getAttribute(ACTOR_KEY);
         if ((actor != null) && (actor instanceof HttpActor))
             return (HttpActor) actor;
         return null;
     }
 
     static ActorRef<? super HttpRequest> getWebActor(HttpSession session) {
-        HttpActor har = getHttpActor(session);
-        return har != null ? har.webActor : null;
+        final HttpActor har = getHttpActor(session);
+        return har != null ? har.userActor : null;
     }
 
     @Override
-    public void sessionCreated(HttpSessionEvent se) {
+    public final void sessionCreated(HttpSessionEvent se) {
     }
 
     @Override
-    public void sessionDestroyed(HttpSessionEvent se) {
-        HttpActor ha = getHttpActor(se.getSession());
+    public final void sessionDestroyed(HttpSessionEvent se) {
+        final HttpActor ha = getHttpActor(se.getSession());
         if (ha != null)
             ha.die(null);
     }
 
     @Override
-    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpActor ha = getHttpActor(req.getSession());
 
         if (ha == null) {
             if (actorClassName != null) {
                 try {
-                    ActorRef<WebMessage> actor = (ActorRef<WebMessage>) Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
+                    //noinspection unchecked
+                    final ActorRef<WebMessage> actor = (ActorRef<WebMessage>) Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
                     attachWebActor(req.getSession(), actor);
                     ha = getHttpActor(req.getSession());
-                } catch (ClassNotFoundException ex) {
+                } catch (final ClassNotFoundException ex) {
                     req.getServletContext().log("Unable to load actorClass: ", ex);
                     return;
                 }
@@ -156,10 +160,11 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             }
         }
 
+        assert ha != null;
         ha.service(req, resp);
     }
 
-    static class HttpActor extends FakeActor<HttpResponse> {
+    static final class HttpActor extends FakeActor<HttpResponse> {
         private final HttpSession session;
         private final ActorRef<? super HttpRequest> webActor;
         private volatile boolean dead;
@@ -172,7 +177,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             watch(webActor);
         }
 
-        void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             if (isDone()) {
                 Throwable deathCause = getDeathCause();
                 req.getSession().removeAttribute(ACTOR_KEY);
@@ -187,7 +192,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
             req.startAsync();
             try {
                 webActor.send(new ServletHttpRequest(ref(), req, resp));
-            } catch (SuspendExecution ex) {
+            } catch (final SuspendExecution ex) {
                 req.getServletContext().log("Exception: ", ex);
             }
         }
@@ -197,9 +202,9 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
 
         @Override
-        protected HttpResponse handleLifecycleMessage(LifecycleMessage m) {
+        protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
             if (m instanceof ExitMessage) {
-                ExitMessage em = (ExitMessage) m;
+                final ExitMessage em = (ExitMessage) m;
                 if (em.getActor() != null && em.getActor().equals(webActor))
                     die(em.getCause());
             }
@@ -207,12 +212,12 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
 
         @Override
-        protected void throwIn(RuntimeException e) {
+        protected final void throwIn(RuntimeException e) {
             die(e);
         }
 
         @Override
-        protected void interrupt() {
+        protected final void interrupt() {
             die(new InterruptedException());
         }
 
@@ -220,105 +225,90 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         protected void die(Throwable cause) {
             if (dead)
                 return;
-            this.dead = true;
+            dead = true;
             super.die(cause);
             try {
                 session.invalidate();
-            } catch (Exception e) {
-            }
-        }
+            } catch (final Exception ignored) {}
 
-        private void log(String message) {
-            session.getServletContext().log(message);
-        }
-
-        private void log(String message, Throwable t) {
-            session.getServletContext().log(message, t);
         }
 
         @Override
-        public String toString() {
-            return "ServletHttpActor{" + "session=" + session + ", webActor=" + webActor + '}';
+        public final String toString() {
+            return "ServletHttpActor{" + "session=" + session + ", userActor=" + userActor + '}';
         }
     }
 
-    private static class HttpChannel implements SendPort<HttpResponse> {
-        private Throwable exception;
+    private static final class HttpChannel implements SendPort<HttpResponse> {
+        private HttpChannel() {}
 
         HttpChannel() {
         }
 
         @Override
-        public void send(HttpResponse message) throws SuspendExecution, InterruptedException {
-            if (!trySend(message)) {
-//                if (exception == null)
-//                    throw new ChannelClosedException(this, exception);
-//                throw Exceptions.rethrow(exception);
-            }
+        public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
+            trySend(message);
         }
 
         @Override
-        public boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+        public final boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
             send(message);
             return true;
         }
 
         @Override
-        public boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
+        public final boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
             return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
         }
 
         @Override
-        public boolean trySend(HttpResponse message) {
-            final HttpServletRequest request = ((ServletHttpRequest) message.getRequest()).request;
+        public final boolean trySend(HttpResponse msg) {
+            final HttpServletRequest request = ((ServletHttpRequest) msg.getRequest()).request;
             if (!request.isAsyncStarted())
                 return false;
 
             final AsyncContext ctx = request.getAsyncContext();
             final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
             try {
-                if (message instanceof HttpResponse) {
-                    final HttpResponse msg = (HttpResponse) message;
-                    if (!response.isCommitted()) {
-                        if (msg.getCookies() != null) {
-                            for (Cookie wc : msg.getCookies())
-                                response.addCookie(getServletCookie(wc));
-                        }
-                        if (msg.getHeaders() != null) {
-                            for (Map.Entry<String, String> h : msg.getHeaders().entries())
-                                response.addHeader(h.getKey(), h.getValue());
-                        }
+                if (!response.isCommitted()) {
+                    if (msg.getCookies() != null) {
+                        for (final Cookie wc : msg.getCookies())
+                            response.addCookie(getServletCookie(wc));
                     }
-
-                    if (msg.getStatus() >= 400 && msg.getStatus() < 600) {
-                        response.sendError(msg.getStatus(), msg.getError() != null ? msg.getError().toString() : null);
-                        close();
-                        return true;
-                    }
-
-                    if (msg.getRedirectPath() != null) {
-                        response.sendRedirect(msg.getRedirectPath());
-                        ctx.complete(); // Seems to be required only by Tomcat
-                        close();
-                        return true;
-                    }
-
-                    if (!response.isCommitted()) {
-                        response.setStatus(msg.getStatus());
-
-                        if (msg.getContentType() != null)
-                            response.setContentType(msg.getContentType());
-                        if (msg.getCharacterEncoding() != null)
-                            response.setCharacterEncoding(msg.getCharacterEncoding().name());
+                    if (msg.getHeaders() != null) {
+                        for (final Map.Entry<String, String> h : msg.getHeaders().entries())
+                            response.addHeader(h.getKey(), h.getValue());
                     }
                 }
-                ServletOutputStream out = writeBody(message, response, !message.shouldStartActor());
+
+                if (msg.getStatus() >= 400 && msg.getStatus() < 600) {
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    response.sendError(msg.getStatus(), msg.getError() != null ? msg.getError().toString() : null);
+                    ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+                    return true;
+                }
+
+                if (msg.getRedirectPath() != null) {
+                    response.sendRedirect(msg.getRedirectPath());
+                    ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+                    return true;
+                }
+
+                if (!response.isCommitted()) {
+                    response.setStatus(msg.getStatus());
+
+                    if (msg.getContentType() != null)
+                        response.setContentType(msg.getContentType());
+                    if (msg.getCharacterEncoding() != null)
+                        response.setCharacterEncoding(msg.getCharacterEncoding().name());
+                }
+                final ServletOutputStream out = writeBody(msg, response, !msg.shouldStartActor());
                 out.flush(); // commits the response
 
-                if (message.shouldStartActor()) {
+                if (msg.shouldStartActor()) {
                     try {
-                        message.getFrom().send(new HttpStreamOpened(new HttpStreamActor(request, response).ref(), message));
-                    } catch (SuspendExecution e) {
+                        msg.getFrom().send(new HttpStreamOpened(new HttpStreamActor(request, response).ref(), msg));
+                    } catch (final SuspendExecution e) {
                         throw new AssertionError(e);
                     }
                 } else {
@@ -326,39 +316,34 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                     ctx.complete();
                 }
                 return true;
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 request.getServletContext().log("IOException", ex);
                 ctx.complete();
-                this.exception = ex;
                 return false;
             }
         }
 
         @Override
-        public void close() {
+        public final void close() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void close(Throwable t) {
+        public final void close(Throwable t) {
             throw new UnsupportedOperationException();
         }
     }
 
-    private static class HttpStreamActor extends FakeActor<WebDataMessage> {
-        private final AsyncContext ctx;
-        private final HttpServletResponse response;
+    private static final class HttpStreamActor extends FakeActor<WebDataMessage> {
         private volatile boolean dead;
 
         public HttpStreamActor(final HttpServletRequest request, final HttpServletResponse response) {
             super(request.toString(), new HttpStreamChannel(request.getAsyncContext(), response));
-            this.ctx = request.getAsyncContext();
-            this.response = response;
             ((HttpStreamChannel) (Object) mailbox()).actor = this;
         }
 
         @Override
-        protected WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
+        protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
             if (m instanceof ShutdownMessage) {
                 die(null);
             }
@@ -366,39 +351,31 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
 
         @Override
-        protected void throwIn(RuntimeException e) {
+        protected final void throwIn(RuntimeException e) {
             die(e);
         }
 
         @Override
-        public void interrupt() {
+        public final void interrupt() {
             die(new InterruptedException());
         }
 
         @Override
-        protected void die(Throwable cause) {
+        protected final void die(Throwable cause) {
             if (dead)
                 return;
-            this.dead = true;
+            dead = true;
             mailbox().close();
             super.die(cause);
         }
 
-        private void log(String message) {
-            ctx.getRequest().getServletContext().log(message);
-        }
-
-        private void log(String message, Throwable t) {
-            ctx.getRequest().getServletContext().log(message, t);
-        }
-
         @Override
-        public String toString() {
+        public final String toString() {
             return "HttpStreamActor{request + " + getName() + "}";
         }
     }
 
-    private static class HttpStreamChannel implements SendPort<WebDataMessage> {
+    private static final class HttpStreamChannel implements SendPort<WebDataMessage> {
         HttpStreamActor actor;
         final AsyncContext ctx;
         final HttpServletResponse response;
@@ -410,11 +387,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
 
         @Override
         public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
-            if (!trySend(message)) {
-//                if (exception == null)
-//                    throw new ChannelClosedException(this, exception);
-//                throw Exceptions.rethrow(exception);
-            }
+            trySend(message);
         }
 
         @Override
@@ -450,7 +423,7 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
                     //ctx.getRequest().getServletContext().log("error", e);
                 }
                 ctx.complete();
-            } catch (Exception e) {
+            } catch (final Exception ignored) {
             }
         }
 
@@ -460,50 +433,6 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         }
     }
 
-    static SendPort<WebDataMessage> openChannel(final HttpStreamActor actor, final AsyncContext ctx, final HttpServletResponse response) {
-        return new SendPort<WebDataMessage>() {
-            @Override
-            public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
-                if (!trySend(message)) {
-//                if (exception == null)
-//                    throw new ChannelClosedException(this, exception);
-//                throw Exceptions.rethrow(exception);
-                }
-            }
-
-            @Override
-            public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
-                send(message);
-                return true;
-            }
-
-            @Override
-            public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
-                return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
-            }
-
-            @Override
-            public boolean trySend(WebDataMessage message) {
-                try {
-                    ServletOutputStream os = writeBody(message, response, false);
-                    os.flush();
-                } catch (IOException ex) {
-                    actor.die(ex);
-                    return false;
-                }
-                return true;
-            }
-
-            @Override
-            public void close() {
-            }
-
-            @Override
-            public void close(Throwable t) {
-            }
-        };
-    }
-
     static ServletOutputStream writeBody(WebMessage message, HttpServletResponse response, boolean shouldClose) throws IOException {
         final byte[] arr;
         final int offset;
@@ -511,8 +440,6 @@ public class WebActorServlet extends HttpServlet implements HttpSessionListener 
         ByteBuffer bb;
         String sb;
         if ((bb = message.getByteBufferBody()) != null) {
-//                        WritableByteChannel wc = Channels.newChannel(out);
-//                        wc.write(bb);
             if (bb.hasArray()) {
                 arr = bb.array();
                 offset = bb.arrayOffset() + bb.position();

@@ -60,7 +60,7 @@ public abstract class AbstractWebActorTest {
 	}
 
 	@Test
-	public void testHttpMsg() throws IOException, InterruptedException, ExecutionException {
+	public final void testHttpMsg() throws IOException, InterruptedException, ExecutionException {
 		final HttpGet httpGet = new HttpGet("http://localhost:8080");
 		try (final CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig).build()) {
 			final CloseableHttpResponse res = client.execute(httpGet);
@@ -72,7 +72,7 @@ public abstract class AbstractWebActorTest {
 	}
 
 	@Test
-	public void testHttpRedirect() throws IOException, InterruptedException, ExecutionException {
+	public final void testHttpRedirect() throws IOException, InterruptedException, ExecutionException {
 		final HttpGet httpGet = new HttpGet("http://localhost:8080/redirect");
 		try (final CloseableHttpClient client = HttpClients.custom().disableRedirectHandling().setDefaultRequestConfig(requestConfig).build()) {
 			final CloseableHttpResponse res = client.execute(httpGet);
@@ -84,7 +84,7 @@ public abstract class AbstractWebActorTest {
 	}
 
 	@Test
-	public void testWebSocketMsg() throws IOException, InterruptedException, ExecutionException, DeploymentException {
+	public final void testWebSocketMsg() throws IOException, InterruptedException, ExecutionException, DeploymentException {
 		BasicCookieStore cookieStore = new BasicCookieStore();
 		final HttpGet httpGet = new HttpGet("http://localhost:8080");
 		HttpClients.custom().setDefaultRequestConfig(requestConfig).setDefaultCookieStore(cookieStore).build().execute(httpGet, new BasicResponseHandler());
@@ -100,7 +100,7 @@ public abstract class AbstractWebActorTest {
 	}
 
 	@Test
-	public void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
+	public final void testSSE() throws IOException, InterruptedException, DeploymentException, ExecutionException {
 		Client client = null;
 		try {
 			client = ClientBuilder.newBuilder().register(SseFeature.class).build();
@@ -112,7 +112,7 @@ public abstract class AbstractWebActorTest {
 			final SettableFuture<String> res = new SettableFuture<>();
 			new Thread(new Runnable() {
 				@Override
-				public void run() {
+				public final void run() {
 					try {
 						while (!eventInput.isClosed() && !res.isDone()) {
 							final InboundEvent inboundEvent = eventInput.read();
@@ -147,14 +147,13 @@ public abstract class AbstractWebActorTest {
 			public void onOpen(final Session session, EndpointConfig config) {
 				session.addMessageHandler(new MessageHandler.Whole<String>() {
 					@Override
-					public void onMessage(String text) {
+					public final void onMessage(String text) {
 						res.set(text);
 					}
 				});
 				try {
 					session.getBasicRemote().sendText(sendText);
-				} catch (IOException ignored) {
-				}
+				} catch (final IOException ignored) {}
 			}
 		};
 	}

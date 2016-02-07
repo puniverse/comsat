@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -24,20 +24,21 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MyWebActor extends BasicActor<WebMessage, Void> {
     // There is one actor for each client
-    private static final Set<ActorRef<WebMessage>> actors = Collections.newSetFromMap(new ConcurrentHashMap<ActorRef<WebMessage>, Boolean>());
+    private static final Set<ActorRef<WebMessage>> actors =
+        Collections.newSetFromMap(new ConcurrentHashMap<ActorRef<WebMessage>, Boolean>());
 
     // The client representation of this actor
     private SendPort<WebDataMessage> peer;
 
     @Override
-    protected Void doRun() throws InterruptedException, SuspendExecution {
+    protected final Void doRun() throws InterruptedException, SuspendExecution {
         actors.add(self());
         try {
             //noinspection InfiniteLoopStatement
             for (;;) {
-                Object message = receive();
+                final Object message = receive();
                 if (message instanceof HttpRequest) {
-                    HttpRequest msg = (HttpRequest) message;
+                    final HttpRequest msg = (HttpRequest) message;
                     switch (msg.getRequestURI()) {
                         case "/":
                             msg.getFrom().send(HttpResponse.ok(self(), msg, "httpResponse").setContentType("text/html").build());
@@ -55,7 +56,7 @@ public class MyWebActor extends BasicActor<WebMessage, Void> {
                     }
                 } // -------- WebSocket/SSE opened --------
                 else if (message instanceof WebStreamOpened) {
-                    WebStreamOpened msg = (WebStreamOpened) message;
+                    final WebStreamOpened msg = (WebStreamOpened) message;
                     watch(msg.getFrom()); // will call handleLifecycleMessage with ExitMessage when the session ends
 
                     SendPort<WebDataMessage> p = msg.getFrom();
@@ -77,7 +78,7 @@ public class MyWebActor extends BasicActor<WebMessage, Void> {
     private SendPort<WebDataMessage> wrapAsSSE(SendPort<WebDataMessage> actor) {
         return Channels.mapSend(actor, new Function<WebDataMessage, WebDataMessage>() {
             @Override
-            public WebDataMessage apply(WebDataMessage f) {
+            public final WebDataMessage apply(WebDataMessage f) {
                 return new WebDataMessage(f.getFrom(), SSE.event(f.getStringBody()));
             }
         });
@@ -87,14 +88,14 @@ public class MyWebActor extends BasicActor<WebMessage, Void> {
         if (peer != null)
             peer.send(webDataMessage);
         if (webDataMessage.getFrom().equals(peer))
-            for (SendPort actor : actors)
+            for (final SendPort actor : actors)
                 if (actor != self())
                     //noinspection unchecked
                     actor.send(webDataMessage);
     }
 
     @Override
-    protected WebMessage handleLifecycleMessage(LifecycleMessage m) {
+    protected final WebMessage handleLifecycleMessage(LifecycleMessage m) {
         // while listeners might contain an SSE actor wrapped with Channels.map, the wrapped SendPort maintains the original actors hashCode and equals behavior
         if (m instanceof ExitMessage)
             actors.remove(((ExitMessage) m).getActor());

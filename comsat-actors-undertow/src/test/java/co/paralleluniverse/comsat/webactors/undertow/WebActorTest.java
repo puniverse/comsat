@@ -89,12 +89,12 @@ public class WebActorTest extends AbstractWebActorTest {
 
 	private static final int INET_PORT = 8080;
 
-	private final Callable<WebActorHandler> webActorHandlerCreator;
+	private final Callable<WebActorHandler> webActorHandlerCreatorInEffect;
 
 	private Undertow server;
 
 	public WebActorTest(Callable<WebActorHandler> webActorHandlerCreator) {
-		this.webActorHandlerCreator = webActorHandlerCreator;
+		this.webActorHandlerCreatorInEffect = webActorHandlerCreator;
 	}
 
 	@Before
@@ -107,7 +107,7 @@ public class WebActorTest extends AbstractWebActorTest {
 			new SessionAttachmentHandler(sessionManager, sessionConfig);
 		server = Undertow.builder()
 				.addHttpListener(INET_PORT, "localhost")
-				.setHandler(new RequestDumpingHandler(sessionAttachmentHandler.setNext(webActorHandlerCreator.call()))).build();
+				.setHandler(new RequestDumpingHandler(sessionAttachmentHandler.setNext(webActorHandlerCreatorInEffect.call()))).build();
 		server.start();
 		AbstractEmbeddedServer.waitUrlAvailable("http://localhost:" + INET_PORT);
 

@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -18,9 +18,7 @@ import co.paralleluniverse.comsat.webactors.Cookie;
 import static co.paralleluniverse.comsat.webactors.Cookie.*;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
-import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.comsat.webactors.WebMessage;
-import co.paralleluniverse.strands.channels.SendPort;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -43,16 +41,16 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Wraps a {@link HttpServletRequest} as a {@link HttpRequest}
  */
-class ServletHttpRequest extends HttpRequest {
+final class ServletHttpRequest extends HttpRequest {
     final HttpServletRequest request;
     final HttpServletResponse response;
+
     private ListMultimap<String, String> headers;
     private Multimap<String, String> params;
     private Map<String, Object> attrs;
     private final ActorRef<? super HttpResponse> sender;
     private String strBody;
     private byte[] binBody;
-    private SendPort<WebDataMessage> channel;
     private Collection<Cookie> cookies;
 
     /**
@@ -73,15 +71,15 @@ class ServletHttpRequest extends HttpRequest {
 //        return request.getRequestURL().toString();
 //    }
     @Override
-    public String getStringBody() {
+    public final String getStringBody() {
         if (strBody == null) {
             if (binBody != null)
                 return null;
-            byte[] ba = readBody();
-            String enc = request.getCharacterEncoding();
+            final byte[] ba = readBody();
+            final String enc = request.getCharacterEncoding();
             try {
                 this.strBody = enc!=null ?  new String(ba, enc) : new String(ba);
-            } catch (UnsupportedEncodingException e) {
+            } catch (final UnsupportedEncodingException e) {
                 throw new UnsupportedCharsetException(enc);
             }
         }
@@ -89,7 +87,7 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public ByteBuffer getByteBufferBody() {
+    public final ByteBuffer getByteBufferBody() {
         if (binBody == null) {
             if (strBody != null)
                 return null;
@@ -100,9 +98,9 @@ class ServletHttpRequest extends HttpRequest {
 
     private byte[] readBody() {
         try {
-            ServletInputStream is = request.getInputStream();
-            int length = request.getContentLength();
-            byte[] ba;
+            final ServletInputStream is = request.getInputStream();
+            final int length = request.getContentLength();
+            final byte[] ba;
             if (length < 0)
                 ba = ByteStreams.toByteArray(is);
             else {
@@ -110,18 +108,18 @@ class ServletHttpRequest extends HttpRequest {
                 ByteStreams.readFully(is, ba);
             }
             return ba;
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             throw new RuntimeException(ex);
         }
     }
 
     @Override
-    public ListMultimap<String, String> getHeaders() {
+    public final ListMultimap<String, String> getHeaders() {
         if (headers == null) {
-            ImmutableListMultimap.Builder<String, String> mm = ImmutableListMultimap.builder();// LinkedHashMultimap.create();
-            for (Enumeration<String> hs = request.getHeaderNames(); hs.hasMoreElements();) {
-                String h = hs.nextElement();
-                for (Enumeration<String> hv = request.getHeaders(h); hv.hasMoreElements();)
+            final ImmutableListMultimap.Builder<String, String> mm = ImmutableListMultimap.builder();// LinkedHashMultimap.create();
+            for (final Enumeration<String> hs = request.getHeaderNames(); hs.hasMoreElements();) {
+                final String h = hs.nextElement();
+                for (final Enumeration<String> hv = request.getHeaders(h); hv.hasMoreElements();)
                     mm.put(h, hv.nextElement());
             }
             this.headers = mm.build();
@@ -130,14 +128,14 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public Multimap<String, String> getParameters() {
+    public final Multimap<String, String> getParameters() {
         if (params == null) {
-            ImmutableListMultimap.Builder<String, String> mm = ImmutableListMultimap.builder();
-            for (Enumeration<String> ps = request.getParameterNames(); ps.hasMoreElements();) {
-                String p = ps.nextElement();
-                String[] pvs = request.getParameterValues(p);
+            final ImmutableListMultimap.Builder<String, String> mm = ImmutableListMultimap.builder();
+            for (final Enumeration<String> ps = request.getParameterNames(); ps.hasMoreElements();) {
+                final String p = ps.nextElement();
+                final String[] pvs = request.getParameterValues(p);
                 if (pvs != null) {
-                    for (String pv : pvs)
+                    for (final String pv : pvs)
                         mm.put(p, pv);
                 }
             }
@@ -147,12 +145,12 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public Map<String, Object> getAttributes() {
+    public final Map<String, Object> getAttributes() {
         if (attrs == null) {
-            ImmutableMap.Builder<String, Object> m = ImmutableMap.builder();
-            for (Enumeration<String> as = request.getAttributeNames(); as.hasMoreElements();) {
-                String a = as.nextElement();
-                Object v = request.getAttribute(a);
+            final ImmutableMap.Builder<String, Object> m = ImmutableMap.builder();
+            for (final Enumeration<String> as = request.getAttributeNames(); as.hasMoreElements();) {
+                final String a = as.nextElement();
+                final Object v = request.getAttribute(a);
                 m.put(a, v);
             }
             this.attrs = m.build();
@@ -161,12 +159,12 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public Collection<Cookie> getCookies() {
+    public final Collection<Cookie> getCookies() {
         if (cookies == null) {
             final javax.servlet.http.Cookie[] cs = request.getCookies();
-            ImmutableCollection.Builder<Cookie> collb = ImmutableList.builder();
+            final ImmutableCollection.Builder<Cookie> collb = ImmutableList.builder();
             if (cs != null) {
-                for (javax.servlet.http.Cookie c : cs) {
+                for (final javax.servlet.http.Cookie c : cs) {
                     collb.add(cookie(c.getName(), c.getValue())
                             .setComment(c.getComment())
                             .setDomain(c.getDomain())
@@ -184,68 +182,69 @@ class ServletHttpRequest extends HttpRequest {
     }
 
     @Override
-    public long getDateHeader(String name) {
+    public final long getDateHeader(String name) {
         return request.getDateHeader(name);
     }
 
     @Override
-    public String getMethod() {
+    public final String getMethod() {
         return request.getMethod();
     }
 
     @Override
-    public String getScheme() {
+    public final String getScheme() {
         return request.getScheme();
     }
 
     
     @Override
-    public String getQueryString() {
+    public final String getQueryString() {
         return request.getQueryString();
     }
 
     @Override
-    public String getServerName() {
+    public final String getServerName() {
         return request.getServerName();
     }
 
     @Override
-    public int getServerPort() {
+    public final int getServerPort() {
         return request.getServerPort();
     }
 
     @Override
-    public String getContextPath() {
+    public final String getContextPath() {
         return request.getContextPath();
     }
 
     @Override
-    public String getRequestURI() {
+    public final String getRequestURI() {
         return request.getRequestURI();
     }
 
     @Override
-    public int getContentLength() {
+    public final int getContentLength() {
         return request.getContentLength();
     }
 
     @Override
-    public String getContentType() {
+    public final String getContentType() {
         return request.getContentType();
     }
 
     @Override
-    public String getPathInfo() {
+    public final String getPathInfo() {
         return request.getPathInfo();
     }
 
     @Override
-    public Charset getCharacterEncoding() {
+    public final Charset getCharacterEncoding() {
         return request.getCharacterEncoding() != null ? Charset.forName(request.getCharacterEncoding()) : null;
     }
 
     @Override
-    public ActorRef<WebMessage> getFrom() {
+    public final ActorRef<WebMessage> getFrom() {
+        //noinspection unchecked
         return (ActorRef<WebMessage>) sender;
     }
 }

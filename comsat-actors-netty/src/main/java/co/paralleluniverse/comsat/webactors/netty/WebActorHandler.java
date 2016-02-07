@@ -254,7 +254,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         lock.unlock();
     }
 
-    private static class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
+    private static final class WebSocketActorAdapter extends FakeActor<WebDataMessage> {
         final ActorRef<? super WebMessage> webActor;
         private final ChannelHandlerContext ctx;
 
@@ -272,7 +272,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final String toString() {
-            return "WebSocketActorAdapter{" + "webActor=" + webActor + '}';
+            return "WebSocketActorAdapter{" + "userActor=" + webActor + '}';
         }
 
         private void onMessage(final ByteBuffer message) {
@@ -314,7 +314,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class WebSocketChannelAdapter implements SendPort<WebDataMessage> {
+    private static final class WebSocketChannelAdapter implements SendPort<WebDataMessage> {
         private final ChannelHandlerContext ctx;
 
         public WebSocketChannelAdapter(ChannelHandlerContext ctx) {
@@ -357,7 +357,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private final class HttpActorAdapter extends FakeActor<HttpResponse> {
+    private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
         public HttpActorAdapter(Context actorContext, String httpResponseEncoderName) {
             super("HttpActorAdapter", new HttpChannelAdapter(actorContext, httpResponseEncoderName));
         }
@@ -396,7 +396,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class HttpChannelAdapter implements SendPort<HttpResponse> {
+    private static final class HttpChannelAdapter implements SendPort<HttpResponse> {
         private final String httpResponseEncoderName;
         private Context actorContext;
 
@@ -556,7 +556,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         return match(uri, actorClass).equals("ws");
     }
 
-    private static class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
+    private static final class HttpStreamActorAdapter extends FakeActor<WebDataMessage> {
         private volatile boolean dead;
 
         public HttpStreamActorAdapter(final ChannelHandlerContext ctx, final FullHttpRequest req) {
@@ -596,7 +596,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private static class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
+    private static final class HttpStreamChannelAdapter implements SendPort<WebDataMessage> {
         private final Charset encoding;
         private final ChannelHandlerContext ctx;
 

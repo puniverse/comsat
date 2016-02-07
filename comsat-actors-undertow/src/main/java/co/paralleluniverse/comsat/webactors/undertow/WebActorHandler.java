@@ -274,7 +274,7 @@ public class WebActorHandler implements HttpHandler {
 
         @Override
         public final String toString() {
-            return "WebSocketActor{" + "webActor=" + webActor + '}';
+            return "WebSocketActor{" + "userActor=" + webActor + '}';
         }
     }
 
@@ -382,7 +382,7 @@ public class WebActorHandler implements HttpHandler {
             }
         }
 
-        private static class HttpByteArrayReadChannelListener extends ByteArrayReadChannelListener {
+        private static final class HttpByteArrayReadChannelListener extends ByteArrayReadChannelListener {
             private final HttpServerExchange xch;
             private final ActorRef<? super HttpRequest> userActor;
             private final ActorRef<HttpResponse> from;

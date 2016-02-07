@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -41,15 +41,16 @@ import javax.websocket.Session;
 /**
  * A WebSocket endpoint that forwards requests to a web actor.
  */
-public class WebActorEndpoint extends Endpoint {
+public final class WebActorEndpoint extends Endpoint {
     private volatile EndpointConfig config;
 
     @Override
-    public void onOpen(Session session, EndpointConfig config) {
+    public final void onOpen(Session session, EndpointConfig config) {
         if (this.config == null)
             this.config = config;
-        ActorRef webActor = getHttpSessionActor(config).getWebActor();
+        ActorRef webActor = getHttpSessionActor(config).getUserActor();
         if (webActor != null) {
+            //noinspection unchecked
             WebSocketActor wsa = attachWebActor(session, config, webActor);
             wsa.onOpen();
         } else {
@@ -74,12 +75,12 @@ public class WebActorEndpoint extends Endpoint {
     }
 
     @Override
-    public void onError(Session session, Throwable t) {
+    public final void onError(Session session, Throwable t) {
         getSessionActor(session).onError(t);
     }
 
     @Override
-    public void onClose(Session session, CloseReason closeReason) {
+    public final void onClose(Session session, CloseReason closeReason) {
         getSessionActor(session).onClose(closeReason);
     }
 
@@ -98,14 +99,10 @@ public class WebActorEndpoint extends Endpoint {
         return (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
     }
 
-    static class WebSocketActor extends FakeActor<WebDataMessage> {
+    static final class WebSocketActor extends FakeActor<WebDataMessage> {
         private final Session session;
         private final HttpSession httpSession;
         private final ActorRef<? super WebMessage> webActor;
-
-        public WebSocketActor(Session session, EndpointConfig config, ActorRef<? super WebMessage> webActor) {
-            this(session, getHttpSession(config), webActor);
-        }
 
         public WebSocketActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> webActor) {
             super(session.toString(), new WebSocketChannel(session, httpSession));
@@ -136,7 +133,7 @@ public class WebActorEndpoint extends Endpoint {
             });
         }
 
-        void onOpen() {
+        final void onOpen() {
             try {
                 FiberUtil.runInFiber(new SuspendableRunnable() {
                     @Override
@@ -144,30 +141,26 @@ public class WebActorEndpoint extends Endpoint {
                         webActor.send(new WebSocketOpened(WebSocketActor.this.ref()));
                     }
                 });
-            } catch (ExecutionException e) {
+            } catch (final ExecutionException e) {
                 log("Exception in onOpen", e.getCause());
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 throw new RuntimeException();
             }
         }
 
-        void onClose(CloseReason closeReason) {
+        final void onClose(CloseReason closeReason) {
             // don't call die because the session is already closed.
             super.die(closeReason.getCloseCode() == CloseReason.CloseCodes.NORMAL_CLOSURE ? null : new RuntimeException(closeReason.toString()));
         }
 
-        void onError(Throwable t) {
+        final void onError(Throwable t) {
             log("onError", t);
         }
 
-        ActorRef<? super WebDataMessage> getWebActor() {
-            return webActor;
-        }
-
         @Override
-        protected WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
+        protected final WebDataMessage handleLifecycleMessage(LifecycleMessage m) {
             if (m instanceof ExitMessage) {
-                ExitMessage em = (ExitMessage) m;
+                final ExitMessage em = (ExitMessage) m;
                 if (em.getActor() != null && em.getActor().equals(webActor))
                     die(em.getCause());
             }
@@ -175,27 +168,23 @@ public class WebActorEndpoint extends Endpoint {
         }
 
         @Override
-        protected void throwIn(RuntimeException e) {
+        protected final void throwIn(RuntimeException e) {
             die(e);
         }
 
         @Override
-        public void interrupt() {
+        public final void interrupt() {
             die(new InterruptedException());
         }
 
         @Override
-        protected void die(Throwable cause) {
+        protected final void die(Throwable cause) {
             super.die(cause);
             try {
                 session.close(new CloseReason(CloseReason.CloseCodes.GOING_AWAY, cause != null ? (cause.getClass() + ": " + cause.getMessage()) : ""));
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 log("IOException on interrupt", ex);
             }
-        }
-
-        private void log(String message) {
-            httpSession.getServletContext().log(message);
         }
 
         private void log(String message, Throwable t) {
@@ -208,7 +197,7 @@ public class WebActorEndpoint extends Endpoint {
         }
     }
 
-    private static class WebSocketChannel implements SendPort<WebDataMessage> {
+    private static final class WebSocketChannel implements SendPort<WebDataMessage> {
         private final Session session;
         private final HttpSession httpSession;
 
@@ -218,33 +207,34 @@ public class WebActorEndpoint extends Endpoint {
         }
 
         @Override
-        public void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
+        public final void send(WebDataMessage message) throws SuspendExecution, InterruptedException {
             trySend(message);
         }
 
         @Override
-        public boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+        public final boolean send(WebDataMessage message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
             return trySend(message);
         }
 
         @Override
-        public boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
+        public final boolean send(WebDataMessage message, Timeout timeout) throws SuspendExecution, InterruptedException {
             return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
         }
 
         @Override
-        public boolean trySend(WebDataMessage message) {
+        public final boolean trySend(WebDataMessage message) {
             if (!session.isOpen())
                 return false;
+            // TODO: use fiber async instead of servlet Async ?
             if (!message.isBinary())
-                session.getAsyncRemote().sendText(message.getStringBody()); // TODO: use fiber async instead of servlet Async ?
+                session.getAsyncRemote().sendText(message.getStringBody());
             else
                 session.getAsyncRemote().sendBinary(message.getByteBufferBody());
             return true;
         }
 
         @Override
-        public void close() {
+        public final void close() {
             try {
                 session.close();
             } catch (IOException ex) {
@@ -253,7 +243,7 @@ public class WebActorEndpoint extends Endpoint {
         }
 
         @Override
-        public void close(Throwable t) {
+        public final void close(Throwable t) {
             close();
         }
     }

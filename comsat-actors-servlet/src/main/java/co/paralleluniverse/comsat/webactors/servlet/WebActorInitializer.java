@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -49,20 +49,20 @@ public class WebActorInitializer implements ServletContextListener {
     }
 
     @Override
-    public void contextInitialized(ServletContextEvent sce) {
+    public final void contextInitialized(ServletContextEvent sce) {
         final ServletContext sc = sce.getServletContext();
         try {
-            ClassLoader classLoader = userClassLoader != null ? userClassLoader : sc.getClassLoader();
+            final ClassLoader classLoader = userClassLoader != null ? userClassLoader : sc.getClassLoader();
             ClassLoaderUtil.accept((URLClassLoader)classLoader, new ClassLoaderUtil.Visitor() {
                 @Override
                 public void visit(String resource, URL url, ClassLoader cl) {
                     if (!ClassLoaderUtil.isClassFile(resource))
                         return;
                     final String className = ClassLoaderUtil.resourceToClass(resource);
-                    try (InputStream is = cl.getResourceAsStream(resource)) {
+                    try (final InputStream is = cl.getResourceAsStream(resource)) {
                         if (AnnotationUtil.hasClassAnnotation(WebActor.class, is))
                             registerWebActor(sc, cl.loadClass(className));
-                    } catch (IOException | ClassNotFoundException e) {
+                    } catch (final IOException | ClassNotFoundException e) {
                         sc.log("Exception while scanning class " + className + " for WebActor annotation", e);
                         throw new RuntimeException(e);
                     }
@@ -77,7 +77,7 @@ public class WebActorInitializer implements ServletContextListener {
 //                    sc.log("IOException while scanning class " + ci.getName() + " for WebActor annotation", e);
 //                }
 //            }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             sc.log("IOException while scanning classes for WebActor annotation", e);
         }
     }
@@ -86,25 +86,25 @@ public class WebActorInitializer implements ServletContextListener {
         final WebActor waAnn = webActorClass.getAnnotation(WebActor.class);
         final String name = (waAnn.name() != null && !waAnn.name().isEmpty()) ? waAnn.name() : webActorClass.getName();
         // servlet
-        Dynamic d = sc.addServlet(name, WebActorServlet.class);
+        final Dynamic d = sc.addServlet(name, WebActorServlet.class);
         d.setInitParameter(WebActorServlet.ACTOR_CLASS_PARAM, webActorClass.getName());
         d.setAsyncSupported(true);
         d.addMapping(waAnn.httpUrlPatterns());
         d.addMapping(waAnn.value());
 
         // web socket
-        ServerContainer scon = (ServerContainer) sc.getAttribute("javax.websocket.server.ServerContainer");
+        final ServerContainer scon = (ServerContainer) sc.getAttribute("javax.websocket.server.ServerContainer");
         assert scon!=null : "Container does not support websockets !!!";
-        for (String wsPath : waAnn.webSocketUrlPatterns()) {
+        for (final String wsPath : waAnn.webSocketUrlPatterns()) {
             try {
                 scon.addEndpoint(ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath).configurator(new EmbedHttpSessionWsConfigurator()).build());
-            } catch (DeploymentException ex) {
+            } catch (final DeploymentException ex) {
                 sc.log("Unable to deploy endpoint", ex);
             }
         }
     }
 
     @Override
-    public void contextDestroyed(ServletContextEvent sce) {
+    public final void contextDestroyed(ServletContextEvent sce) {
     }
 }
