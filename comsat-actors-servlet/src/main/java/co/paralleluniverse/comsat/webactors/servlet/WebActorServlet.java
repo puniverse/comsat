@@ -209,6 +209,9 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         private void unwatch() {
             if (watchToken != null && userActor != null)
                 unwatch(userActor, watchToken);
+            asyncCtx = null;
+            resp = null;
+            watchToken = null;
         }
 
         private void handleDeath(Throwable cause) throws IOException {
