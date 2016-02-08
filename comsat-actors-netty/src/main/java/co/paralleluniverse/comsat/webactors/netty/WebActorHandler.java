@@ -599,7 +599,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
                 return true;
             } finally {
-                actor.unwatch();
+                if (actor != null)
+                    actor.unwatch();
             }
         }
 
