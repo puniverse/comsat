@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -22,18 +22,16 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 
-public class JettyServer extends AbstractEmbeddedServer {
+public final class JettyServer extends AbstractEmbeddedServer {
     private Server server;
-    private ServerConnector http;
     private ServletContextHandler context;
-    private boolean error;
     private boolean wsEnabled;
 
     private void build() {
         if (server != null)
             return;
         this.server = new Server(new QueuedThreadPool(nThreads, nThreads));
-        this.http = new ServerConnector(server);
+        final ServerConnector http = new ServerConnector(server);
         http.setPort(port);
         http.setAcceptQueueSize(maxConn);
         server.addConnector(http);
@@ -41,7 +39,7 @@ public class JettyServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
+    public final ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
         if (context == null)
             build();
         ServletHolder sh = new ServletHolder(servletClass);
@@ -50,7 +48,7 @@ public class JettyServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void addServletContextListener(Class<? extends ServletContextListener> scl) {
+    public final void addServletContextListener(Class<? extends ServletContextListener> scl) {
         if (context == null)
             build();
         try {
@@ -61,7 +59,7 @@ public class JettyServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void start() throws Exception {
+    public final void start() throws Exception {
         if (context==null)
             build();
         server.setHandler(context);
@@ -71,23 +69,23 @@ public class JettyServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void stop() throws Exception {
+    public final void stop() throws Exception {
         server.stop();
     }
 
     @Override
-    public void enableWebsockets() throws Exception {
+    public final void enableWebsockets() throws Exception {
         this.wsEnabled = true;
     }
 
     @Override
-    public void setResourceBase(final String resourceBaseUrl) {
+    public final void setResourceBase(final String resourceBaseUrl) {
         if (context==null)
             build();
         context.setResourceBase(resourceBaseUrl);
     }
 
-    private static class JettyServletDesc implements ServletDesc {
+    private static final class JettyServletDesc implements ServletDesc {
         private final ServletHolder impl;
 
         public JettyServletDesc(ServletHolder sh) {
@@ -95,13 +93,13 @@ public class JettyServer extends AbstractEmbeddedServer {
         }
 
         @Override
-        public ServletDesc setInitParameter(String name, String value) {
+        public final ServletDesc setInitParameter(String name, String value) {
             impl.setInitParameter(name, value);
             return this;
         }
 
         @Override
-        public ServletDesc setLoadOnStartup(int load) {
+        public final ServletDesc setLoadOnStartup(int load) {
             impl.setInitOrder(load);
             return this;
         }

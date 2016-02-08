@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -33,21 +33,24 @@ import org.xnio.Options;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 
-public class UndertowServer extends AbstractEmbeddedServer {
+public final class UndertowServer extends AbstractEmbeddedServer {
     private static final String ANY_LOCAL_ADDRESS = "0.0.0.0"; // not "localhost"!
+
     private DeploymentInfo deployment;
     private Undertow server;
 
     private void build() {
         if (deployment != null)
             return;
-        this.deployment = Servlets.deployment().setDeploymentName("")
+
+        this.deployment =
+            Servlets.deployment().setDeploymentName("")
                 .setClassLoader(ClassLoader.getSystemClassLoader())
                 .setContextPath("/");
     }
 
     @Override
-    public ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
+    public final ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
         build();
         final ServletInfo info = Servlets.servlet(name, servletClass).addMapping(mapping).setAsyncSupported(true);
         deployment.addServlet(info);
@@ -55,7 +58,7 @@ public class UndertowServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void start() throws Exception {
+    public final void start() throws Exception {
         final DeploymentManager servletsContainer = Servlets.defaultContainer().addDeployment(deployment);
         servletsContainer.deploy();
         HttpHandler handler = servletsContainer.start();
@@ -67,7 +70,7 @@ public class UndertowServer extends AbstractEmbeddedServer {
                 .build();
         new Thread(new Runnable() {
             @Override
-            public void run() {
+            public final void run() {
                 server.start();
             }
         }).start();
@@ -75,20 +78,20 @@ public class UndertowServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void stop() throws Exception {
+    public final void stop() throws Exception {
         if (server != null)
             server.stop();
     }
 
     @Override
-    public void addServletContextListener(Class<? extends ServletContextListener> scl) {
+    public final void addServletContextListener(Class<? extends ServletContextListener> scl) {
         build();
         final ListenerInfo li = Servlets.listener(scl);
         deployment.addListener(li);
     }
 
     @Override
-    public void enableWebsockets() throws Exception {
+    public final void enableWebsockets() throws Exception {
         final Xnio xnio = Xnio.getInstance("nio", this.getClass().getClassLoader());
         final XnioWorker worker = xnio.createWorker(OptionMap.builder()
                         .set(Options.WORKER_IO_THREADS, 8)
@@ -101,7 +104,7 @@ public class UndertowServer extends AbstractEmbeddedServer {
                         .getMap());
         final ClassIntrospecter ci = new ClassIntrospecter() {
             @Override
-            public <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
+            public final <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
                 try {
                     return new ConstructorInstanceFactory<>(clazz.getDeclaredConstructor());
                 } catch (NoSuchMethodException e) {
@@ -109,7 +112,12 @@ public class UndertowServer extends AbstractEmbeddedServer {
                 }
             }
         };
-        final ServerWebSocketContainer wsc = new ServerWebSocketContainer(ci, worker, new DefaultByteBufferPool(true, 100), new CompositeThreadSetupAction(Collections.EMPTY_LIST), false, false);
+        //noinspection unchecked
+        final ServerWebSocketContainer wsc =
+            new ServerWebSocketContainer (
+                ci, worker, new DefaultByteBufferPool(true, 100),
+                new CompositeThreadSetupAction(Collections.EMPTY_LIST), false, false
+            );
         final FilterInfo fi = new FilterInfo("filter", JsrWebSocketFilter.class);
         fi.setAsyncSupported(true);
         deployment
@@ -119,12 +127,12 @@ public class UndertowServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public void setResourceBase(String resourceBaseUrl) {
+    public final void setResourceBase(String resourceBaseUrl) {
         // TODO
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    private static class UndertowServletDesc implements ServletDesc {
+    private static final class UndertowServletDesc implements ServletDesc {
         private final ServletInfo impl;
 
         public UndertowServletDesc(ServletInfo info) {
@@ -132,13 +140,13 @@ public class UndertowServer extends AbstractEmbeddedServer {
         }
 
         @Override
-        public ServletDesc setInitParameter(String name, String value) {
+        public final ServletDesc setInitParameter(String name, String value) {
             impl.addInitParam(name, value);
             return this;
         }
 
         @Override
-        public ServletDesc setLoadOnStartup(int load) {
+        public final ServletDesc setLoadOnStartup(int load) {
             impl.setLoadOnStartup(load);
             return this;
         }

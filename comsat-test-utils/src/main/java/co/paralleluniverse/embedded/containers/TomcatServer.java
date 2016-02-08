@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -24,7 +24,7 @@ import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.websocket.server.WsSci;
 
-public class TomcatServer extends AbstractEmbeddedServer {
+public final class TomcatServer extends AbstractEmbeddedServer {
     private static final String defaultResDir = System.getProperty(TomcatServer.class.getName() + ".defaultResDir", "./build");
 
     protected final Tomcat tomcat;
@@ -40,14 +40,14 @@ public class TomcatServer extends AbstractEmbeddedServer {
     }
 
     @Override
-    public ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
-        Wrapper w = Tomcat.addServlet(context, name, servletClass.getName());
+    public final ServletDesc addServlet(String name, Class<? extends Servlet> servletClass, String mapping) {
+        final Wrapper w = Tomcat.addServlet(context, name, servletClass.getName());
         w.addMapping(mapping);
         return new TomcatServletDesc(w);
     }
 
     @Override
-    public void start() throws Exception {
+    public final void start() throws Exception {
         tomcat.setPort(port);
 
         tomcat.getConnector().setAttribute("maxThreads", nThreads);
@@ -55,7 +55,7 @@ public class TomcatServer extends AbstractEmbeddedServer {
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
-            public void run() {
+            public final void run() {
                 try {
                     tomcat.stop();
                 } catch (LifecycleException ignored) {}
@@ -66,37 +66,37 @@ public class TomcatServer extends AbstractEmbeddedServer {
 
         new Thread() {
             @Override
-            public void run() {
+            public final void run() {
                 tomcat.getServer().await();
             }
         }.start();
     }
 
     @Override
-    public void stop() throws Exception {
+    public final void stop() throws Exception {
         tomcat.stop();
         tomcat.getConnector().destroy();
         tomcat.destroy();
     }
 
     @Override
-    public void enableWebsockets() throws Exception {
+    public final void enableWebsockets() throws Exception {
         context.addServletContainerInitializer(new WsSci(), null);
     }
 
     @Override
-    public void addServletContextListener(Class<? extends ServletContextListener> scl) {
+    public final void addServletContextListener(Class<? extends ServletContextListener> scl) {
         StandardContext tomcatCtx = (StandardContext) this.context;
         tomcatCtx.addApplicationListener(scl.getName());
     }
 
     @Override
-    public void setResourceBase(String resourceBaseUrl) {
+    public final void setResourceBase(String resourceBaseUrl) {
         // TODO
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    private static class TomcatServletDesc implements ServletDesc {
+    private static final class TomcatServletDesc implements ServletDesc {
         private final Wrapper impl;
 
         public TomcatServletDesc(Wrapper w) {
@@ -104,13 +104,13 @@ public class TomcatServer extends AbstractEmbeddedServer {
         }
 
         @Override
-        public ServletDesc setInitParameter(String name, String value) {
+        public final ServletDesc setInitParameter(String name, String value) {
             impl.addInitParameter(name, value);
             return this;
         }
 
         @Override
-        public ServletDesc setLoadOnStartup(int load) {
+        public final ServletDesc setLoadOnStartup(int load) {
             impl.setLoadOnStartup(load);
             return this;
         }

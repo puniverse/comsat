@@ -11,6 +11,6 @@
  * as published by the Free Software Foundation.
  */
 /**
- * A Web Actor Implementation on Undertow
+ * A Web Actors backend implementation based on Undertow
  */
 package co.paralleluniverse.comsat.webactors.undertow;

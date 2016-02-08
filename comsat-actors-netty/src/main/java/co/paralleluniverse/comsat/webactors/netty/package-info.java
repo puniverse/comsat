@@ -11,6 +11,6 @@
  * as published by the Free Software Foundation.
  */
 /**
- * A Web Actor Implementation on Netty
+ * A Web Actors backend implementation based on Netty
  */
 package co.paralleluniverse.comsat.webactors.netty;

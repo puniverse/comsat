@@ -11,6 +11,6 @@
  * as published by the Free Software Foundation.
  */
 /**
- * A Web Actor Implementation on Java EE Web Containers
+ * A Web Actors backend implementation based on Servlets
  */
 package co.paralleluniverse.comsat.webactors.servlet;

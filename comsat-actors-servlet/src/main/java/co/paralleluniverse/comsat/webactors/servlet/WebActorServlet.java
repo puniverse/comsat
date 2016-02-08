@@ -169,6 +169,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         private ActorRef<? super HttpRequest> userActor;
 
         private volatile boolean dead;
+
         private volatile AsyncContext asyncCtx;
         private volatile HttpServletResponse resp;
         private volatile Object watchToken;
