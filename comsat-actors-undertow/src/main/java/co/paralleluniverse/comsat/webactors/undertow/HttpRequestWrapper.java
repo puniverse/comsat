@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
@@ -49,6 +50,7 @@ final class HttpRequestWrapper extends HttpRequest {
     private ByteBuffer byteBufferBody;
     private String stringBody;
     private String contentType;
+    private Charset encoding;
 
     public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, HttpServerExchange xch, ByteBuffer reqContent) {
         this.actorRef = actorRef;
@@ -179,10 +181,18 @@ final class HttpRequestWrapper extends HttpRequest {
 
     @Override
     public Charset getCharacterEncoding() {
-        final String charsetName = xch.getRequestCharset();
-        if (charsetName != null)
-            return Charset.forName(charsetName);
-        return null;
+        if (encoding == null) {
+            final String charsetName = xch.getRequestCharset();
+            if (charsetName != null) {
+                try {
+                    encoding = Charset.forName(charsetName);
+                } catch (final UnsupportedCharsetException ignored) {}
+            }
+
+            if (encoding == null)
+                encoding = Charset.defaultCharset();
+        }
+        return encoding;
     }
 
     @Override
