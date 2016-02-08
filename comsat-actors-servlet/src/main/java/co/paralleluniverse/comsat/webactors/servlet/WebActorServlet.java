@@ -193,7 +193,6 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             this.resp = resp;
 
             if (isDone()) {
-                req.getSession().removeAttribute(ACTOR_KEY);
                 handleDeath(getDeathCause());
                 return;
             }
@@ -259,6 +258,8 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
             // Ensure to release references to server objects
             unwatch(userActor, watchToken);
+            if (session != null)
+                session.removeAttribute(ACTOR_KEY);
             userActor = null;
             session = null;
             asyncCtx = null;
