@@ -439,7 +439,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         @Override
-        protected void die(Throwable cause) {
+        protected final void die(Throwable cause) {
             if (dead)
                 return;
             dead = true;
