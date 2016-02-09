@@ -101,7 +101,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                 //noinspection unchecked
                 return (ActorRef<T>) oldActor;
             //noinspection unchecked
-            session.setAttribute(ACTOR_KEY, new HttpActor(session, (ActorRef<HttpRequest>) actor));
+            session.setAttribute(ACTOR_KEY, new HttpActor((ActorRef<HttpRequest>) actor));
             return actor;
         }
     }
@@ -165,7 +165,6 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
     }
 
     static final class HttpActor extends FakeActor<HttpResponse> {
-        private HttpSession session;
         private ActorRef<? super HttpRequest> userActor;
 
         private volatile boolean dead;
@@ -173,13 +172,13 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         private volatile AsyncContext asyncCtx;
         private volatile HttpServletResponse resp;
         private volatile Object watchToken;
+        private volatile HttpSession session;
 
-        public HttpActor(HttpSession session, ActorRef<? super HttpRequest> userActor) {
-            super(session.toString(), new HttpChannel());
+        public HttpActor(ActorRef<? super HttpRequest> userActor) {
+            super(userActor.toString(), new HttpChannel());
 
             ((HttpChannel) (SendPort) getMailbox()).actor = this;
 
-            this.session = session;
             this.userActor = userActor;
         }
 
@@ -189,15 +188,15 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
         final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             watchToken = watch(userActor);
-
             this.resp = resp;
+            session = req.getSession();
 
             if (isDone()) {
                 handleDeath(getDeathCause());
                 return;
             }
 
-            req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
+            req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true); // TODO: do only for Tomcat
             this.asyncCtx = req.startAsync();
             try {
                 userActor.send(new ServletHttpRequest(ref(), req, resp));
@@ -212,6 +211,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             asyncCtx = null;
             resp = null;
             watchToken = null;
+            session = null;
         }
 
         private void handleDeath(Throwable cause) throws IOException {
