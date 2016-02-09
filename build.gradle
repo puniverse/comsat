@@ -47,36 +47,36 @@ subprojects {
     ext.quasarVer       = '0.7.4'
 
     ext.jettyVer        = '9.2.14.v20151106' // '9.3.x' requires JDK8
-    ext.tomcatVer       = '8.0.28'
+    ext.tomcatVer       = '8.0.28' // TODO Upgrade, later versions seem to break some stuff because they're more restrictive about `getOutputstream` and `getWriter` from the response
     ext.undertowVer     = '1.3.15.Final'
-    ext.nettyVer        = '4.0.33.Final'
+    ext.nettyVer        = '4.0.34.Final'
 
     ext.osgiVer         = '6.0.0'
     ext.jerseyVer       = '2.22.1'
-    ext.hk2apiVer       = '2.4.0-b34'
+    ext.hk2apiVer       = '2.4.0'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
     ext.servletVer      = '3.0.1'
     ext.jaxrsVer        = '2.0.1'
     ext.websocketApiVer = '1.0'
 
-    ext.dropwizardVer   = '0.9.1'
-    ext.jdbiVer         = '2.63.1'
+    ext.dropwizardVer   = '0.9.2'
+    ext.jdbiVer         = '2.71'
 
     ext.retrofitVer     = '1.9.0'
-    ext.jooqVer         = '3.6.4'
-    ext.slf4jApiVer     = '1.7.13'
+    ext.jooqVer         = '3.7.2'
+    ext.slf4jApiVer     = '1.7.14'
     ext.log4jVer        = '1.2.17'
-    ext.guavaVer        = '18.0'
+    ext.guavaVer        = '19.0'
 
-    ext.okhttpVer       = '2.6.0'
+    ext.okhttpVer       = '2.6.0' // TODO Upgrade to 2.7.x or jump to 3.x
 
     ext.apacheAsyncClientVer   = '4.1.1'
     ext.httpCoreVer            = '4.4.4'
     ext.httpClientVer          = '4.5.1'
 
     ext.junitVer               = '4.12'
-    ext.h2Ver                  = '1.4.190'
+    ext.h2Ver                  = '1.4.191'
 
     ext.mongodbJavaAsyncDriverVer       = '2.0.1'
     ext.embedMongoVer                   = '1.47.0' // TODO Upgrade and troubleshoot
@@ -85,8 +85,8 @@ subprojects {
 
     // Spring projects
     ext.springSecurityVer               = '4.0.3.RELEASE'
-    ext.springVer                       = '4.2.3.RELEASE'
-    ext.springBootVer                   = '1.3.0.RELEASE' // TODO check for more tests
+    ext.springVer                       = '4.2.3.RELEASE' // TODO Upgrade
+    ext.springBootVer                   = '1.3.0.RELEASE' // TODO Upgrade and check for more tests
     ext.aspectjVer                      = '1.8.7'
 
     ext.commonsLoggingVer               = '1.2'
@@ -145,6 +145,7 @@ subprojects {
             force "org.springframework.security:spring-security-config:$springSecurityVer"
             force "org.springframework.security:spring-security-web:$springSecurityVer"
             force "org.aspectj:aspectjrt:$aspectjVer"
+            // force "org.aspectj:aspectjweaver:$aspectjVer"
             force "org.webjars:jquery:$jqueryVer"
             force "commons-logging:commons-logging:$commonsLoggingVer"
             force "commons-beanutils:commons-beanutils:$commonsBeanUtilsVer"
