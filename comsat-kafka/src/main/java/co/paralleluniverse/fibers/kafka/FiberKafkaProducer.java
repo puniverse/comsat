@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2013-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -22,6 +22,7 @@ import org.apache.kafka.common.PartitionInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class FiberKafkaProducer<K, V> implements Producer<K, V> {
 
@@ -38,9 +39,14 @@ public class FiberKafkaProducer<K, V> implements Producer<K, V> {
 
     @Override
     public Future<RecordMetadata> send(ProducerRecord<K, V> record, Callback callback) {
-        SettableFuture<RecordMetadata> future = new SettableFuture<>();
+        final SettableFuture<RecordMetadata> future = new SettableFuture<>();
         producer.send(record, new CallbackWrapper(future, callback));
         return future;
+    }
+
+    @Override
+    public void flush() {
+        producer.flush();
     }
 
     @Override
@@ -56,6 +62,11 @@ public class FiberKafkaProducer<K, V> implements Producer<K, V> {
     @Override
     public void close() {
         producer.close();
+    }
+
+    @Override
+    public void close(long timeout, TimeUnit unit) {
+        producer.close(timeout, unit);
     }
 
     private static class CallbackWrapper implements Callback {

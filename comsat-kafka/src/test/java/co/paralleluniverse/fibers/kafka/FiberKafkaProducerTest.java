@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2013-2015, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -20,6 +20,7 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,13 +35,13 @@ import static org.junit.Assert.fail;
 
 public class FiberKafkaProducerTest {
 
-    private MockProducer mockProducer;
+    private MockProducer<byte[], byte[]> mockProducer;
     private FiberKafkaProducer<byte[], byte[]> fiberProducer;
     private co.paralleluniverse.strands.concurrent.Phaser phaser;
 
     @Before
     public void setUp() {
-        mockProducer = new MockProducer(false);
+        mockProducer = new MockProducer<>(false, new ByteArraySerializer(), new ByteArraySerializer());
         fiberProducer = new FiberKafkaProducer<>(mockProducer);
         phaser = new co.paralleluniverse.strands.concurrent.Phaser(2);
     }
