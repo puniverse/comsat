@@ -19,9 +19,9 @@
      [ring/ring-devel "1.4.0"]
      [ring/ring-servlet "1.4.0"]
 
-     [org.eclipse.jetty/jetty-server "9.3.6.v20151106"]
+     [org.eclipse.jetty/jetty-server "9.3.7.v20160115"]
 
-     [org.slf4j/slf4j-simple "1.7.12"]
+     [org.slf4j/slf4j-simple "1.7.14"]
 
      [co.paralleluniverse/pulsar ~quasar-pulsar-version]]
 
@@ -30,4 +30,4 @@
   :java-agents [[co.paralleluniverse/quasar-core ~quasar-pulsar-version]]
 
   :profiles
-    {:dev {:dependencies [[clj-http "2.0.0"]]}})
+    {:dev {:dependencies [[clj-http "2.0.1"]]}})
