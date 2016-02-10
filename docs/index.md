@@ -185,19 +185,19 @@ Then you can simply add it as a regular servlet to you favorite servlet containt
 {% include_snippet servlet registration ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
 ~~~
 
-Some options can be configured globally via system properties or per-servlet through standard servlet configuration attributes:
+To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html).
+
+Finally some options can be configured globally via system properties or per-servlet through standard servlet configuration attributes:
 
  * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.asyncTimeout` (ms): defines the asynchronous request's timeout (default = 120 seconds).
- * The following features are enabled by default and they can add up to 8% overhead:
+ * The following features are enabled by default and together they can add up to 8% overhead:
    * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableSyncExceptions`: if present or `true` as a system property or if `true` as a servlet config option it will disable the translation of exceptions to standard synchronous server exceptions via `dispatch`.
    * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableSyncForward`: if present or `true` as a system property or if `true` as a servlet config option it will disable the translation of async forward requests to standard synchronous forwards.
- * The following workarounds are enabled by default only when running in their specific servlet container and they can add up to 3% overhead:
+ * The following workarounds are enabled by default only when running in their respective servlet container and they can add up to 3% overhead:
    * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableJettyAsyncFixes`
    * `co.paralleluniverse.fibers.servlet.FiberHttpServlet.disableTomcatAsyncFixes`
 
-"Overhead" here means "percentage of execution time" and it has been measured in benchmarks with no request processing (immediate response) and `localhost` network.
-
-To learn about writing servlets, you can refer to the [Java Servlets tutorial](http://docs.oracle.com/javaee/6/tutorial/doc/bnafd.html).
+"Overhead" here means "percentage of execution time" and it has been measured in benchmarks with no request processing (immediate response) and `localhost` network on an Linux Ubuntu Trusty box.
 
 ### REST Services
 
@@ -603,6 +603,8 @@ server = Undertow.builder().addHttpListener(INET_PORT, "localhost")
 server.start();
 ~~~
 
+Notice that the session handler is installed as well: `AutoWebActorHandler` will use Undertow sessions if available, else it will create a new actor instance for every exchange.
+
 The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides the web actor reference and URL matching logic.
 
 `WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ContextProvider` which is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-undertow`'s' tests for further insight):
@@ -638,7 +640,7 @@ server = Undertow.builder()
 server.start();
 ~~~
 
-`WebActorHandler` assumes the same actor will manage a whole SSE session.
+If not using Undertow sessions please consider that `WebActorHandler` assumes the same actor will manage a whole SSE session.
 
 The actor context validity is 10 seconds by default but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
 
@@ -674,7 +676,7 @@ b.group(bossGroup, workerGroup)
 final ChannelFuture ch = b.bind(INET_PORT).sync();
 ~~~
 
-The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides which provides the web actor reference and URL matching logic..
+The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides the web actor reference and URL matching logic.
 
 `WebActorHandler` delegates context lookup (or creation) to a developer-supplied `ContextProvider` which is is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty`'s' tests for further insight):
 
@@ -723,7 +725,7 @@ b.group(bossGroup, workerGroup)
 final ChannelFuture ch = b.bind(8080).sync();
 ~~~
 
-`WebActorHandler` needs cookie-based client session tracking only for SSE exchanges and by default it is enabled for them but it can be disabled in non-SSE cases through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.trackSession` system property (legal values are `sse` and `always`).
+`WebActorHandler` needs (and enables by default) cookie-based client session tracking only for SSE exchanges but it can enabled for all requests through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.trackSession` system property (legal values are `sse` and `always`). The cookie name will be `JSESSIONID` as in most server-side HTTP Java APIs with session support (e.g. servlets).
 
 The Netty WebActor backend will always include the `Date` header by default but this behaviour can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.omitDateHeader` system property
 
