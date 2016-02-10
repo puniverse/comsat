@@ -98,6 +98,7 @@ Then add the following Maven/Gradle dependencies:
 | Use Comsat in the Tomcat servlet container without java agent.                                                            | `co.paralleluniverse:comsat-tomcat-loader:0.6.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
 | Use Comsat in the Jetty servlet container without the java agent.                                                         | `co.paralleluniverse:comsat-jetty-loader:0.6.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
 | [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.6.0`
+| [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.6.0`
 
 ## Examples
 
@@ -832,3 +833,9 @@ A web actor may register itself to handle web socket connections by declaring wh
 When the client connects to a web socket, the web actor will receive a [`WebSocketOpened`]({{javadoc}}/comsat/webactors/WebSocketOpened.html) message, and each following message will be received as a [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html). The actor can send messages to the client by replying to the sender with `WebDataMessage`s of its own.
 
 The virtual actor that's the *sender* of the messages received from the client represents the WebSocket session; i.e., each open web socket will have a different actor as the sender of the messages. That virtual actor dies when the web socket connection closes.
+
+### Apache Kafka
+
+[Apache Kafka](http://kafka.apache.org/) is a fast publish-subscribe messaging solution rethought as a distributed commit log.
+
+The `comsat-kafka` module provides a [Kafka Producer](https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html) with an asynchronous [`send`](https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html#send(org.apache.kafka.clients.producer.ProducerRecord,%20org.apache.kafka.clients.producer.Callback)) method that will return a Quasar [`SettableFuture`](http://docs.paralleluniverse.co/quasar/javadoc/index.html). A Quasar `SettableFuture` can block fibers in addition to threads.

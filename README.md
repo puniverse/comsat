@@ -30,6 +30,7 @@ Add the following Maven/Gradle dependencies:
 | Use Comsat in the Tomcat servlet container without the java agent.                                                        | `co.paralleluniverse:comsat-tomcat-loader:0.6.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
 | Use Comsat in the Jetty servlet container without the java agent.                                                         | `co.paralleluniverse:comsat-jetty-loader:0.6.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
 | [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.6.0`
+| [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.6.0`
 
 Or, build and install from sources (after installing [Gradle](http://www.gradle.org) locally) in your local maven repository with:
 
