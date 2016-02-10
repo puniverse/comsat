@@ -13,6 +13,7 @@ co.paralleluniverse.fibers.jdbc
 co.paralleluniverse.fibers.jdbi
 co.paralleluniverse.fibers.jersey
 co.paralleluniverse.fibers.jooq
+co.paralleluniverse.fibers.kafka
 co.paralleluniverse.fibers.mongodb
 co.paralleluniverse.fibers.okhttp
 co.paralleluniverse.fibers.retrofit
