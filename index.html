@@ -131,6 +131,7 @@
 <li><a href="#http-rest-services">HTTP (REST Services)</a></li>
 <li><a href="#sse">SSE</a></li>
 <li><a href="#websockets">WebSockets</a></li>
+<li><a href="#apache-kafka">Apache Kafka</a></li>
 </ul>
 </li>
 </ul>
@@ -302,6 +303,10 @@
     <tr>
       <td><a href="http://projects.spring.io/spring-framework/">Spring Framework</a> Web integration allows using fiber-blocking controllers.</td>
       <td><code>co.paralleluniverse:comsat-spring-web:0.6.0</code></td>
+    </tr>
+    <tr>
+      <td><a href="http://kafka.apache.org/">Apache Kafka</a> producer integration module.</td>
+      <td><code>co.paralleluniverse:comsat-kafka:0.6.0</code></td>
     </tr>
   </tbody>
 </table>
@@ -1110,6 +1115,12 @@ For&nbsp;example:</p>
 <p>When the client connects to a web socket, the web actor will receive a <a href="/comsat/javadoc/co/paralleluniverse/comsat/webactors/WebSocketOpened.html"><code>WebSocketOpened</code></a> message, and each following message will be received as a <a href="/comsat/javadoc/co/paralleluniversecomsat/webactors/WebDataMessage.html"><code>WebDataMessage</code></a>. The actor can send messages to the client by replying to the sender with <code>WebDataMessage</code>s of its&nbsp;own.</p>
 
 <p>The virtual actor that’s the <em>sender</em> of the messages received from the client represents the WebSocket session; i.e., each open web socket will have a different actor as the sender of the messages. That virtual actor dies when the web socket connection&nbsp;closes.</p>
+
+<h3 id="apache-kafka">Apache&nbsp;Kafka</h3>
+
+<p><a href="http://kafka.apache.org/">Apache Kafka</a> is a fast publish-subscribe messaging solution rethought as a distributed commit&nbsp;log.</p>
+
+<p>The <code>comsat-kafka</code> module provides a <a href="https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html">Kafka Producer</a> with an asynchronous <a href="https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html#send(org.apache.kafka.clients.producer.ProducerRecord,%20org.apache.kafka.clients.producer.Callback)"><code>send</code></a> method that will return a Quasar <a href="http://docs.paralleluniverse.co/quasar/javadoc/index.html"><code>SettableFuture</code></a>. A Quasar <code>SettableFuture</code> can block fibers in addition to&nbsp;threads.</p>
 
 					</div>
 				</div><!--main-->
