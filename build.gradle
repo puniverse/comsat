@@ -64,7 +64,7 @@ subprojects {
     ext.jdbiVer         = '2.71'
 
     ext.retrofitVer     = '1.9.0'
-    ext.jooqVer         = '3.7.2'
+    ext.jooqVer         = '3.6.4' // 3.7.x support only Java 8+
     ext.slf4jApiVer     = '1.7.14'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '19.0'
