@@ -77,8 +77,9 @@ public final class QuasarWebAppClassLoader extends WebappClassLoader {
     protected final ResourceEntry findResourceInternal(String name, String path, boolean manifestRequired) {
         initInstrumentor();
         final ResourceEntry entry = super.findResourceInternal(name, path, manifestRequired);
-        if (entry != null && path.endsWith(".class") && entry.binaryContent != null) {
-            final String className = name.substring(0, name.length() - ".class".length());
+        if (name != null && path != null && path.endsWith(CLASS_SUFFIX) && entry != null && entry.binaryContent != null) {
+            final int nameLen = name.length();
+            final String className = name.substring(0, name.endsWith(CLASS_SUFFIX) ? nameLen - CLASS_SUFFIX_LENGTH : nameLen);
             try {
                 final byte[] res = instrumentor.instrumentClass(className, entry.binaryContent);
                 if (res != null)
@@ -92,4 +93,7 @@ public final class QuasarWebAppClassLoader extends WebappClassLoader {
         }
         return entry;
     }
+
+    private static final String CLASS_SUFFIX = ".class";
+    private static final int CLASS_SUFFIX_LENGTH = CLASS_SUFFIX.length();
 }
