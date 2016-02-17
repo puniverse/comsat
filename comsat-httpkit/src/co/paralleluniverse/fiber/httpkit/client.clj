@@ -11,6 +11,7 @@
 ; as published by the Free Software Foundation.
 
 (ns ^{:author "circlespainter"} co.paralleluniverse.fiber.httpkit.client
+  (:refer-clojure :exclude [get await])
   (:require [org.httpkit.client :as hc]
             [co.paralleluniverse.pulsar.core :refer [defsfn await]]))
 
