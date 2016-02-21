@@ -89,8 +89,6 @@ public final class AutoWebActorHandler extends WebActorHandler {
             final Attribute<Context> s = ctx.attr(SESSION_KEY);
             if (s.get() == null) {
                 final String sessionId = getSessionId(req);
-                System.err.println("Session ID: " + sessionId);
-                System.err.println("Sessions enabled: " + sessionsEnabled());
                 if (sessionId != null && sessionsEnabled()) {
                     final Context actorContext = sessions.get(sessionId);
                     if (actorContext != null) {
