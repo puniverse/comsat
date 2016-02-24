@@ -39,7 +39,7 @@ public final class ServletWebActors {
      * @return {@code actor}
      */
     public static <T> ActorRef<T> attachWebActor(HttpSession session, ActorRef<T> actor) {
-        return WebActorServlet.attachWebActor(session, actor);
+        return WebActorServlet.attachWebActor(session, actor, null).getSecond();
     }
 
     /**

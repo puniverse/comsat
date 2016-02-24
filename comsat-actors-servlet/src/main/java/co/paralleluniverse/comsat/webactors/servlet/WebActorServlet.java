@@ -13,46 +13,58 @@
  */
 package co.paralleluniverse.comsat.webactors.servlet;
 
-import co.paralleluniverse.actors.Actor;
-import co.paralleluniverse.actors.ActorRef;
-import co.paralleluniverse.actors.ActorSpec;
-import co.paralleluniverse.actors.ExitMessage;
-import co.paralleluniverse.actors.FakeActor;
-import co.paralleluniverse.actors.LifecycleMessage;
-import co.paralleluniverse.actors.ShutdownMessage;
+import co.paralleluniverse.actors.*;
+import co.paralleluniverse.common.util.Pair;
+import co.paralleluniverse.common.util.SystemProperties;
 import co.paralleluniverse.comsat.webactors.Cookie;
-import co.paralleluniverse.comsat.webactors.HttpRequest;
-import co.paralleluniverse.comsat.webactors.HttpResponse;
-import co.paralleluniverse.comsat.webactors.HttpStreamOpened;
-import co.paralleluniverse.comsat.webactors.WebDataMessage;
-import co.paralleluniverse.comsat.webactors.WebMessage;
+import co.paralleluniverse.comsat.webactors.*;
+import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
+import co.paralleluniverse.strands.SuspendableRunnable;
 import co.paralleluniverse.strands.Timeout;
+import co.paralleluniverse.strands.channels.Channel;
+import co.paralleluniverse.strands.channels.Channels;
 import co.paralleluniverse.strands.channels.SendPort;
+import co.paralleluniverse.strands.concurrent.ReentrantLock;
+
+import javax.servlet.*;
+import javax.servlet.annotation.WebListener;
+import javax.servlet.http.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionListener;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A servlet that forwards requests to a web actor.
  */
 @WebListener
 public final class WebActorServlet extends HttpServlet implements HttpSessionListener {
-    static final String ACTOR_KEY = "co.paralleluniverse.actor";
     static final String ACTOR_CLASS_PARAM = "actor";
     static final String ACTOR_PARAM_PREFIX = "actorParam";
+
+    static final String ACTOR_SESSION_KEY = "co.paralleluniverse.actor";
+
+    private static final String HTTP_SERVLET_FAKE_ACTOR_SESSION_KEY = WebActorServlet.class.getName() + ".httpFakeActor";
+
+    private static final String DISPATCH_INTERNAL_ERROR_EXCEPTION_REQUEST_KEY = WebActorServlet.class.getName() + ".reqAttr.internalErrorException";
+    private static final String DISPATCH_ERROR_STATUS_REQUEST_KEY = WebActorServlet.class.getName() + ".reqAttr.errorStatus";
+    private static final String DISPATCH_ERROR_MESSAGE_REQUEST_KEY = WebActorServlet.class.getName() + ".reqAttr.errorMessage";
+
+    public static final String PROP_DISABLE_SYNC_ERRORS = WebActorServlet.class.getName() + ".disableSyncErrors";
+    static final boolean disableSyncErrorsGlobal = SystemProperties.isEmptyOrTrue(PROP_DISABLE_SYNC_ERRORS);
+
+    public static final String PROP_ACTOR_END_ACTION = WebActorServlet.class.getName() + ".actorEndAction";
+    public static final String PROP_ACTOR_END_ACTION_VALUE_DIE_IF_ERROR_ELSE_RESTART = "dieIfErrorElseRestart";
+    public static final String PROP_ACTOR_END_ACTION_VALUE_RESTART = "restart";
+//    public static final String PROP_ACTOR_END_ACTION_VALUE_DIE = "die";
+    static final String actorEndActionGlobal = System.getProperty(PROP_ACTOR_END_ACTION, PROP_ACTOR_END_ACTION_VALUE_DIE_IF_ERROR_ELSE_RESTART);
+
+    public static final String PROP_ASYNC_TIMEOUT = HttpActor.class.getName() + ".asyncTimeout";
+
+    private final AtomicReference<ActorSpec> specAR = new AtomicReference<>();
 
     private String redirectPath = null;
     private String actorClassName = null;
@@ -61,10 +73,12 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
     @Override
     public final void init(ServletConfig config) throws ServletException {
         super.init(config);
+
         final Enumeration<String> initParameterNames = config.getInitParameterNames();
         final SortedMap<Integer, String> map = new TreeMap<>();
         while (initParameterNames.hasMoreElements()) {
             final String name = initParameterNames.nextElement();
+
             if (name.equals("redirectNoSessionPath"))
                 setRedirectNoSessionPath(config.getInitParameter(name));
             else if (name.equals(ACTOR_CLASS_PARAM))
@@ -76,7 +90,6 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                 } catch (final NumberFormatException nfe) {
                     getServletContext().log("Wrong actor parameter number: ", nfe);
                 }
-
             }
         }
         final Collection<String> values = map.values();
@@ -93,36 +106,82 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         return this;
     }
 
-    static <T> ActorRef<T> attachWebActor(HttpSession session, ActorRef<T> actor) {
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (session) {
-            Object oldActor;
-            if ((oldActor = session.getAttribute(ACTOR_KEY)) != null)
+    @Suspendable
+    static <T> Pair<HttpActor, ActorRef<T>> attachWebActor(final HttpSession session, final ActorRef<T> actor, ActorSpec spec) {
+        ReentrantLock l = null;
+        try {
+            final HttpActor oldHttpActor = (HttpActor) session.getAttribute(HTTP_SERVLET_FAKE_ACTOR_SESSION_KEY);
+            final HttpActor httpActor;
+            if (oldHttpActor == null)
+                httpActor = new HttpActor(spec);
+            else
+                httpActor = oldHttpActor;
+            l = httpActor.singleReqInProgressPerSessionLock;
+            l.lock();
+            if (oldHttpActor == null)
+                session.setAttribute(HTTP_SERVLET_FAKE_ACTOR_SESSION_KEY, httpActor);
+            final Object oldActor = session.getAttribute(ACTOR_SESSION_KEY);
+            if (oldActor != null)
                 //noinspection unchecked
-                return (ActorRef<T>) oldActor;
+                return new Pair<>(httpActor, (ActorRef<T>) oldActor);
             //noinspection unchecked
-            session.setAttribute(ACTOR_KEY, new HttpActor((ActorRef<HttpRequest>) actor));
-            return actor;
+            session.setAttribute(ACTOR_SESSION_KEY, actor);
+            return new Pair<>(httpActor, actor);
+        } catch (final IllegalStateException e) { // Invalidated session
+            return null;
+        } finally {
+            if (l != null)
+                l.unlock();
         }
     }
 
-    static boolean isWebActorAttached(HttpSession session) {
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (session) {
-            return (session.getAttribute(ACTOR_KEY) != null);
+    static boolean isWebActorAttached(final HttpSession session) {
+        ReentrantLock l = null;
+        try {
+            final Object httpActor = session.getAttribute(HTTP_SERVLET_FAKE_ACTOR_SESSION_KEY);
+            if (httpActor == null || !(httpActor instanceof HttpActor))
+                return false;
+            l = ((HttpActor) httpActor).singleReqInProgressPerSessionLock;
+            l.lock();
+            return (session.getAttribute(ACTOR_SESSION_KEY) != null);
+        } catch (final IllegalStateException ignored) { // Invalidated
+            return false;
+        } finally {
+            if (l != null)
+                l.unlock();
         }
     }
 
-    static HttpActor getHttpActor(HttpSession session) {
-        final Object actor = session.getAttribute(ACTOR_KEY);
-        if ((actor != null) && (actor instanceof HttpActor))
-            return (HttpActor) actor;
+    static HttpActor getHttpActor(final HttpSession session) {
+        try {
+            final Object httpActor = session.getAttribute(HTTP_SERVLET_FAKE_ACTOR_SESSION_KEY);
+            if (httpActor == null || !(httpActor instanceof HttpActor))
+                return null;
+            return (HttpActor) httpActor;
+        } catch (final IllegalStateException ignored) {
+        } // Invalidated
         return null;
     }
 
-    static ActorRef<? super HttpRequest> getWebActor(HttpSession session) {
-        final HttpActor har = getHttpActor(session);
-        return har != null ? har.userActor : null;
+    static ActorRef<? super HttpRequest> getWebActor(final HttpSession session) {
+        ReentrantLock l = null;
+        try {
+            final Object httpActor = session.getAttribute(HTTP_SERVLET_FAKE_ACTOR_SESSION_KEY);
+            if (httpActor == null || !(httpActor instanceof HttpActor))
+                return null;
+            l = ((HttpActor) httpActor).singleReqInProgressPerSessionLock;
+            l.lock();
+            Object userActor = session.getAttribute(ACTOR_SESSION_KEY);
+            if (userActor == null || !(userActor instanceof ActorRef<?>))
+                return null;
+            //noinspection unchecked
+            return ((ActorRef<? super HttpRequest>) userActor);
+        } catch (final IllegalStateException ignored) { // Invalidated
+            return null;
+        } finally {
+            if (l != null)
+                l.unlock();
+        }
     }
 
     @Override
@@ -137,103 +196,237 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
     }
 
     @Override
-    protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpActor ha = getHttpActor(req.getSession());
-
-        if (ha == null) {
-            if (actorClassName != null) {
-                try {
-                    //noinspection unchecked
-                    final ActorRef<WebMessage> actor = (ActorRef<WebMessage>) Actor.newActor(new ActorSpec(Class.forName(actorClassName), actorParams)).spawn();
-                    attachWebActor(req.getSession(), actor);
-                    ha = getHttpActor(req.getSession());
-                } catch (final ClassNotFoundException ex) {
-                    req.getServletContext().log("Unable to load actorClass: ", ex);
-                    return;
-                }
-            } else if (redirectPath != null) {
-                resp.sendRedirect(redirectPath);
-                return;
-            } else {
-                resp.sendError(500, "Actor not found");
+    protected final void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
+        if (!disableSyncErrorsGlobal && DispatcherType.ASYNC.equals(req.getDispatcherType())) {
+            final Throwable ex = (Throwable) req.getAttribute(DISPATCH_INTERNAL_ERROR_EXCEPTION_REQUEST_KEY);
+            if (ex != null)
+                throw new ServletException(ex);
+            final Integer status = (Integer) req.getAttribute(DISPATCH_ERROR_STATUS_REQUEST_KEY);
+            if (status != null) {
+                resp.sendError(status, (String) req.getAttribute(DISPATCH_ERROR_MESSAGE_REQUEST_KEY));
                 return;
             }
         }
 
-        assert ha != null;
-        ha.service(req, resp);
+        if (isTomcat(req.getClass()))
+            req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
+        final AsyncContext ctx = req.startAsync();
+
+        new Fiber(new SuspendableRunnable() {
+            @Override
+            public void run() throws SuspendExecution, InterruptedException {
+                try {
+                    try {
+                        //noinspection unchecked
+                        specAR.compareAndSet(null, new ActorSpec(Class.forName(actorClassName), actorParams));
+                    } catch (final ClassNotFoundException ex) {
+                        internalError(req, ctx, resp, new RuntimeException("Unable to load actorClass: " + ex.getMessage()));
+                        return;
+                    }
+                    final ActorSpec spec = specAR.get();
+                    HttpActor ha = getHttpActor(req.getSession());
+                    if (ha == null) {
+                        if (actorClassName != null) {
+                            //noinspection unchecked
+                            final ActorRef<WebMessage> actor = (ActorRef<WebMessage>) Actor.newActor(spec).spawn();
+                            final Pair<HttpActor, ActorRef<WebMessage>> ret = attachWebActor(req.getSession(), actor, spec);
+                            if (ret == null) {
+                                internalError(req, ctx, resp, new RuntimeException("Session invalidated during request execution"));
+                                return;
+                            }
+                            ha = ret.getFirst();
+                        } else if (redirectPath != null) {
+                            redirect(ctx, resp, redirectPath);
+                            return;
+                        } else {
+                            internalError(req, ctx, resp, new RuntimeException("Actor not found"));
+                            return;
+                        }
+                    }
+
+                    assert ha != null;
+
+                    ha.service(ctx, req, resp);
+                } catch (final ServletException | IOException e) {
+                    // TODO review handling
+                    e.printStackTrace(System.err);
+                    throw new RuntimeException(e);
+                }
+            }
+        }).start();
+    }
+
+    static void redirect(AsyncContext ac, HttpServletResponse res, String path) throws IOException {
+        res.sendRedirect(path);
+        if (isTomcat(ac.getClass())) // Seems required only by Tomcat
+            ac.complete();
+    }
+
+
+    static void internalError(HttpServletRequest req, AsyncContext ac, HttpServletResponse resp, Throwable t) throws IOException {
+        if (disableSyncErrorsGlobal) {
+            resp.sendError(500, t.getMessage());
+            if (isTomcat(ac.getClass())) // Seems required only by Tomcat
+                ac.complete();
+        } else {
+            req.setAttribute(DISPATCH_INTERNAL_ERROR_EXCEPTION_REQUEST_KEY, t);
+            ac.dispatch();
+        }
+    }
+
+    static void error(HttpServletRequest req, AsyncContext ac, HttpServletResponse resp, int status, String message) throws IOException {
+        if (disableSyncErrorsGlobal || isTomcat(ac.getClass())) { // Tomcat doesn't seem to support dispatching error responses
+            resp.sendError(status, message);
+            if (isTomcat(ac.getClass())) // Seems required only by Tomcat
+                ac.complete();
+        } else {
+            req.setAttribute(DISPATCH_ERROR_STATUS_REQUEST_KEY, status);
+            req.setAttribute(DISPATCH_ERROR_MESSAGE_REQUEST_KEY, message);
+            ac.dispatch();
+        }
     }
 
     static final class HttpActor extends FakeActor<HttpResponse> {
-        private ActorRef<? super HttpRequest> userActor;
+        static final long reqTimeoutMS;
+
+        static {
+            reqTimeoutMS = getLong(PROP_ASYNC_TIMEOUT, 120_000L);
+        }
+
+        static final class ReqInProgress {
+            AsyncContext asyncCtx;
+            HttpServletRequest req;
+            HttpSession session;
+            HttpServletResponse resp;
+            ActorRef<? super HttpRequest> userActor;
+            Object watchToken;
+        }
+
+        private final ReentrantLock singleReqInProgressPerSessionLock = new ReentrantLock();
+        private final ActorSpec userActorSpec;
+
+        final Channel<Object> done = Channels.newChannel(1);
+
+        private AtomicReference<ReqInProgress>
+            reqInProgressAR = new AtomicReference<>(),
+            lastReqInProgressAR = new AtomicReference<>();
+
+        private final HttpChannel channel;
 
         private volatile boolean dead;
 
-        private volatile AsyncContext asyncCtx;
-        private volatile HttpServletResponse resp;
-        private volatile Object watchToken;
-        private volatile HttpSession session;
+        public HttpActor(ActorSpec spec) {
+            super("HttpActor-" + UUID.randomUUID(), new HttpChannel());
 
-        public HttpActor(ActorRef<? super HttpRequest> userActor) {
-            super(userActor.toString(), new HttpChannel());
+            userActorSpec = spec;
 
-            ((HttpChannel) (SendPort) getMailbox()).actor = this;
-
-            this.userActor = userActor;
+            channel = ((HttpChannel) (SendPort) getMailbox());
+            channel.actor = this;
         }
 
-        ActorRef<? super HttpRequest> getUserActor() {
-            return userActor;
+        // For webactors
+        final ActorRef<? super HttpRequest> getUserActor() {
+            final ReqInProgress r = lastReqInProgressAR.get();
+            return r != null ? r.userActor : null;
         }
 
-        final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-            watchToken = watch(userActor);
-            this.resp = resp;
-            session = req.getSession();
+        final void service(final AsyncContext ctx, final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException, SuspendExecution, InterruptedException {
+            singleReqInProgressPerSessionLock.lock(); // Else bad things can happen to the (thread-unsafe...) session
 
-            if (isDone()) {
-                handleDeath(getDeathCause());
-                return;
-            }
-
-            req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true); // TODO: do only for Tomcat
-            this.asyncCtx = req.startAsync();
             try {
-                userActor.send(new ServletHttpRequest(ref(), req, resp));
-            } catch (final SuspendExecution ex) {
-                req.getServletContext().log("Exception: ", ex);
+                startReq(ctx, req, resp);
+                final ReqInProgress r = reqInProgressAR.get();
+                if (r == null) {
+                    if (resp != null) // Happened == null with Jetty
+                        internalError(req, ctx, resp, new RuntimeException("Session invalidated during request execution"));
+                    singleReqInProgressPerSessionLock.unlock();
+                    return;
+                }
+
+                r.userActor.send(new ServletHttpRequest(ref(), req, resp));
+                Object token = done.receive(reqTimeoutMS, TimeUnit.MILLISECONDS);
+                if (token == null) // Timeout
+                    internalError(req, ctx, resp, new RuntimeException("The request timed out (timeout after " + reqTimeoutMS + "ms"));
+            } finally {
+                unwatch();
+                singleReqInProgressPerSessionLock.unlock();
             }
         }
 
-        private void unwatch() {
-            if (watchToken != null && userActor != null)
-                unwatch(userActor, watchToken);
-            asyncCtx = null;
-            resp = null;
-            watchToken = null;
-            session = null;
+        private void startReq(AsyncContext ctx, HttpServletRequest req, HttpServletResponse resp) {
+            if (req == null || resp == null)
+                return;
+
+            ReqInProgress r = new ReqInProgress();
+
+            r.req = req;
+            r.resp = resp;
+            r.asyncCtx = ctx;
+
+            r.session = req.getSession();
+            if (!watch(r, r.session))
+                return;
+
+            reqInProgressAR.set(r);
+            lastReqInProgressAR.set(r);
         }
 
-        private void handleDeath(Throwable cause) throws IOException {
-            if (cause != null)
-                resp.sendError(500, "Actor is dead because of " + cause.getMessage());
-            else
-                resp.sendError(500, "Actor has terminated.");
-            if (asyncCtx != null)
-                asyncCtx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+        private boolean watch(ReqInProgress r, HttpSession s) {
+            r.userActor = s != null ? getWebActor0(s) : null;
+            if (r.userActor == null || r.session == null)
+                return false;
+
+            r.watchToken = watch(r.userActor);
+            return true;
+        }
+
+        private ActorRef<? super HttpRequest> getWebActor0(HttpSession session) {
+            try {
+                Object userActor = session.getAttribute(ACTOR_SESSION_KEY);
+                if (userActor == null || !(userActor instanceof ActorRef<?>))
+                    return null;
+                //noinspection unchecked
+                return ((ActorRef<? super HttpRequest>) userActor);
+            } catch (final IllegalStateException ignored) { // Invalidated
+                return null;
+            }
+        }
+
+        final void unwatch() {
+            final ReqInProgress r = reqInProgressAR.getAndSet(null);
+            if (r != null) {
+                unwatch(r.userActor, r.watchToken);
+            }
+        }
+
+        private void abortReqInProgress(final Throwable cause) throws IOException {
+            final ReqInProgress r = reqInProgressAR.get();
+            if (r != null) { // Not unwatched
+                if (cause != null)
+                    internalError(r.req, r.asyncCtx, r.resp, new RuntimeException("Actor is dead because of " + cause.getMessage()));
+                else
+                    internalError(r.req, r.asyncCtx, r.resp, new RuntimeException("Actor has terminated."));
+            }
+
+            unwatch();
         }
 
         @Override
         protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
             if (m instanceof ExitMessage) {
                 final ExitMessage em = (ExitMessage) m;
-                if (em.getActor() != null && em.getActor().equals(userActor)) {
-                    try {
-                        handleDeath(em.getCause());
-                    } catch (final IOException e) {
-                        throw new RuntimeException(e);
+                final ReqInProgress r = reqInProgressAR.get();
+                if (em.getActor() != null && r != null && em.getActor().equals(r.userActor)) {
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    if (userActorSpec != null &&
+                            (actorEndActionGlobal.equals(PROP_ACTOR_END_ACTION_VALUE_RESTART) ||
+                             actorEndActionGlobal.equals(PROP_ACTOR_END_ACTION_VALUE_DIE_IF_ERROR_ELSE_RESTART) &&
+                                 em.getCause() == null)) {
+                        unwatch();
+                        attachWebActor(r.session, userActorSpec.build().spawn(), userActorSpec);
+                    } else {
+                        die(em.getCause());
                     }
-                    die(em.getCause());
                 }
             }
             return null;
@@ -254,24 +447,22 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             if (dead)
                 return;
             dead = true;
+
             super.die(cause);
             try {
-                session.invalidate();
-            } catch (final Exception ignored) {}
+                abortReqInProgress(cause);
+            } catch (final IOException e) {
+                throw new RuntimeException(e);
+            }
 
-            // Ensure to release references to server objects
-            unwatch(userActor, watchToken);
-            if (session != null)
-                session.removeAttribute(ACTOR_KEY);
-            userActor = null;
-            session = null;
-            asyncCtx = null;
-            resp = null;
-        }
-
-        @Override
-        public final String toString() {
-            return "ServletHttpActor{" + "session=" + session + ", userActor=" + userActor + '}';
+            final ReqInProgress r = reqInProgressAR.get();
+            final HttpSession s = r != null ? r.session : null;
+            if (r != null) {
+                try {
+                    s.invalidate();
+                } catch (final IllegalStateException ignored) {
+                } // Invalidated
+            }
         }
     }
 
@@ -297,47 +488,41 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         }
 
         @Override
+        @Suspendable
         public final boolean trySend(HttpResponse msg) {
+            HttpServletRequest request;
             try {
-                final HttpServletRequest request = ((ServletHttpRequest) msg.getRequest()).request;
-                if (!request.isAsyncStarted())
-                    return false;
+                request = ((ServletHttpRequest) msg.getRequest()).request;
 
                 final AsyncContext ctx = request.getAsyncContext();
                 final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();
                 try {
-                    if (!response.isCommitted()) {
-                        if (msg.getCookies() != null) {
-                            for (final Cookie wc : msg.getCookies())
-                                response.addCookie(getServletCookie(wc));
-                        }
-                        if (msg.getHeaders() != null) {
-                            for (final Map.Entry<String, String> h : msg.getHeaders().entries())
-                                response.addHeader(h.getKey(), h.getValue());
-                        }
+                    if (msg.getCookies() != null) {
+                        for (final Cookie wc : msg.getCookies())
+                            response.addCookie(getServletCookie(wc));
+                    }
+                    if (msg.getHeaders() != null) {
+                        for (final Map.Entry<String, String> h : msg.getHeaders().entries())
+                            response.addHeader(h.getKey(), h.getValue());
                     }
 
                     if (msg.getStatus() >= 400 && msg.getStatus() < 600) {
                         //noinspection ThrowableResultOfMethodCallIgnored
-                        response.sendError(msg.getStatus(), msg.getError() != null ? msg.getError().toString() : null);
-                        ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+                        error(request, ctx, response, msg.getStatus(), msg.getError() != null ? msg.getError().toString() : null);
                         return true;
                     }
 
                     if (msg.getRedirectPath() != null) {
-                        response.sendRedirect(msg.getRedirectPath());
-                        ctx.complete(); // Seems to be required only by Tomcat, TODO: perform only on Tomcat
+                        redirect(ctx, response, msg.getRedirectPath());
                         return true;
                     }
 
-                    if (!response.isCommitted()) {
-                        response.setStatus(msg.getStatus());
+                    response.setStatus(msg.getStatus());
 
-                        if (msg.getContentType() != null)
-                            response.setContentType(msg.getContentType());
-                        if (msg.getCharacterEncoding() != null)
-                            response.setCharacterEncoding(msg.getCharacterEncoding().name());
-                    }
+                    if (msg.getContentType() != null)
+                        response.setContentType(msg.getContentType());
+                    if (msg.getCharacterEncoding() != null)
+                        response.setCharacterEncoding(msg.getCharacterEncoding().name());
                     final ServletOutputStream out = writeBody(msg, response, !msg.shouldStartActor());
                     out.flush(); // commits the response
 
@@ -359,8 +544,12 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                     return false;
                 }
             } finally {
-                if (actor != null)
-                    actor.unwatch();
+                try {
+                    if (actor != null)
+                        actor.done.send(this); // Unlock serving fiber in fake actor so next can come
+                } catch (final SuspendExecution | InterruptedException e) {
+                    e.printStackTrace(System.err); // TODO handle
+                }
             }
         }
 
@@ -372,7 +561,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
         @Override
         public final void close(Throwable t) {
-            t.printStackTrace(System.err); // TODO: log
+            t.printStackTrace(System.err); // TODO: handle
             if (actor != null)
                 actor.die(t);
         }
@@ -448,8 +637,12 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         @Override
         public boolean trySend(WebDataMessage message) {
             try {
-                ServletOutputStream os = writeBody(message, response, false);
-                os.flush();
+                if (response != null) {
+                    ServletOutputStream os = writeBody(message, response, false);
+                    os.flush();
+                } else {
+                    return false;
+                }
             } catch (final IOException ex) {
                 if (actor != null)
                     actor.die(ex);
@@ -461,13 +654,15 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         @Override
         public void close() {
             try {
-                try {
-                    ServletOutputStream os = response.getOutputStream();
-                    os.close();
-                } catch (IOException e) {
-                    //ctx.getRequest().getServletContext().log("error", e);
+                if (response != null) {
+                    try {
+                        ServletOutputStream os = response.getOutputStream();
+                        os.close();
+                    } catch (final IOException ignored) {
+                        //ctx.getRequest().getServletContext().log("error", e);
+                    }
+                    ctx.complete();
                 }
-                ctx.complete();
             } catch (final Exception ignored) {
             } finally {
                 if (actor != null)
@@ -534,5 +729,24 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         c.setHttpOnly(wc.isHttpOnly());
         c.setVersion(wc.getVersion());
         return c;
+    }
+
+    static boolean isTomcat(Class c) {
+        return c.getName().startsWith("org.apache.");
+    }
+
+    static long getLong(String propName, long def) {
+        final String longS = System.getProperty(propName);
+
+        if (longS == null)
+            return def;
+
+        long l;
+        try {
+            l = Long.parseLong(longS);
+        } catch (final NumberFormatException ignored) {
+            l = def;
+        }
+        return l;
     }
 }

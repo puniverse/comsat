@@ -20,7 +20,7 @@ import co.paralleluniverse.actors.LifecycleMessage;
 import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.comsat.webactors.WebSocketOpened;
-import static co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.ACTOR_KEY;
+import static co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.ACTOR_SESSION_KEY;
 import co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.HttpActor;
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
@@ -67,10 +67,10 @@ public final class WebActorEndpoint extends Endpoint {
     }
 
     static WebSocketActor attachWebActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> actor) {
-        if (session.getUserProperties().containsKey(ACTOR_KEY))
+        if (session.getUserProperties().containsKey(ACTOR_SESSION_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
         final WebSocketActor wsa = new WebSocketActor(session, httpSession, actor);
-        session.getUserProperties().put(ACTOR_KEY, wsa);
+        session.getUserProperties().put(ACTOR_SESSION_KEY, wsa);
         return wsa;
     }
 
@@ -85,14 +85,12 @@ public final class WebActorEndpoint extends Endpoint {
     }
 
     private static WebSocketActor getSessionActor(Session session) {
-        return (WebSocketActor) session.getUserProperties().get(ACTOR_KEY);
+        return (WebSocketActor) session.getUserProperties().get(ACTOR_SESSION_KEY);
     }
 
     private static HttpActor getHttpSessionActor(EndpointConfig config) {
         final HttpSession httpSession = getHttpSession(config);
-        if (httpSession == null)
-            throw new RuntimeException("HttpSession hasn't been embedded by the EndPoint Configurator.");
-        return (HttpActor) httpSession.getAttribute(ACTOR_KEY);
+        return WebActorServlet.getHttpActor(httpSession);
     }
 
     private static HttpSession getHttpSession(EndpointConfig config) {
