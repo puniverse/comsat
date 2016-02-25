@@ -216,6 +216,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             @Override
             public void run() throws SuspendExecution, InterruptedException {
                 try {
+                    // System.err.println("S " + req.getSession().getId() + ":" + req.hashCode());
                     try {
                         //noinspection unchecked
                         specAR.compareAndSet(null, new ActorSpec(Class.forName(actorClassName), actorParams));
@@ -296,7 +297,6 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         static final class ReqInProgress {
             AsyncContext asyncCtx;
             HttpServletRequest req;
-            HttpSession session;
             HttpServletResponse resp;
             ActorRef<? super HttpRequest> userActor;
             Object watchToken;
@@ -333,6 +333,8 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         final void service(final AsyncContext ctx, final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException, SuspendExecution, InterruptedException {
             singleReqInProgressPerSessionLock.lock(); // Else bad things can happen to the (thread-unsafe...) session
 
+            // System.err.println("I " + req.getSession().getId() + ":" + req.hashCode());
+
             try {
                 startReq(ctx, req, resp);
                 final ReqInProgress r = reqInProgressAR.get();
@@ -348,6 +350,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                 if (token == null) // Timeout
                     internalError(req, ctx, resp, new RuntimeException("The request timed out (timeout after " + reqTimeoutMS + "ms"));
             } finally {
+                // System.err.println("E " + req.getSession().getId() + ":" + req.hashCode());
                 unwatch();
                 singleReqInProgressPerSessionLock.unlock();
             }
@@ -363,8 +366,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             r.resp = resp;
             r.asyncCtx = ctx;
 
-            r.session = req.getSession();
-            if (!watch(r, r.session))
+            if (!watch(r, req.getSession()))
                 return;
 
             reqInProgressAR.set(r);
@@ -373,7 +375,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
 
         private boolean watch(ReqInProgress r, HttpSession s) {
             r.userActor = s != null ? getWebActor0(s) : null;
-            if (r.userActor == null || r.session == null)
+            if (r.userActor == null)
                 return false;
 
             r.watchToken = watch(r.userActor);
@@ -423,7 +425,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                              actorEndActionGlobal.equals(PROP_ACTOR_END_ACTION_VALUE_DIE_IF_ERROR_ELSE_RESTART) &&
                                  em.getCause() == null)) {
                         unwatch();
-                        attachWebActor(r.session, userActorSpec.build().spawn(), userActorSpec);
+                        attachWebActor(r.req.getSession(), userActorSpec.build().spawn(), userActorSpec);
                     } else {
                         die(em.getCause());
                     }
@@ -456,7 +458,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             }
 
             final ReqInProgress r = reqInProgressAR.get();
-            final HttpSession s = r != null ? r.session : null;
+            final HttpSession s = r != null ? r.req.getSession() : null;
             if (r != null) {
                 try {
                     s.invalidate();
@@ -536,6 +538,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
                         out.close();
                         ctx.complete();
                     }
+                    // System.err.println("R " + request.getSession().getId() + ":" + request.hashCode());
                     return true;
                 } catch (final IOException ex) {
                     if (request.getServletContext() != null)
