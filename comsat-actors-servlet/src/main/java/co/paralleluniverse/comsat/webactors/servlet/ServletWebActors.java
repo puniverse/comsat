@@ -40,13 +40,13 @@ public final class ServletWebActors {
      * @return {@code actor}
      */
     public static <T> ActorRef<T> attachWebActor(HttpSession session, final ActorRef<T> actor) {
-        //noinspection unchecked
-        return WebActorServlet.attachWebActor(session, new Callable<ActorRef>() {
+        //noinspection unchecked,ConstantConditions
+        return WebActorServlet.getOrAttachSessionActor(session, new Callable<ActorRef>() {
             @Override
             public ActorRef call() throws Exception {
                 return actor;
             }
-        });
+        }).httpSessionActor.userWebActor;
     }
 
     /**
