@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -18,6 +18,7 @@ import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.Callable;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 import javax.websocket.DeploymentException;
@@ -38,8 +39,14 @@ public final class ServletWebActors {
      * @param actor   the web actor
      * @return {@code actor}
      */
-    public static <T> ActorRef<T> attachWebActor(HttpSession session, ActorRef<T> actor) {
-        return WebActorServlet.attachWebActor(session, actor, null).getSecond();
+    public static <T> ActorRef<T> attachWebActor(HttpSession session, final ActorRef<T> actor) {
+        //noinspection unchecked
+        return WebActorServlet.attachWebActor(session, new Callable<ActorRef>() {
+            @Override
+            public ActorRef call() throws Exception {
+                return actor;
+            }
+        });
     }
 
     /**
