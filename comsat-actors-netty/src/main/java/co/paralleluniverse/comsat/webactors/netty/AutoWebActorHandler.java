@@ -92,7 +92,7 @@ public class AutoWebActorHandler extends WebActorHandler {
             if (sessionId != null && sessionsEnabled()) {
                 final Context actorContext = sessions.get(sessionId);
                 if (actorContext != null) {
-                    if (actorContext.isValid())
+                    if (actorContext.renew())
                         return actorContext;
                     else
                         sessions.remove(sessionId); // Evict session

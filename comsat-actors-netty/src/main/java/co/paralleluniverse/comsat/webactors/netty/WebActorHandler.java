@@ -64,6 +64,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         ReentrantLock getLock();
 
         Map<String, Object> getAttachments();
+        boolean renew();
 
         ActorRef<? extends WebMessage> getWebActor();
         boolean handlesWithHttp(String uri);
@@ -76,13 +77,15 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         private final static String durationProp = System.getProperty(DefaultContextImpl.class.getName() + ".durationMillis");
         private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000L;
         private final ReentrantLock lock = new ReentrantLock();
+        @SuppressWarnings("unused")
         private final long created;
         private final Map<String, Object> attachments = new HashMap<>();
 
+        protected long renewed;
         private boolean valid = true;
 
         public DefaultContextImpl() {
-            created = new Date().getTime();
+            renewed = created = new Date().getTime();
         }
 
         @Override
@@ -93,10 +96,19 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final boolean isValid() {
-            final boolean ret = valid && (new Date().getTime() - created) <= DURATION;
+            final boolean ret = valid && (new Date().getTime() - renewed) <= DURATION;
             if (!ret)
                 invalidate();
             return ret;
+        }
+
+        @Override
+        public final boolean renew() {
+            if (!valid)
+                return false;
+
+            renewed = new Date().getTime();
+            return true;
         }
 
         @Override
