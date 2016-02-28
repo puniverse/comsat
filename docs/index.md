@@ -591,7 +591,7 @@ Web Actors are deployed on a web server. Currently they can be deployed as a [Ne
 
 Deploying web actors on top of Netty is as easy as inserting one of two Netty handlers in your pipeline: either `AutoWebActorHandler` or `WebActorHandler`.
 
-`AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and  will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there's no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be passed in.
+`AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and  will then instantiate and start the appropriate actor class (among detected ones) once per client session. Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be provided.
 
 The only other requirement is that your channel pipeline contains separate `HttpRequestDecoder` and `HttpResponseEncoder` instances rather than a single `HttpServerCodec` because the `HttpResponseEncoder` needs to be dynamically removed when an SSE exchange starts. If you prefer, as an alternative you can pass to `AutoWebActorHandler`'s constructor the name of the installed `HttpResponseEncoder`.
 
@@ -619,60 +619,11 @@ b.group(bossGroup, workerGroup)
 final ChannelFuture ch = b.bind(INET_PORT).sync();
 ~~~
 
-The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides the web actor reference and URL matching logic.
-
-`WebActorHandler` delegates context lookup (or creation) to a developer-supplied `ContextProvider` which is is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty`'s' tests for further insight):
-
-~~~ java
-final MyWebActor actor = new MyWebActor();
-final MActorRef<? extends WebMessage> actorRef = actor.spawn();
-// ...
-final NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
-final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
-final ServerBootstrap b = new ServerBootstrap();
-b.group(bossGroup, workerGroup)
-    .channel(NioServerSocketChannel.class)
-    .handler(new LoggingHandler(LogLevel.INFO))
-    .childHandler(new ChannelInitializer<SocketChannel>() {
-        @Override
-        public void initChannel(SocketChannel ch) throws Exception {
-            ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast(new HttpRequestDecoder());
-            pipeline.addLast(new HttpResponseEncoder());
-            pipeline.addLast(new HttpObjectAggregator(65536));
-
-            pipeline.addLast(new WebActorHandler(new WebActorHandler.ActorContextProvider() {
-                @Override
-                public WebActorHandler.ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
-                    return new WebActorHandler.DefaultActorContextImpl() {
-                        @Override
-                        public ActorRef<? extends WebMessage> getRef() {
-                            return actorRef;
-                        }
-                    
-                        @Override
-                        public final boolean handlesWithWebSocket(String uri) {
-                            return uri.startsWith("/ws");
-                        }
-
-                        @Override
-                        public final boolean handlesWithHttp(String uri) {
-                            return !handlesWithWebSocket(uri);
-                        }
-                    };
-                }
-            }));
-        }
-    });
-
-final ChannelFuture ch = b.bind(8080).sync();
-~~~
-
 `WebActorHandler` needs (and enables by default) cookie-based client session tracking only for SSE exchanges but it can enabled for all requests through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.trackSession` system property (legal values are `sse` and `always`). The cookie name will be `JSESSIONID` as in most server-side HTTP Java APIs with session support (e.g. servlets).
 
 The Netty WebActor backend will always include the `Date` header by default but this behaviour can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.omitDateHeader` system property
 
-Session duration for the default implementation is 10 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.DefaultContextImpl.durationMillis` system property.
+The session duration for the default implementation is 60 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.DefaultContextImpl.durationMillis` system property.
 
 ### Undertow deployment
 
@@ -697,44 +648,9 @@ server.start();
 
 Notice that the session handler is installed as well: `AutoWebActorHandler` will use Undertow sessions if available, else it will create a new actor instance for every exchange.
 
-The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides the web actor reference and URL matching logic.
-
-`WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ContextProvider` which is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-undertow`'s' tests for further insight):
-
-~~~ java
-final Actor actor = new MyWebActor();
-final MActorRef<? extends WebMessage> actorRef = actor.spawn();
-// ...
-server = Undertow.builder()
-    .addHttpListener(8080, "localhost")
-    .setHandler(new WebActorHandler(new WebActorHandler.ContextProvider() {
-        @Override
-        public WebActorHandler.ActorContext get(HttpServerExchange xch) {
-            return new WebActorHandler.DefaultContextImpl() {
-                @Override
-                public ActorRef<? extends WebMessage> getRef() {
-                    return actorRef;
-                }
-
-                @Override
-                public final boolean handlesWithWebSocket(String uri) {
-                   return uri.startsWith("/ws");
-                }
-
-                @Override
-                public final boolean handlesWithHttp(String uri) {
-                    return !handlesWithWebSocket(uri);
-                }
-            };
-        }
-    })).build();
-
-server.start();
-~~~
-
 If not using Undertow sessions please consider that `WebActorHandler` assumes the same actor will manage a whole SSE session.
 
-The actor context validity is 10 seconds by default but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
+The actor context validity is 60 seconds by default but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
 
 ### Servlet deployment
 
