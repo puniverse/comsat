@@ -52,10 +52,12 @@ import java.util.concurrent.TimeUnit;
 public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     // @FunctionalInterface
     public interface WebActorContextProvider {
-        Context get(ChannelHandlerContext ctx, FullHttpRequest req);
+        Context get(FullHttpRequest req);
     }
 
     public interface Context {
+        String getId();
+
         boolean isValid();
         void invalidate();
 
@@ -199,8 +201,10 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         final String uri = req.getUri();
 
-        final Context actorCtx = selector.get(ctx, req);
+        final Context actorCtx = selector.get(req);
         assert actorCtx != null;
+        final String sessionId = actorCtx.getId();
+        assert sessionId != null;
 
         final ReentrantLock lock = actorCtx.getLock();
         assert lock != null;
@@ -245,7 +249,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                         addActorToContextAndUnlock(actorCtx, internalActor, lock);
                     }
                     //noinspection unchecked
-                    ((HttpActorAdapter) internalActor).service(ctx, req);
+                    ((HttpActorAdapter) internalActor).service(ctx, req, sessionId);
                     return;
                 }
             }
@@ -507,6 +511,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 final HttpRequestWrapper nettyRequest = (HttpRequestWrapper) message.getRequest();
                 final FullHttpRequest req = nettyRequest.req;
                 final ChannelHandlerContext ctx = nettyRequest.ctx;
+                final String sessionId = nettyRequest.getSessionId();
 
                 final HttpResponseStatus status = HttpResponseStatus.valueOf(message.getStatus());
 
@@ -549,7 +554,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
                 final boolean sseStarted = message.shouldStartActor();
                 if (trackSession(sseStarted)) {
-                    final String sessionId = UUID.randomUUID().toString();
                     res.headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(SESSION_COOKIE_KEY, sessionId));
                     startSession(sessionId, actorContext);
                 }

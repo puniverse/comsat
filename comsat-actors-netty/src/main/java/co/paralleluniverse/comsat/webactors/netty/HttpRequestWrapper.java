@@ -49,6 +49,9 @@ final class HttpRequestWrapper extends HttpRequest {
     final ActorRef<? super HttpResponse> actorRef;
     final FullHttpRequest req;
     final ChannelHandlerContext ctx;
+    final String sessionId;
+
+    private static final Set<io.netty.handler.codec.http.cookie.Cookie> EMPTY_SET = new HashSet<>();
 
     private ImmutableMultimap<String, String> params;
     private URI uri;
@@ -59,11 +62,12 @@ final class HttpRequestWrapper extends HttpRequest {
     private Charset encoding;
     private String contentType;
 
-    public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req) {
+    public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req, String sessionId) {
         this.actorRef = actorRef;
         this.ctx = ctx;
         this.req = req;
         this.reqContent = Unpooled.copiedBuffer(req.content());
+        this.sessionId = sessionId;
     }
 
     @Override
@@ -224,6 +228,10 @@ final class HttpRequestWrapper extends HttpRequest {
                 byteBufferBody = reqContent.nioBuffer();
         }
         return byteBufferBody;
+    }
+
+    public final String getSessionId() {
+        return sessionId;
     }
 
     private String decodeStringBody() {

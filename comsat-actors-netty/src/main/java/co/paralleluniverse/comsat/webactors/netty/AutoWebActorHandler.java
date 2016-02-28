@@ -22,13 +22,10 @@ import co.paralleluniverse.common.reflection.ClassLoaderUtil;
 import co.paralleluniverse.common.util.Pair;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -45,8 +42,6 @@ import java.util.Set;
  * @author circlespainter
  */
 public final class AutoWebActorHandler extends WebActorHandler {
-    private static final AttributeKey<Context> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
-
     private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
     private static final List<Class<?>> actorClasses = new ArrayList<>(4);
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -85,26 +80,18 @@ public final class AutoWebActorHandler extends WebActorHandler {
         }
 
         @Override
-        public final Context get(ChannelHandlerContext ctx, final FullHttpRequest req) {
-            final Attribute<Context> s = ctx.attr(SESSION_KEY);
-            if (s.get() == null) {
-                final String sessionId = getSessionId(req);
-                if (sessionId != null && sessionsEnabled()) {
-                    final Context actorContext = sessions.get(sessionId);
-                    if (actorContext != null) {
-                        if (actorContext.isValid()) {
-                            s.set(actorContext);
-                            return actorContext;
-                        } else
-                            sessions.remove(sessionId); // Evict session
-                    }
+        public final Context get(final FullHttpRequest req) {
+            final String sessionId = getSessionId(req);
+            if (sessionId != null && sessionsEnabled()) {
+                final Context actorContext = sessions.get(sessionId);
+                if (actorContext != null) {
+                    if (actorContext.isValid())
+                        return actorContext;
+                    else
+                        sessions.remove(sessionId); // Evict session
                 }
-
-                final Context actorContext = newActorContext(req, userClassLoader, actorParams);
-                s.set(actorContext);
-                return actorContext;
             }
-            return s.get();
+            return newActorContext(req);
         }
 
         private String getSessionId(FullHttpRequest req) {
@@ -123,6 +110,8 @@ public final class AutoWebActorHandler extends WebActorHandler {
     }
 
     private static class AutoContext extends DefaultContextImpl {
+        private String id;
+
         private final Map<Class<?>, Object[]> actorParams;
         private final ClassLoader userClassLoader;
         private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
@@ -136,6 +125,11 @@ public final class AutoWebActorHandler extends WebActorHandler {
                 actorRef = p.getFirst();
                 actorClass = p.getSecond();
             }
+        }
+
+        @Override
+        public final String getId() {
+            return id != null ? id : (id = UUID.randomUUID().toString());
         }
 
         @Override
