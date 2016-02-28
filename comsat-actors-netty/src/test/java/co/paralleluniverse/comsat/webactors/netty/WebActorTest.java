@@ -14,7 +14,6 @@
 package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.Actor;
-import co.paralleluniverse.actors.ActorImpl;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
@@ -62,7 +61,7 @@ public class WebActorTest extends AbstractWebActorTest {
 
         @SuppressWarnings("unchecked")
         @Override
-        public ActorRef<? extends WebMessage> getRef() {
+        public ActorRef<? extends WebMessage> getWebActor() {
             return actorRef;
         }
 

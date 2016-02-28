@@ -61,12 +61,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         boolean isValid();
         void invalidate();
 
-        ActorRef<? extends WebMessage> getRef();
-
         ReentrantLock getLock();
 
         Map<String, Object> getAttachments();
 
+        ActorRef<? extends WebMessage> getWebActor();
         boolean handlesWithHttp(String uri);
         boolean handlesWithWebSocket(String uri);
 
@@ -212,7 +211,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         lock.lock();
 
         try {
-            final ActorRef<? extends WebMessage> userActorRef = actorCtx.getRef();
+            final ActorRef<? extends WebMessage> userActorRef = actorCtx.getWebActor();
             ActorImpl internalActor = (ActorImpl) actorCtx.getAttachments().get(ACTOR_KEY);
 
             if (userActorRef != null) {

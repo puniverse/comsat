@@ -39,7 +39,7 @@ import java.util.*;
  */
 public class AutoWebActorHandler extends WebActorHandler {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
-    private static final List<Class<?>> actorClasses = new ArrayList<>(4);
+    private static final List<Class<?>> actorClasses = new ArrayList<>(32);
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     public AutoWebActorHandler() {
@@ -148,7 +148,7 @@ public class AutoWebActorHandler extends WebActorHandler {
         }
 
         @Override
-        public final ActorRef<? extends WebMessage> getRef() {
+        public final ActorRef<? extends WebMessage> getWebActor() {
             return actorRef;
         }
 
@@ -169,7 +169,7 @@ public class AutoWebActorHandler extends WebActorHandler {
             for (final Class<?> c : actorClasses) {
                 if (WebActorHandler.handlesWithHttp(uri, c) || WebActorHandler.handlesWithWebSocket(uri, c))
                     return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>>(
-                        Actor.newActor(
+                        Actor.newActor (
                             new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY)
                         ).spawn(),
                         (Class<? extends ActorImpl<? extends WebMessage>>) c
