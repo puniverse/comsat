@@ -22,6 +22,7 @@ import co.paralleluniverse.common.reflection.ClassLoaderUtil;
 import co.paralleluniverse.common.util.Pair;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
+import co.paralleluniverse.fibers.Suspendable;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.util.internal.logging.InternalLogger;
@@ -36,7 +37,7 @@ import java.util.*;
 /**
  * @author circlespainter
  */
-public final class AutoWebActorHandler extends WebActorHandler {
+public class AutoWebActorHandler extends WebActorHandler {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
     private static final List<Class<?>> actorClasses = new ArrayList<>(4);
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -58,20 +59,31 @@ public final class AutoWebActorHandler extends WebActorHandler {
     }
 
     public AutoWebActorHandler(final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-        super(new AutoContextProvider(userClassLoader, actorParams), httpResponseEncoderName);
+        super(null, httpResponseEncoderName);
+        super.contextProvider = newContextProvider(userClassLoader, actorParams);
     }
 
-    private static Context newActorContext(final FullHttpRequest req, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-        return new AutoContext(req, actorParams, userClassLoader);
+    public AutoWebActorHandler(String httpResponseEncoderName, AutoContextProvider prov) {
+        super(prov, httpResponseEncoderName);
     }
 
-    private static class AutoContextProvider implements WebActorContextProvider {
+    protected AutoContextProvider newContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
+        return new AutoContextProvider(userClassLoader, actorParams);
+    }
+
+    public static class AutoContextProvider implements WebActorContextProvider {
         private final ClassLoader userClassLoader;
         private final Map<Class<?>, Object[]> actorParams;
+        private final Long defaultContextValidityMS;
 
         public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
+            this(userClassLoader, actorParams, null);
+        }
+
+        public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams, Long defaultContextValidityMS) {
             this.userClassLoader = userClassLoader;
             this.actorParams = actorParams;
+            this.defaultContextValidityMS = defaultContextValidityMS;
         }
 
         @Override
@@ -87,6 +99,13 @@ public final class AutoWebActorHandler extends WebActorHandler {
                 }
             }
             return newActorContext(req);
+        }
+
+        protected AutoContext newActorContext(FullHttpRequest req) {
+            final AutoContext c = new AutoContext(req, actorParams, userClassLoader);
+            if (defaultContextValidityMS !=  null)
+                c.setValidityMS(defaultContextValidityMS);
+            return c;
         }
 
         private String getSessionId(FullHttpRequest req) {
@@ -112,6 +131,10 @@ public final class AutoWebActorHandler extends WebActorHandler {
         public AutoContext(FullHttpRequest req, Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
             this.actorParams = actorParams;
             this.userClassLoader = userClassLoader;
+            fillActor(req);
+        }
+
+        private void fillActor(FullHttpRequest req) {
             final Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> p = autoCreateActor(req);
             if (p != null) {
                 actorRef = p.getFirst();

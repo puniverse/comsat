@@ -116,12 +116,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    public WebActorHandler(WebActorContextProvider selector) {
-        this(selector, null);
+    public WebActorHandler(WebActorContextProvider contextProvider) {
+        this(contextProvider, null);
     }
 
-    public WebActorHandler(WebActorContextProvider selector, String httpResponseEncoderName) {
-        this.selector = selector;
+    public WebActorHandler(WebActorContextProvider contextProvider, String httpResponseEncoderName) {
+        this.contextProvider = contextProvider;
         this.httpResponseEncoderName = httpResponseEncoderName;
     }
 
@@ -160,13 +160,13 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     protected final static String OMIT_DATE_HEADER_PROP = HttpChannelAdapter.class.getName() + ".omitDateHeader";
     protected final static Boolean omitDateHeader = SystemProperties.isEmptyOrTrue(OMIT_DATE_HEADER_PROP);
 
+    protected WebActorContextProvider contextProvider;
+    protected String httpResponseEncoderName;
+
     private static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
 
     private static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
     private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
-
-    private final WebActorContextProvider selector;
-    private final String httpResponseEncoderName;
 
     private WebSocketServerHandshaker handshaker;
     private WebSocketActorAdapter webSocketActor;
@@ -201,7 +201,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         final String uri = req.getUri();
 
-        final Context actorCtx = selector.get(req);
+        final Context actorCtx = contextProvider.get(req);
         assert actorCtx != null;
         final String sessionId = actorCtx.getId();
         assert sessionId != null;
