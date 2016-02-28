@@ -162,7 +162,7 @@ final class HttpRequestWrapper extends HttpRequest {
     public Collection<Cookie> getCookies() {
         if (cookies == null) {
             final ImmutableList.Builder<Cookie> builder = ImmutableList.builder();
-            for (io.netty.handler.codec.http.cookie.Cookie c : ServerCookieDecoder.LAX.decode(req.headers().get("Cookies"))) {
+            for (io.netty.handler.codec.http.cookie.Cookie c : getNettyCookies(req)) {
                 builder.add(
                     Cookie.cookie(c.name(), c.value())
                         .setDomain(c.domain())
@@ -176,6 +176,15 @@ final class HttpRequestWrapper extends HttpRequest {
             cookies = builder.build();
         }
         return cookies;
+    }
+
+    static Set<io.netty.handler.codec.http.cookie.Cookie> getNettyCookies(FullHttpRequest req) {
+        final HttpHeaders heads = req.headers();
+        final String head = heads != null ? heads.get(HttpHeaders.Names.COOKIE) : null;
+        if (head != null)
+            return ServerCookieDecoder.LAX.decode(head);
+        else
+            return EMPTY_SET;
     }
 
     @Override

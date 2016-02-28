@@ -23,9 +23,7 @@ import co.paralleluniverse.common.util.Pair;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -33,10 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author circlespainter
@@ -95,14 +90,11 @@ public final class AutoWebActorHandler extends WebActorHandler {
         }
 
         private String getSessionId(FullHttpRequest req) {
-            final String cookiesString = req.headers().get(HttpHeaders.Names.COOKIE);
-            if (cookiesString != null) {
-                final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookiesString);
-                if (cookies != null) {
-                    for (final Cookie c : cookies) {
-                        if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
-                            return c.value();
-                    }
+            final Set<Cookie> cookies = HttpRequestWrapper.getNettyCookies(req);
+            if (cookies != null) {
+                for (final Cookie c : cookies) {
+                    if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
+                        return c.value();
                 }
             }
             return null;
