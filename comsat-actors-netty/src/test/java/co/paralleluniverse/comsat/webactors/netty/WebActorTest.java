@@ -66,6 +66,11 @@ public class WebActorTest extends AbstractWebActorTest {
         }
 
         @Override
+        public void restart(FullHttpRequest r) {
+            // Nothing to do
+        }
+
+        @Override
         public final boolean handlesWithWebSocket(String uri) {
             return uri.startsWith("/ws");
         }

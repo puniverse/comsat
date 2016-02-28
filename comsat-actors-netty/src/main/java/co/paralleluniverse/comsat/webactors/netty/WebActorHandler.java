@@ -65,6 +65,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         Map<String, Object> getAttachments();
         boolean renew();
+        void restart(FullHttpRequest r);
 
         ActorRef<? extends WebMessage> getWebActor();
         boolean handlesWithHttp(String uri);

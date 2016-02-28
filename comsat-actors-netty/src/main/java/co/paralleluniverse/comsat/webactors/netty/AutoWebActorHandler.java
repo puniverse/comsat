@@ -148,6 +148,12 @@ public class AutoWebActorHandler extends WebActorHandler {
         }
 
         @Override
+        public final void restart(FullHttpRequest req) {
+            renewed = new Date().getTime();
+            fillActor(req);
+        }
+
+        @Override
         public final ActorRef<? extends WebMessage> getWebActor() {
             return actorRef;
         }
