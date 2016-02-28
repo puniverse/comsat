@@ -84,6 +84,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         private final Map<String, Object> attachments = new HashMap<>();
 
         protected long renewed;
+        private Long validityMS;
+
         private boolean valid = true;
 
         public DefaultContextImpl() {
@@ -98,7 +100,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
         public final boolean isValid() {
-            final boolean ret = valid && (new Date().getTime() - renewed) <= DURATION;
+            final boolean ret = valid && (new Date().getTime() - renewed) <= getValidityMS();
             if (!ret)
                 invalidate();
             return ret;
@@ -123,6 +125,13 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             return lock;
         }
 
+        public void setValidityMS(long validityMS) {
+            this.validityMS = validityMS;
+        }
+
+        public long getValidityMS() {
+            return validityMS != null ? validityMS : DURATION;
+        }
     }
 
     public WebActorHandler(WebActorContextProvider contextProvider) {
