@@ -71,7 +71,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         boolean handlesWithHttp(String uri);
         boolean handlesWithWebSocket(String uri);
 
-        boolean watch();
+        enum WatchPolicy { DONT_WATCH, DIE, DIE_IF_EXCEPTION_ELSE_RESTART, RESTART }
+        WatchPolicy watch();
     }
 
     public static abstract class DefaultContextImpl implements Context {
@@ -122,10 +123,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             return lock;
         }
 
-        @Override
-        public boolean watch() {
-            return true;
-        }
     }
 
     public WebActorHandler(WebActorContextProvider contextProvider) {

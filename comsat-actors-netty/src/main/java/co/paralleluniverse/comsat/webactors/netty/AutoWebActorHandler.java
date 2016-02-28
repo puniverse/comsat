@@ -168,6 +168,11 @@ public class AutoWebActorHandler extends WebActorHandler {
             return WebActorHandler.handlesWithWebSocket(uri, actorClass);
         }
 
+        @Override
+        public WatchPolicy watch() {
+            return WatchPolicy.DIE_IF_EXCEPTION_ELSE_RESTART;
+        }
+
         @SuppressWarnings("unchecked")
         private Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> autoCreateActor(FullHttpRequest req) {
             registerActorClasses();

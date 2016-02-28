@@ -76,6 +76,11 @@ public class WebActorTest extends AbstractWebActorTest {
         }
 
         @Override
+        public WatchPolicy watch() {
+            return WatchPolicy.DIE;
+        }
+
+        @Override
         public final boolean handlesWithHttp(String uri) {
             return !handlesWithWebSocket(uri);
         }
