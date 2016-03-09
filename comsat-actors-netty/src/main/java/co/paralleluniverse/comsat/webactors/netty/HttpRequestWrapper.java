@@ -53,6 +53,7 @@ final class HttpRequestWrapper extends HttpRequest {
 
     private final ByteBuf reqContent;
 
+    private String sourceAddress;
     private ImmutableMultimap<String, String> params;
     private URI uri;
     private Collection<Cookie> cookies;
@@ -69,6 +70,14 @@ final class HttpRequestWrapper extends HttpRequest {
         this.sessionId = sessionId;
 
         reqContent = Unpooled.copiedBuffer(req.content());
+    }
+
+    @Override
+    public final String getSourceAddress() {
+        if (sourceAddress == null) {
+            sourceAddress = ctx.channel().remoteAddress().toString();
+        }
+        return sourceAddress;
     }
 
     @Override

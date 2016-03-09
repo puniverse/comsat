@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -35,6 +35,11 @@ import java.util.TimeZone;
  * An HTTP request message.
  */
 public abstract class HttpRequest extends HttpMessage {
+    /**
+     * The Internet Protocol (IP) address that sent the request.
+     */
+    public abstract String getSourceAddress();
+
     /**
      * A multimap of the parameters contained in this message and (all) their values.
      * If the request has no parameters, returns an empty multimap.
@@ -250,6 +255,7 @@ public abstract class HttpRequest extends HttpMessage {
     protected String contentString() {
         StringBuilder sb = new StringBuilder();
         sb.append(" ").append(getMethod());
+        sb.append(" sourceAddress: ").append(getSourceAddress());
         sb.append(" uri: ").append(getRequestURI());
         sb.append(" query: ").append(getQueryString());
         sb.append(" params: ").append(getParameters());
@@ -265,6 +271,7 @@ public abstract class HttpRequest extends HttpMessage {
         private final ActorRef<WebMessage> sender;
         private final String strBody;
         private final ByteBuffer binBody;
+        private String sourceAddress;
         private String contentType;
         private Charset charset;
         private List<Cookie> cookies;
@@ -290,6 +297,11 @@ public abstract class HttpRequest extends HttpMessage {
 
         public Builder(ActorRef<? super WebMessage> from) {
             this(from, (String) null);
+        }
+
+        public Builder setSourceAddress(String sourceAddress) {
+            this.sourceAddress = sourceAddress;
+            return this;
         }
 
         /**
@@ -400,6 +412,7 @@ public abstract class HttpRequest extends HttpMessage {
     }
 
     private static class SimpleHttpRequest extends HttpRequest {
+        private final String sourceAddress;
         private final ActorRef<WebMessage> sender;
         private final String contentType;
         private final Charset charset;
@@ -421,6 +434,7 @@ public abstract class HttpRequest extends HttpMessage {
          * @param httpRequest
          */
         public SimpleHttpRequest(ActorRef<? super WebMessage> from, HttpRequest httpRequest) {
+            this.sourceAddress = httpRequest.getSourceAddress();
             this.sender = (ActorRef<WebMessage>) from;
             this.contentType = httpRequest.getContentType();
             this.charset = httpRequest.getCharacterEncoding();
@@ -437,6 +451,7 @@ public abstract class HttpRequest extends HttpMessage {
         }
 
         public SimpleHttpRequest(ActorRef<? super WebMessage> from, HttpRequest.Builder builder) {
+            this.sourceAddress = builder.sourceAddress;
             this.sender = (ActorRef<WebMessage>) from;
             this.contentType = builder.contentType;
             this.charset = builder.charset;
@@ -450,6 +465,11 @@ public abstract class HttpRequest extends HttpMessage {
             this.server = builder.server;
             this.port = builder.port;
             this.uri = builder.path;
+        }
+
+        @Override
+        public String getSourceAddress() {
+            return sourceAddress;
         }
 
         @Override

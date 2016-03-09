@@ -52,6 +52,7 @@ final class ServletHttpRequest extends HttpRequest {
     private String strBody;
     private byte[] binBody;
     private Collection<Cookie> cookies;
+    private String sourceAddress;
 
     /**
      * Constructs a {@code ServletHttpRequest} message
@@ -66,7 +67,14 @@ final class ServletHttpRequest extends HttpRequest {
         this.response = response;
     }
 
-//    @Override
+    @Override
+    public final String getSourceAddress() {
+        if (sourceAddress == null)
+            sourceAddress = request.getRemoteAddr();
+        return sourceAddress;
+    }
+
+    //    @Override
 //    public String getRequestURL() {
 //        return request.getRequestURL().toString();
 //    }

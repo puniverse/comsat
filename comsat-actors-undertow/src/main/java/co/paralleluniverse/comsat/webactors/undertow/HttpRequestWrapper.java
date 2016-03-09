@@ -43,6 +43,7 @@ final class HttpRequestWrapper extends HttpRequest {
     final ActorRef<? super HttpResponse> actorRef;
     final HttpServerExchange xch;
     private final ByteBuffer reqContent;
+    private String sourceAddress;
     private ImmutableMultimap<String, String> params;
     private URI uri;
     private Collection<Cookie> cookies;
@@ -66,6 +67,13 @@ final class HttpRequestWrapper extends HttpRequest {
             return builder.build();
         }
         return null;
+    }
+
+    @Override
+    public final String getSourceAddress() {
+        if (sourceAddress == null)
+            sourceAddress = xch.getSourceAddress().toString();
+        return sourceAddress;
     }
 
     @Override
