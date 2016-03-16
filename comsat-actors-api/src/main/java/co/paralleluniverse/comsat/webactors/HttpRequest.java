@@ -36,9 +36,14 @@ import java.util.TimeZone;
  */
 public abstract class HttpRequest extends HttpMessage {
     /**
-     * The Internet Protocol (IP) address that sent the request.
+     * The Internet Protocol (IP) host that sent the request or {@code null} if not available.
      */
-    public abstract String getSourceAddress();
+    public abstract String getSourceHost();
+
+    /**
+     * The Internet Protocol (IP) port from which the request was sent or {@code -1} if not available.
+     */
+    public abstract int getSourcePort();
 
     /**
      * A multimap of the parameters contained in this message and (all) their values.
@@ -255,7 +260,7 @@ public abstract class HttpRequest extends HttpMessage {
     protected String contentString() {
         StringBuilder sb = new StringBuilder();
         sb.append(" ").append(getMethod());
-        sb.append(" sourceAddress: ").append(getSourceAddress());
+        sb.append(" sourceHost: ").append(getSourceHost());
         sb.append(" uri: ").append(getRequestURI());
         sb.append(" query: ").append(getQueryString());
         sb.append(" params: ").append(getParameters());
@@ -271,7 +276,8 @@ public abstract class HttpRequest extends HttpMessage {
         private final ActorRef<WebMessage> sender;
         private final String strBody;
         private final ByteBuffer binBody;
-        private String sourceAddress;
+        private String sourceHost;
+        private int sourcePort;
         private String contentType;
         private Charset charset;
         private List<Cookie> cookies;
@@ -299,8 +305,13 @@ public abstract class HttpRequest extends HttpMessage {
             this(from, (String) null);
         }
 
-        public Builder setSourceAddress(String sourceAddress) {
-            this.sourceAddress = sourceAddress;
+        public Builder setSourceHost(String sourceAddress) {
+            this.sourceHost = sourceAddress;
+            return this;
+        }
+
+        public Builder setSourcePort(int sourcePort) {
+            this.sourcePort = sourcePort;
             return this;
         }
 
@@ -421,7 +432,8 @@ public abstract class HttpRequest extends HttpMessage {
     }
 
     private static class SimpleHttpRequest extends HttpRequest {
-        private final String sourceAddress;
+        private final String sourceHost;
+        private final int sourcePort;
         private final ActorRef<WebMessage> sender;
         private final String contentType;
         private final Charset charset;
@@ -443,7 +455,8 @@ public abstract class HttpRequest extends HttpMessage {
          * @param httpRequest
          */
         public SimpleHttpRequest(ActorRef<? super WebMessage> from, HttpRequest httpRequest) {
-            this.sourceAddress = httpRequest.getSourceAddress();
+            this.sourceHost = httpRequest.getSourceHost();
+            this.sourcePort = httpRequest.getSourcePort();
             this.sender = (ActorRef<WebMessage>) from;
             this.contentType = httpRequest.getContentType();
             this.charset = httpRequest.getCharacterEncoding();
@@ -460,7 +473,8 @@ public abstract class HttpRequest extends HttpMessage {
         }
 
         public SimpleHttpRequest(ActorRef<? super WebMessage> from, HttpRequest.Builder builder) {
-            this.sourceAddress = builder.sourceAddress;
+            this.sourceHost = builder.sourceHost;
+            this.sourcePort = builder.sourcePort;
             this.sender = (ActorRef<WebMessage>) from;
             this.contentType = builder.contentType;
             this.charset = builder.charset;
@@ -477,8 +491,13 @@ public abstract class HttpRequest extends HttpMessage {
         }
 
         @Override
-        public String getSourceAddress() {
-            return sourceAddress;
+        public String getSourceHost() {
+            return sourceHost;
+        }
+
+        @Override
+        public int getSourcePort() {
+            return sourcePort;
         }
 
         @Override

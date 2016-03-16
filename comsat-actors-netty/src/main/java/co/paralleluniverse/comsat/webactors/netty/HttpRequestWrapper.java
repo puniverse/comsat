@@ -27,6 +27,8 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -53,7 +55,7 @@ final class HttpRequestWrapper extends HttpRequest {
 
     private final ByteBuf reqContent;
 
-    private String sourceAddress;
+    private InetSocketAddress sourceAddress;
     private ImmutableMultimap<String, String> params;
     private URI uri;
     private Collection<Cookie> cookies;
@@ -73,11 +75,22 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public final String getSourceAddress() {
-        if (sourceAddress == null) {
-            sourceAddress = ctx.channel().remoteAddress().toString();
+    public final String getSourceHost() {
+        fillSourceAddress();
+        return sourceAddress != null ? sourceAddress.getHostString() : null;
+    }
+
+    @Override
+    public final int getSourcePort() {
+        fillSourceAddress();
+        return sourceAddress != null ? sourceAddress.getPort() : -1;
+    }
+
+    private void fillSourceAddress() {
+        final SocketAddress remoteAddress = ctx.channel().remoteAddress();
+        if (sourceAddress == null && remoteAddress instanceof InetSocketAddress) {
+            sourceAddress = (InetSocketAddress) remoteAddress;
         }
-        return sourceAddress;
     }
 
     @Override

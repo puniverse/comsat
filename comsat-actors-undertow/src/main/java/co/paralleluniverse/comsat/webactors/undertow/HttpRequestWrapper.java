@@ -24,6 +24,7 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -43,7 +44,7 @@ final class HttpRequestWrapper extends HttpRequest {
     final ActorRef<? super HttpResponse> actorRef;
     final HttpServerExchange xch;
     private final ByteBuffer reqContent;
-    private String sourceAddress;
+    private InetSocketAddress sourceAddress;
     private ImmutableMultimap<String, String> params;
     private URI uri;
     private Collection<Cookie> cookies;
@@ -70,10 +71,20 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public final String getSourceAddress() {
+    public final String getSourceHost() {
+        fillSourceAddress();
+        return sourceAddress != null ? sourceAddress.getHostString() : null;
+    }
+
+    @Override
+    public final int getSourcePort() {
+        fillSourceAddress();
+        return sourceAddress != null ? sourceAddress.getPort() : -1;
+    }
+
+    private void fillSourceAddress() {
         if (sourceAddress == null)
-            sourceAddress = xch.getSourceAddress().toString();
-        return sourceAddress;
+            sourceAddress = xch.getSourceAddress();
     }
 
     @Override
