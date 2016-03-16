@@ -397,6 +397,15 @@ public abstract class HttpRequest extends HttpMessage {
             params.put(name, value);
             return this;
         }
+
+        /**
+         * Instantiates a new immutable {@link HttpRequest} based on the values set in this builder.
+         *
+         * @return a new {@link HttpRequest}
+         */
+        public HttpRequest build() {
+            return new SimpleHttpRequest(sender, this);
+        }
     }
 
     private static class SimpleHttpRequest extends HttpRequest {
