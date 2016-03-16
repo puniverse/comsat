@@ -110,6 +110,7 @@ subprojects {
     ext.hibernateVer                    = '4.3.11.Final'
 
     ext.kafkaClientsVer                 = '0.9.0.0' // ''0.8.2.2'
+    ext.shiroVer                        = '1.2.4'
 
     configurations.all {
         resolutionStrategy {
@@ -438,6 +439,14 @@ project (':comsat-okhttp') {
 project (':comsat-kafka') {
     dependencies {
         compile "org.apache.kafka:kafka-clients:$kafkaClientsVer"
+    }
+}
+
+project (':comsat-shiro') {
+    dependencies {
+        compile "org.apache.shiro:shiro-core:$shiroVer"
+        testCompile "co.paralleluniverse:quasar-core:$quasarVer"
+        testCompile "commons-logging:commons-logging:$commonsLoggingVer"
     }
 }
 

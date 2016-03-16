@@ -99,6 +99,7 @@ Then add the following Maven/Gradle dependencies:
 | Use Comsat in the Jetty servlet container without the java agent.                                                         | `co.paralleluniverse:comsat-jetty-loader:0.6.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
 | [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.6.0`
 | [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.6.0`
+| [Apache Shiro](http://shiro.apache.org/) integration module.                                                              | `co.paralleluniverse:comsat-shiro:0.6.0`
 
 ## Examples
 
@@ -184,7 +185,7 @@ Example:
 {% include_snippet FiberHttpServlet example ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
 ~~~
 
-Then you can simply add it as a regular servlet to you favorite servlet containter, e.g. for embedded Jetty:
+Then you can simply add it as a regular servlet to you favorite servlet container, e.g. for embedded Jetty:
 
 ~~~ java
 {% include_snippet servlet registration ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
@@ -738,13 +739,13 @@ To close the stream, you send a `co.paralleluniverse.actors.ShutdownMessage` to 
 co.paralleluniverse.actors.ActorUtil.sendOrInterrupt(sseActor, new ShutdownMessage());
 ~~~
 
-It might be convient (and elegant) to wrap the channel returned by `openStream` with a *mapping channel* (see the Quasar docs) that will transform a message class representing the event into an SSE-encoded `WebDataMessage`.
+It might be convenient (and elegant) to wrap the channel returned by `openStream` with a *mapping channel* (see the Quasar docs) that will transform a message class representing the event into an SSE-encoded `WebDataMessage`.
 
 ### WebSockets
 
 [WebSocket](http://en.wikipedia.org/wiki/WebSocket) is a new web protocol for low(ish)-latency, bi-directional communication between the client and the server. Web sockets are extremely useful for interactive web applications, and they fit beautifully with COMSAT Web Actors.
 
-A web actor may register itself to handle web socket connections by declaring which WebSocket URIs it is interesten in, in the `@WebActor` annotations `webSocketUrlPatterns` property. Such a web actor will handle all web socket sessions at those URIs associated with the actor instance's HTTP session (a web socket is also associated with an HTTP session).
+A web actor may register itself to handle web socket connections by declaring which WebSocket URIs it is interested in, in the `@WebActor` annotations `webSocketUrlPatterns` property. Such a web actor will handle all web socket sessions at those URIs associated with the actor instance's HTTP session (a web socket is also associated with an HTTP session).
 
 When the client connects to a web socket, the web actor will receive a [`WebSocketOpened`]({{javadoc}}/comsat/webactors/WebSocketOpened.html) message, and each following message will be received as a [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html). The actor can send messages to the client by replying to the sender with `WebDataMessage`s of its own.
 
@@ -755,3 +756,43 @@ The virtual actor that's the *sender* of the messages received from the client r
 [Apache Kafka](http://kafka.apache.org/) is a fast publish-subscribe messaging solution rethought as a distributed commit log.
 
 The `comsat-kafka` module provides a [Kafka Producer](https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html) with an asynchronous [`send`](https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html#send(org.apache.kafka.clients.producer.ProducerRecord,%20org.apache.kafka.clients.producer.Callback)) method that will return a Quasar [`SettableFuture`](http://docs.paralleluniverse.co/quasar/javadoc/index.html). A Quasar `SettableFuture` can block fibers in addition to threads.
+
+### Apache Shiro
+
+[Apache Shiro](http://shiro.apache.org/) is a security framework that performs authentication, authorization, cryptography, and session management.
+
+The `comsat-shiro` module provides instrumentation definitions of Shiro methods allowing client implementations of [Shiro Realms](http://shiro.apache.org/realm.html) to use fiber-blocking functionality.
+
+Given a client [AuthorizingRealm](https://shiro.apache.org/static/1.2.1/apidocs/org/apache/shiro/realm/AuthorizingRealm.html) which queries a fiber-suspending API for user details, e.g.:   
+~~~ java
+// (exception handling ignored below)
+public class FiberedRealm extends AuthorizingRealm {
+
+    @Suspendable
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+        // Get user roles using a fiber-blocking API
+        final Set<String> roles = ... 
+        return new SimpleAuthorizationInfo(roles);
+    }
+
+    @Suspendable
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token) throws AuthenticationException {
+        // Get principal and credentials using a fiber-blocking API 
+        final Object principal = ... 
+        final Object creds = ... 
+        return new SimpleAuthenticationInfo(principal, creds, "FiberedRealm");
+    }
+}
+~~~
+
+Other fibers can in turn use the static methods of [SecurityUtils](http://shiro.apache.org/static/1.2.1/apidocs/org/apache/shiro/SecurityUtils.html) to query said realm:
+~~~ java
+    SecurityUtils.getSubject().login(...);
+    boolean isAuthorized = SecurityUtils.getSubject().isAuthenticated();
+    if (isAuthorized) {
+        isAuthorized = SecurityUtils.getSubject().hasRole("someRole")
+            && SecurityUtils.getSubject().isPermitted("some:permission");
+    }
+~~~
