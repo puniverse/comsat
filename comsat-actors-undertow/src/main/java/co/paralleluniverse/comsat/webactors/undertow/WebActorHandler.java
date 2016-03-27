@@ -19,8 +19,10 @@ import co.paralleluniverse.comsat.webactors.*;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import co.paralleluniverse.strands.Timeout;
+import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.SendPort;
 import co.paralleluniverse.strands.concurrent.ReentrantLock;
 import io.undertow.Handlers;
@@ -56,45 +58,66 @@ public class WebActorHandler implements HttpHandler {
     }
 
     public interface Context {
-        boolean isValid();
-        void invalidate();
-
-        ActorRef<? extends WebMessage> getRef();
-
+        String getId();
         ReentrantLock getLock();
 
-        Map<String, Object> getAttachments();
+        boolean isValid() throws SuspendExecution, InterruptedException;
+        void invalidate() throws SuspendExecution, InterruptedException;
 
-        boolean handlesWithWebSocket(String uri);
+        boolean renew();
+        void restart(HttpServerExchange xch);
+
+        ActorRef<? extends WebMessage> getWebActor();
         boolean handlesWithHttp(String uri);
+        boolean handlesWithWebSocket(String uri);
 
-        boolean watch();
+        enum WatchPolicy { DONT_WATCH, DIE, DIE_IF_EXCEPTION_ELSE_RESTART, RESTART }
+        WatchPolicy watch();
+
+        Map<String, Object> getAttachments();
     }
 
     public static abstract class DefaultContextImpl implements Context {
         private final static String durationProp = System.getProperty(DefaultContextImpl.class.getName() + ".durationMillis");
         private final static long DURATION = durationProp != null ? Long.parseLong(durationProp) : 60_000L;
-        final Map<String, Object> attachments = new HashMap<>();
         private final ReentrantLock lock = new ReentrantLock();
+        @SuppressWarnings("unused")
         private final long created;
+        final Map<String, Object> attachments = new HashMap<>();
+
+        protected long renewed;
+        private Long validityMS;
+
         private boolean valid = true;
 
         public DefaultContextImpl() {
-            created = new Date().getTime();
+            renewed = created = new Date().getTime();
         }
 
         @Override
-        public final void invalidate() {
+        public final void invalidate() throws SuspendExecution, InterruptedException {
+            final HttpActorAdapter actor = (HttpActorAdapter) attachments.get(ACTOR_KEY);
+            if (actor != null)
+                actor.ch.send(HttpActorAdapter.EXIT);
             attachments.clear();
             valid = false;
         }
 
         @Override
-        public final boolean isValid() {
-            final boolean ret = valid && (new Date().getTime() - created) <= DURATION;
+        public final boolean isValid() throws SuspendExecution, InterruptedException {
+            final boolean ret = valid && (new Date().getTime() - renewed) <= getValidityMS();
             if (!ret)
                 invalidate();
             return ret;
+        }
+
+        @Override
+        public final boolean renew() {
+            if (!valid)
+                return false;
+
+            renewed = new Date().getTime();
+            return true;
         }
 
         @Override
@@ -107,18 +130,21 @@ public class WebActorHandler implements HttpHandler {
             return lock;
         }
 
-        @Override
-        public boolean watch() {
-            return true;
+        public void setValidityMS(long validityMS) {
+            this.validityMS = validityMS;
+        }
+
+        public long getValidityMS() {
+            return validityMS != null ? validityMS : DURATION;
         }
     }
 
     static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
 
-    private final ContextProvider selector;
+    protected ContextProvider contextProvider;
 
-    public WebActorHandler(ContextProvider selector) {
-        this.selector = selector;
+    public WebActorHandler(ContextProvider contextProvider) {
+        this.contextProvider = contextProvider;
         // this.continueHandler = Handlers.httpContinueRead(null);
     }
 
@@ -126,7 +152,7 @@ public class WebActorHandler implements HttpHandler {
     public final void handleRequest(final HttpServerExchange xch) throws Exception {
         // continueHandler.handleRequest(xch);
 
-        final Context context = selector.get(xch);
+        final Context context = contextProvider.get(xch);
         assert context != null;
 
         final ReentrantLock lock = context.getLock();
@@ -135,7 +161,7 @@ public class WebActorHandler implements HttpHandler {
         lock.lock();
 
         try {
-            final ActorRef<? extends WebMessage> userActorRef = context.getRef();
+            final ActorRef<? extends WebMessage> userActorRef = context.getWebActor();
             ActorImpl internalActor = (ActorImpl) context.getAttachments().get(ACTOR_KEY);
 
             final String uri = xch.getRequestURI();
@@ -347,169 +373,67 @@ public class WebActorHandler implements HttpHandler {
     }
 
     private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
-        private ActorRef<? super HttpRequest> userActor;
-        private Context context;
+        public static final Object EXIT = new Object();
 
-        private volatile boolean dead;
-        private volatile HttpServerExchange xch;
-        private volatile Object watchToken;
-
-        HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext) {
-            super("HttpActorAdapter", actorContext.watch() ? new HttpChannelAdapter() : HttpChannelAdapter.INSTANCE);
-
-            if (actorContext.watch())
-                ((HttpChannelAdapter) (SendPort) getMailbox()).actor = this;
-
-            this.userActor = userActor;
-            context = actorContext;
-        }
-
-        final void service(final HttpServerExchange xch) throws SuspendExecution {
-            this.xch = xch;
-
-            if (context.watch())
-                watchToken = watch(userActor);
-
-            if (isDone()) {
-                handleDeath(getDeathCause());
-                return;
+        static final class HandleLifecycle {
+            final LifecycleMessage m;
+            HandleLifecycle(LifecycleMessage m) {
+                this.m = m;
             }
-
-            new HttpByteArrayReadChannelListener(ref(), xch, userActor).setup(xch.getRequestChannel());
         }
-
-        private void handleDeath(Throwable cause) {
-            if (cause != null)
-                sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
-            else
-                sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated");
-        }
-
-        final void unwatch() {
-            if (watchToken != null && userActor != null) {
-                unwatch(userActor, watchToken);
-                watchToken = null;
+        static final class Die {
+            final Throwable cause;
+            Die(Throwable cause) {
+                this.cause = cause;
             }
         }
 
-        @Override
-        protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
-            if (m instanceof ExitMessage) {
-                final ExitMessage em = (ExitMessage) m;
-                if (em.getActor() != null && em.getActor().equals(userActor)) {
-                    handleDeath(em.getCause());
-                    die(em.getCause());
+        private co.paralleluniverse.strands.channels.Channel<Object> ch =
+            co.paralleluniverse.strands.channels.Channels.newChannel(-1); // Unlimited
+
+        private Fiber f = new Fiber() {
+            @Override
+            protected final Void run() throws SuspendExecution, InterruptedException {
+                for (;;) {
+                    assert ch != null;
+                    final Object m = ch.receive();
+                    if (m == EXIT) {
+                        handleDie(null);
+                        return null;
+                    } else if (m instanceof HttpRequestWrapper) {
+                        handleRequest((HttpRequestWrapper) m);
+                    } else if (m instanceof HttpResponse) {
+                        handleReply((HttpResponse) m);
+                    } else if (m instanceof HandleLifecycle) {
+                        if (handleLifecycle((HandleLifecycle) m))
+                            return null;
+                    } else if (m instanceof Die) {
+                        handleDie(((Die) m).cause);
+                        return null;
+                    } else {
+                        throw new AssertionError("Unexpected message: " + m);
+                    }
                 }
             }
-            return null;
-        }
 
-        @Override
-        protected void die(Throwable cause) {
-            if (dead)
-                return;
-            dead = true;
-            super.die(cause);
-            try {
-                context.invalidate();
-            } catch (final Exception ignored) {}
-
-            // Ensure to release references
-            unwatch();
-            userActor = null;
-            watchToken = null;
-            context = null;
-            xch = null;
-        }
-
-        @Override
-        protected final void throwIn(RuntimeException e) {
-            die(e);
-        }
-
-        @Override
-        protected final void interrupt() {
-            die(new InterruptedException());
-        }
-
-        @Override
-        public final String toString() {
-            return "HttpActorAdapter{" + userActor + "}";
-        }
-
-        private static final class RequestSending implements SuspendableRunnable {
-            private final ActorRef from;
-            private final ActorRef<? super HttpRequest> userActor;
-            private final HttpServerExchange xch;
-            private final byte[] ba;
-
-            public RequestSending(ActorRef from, ActorRef<? super HttpRequest> userActor, HttpServerExchange xch, byte[] ba) {
-                this.from = from;
-                this.userActor = userActor;
-                this.xch = xch;
-                this.ba = ba;
+            private void handleSSEStart(HttpStreamActorAdapter httpStreamActorAdapter, HttpResponse message, StreamSinkChannel channel) throws SuspendExecution {
+                httpStreamActorAdapter.setChannel(channel);
+                message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
             }
 
-            @Override
-            public final void run() throws SuspendExecution, InterruptedException {
-                //noinspection unchecked
-                userActor.send(new HttpRequestWrapper(from, xch, ByteBuffer.wrap(ba)));
-            }
-        }
-
-        private static final class HttpByteArrayReadChannelListener extends ByteArrayReadChannelListener {
-            private final HttpServerExchange xch;
-            private final ActorRef<? super HttpRequest> userActor;
-            private final ActorRef<HttpResponse> from;
-
-            public HttpByteArrayReadChannelListener(ActorRef<HttpResponse> from, HttpServerExchange xch, ActorRef<? super HttpRequest> userActor) {
-                super(xch.getConnection().getByteBufferPool());
-                this.xch = xch;
-                this.userActor = userActor;
-                this.from = from;
+            private io.undertow.server.handlers.Cookie newUndertowCookie(Cookie c) {
+                io.undertow.server.handlers.Cookie ret = new CookieImpl(c.getName(), c.getValue());
+                ret.setComment(c.getComment());
+                ret.setDomain(c.getDomain());
+                ret.setHttpOnly(c.isHttpOnly());
+                ret.setMaxAge(c.getMaxAge());
+                ret.setPath(c.getPath());
+                ret.setVersion(c.getVersion());
+                ret.setSecure(c.isSecure());
+                return ret;
             }
 
-            @Override
-            protected final void byteArrayDone(final byte[] ba) {
-                xch.dispatch(); // Start async
-
-                new Fiber(new RequestSending(from, userActor, xch, ba)).start();
-            }
-
-            @Override
-            protected final void error(IOException e) {
-                UndertowLogger.ROOT_LOGGER.error("Exception while reading HTTP request", e);
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    private static final class HttpChannelAdapter implements SendPort<HttpResponse> {
-        static final HttpChannelAdapter INSTANCE = new HttpChannelAdapter();
-
-        private HttpActorAdapter actor;
-
-        HttpChannelAdapter() {}
-
-        @Override
-        public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
-            trySend(message);
-        }
-
-        @Override
-        public final boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
-            send(message);
-            return true;
-        }
-
-        @Override
-        public final boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
-            return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
-        }
-
-        @Override
-        public final boolean trySend(final HttpResponse message) {
-            try {
+            private void handleReply(final HttpResponse message) {
                 final HttpRequestWrapper undertowRequest = (HttpRequestWrapper) message.getRequest();
                 final HttpServerExchange xch = undertowRequest.xch;
 
@@ -518,13 +442,11 @@ public class WebActorHandler implements HttpHandler {
                 if (status >= 400 && status < 600) {
                     sendHttpResponse(xch, status);
                     close();
-                    return true;
                 }
 
                 if (message.getRedirectPath() != null) {
                     sendHttpRedirect(xch, message.getRedirectPath());
                     close();
-                    return true;
                 }
 
                 if (message.getCookies() != null) {
@@ -588,29 +510,213 @@ public class WebActorHandler implements HttpHandler {
                     else
                         sendHttpResponse(xch, status);
                 }
+            }
 
-                return true;
-            } finally {
-                if (actor != null)
-                    actor.unwatch();
+            private boolean handleLifecycle(HandleLifecycle l) {
+                if (l.m instanceof ExitMessage) {
+                    final ExitMessage em = (ExitMessage) l.m;
+                    if (em.getActor() != null && em.getActor().equals(userActor)) {
+                        final Context.WatchPolicy wp = context.watch();
+                        //noinspection ThrowableResultOfMethodCallIgnored
+                        if (wp == Context.WatchPolicy.RESTART ||
+                            wp == Context.WatchPolicy.DIE_IF_EXCEPTION_ELSE_RESTART && em.getCause() == null) {
+                            needsRestart = true;
+                        } else {
+                            handleDie(em.getCause());
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            private void handleRequest(HttpRequestWrapper s) throws SuspendExecution {
+                replied = false;
+                xch = s.xch;
+                if (needsRestart) {
+                    context.restart(xch);
+                    context.getLock().lock();
+                    addActorToContextAndUnlock(context, HttpActorAdapter.this, context.getLock());
+                    needsRestart = false;
+                }
+                userActor.send(s);
+            }
+
+            @Suspendable
+            private void handleDie(Throwable cause) {
+                if (!replied) { // Req replied
+                    if (cause != null) {
+                        sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
+                        replied = true;
+                        die(cause);
+                    } else {
+                        sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated.");
+                        replied = true;
+                    }
+                }
+
+                if (dead)
+                    return;
+                dead = true;
+                HttpActorAdapter.super.die(cause);
+                try {
+                    context.invalidate();
+                } catch (final Exception ignored) {}
+
+                // Ensure to release references
+                if (userActor != null && watchToken != null)
+                    unwatch(userActor, watchToken);
+
+                userActor = null;
+                watchToken = null;
+                context = null;
+                xch = null;
+                f = null;
+                ch = null;
+            }
+        };
+
+        private ActorRef<? super HttpRequest> userActor;
+        private Context context;
+
+        private volatile HttpServerExchange xch;
+        public boolean replied, needsRestart;
+
+        private volatile boolean dead;
+        private volatile Object watchToken;
+
+        HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext) {
+            super("HttpActorAdapter", new HttpChannelAdapter());
+
+            ((HttpChannelAdapter) (SendPort) getMailbox()).actor = this;
+            if (actorContext.watch() != Context.WatchPolicy.DONT_WATCH) {
+                if (userActor != null)
+                    watchToken = watch(userActor);
+            }
+
+            this.userActor = userActor;
+            this.context = actorContext;
+
+            f.start();
+        }
+
+        final void service(final HttpServerExchange xch) throws SuspendExecution {
+            new HttpByteArrayReadChannelListener(ref(), xch, ch).setup(xch.getRequestChannel());
+        }
+
+        private static final class HttpByteArrayReadChannelListener extends ByteArrayReadChannelListener {
+            private final HttpServerExchange xch;
+            private final ActorRef<HttpResponse> from;
+            private final Channel<Object> ch;
+
+            public HttpByteArrayReadChannelListener(ActorRef<HttpResponse> from, HttpServerExchange xch, Channel<Object> ch) {
+                super(xch.getConnection().getByteBufferPool());
+                this.xch = xch;
+                this.from = from;
+                this.ch = ch;
+            }
+
+            @Override
+            @Suspendable
+            protected final void byteArrayDone(final byte[] ba) {
+                try {
+                    xch.dispatch(); // Start async
+
+                    ch.send(new HttpRequestWrapper(from, xch, ByteBuffer.wrap(ba)));
+                } catch (final SuspendExecution e) {
+                    throw new AssertionError(e);
+                } catch (final InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            protected final void error(IOException e) {
+                UndertowLogger.ROOT_LOGGER.error("Exception while reading HTTP request", e);
+                throw new RuntimeException(e);
             }
         }
 
-        private void handleSSEStart(HttpStreamActorAdapter httpStreamActorAdapter, HttpResponse message, StreamSinkChannel channel) throws SuspendExecution {
-            httpStreamActorAdapter.setChannel(channel);
-            message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
+        @Override
+        @Suspendable
+        protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
+            try {
+                ch.send(new HandleLifecycle(m));
+            } catch (final SuspendExecution e) {
+                throw new AssertionError(e);
+            } catch (final InterruptedException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeException(e);
+            }
+            return null;
         }
 
-        private io.undertow.server.handlers.Cookie newUndertowCookie(Cookie c) {
-            io.undertow.server.handlers.Cookie ret = new CookieImpl(c.getName(), c.getValue());
-            ret.setComment(c.getComment());
-            ret.setDomain(c.getDomain());
-            ret.setHttpOnly(c.isHttpOnly());
-            ret.setMaxAge(c.getMaxAge());
-            ret.setPath(c.getPath());
-            ret.setVersion(c.getVersion());
-            ret.setSecure(c.isSecure());
-            return ret;
+        @Override
+        @Suspendable
+        protected final void die(Throwable cause) {
+            try {
+                ch.send(new Die(cause));
+            } catch (final SuspendExecution e) {
+                throw new AssertionError(e);
+            } catch (final InterruptedException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        @Suspendable
+        protected final void throwIn(RuntimeException e) {
+            die(e);
+        }
+
+        @Override
+        @Suspendable
+        protected final void interrupt() {
+            die(new InterruptedException());
+        }
+
+        @Override
+        public final String toString() {
+            return "HttpActorAdapter{" + userActor + "}";
+        }
+    }
+
+    private static final class HttpChannelAdapter implements SendPort<HttpResponse> {
+        private HttpActorAdapter actor;
+
+        HttpChannelAdapter() {}
+
+        @Override
+        @Suspendable
+        public final void send(HttpResponse message) throws SuspendExecution, InterruptedException {
+            trySend(message);
+        }
+
+        @Override
+        @Suspendable
+        public final boolean send(HttpResponse message, long timeout, TimeUnit unit) throws SuspendExecution, InterruptedException {
+            send(message);
+            return true;
+        }
+
+        @Override
+        @Suspendable
+        public final boolean send(HttpResponse message, Timeout timeout) throws SuspendExecution, InterruptedException {
+            return send(message, timeout.nanosLeft(), TimeUnit.NANOSECONDS);
+        }
+
+        @Override
+        @Suspendable
+        public final boolean trySend(final HttpResponse m) {
+            try {
+                actor.ch.send(m);
+            } catch (final SuspendExecution e) {
+                throw new AssertionError(e);
+            } catch (final InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return true;
         }
 
         @Override
