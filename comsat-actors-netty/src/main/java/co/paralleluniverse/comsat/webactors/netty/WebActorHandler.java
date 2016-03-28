@@ -21,11 +21,11 @@ import co.paralleluniverse.comsat.webactors.*;
 import co.paralleluniverse.comsat.webactors.Cookie;
 import co.paralleluniverse.comsat.webactors.HttpRequest;
 import co.paralleluniverse.comsat.webactors.HttpResponse;
-import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.Timeout;
 import co.paralleluniverse.strands.channels.SendPort;
+import co.paralleluniverse.strands.concurrent.CountDownLatch;
 import co.paralleluniverse.strands.concurrent.ReentrantLock;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -46,6 +46,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author circlespainter
@@ -97,7 +98,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         public void invalidate() throws SuspendExecution, InterruptedException {
             final HttpActorAdapter actor = (HttpActorAdapter) attachments.get(ACTOR_KEY);
             if (actor != null)
-                actor.ch.send(HttpActorAdapter.EXIT);
+                actor.handleDie(null);
             attachments.clear();
             valid = false;
         }
@@ -216,7 +217,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             webSocketActor.onMessage(frame.content().nioBuffer());
     }
 
-    private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) throws SuspendExecution {
+    private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) throws SuspendExecution, InterruptedException {
         // Handle a bad request.
         if (!req.getDecoderResult().isSuccess()) {
             sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), BAD_REQUEST));
@@ -269,12 +270,10 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                         addActorToContextAndUnlock(actorCtx, internalActor, lock);
                     }
                     //noinspection unchecked
-                    ((HttpActorAdapter) internalActor).service(ctx, req, sessionId);
+                    ((HttpActorAdapter) internalActor).handleRequest(new HttpRequestWrapper(internalActor.ref(), ctx, req, sessionId));
                     return;
                 }
             }
-        } catch (final InterruptedException e) {
-            throw new RuntimeException(e);
         } finally {
             if (lock.isHeldByCurrentStrand() && lock.isLocked())
                 lock.unlock();
@@ -405,83 +404,101 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    // TODO replace fake actor/port objects + fiber + channel with real actor and re-run performance tests
     private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
-        public static final Object EXIT = new Object();
+        private final AtomicReference<CountDownLatch> gate = new AtomicReference<>();
 
-        static final class HandleLifecycle {
-            final LifecycleMessage m;
-            HandleLifecycle(LifecycleMessage m) {
-                this.m = m;
+        private final String httpResponseEncoderName;
+
+        private volatile ActorRef<? super HttpRequest> userActor;
+        private volatile Context context;
+
+        private volatile ChannelHandlerContext ctx;
+        private volatile FullHttpRequest req;
+        private volatile boolean replied, needsRestart;
+
+        private volatile Object watchToken;
+        private volatile boolean dead;
+
+        HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext, String httpResponseEncoderName) {
+            super("HttpActorAdapter", new HttpChannelAdapter());
+
+            ((HttpChannelAdapter) (SendPort) getMailbox()).actor = this;
+            if (actorContext.watch() != Context.WatchPolicy.DONT_WATCH) {
+                if (userActor != null)
+                    watchToken = watch(userActor);
             }
-        }
-        static final class Die {
-            final Throwable cause;
-            Die(Throwable cause) {
-                this.cause = cause;
-            }
+
+            this.userActor = userActor;
+            this.context = actorContext;
+            this.httpResponseEncoderName = httpResponseEncoderName;
         }
 
-        private co.paralleluniverse.strands.channels.Channel<Object> ch =
-            co.paralleluniverse.strands.channels.Channels.newChannel(-1); // Unlimited
-        private Fiber f = new Fiber() {
-            @Override
-            protected final Void run() throws SuspendExecution, InterruptedException {
-                for(;;) {
-                    assert ch != null;
-                    final Object m = ch.receive();
-                    if (m == EXIT) {
-                        handleDie(null);
-                        return null;
-                    } else if (m instanceof HttpRequestWrapper) {
-                        handleRequest((HttpRequestWrapper) m);
-                    } else if (m instanceof HttpResponse) {
-                        handleReply((HttpResponse) m);
-                    } else if (m instanceof HandleLifecycle) {
-                        if (handleLifecycle((HandleLifecycle) m))
-                            return null;
-                    } else if (m instanceof Die) {
-                        handleDie(((Die) m).cause);
-                        return null;
+        @Override
+        public final String toString() {
+            return "HttpActorAdapter{" + userActor + "}";
+        }
+
+        @Override
+        @Suspendable
+        protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
+            handleLifecycle(m);
+            return null;
+        }
+
+        @Override
+        @Suspendable
+        protected final void die(Throwable cause) {
+            handleDie(cause);
+        }
+
+        @Override
+        @Suspendable
+        protected final void throwIn(RuntimeException e) {
+            die(e);
+        }
+
+        @Override
+        @Suspendable
+        protected final void interrupt() {
+            die(new InterruptedException());
+        }
+
+        final boolean handleLifecycle(LifecycleMessage l) {
+            if (l instanceof ExitMessage) {
+                final ExitMessage em = (ExitMessage) l;
+                if (em.getActor() != null && em.getActor().equals(userActor)) {
+                    final Context.WatchPolicy wp = context.watch();
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    if (wp == Context.WatchPolicy.RESTART ||
+                        wp == Context.WatchPolicy.DIE_IF_EXCEPTION_ELSE_RESTART && em.getCause() == null) {
+                        needsRestart = true;
                     } else {
-                        throw new AssertionError("Unexpected message: " + m);
+                        handleDie(em.getCause());
+                        return true;
                     }
                 }
             }
+            return false;
+        }
 
-            private boolean handleLifecycle(HandleLifecycle l) {
-                if (l.m instanceof ExitMessage) {
-                    final ExitMessage em = (ExitMessage) l.m;
-                    if (em.getActor() != null && em.getActor().equals(userActor)) {
-                        final Context.WatchPolicy wp = context.watch();
-                        //noinspection ThrowableResultOfMethodCallIgnored
-                        if (wp == Context.WatchPolicy.RESTART ||
-                            wp == Context.WatchPolicy.DIE_IF_EXCEPTION_ELSE_RESTART && em.getCause() == null) {
-                            needsRestart = true;
-                        } else {
-                            handleDie(em.getCause());
-                            return true;
-                        }
-                    }
-                }
-                return false;
+        final void handleRequest(HttpRequestWrapper s) throws SuspendExecution, InterruptedException {
+            closeGate();
+
+            replied = false;
+            ctx = s.ctx;
+            req = s.req;
+            if (needsRestart) {
+                context.restart(req);
+                context.getLock().lock();
+                addActorToContextAndUnlock(context, HttpActorAdapter.this, context.getLock());
+                needsRestart = false;
             }
+            userActor.send(s);
+        }
 
-            private void handleRequest(HttpRequestWrapper s) throws SuspendExecution {
-                replied = false;
-                ctx = s.ctx;
-                req = s.req;
-                if (needsRestart) {
-                    context.restart(req);
-                    context.getLock().lock();
-                    addActorToContextAndUnlock(context, HttpActorAdapter.this, context.getLock());
-                    needsRestart = false;
-                }
-                userActor.send(s);
-            }
-
-            @Suspendable
-            private void handleReply(HttpResponse message) throws SuspendExecution, InterruptedException {
+        @Suspendable
+        final void handleReply(HttpResponse message) throws SuspendExecution, InterruptedException {
+            try {
                 final HttpRequestWrapper nettyRequest = (HttpRequestWrapper) message.getRequest();
                 final FullHttpRequest req = nettyRequest.req;
                 final ChannelHandlerContext ctx = nettyRequest.ctx;
@@ -575,10 +592,14 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                         throw new AssertionError(e);
                     }
                 }
+            } finally {
+                openGate();
             }
+        }
 
-            @Suspendable
-            private void handleDie(Throwable cause) {
+        @Suspendable
+        final void handleDie(Throwable cause) {
+            try {
                 if (!replied) { // Req replied
                     if (cause != null) {
                         sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + cause.getMessage()).getBytes())));
@@ -596,95 +617,37 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 HttpActorAdapter.super.die(cause);
                 try {
                     context.invalidate();
-                } catch (final Exception ignored) {}
+                } catch (final Exception ignored) {
+                }
 
                 // Ensure to release references
                 if (userActor != null && watchToken != null)
                     unwatch(userActor, watchToken);
-
-                userActor = null;
-                watchToken = null;
-                context = null;
-                ctx = null;
-                req = null;
-                f = null;
-                ch = null;
-            }
-        };
-
-        private ActorRef<? super HttpRequest> userActor;
-        private Context context;
-        private final String httpResponseEncoderName;
-
-        private ChannelHandlerContext ctx;
-        private FullHttpRequest req;
-        public boolean replied, needsRestart;
-
-        private Object watchToken;
-        private boolean dead;
-
-        HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext, String httpResponseEncoderName) {
-            super("HttpActorAdapter", new HttpChannelAdapter());
-
-            ((HttpChannelAdapter) (SendPort) getMailbox()).actor = this;
-            if (actorContext.watch() != Context.WatchPolicy.DONT_WATCH) {
-                if (userActor != null)
-                    watchToken = watch(userActor);
+            } finally {
+                openGate();
             }
 
-            this.userActor = userActor;
-            this.context = actorContext;
-            this.httpResponseEncoderName = httpResponseEncoderName;
-
-            f.start();
+            userActor = null;
+            watchToken = null;
+            context = null;
+            ctx = null;
+            req = null;
         }
 
-        final void service(ChannelHandlerContext ctx, FullHttpRequest req, String sessionId) throws SuspendExecution, InterruptedException {
-            ch.send(new HttpRequestWrapper(ref(), ctx, req, sessionId));
-        }
-
-        @Override
         @Suspendable
-        protected final HttpResponse handleLifecycleMessage(LifecycleMessage m) {
-            try {
-                ch.send(new HandleLifecycle(m));
-            } catch (final SuspendExecution e) {
-                throw new AssertionError(e);
-            } catch (final InterruptedException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeException(e);
-            }
-            return null;
-        }
-
-        @Override
-        @Suspendable
-        protected final void die(Throwable cause) {
-            try {
-                ch.send(new Die(cause));
-            } catch (final SuspendExecution e) {
-                throw new AssertionError(e);
-            } catch (final InterruptedException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeException(e);
+        private void closeGate() throws InterruptedException {
+            while (!gate.compareAndSet(null, new CountDownLatch(1))) {
+                final CountDownLatch l = gate.get();
+                if (l != null)
+                    l.await();
             }
         }
 
-        @Override
         @Suspendable
-        protected final void throwIn(RuntimeException e) {
-            die(e);
-        }
-
-        @Override
-        @Suspendable
-        protected final void interrupt() {
-            die(new InterruptedException());
-        }
-
-        @Override
-        public final String toString() {
-            return "HttpActorAdapter{" + userActor + "}";
+        private void openGate() {
+            final CountDownLatch l = gate.getAndSet(null);
+            if (l != null)
+                l.countDown();
         }
     }
 
@@ -714,7 +677,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         @Suspendable
         public final boolean trySend(HttpResponse r) {
             try {
-                actor.ch.send(r);
+                actor.handleReply(r);
             } catch (final SuspendExecution e) {
                 throw new AssertionError(e);
             } catch (final InterruptedException e) {
