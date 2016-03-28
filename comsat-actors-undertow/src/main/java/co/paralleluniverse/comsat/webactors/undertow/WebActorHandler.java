@@ -411,7 +411,7 @@ public class WebActorHandler implements HttpHandler {
     }
 
     private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
-        private volatile AtomicReference<CountDownLatch> gate = new AtomicReference<>();
+        private final AtomicReference<CountDownLatch> gate = new AtomicReference<>();
 
         private volatile ActorRef<? super HttpRequest> userActor;
         private volatile Context context;
