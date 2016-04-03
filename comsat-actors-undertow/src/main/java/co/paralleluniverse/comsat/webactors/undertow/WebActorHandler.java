@@ -604,14 +604,15 @@ public class WebActorHandler implements HttpHandler {
         final void handleDie(final Throwable cause) {
             try {
                 if (!replied) { // Req replied
+                    final HttpServerExchange xch1 = xch;
                     // Sending a reply directly from a fiber produces a thread-local related leak due to unfreed buffers
                     es.submit(new Runnable() {
                         @Override
                         public void run() {
                             if (cause != null) {
-                                sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
+                                sendHttpResponse(xch1, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
                             } else {
-                                sendHttpResponse(xch, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated.");
+                                sendHttpResponse(xch1, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated.");
                             }
                         }
                     });
