@@ -74,8 +74,6 @@ public class WebActorHandler implements HttpHandler {
         boolean handlesWithHttp(String uri);
         boolean handlesWithWebSocket(String uri);
 
-        long getValidityMS();
-
         enum WatchPolicy { DONT_WATCH, DIE, DIE_IF_EXCEPTION_ELSE_RESTART, RESTART }
         WatchPolicy watch();
 
@@ -140,7 +138,6 @@ public class WebActorHandler implements HttpHandler {
             this.validityMS = validityMS;
         }
 
-        @Override
         public final long getValidityMS() {
             return validityMS != null ? validityMS : DURATION;
         }
