@@ -44,14 +44,15 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author circlespainter
  */
 public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
+    protected static final ScheduledExecutorService ts = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
     // @FunctionalInterface
     public interface WebActorContextProvider {
         Context get(FullHttpRequest req);
@@ -405,6 +406,9 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
+        private final static String replyTimeoutProp = System.getProperty(HttpActorAdapter.class.getName() + ".replyTimeout");
+        private static final long REPLY_TIMEOUT = replyTimeoutProp != null ? Long.parseLong(replyTimeoutProp) : 120_000L;
+
         private final AtomicReference<CountDownLatch> gate = new AtomicReference<>();
 
         private final String httpResponseEncoderName;
@@ -418,6 +422,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         private volatile Object watchToken;
         private volatile boolean dead;
+
+        private volatile ScheduledFuture<?> cancelTask;
 
         HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext, String httpResponseEncoderName) {
             super("HttpActorAdapter", new HttpChannelAdapter());
@@ -635,10 +641,20 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 if (l != null)
                     l.await();
             }
+            final ChannelHandlerContext ctx1 = ctx;
+            final FullHttpRequest req1 = req;
+            cancelTask = ts.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    sendHttpError(ctx1, req1, new DefaultFullHttpResponse(req1.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Timeout while waiting for user actor to reply.").getBytes())));
+                }
+            }, REPLY_TIMEOUT, TimeUnit.MILLISECONDS);
         }
 
         @Suspendable
         private void openGate() {
+            if (cancelTask != null)
+                cancelTask.cancel(true);
             final CountDownLatch l = gate.getAndSet(null);
             if (l != null)
                 l.countDown();
