@@ -236,7 +236,7 @@ public class WebActorHandler implements HttpHandler {
                         @Override
                         @Suspendable
                         public void run() {
-                            xch.dispatch(); // Start async: detach response sending from worker thread's return
+//                            xch.dispatch(); // Start async: detach response sending from worker thread's return
 //                            // Free worker thread by starting available I/O in a fiber
 //                            new Fiber(new SuspendableRunnable() {
 //                                @Override
