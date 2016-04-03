@@ -417,7 +417,7 @@ public class WebActorHandler implements HttpHandler {
         private volatile Context context;
 
         private volatile HttpServerExchange xch;
-        private volatile boolean replied, needsRestart;
+        private volatile boolean needsRestart;
 
         private volatile boolean dead;
         private volatile Object watchToken;
@@ -469,7 +469,6 @@ public class WebActorHandler implements HttpHandler {
         @Suspendable
         final void handleRequest(HttpRequestWrapper s) throws SuspendExecution, InterruptedException {
             closeGate();
-            replied = false;
             xch = s.xch;
             if (needsRestart) {
                 context.restart(xch);
@@ -495,7 +494,6 @@ public class WebActorHandler implements HttpHandler {
                             sendHttpResponse(xch, status);
                         }
                     });
-                    replied = true;
                     return;
                 }
 
@@ -507,7 +505,6 @@ public class WebActorHandler implements HttpHandler {
                             sendHttpRedirect(xch, message.getRedirectPath());
                         }
                     });
-                    replied = true;
                     return;
                 }
 
@@ -575,7 +572,6 @@ public class WebActorHandler implements HttpHandler {
                                 sendHttpResponse(xch, status);
                         }
                     });
-                    replied = true;
                 }
             } finally {
                 openGate();
@@ -603,7 +599,7 @@ public class WebActorHandler implements HttpHandler {
         @Suspendable
         final void handleDie(final Throwable cause) {
             try {
-                if (!replied) { // Req replied
+                if (!isGateOpen()) {
                     final HttpServerExchange xch1 = xch;
                     // Sending a reply directly from a fiber produces a thread-local related leak due to unfreed buffers
                     es.submit(new Runnable() {
@@ -616,7 +612,6 @@ public class WebActorHandler implements HttpHandler {
                             }
                         }
                     });
-                    replied = true;
                 }
 
                 if (dead)
@@ -662,6 +657,10 @@ public class WebActorHandler implements HttpHandler {
             final CountDownLatch l = gate.getAndSet(null);
             if (l != null)
                 l.countDown();
+        }
+
+        private boolean isGateOpen() {
+            return gate.get() == null;
         }
 
         private io.undertow.server.handlers.Cookie newUndertowCookie(Cookie c) {
