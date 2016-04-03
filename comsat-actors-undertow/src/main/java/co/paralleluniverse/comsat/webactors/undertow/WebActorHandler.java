@@ -42,10 +42,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -55,6 +52,8 @@ public class WebActorHandler implements HttpHandler {
     protected static final String ACTOR_KEY = "co.paralleluniverse.comsat.webactors.sessionActor";
 
     protected static final ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+    protected static final ScheduledExecutorService ts = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     // @FunctionalInterface
     public interface ContextProvider {
@@ -74,6 +73,8 @@ public class WebActorHandler implements HttpHandler {
         ActorRef<? extends WebMessage> getWebActor();
         boolean handlesWithHttp(String uri);
         boolean handlesWithWebSocket(String uri);
+
+        long getValidityMS();
 
         enum WatchPolicy { DONT_WATCH, DIE, DIE_IF_EXCEPTION_ELSE_RESTART, RESTART }
         WatchPolicy watch();
@@ -139,7 +140,8 @@ public class WebActorHandler implements HttpHandler {
             this.validityMS = validityMS;
         }
 
-        public long getValidityMS() {
+        @Override
+        public final long getValidityMS() {
             return validityMS != null ? validityMS : DURATION;
         }
     }
@@ -411,6 +413,9 @@ public class WebActorHandler implements HttpHandler {
     }
 
     private static final class HttpActorAdapter extends FakeActor<HttpResponse> {
+        private final static String replyTimeoutProp = System.getProperty(HttpActorAdapter.class.getName() + ".replyTimeout");
+        private static final long REPLY_TIMEOUT = replyTimeoutProp != null ? Long.parseLong(replyTimeoutProp) : 120_000L;
+
         private final AtomicReference<CountDownLatch> gate = new AtomicReference<>();
 
         private volatile ActorRef<? super HttpRequest> userActor;
@@ -421,6 +426,8 @@ public class WebActorHandler implements HttpHandler {
 
         private volatile boolean dead;
         private volatile Object watchToken;
+
+        private volatile ScheduledFuture<?> cancelTask;
 
         HttpActorAdapter(ActorRef<? super HttpRequest> userActor, Context actorContext) {
             super("HttpActorAdapter", new HttpChannelAdapter());
@@ -650,10 +657,19 @@ public class WebActorHandler implements HttpHandler {
                 if (l != null)
                     l.await();
             }
+            final HttpServerExchange xch1 = xch;
+            cancelTask = ts.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    sendHttpResponse(xch1, StatusCodes.INTERNAL_SERVER_ERROR, "Timeout while waiting for user actor to reply.");
+                }
+            }, REPLY_TIMEOUT, TimeUnit.MILLISECONDS);
         }
 
         @Suspendable
         private void openGate() {
+            if (cancelTask != null)
+                cancelTask.cancel(true);
             final CountDownLatch l = gate.getAndSet(null);
             if (l != null)
                 l.countDown();
