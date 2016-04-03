@@ -414,7 +414,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         private volatile ChannelHandlerContext ctx;
         private volatile FullHttpRequest req;
-        private volatile boolean replied, needsRestart;
+        private volatile boolean needsRestart;
 
         private volatile Object watchToken;
         private volatile boolean dead;
@@ -484,7 +484,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         final void handleRequest(HttpRequestWrapper s) throws SuspendExecution, InterruptedException {
             closeGate();
 
-            replied = false;
             ctx = s.ctx;
             req = s.req;
             if (needsRestart) {
@@ -508,13 +507,11 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
                 if (message.getStatus() >= 400 && message.getStatus() < 600) {
                     sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), status));
-                    replied = true;
                     return;
                 }
 
                 if (message.getRedirectPath() != null) {
                     sendHttpRedirect(ctx, req, message.getRedirectPath());
-                    replied = true;
                     return;
                 }
 
@@ -570,7 +567,6 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                     httpStreamActorAdapter = null;
 
                 sendHttpResponse(ctx, req, res);
-                replied = true;
 
                 if (sseStarted) {
                     if (httpResponseEncoderName != null) {
@@ -600,14 +596,12 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         @Suspendable
         final void handleDie(Throwable cause) {
             try {
-                if (!replied) { // Req replied
+                if (!isGateOpen()) { // Req replied
                     if (cause != null) {
                         sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + cause.getMessage()).getBytes())));
-                        replied = true;
                         die(cause);
                     } else {
                         sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor has terminated.").getBytes())));
-                        replied = true;
                     }
                 }
 
@@ -648,6 +642,10 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             final CountDownLatch l = gate.getAndSet(null);
             if (l != null)
                 l.countDown();
+        }
+
+        private boolean isGateOpen() {
+            return gate.get() == null;
         }
     }
 
