@@ -472,7 +472,7 @@ public class WebActorHandler implements HttpHandler {
 
         @Suspendable
         final void handleRequest(HttpRequestWrapper s) throws SuspendExecution, InterruptedException {
-            closeGate();
+            blockSessionRequests();
             xch = s.xch;
             if (needsRestart) {
                 context.restart(xch);
@@ -578,7 +578,7 @@ public class WebActorHandler implements HttpHandler {
                     });
                 }
             } finally {
-                openGate();
+                unblockSessionRequests();
             }
         }
 
@@ -603,20 +603,7 @@ public class WebActorHandler implements HttpHandler {
         @Suspendable
         final void handleDie(final Throwable cause) {
             try {
-                if (!isGateOpen()) {
-                    final HttpServerExchange xch1 = xch;
-                    // Sending a reply directly from a fiber produces a thread-local related leak due to unfreed buffers
-                    es.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (cause != null) {
-                                sendHttpResponse(xch1, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
-                            } else {
-                                sendHttpResponse(xch1, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated.");
-                            }
-                        }
-                    });
-                }
+                possiblyReplyDeadAndUnblock(cause);
 
                 if (dead)
                     return;
@@ -631,7 +618,7 @@ public class WebActorHandler implements HttpHandler {
                 if (userActor != null && watchToken != null)
                     unwatch(userActor, watchToken);
             } finally {
-                openGate();
+                unblockSessionRequests();
             }
 
             userActor = null;
@@ -642,13 +629,38 @@ public class WebActorHandler implements HttpHandler {
 //            ch = null;
         }
 
+        private void possiblyReplyDeadAndUnblock(final Throwable cause) {
+            if (isRequestInProgress()) {
+                try {
+                    final HttpServerExchange xch1 = xch;
+                    // Sending a reply directly from a fiber produces a thread-local related leak due to unfreed buffers
+                    es.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                if (cause != null) {
+                                    sendHttpResponse(xch1, StatusCodes.INTERNAL_SERVER_ERROR, "Actor is dead because of " + cause.getMessage());
+                                } else {
+                                    sendHttpResponse(xch1, StatusCodes.INTERNAL_SERVER_ERROR, "Actor has terminated.");
+                                }
+                            } finally {
+                                unblockSessionRequests();
+                            }
+                        }
+                    });
+                } finally {
+                    unblockSessionRequests();
+                }
+            }
+        }
+
         private void notifySSEStarted(HttpStreamActorAdapter httpStreamActorAdapter, HttpResponse message, StreamSinkChannel channel) throws SuspendExecution {
             httpStreamActorAdapter.setChannel(channel);
             message.getFrom().send(new HttpStreamOpened(httpStreamActorAdapter.ref(), message));
         }
 
         @Suspendable
-        private void closeGate() throws InterruptedException {
+        private void blockSessionRequests() throws InterruptedException {
             while (!gate.compareAndSet(null, new CountDownLatch(1))) {
                 final CountDownLatch l = gate.get();
                 if (l != null)
@@ -664,7 +676,7 @@ public class WebActorHandler implements HttpHandler {
         }
 
         @Suspendable
-        private void openGate() {
+        private void unblockSessionRequests() {
             if (cancelTask != null)
                 cancelTask.cancel(true);
             final CountDownLatch l = gate.getAndSet(null);
@@ -672,8 +684,8 @@ public class WebActorHandler implements HttpHandler {
                 l.countDown();
         }
 
-        private boolean isGateOpen() {
-            return gate.get() == null;
+        private boolean isRequestInProgress() {
+            return gate.get() != null;
         }
 
         private io.undertow.server.handlers.Cookie newUndertowCookie(Cookie c) {

@@ -473,13 +473,15 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             if (l instanceof ExitMessage) {
                 final ExitMessage em = (ExitMessage) l;
                 if (em.getActor() != null && em.getActor().equals(userActor)) {
+                    possiblyReplyDeadAndUnblock(em.getCause());
+
                     final Context.WatchPolicy wp = context.watch();
                     //noinspection ThrowableResultOfMethodCallIgnored
                     if (wp == Context.WatchPolicy.RESTART ||
                         wp == Context.WatchPolicy.DIE_IF_EXCEPTION_ELSE_RESTART && em.getCause() == null) {
                         needsRestart = true;
                     } else {
-                        handleDie(em.getCause());
+                        die(em.getCause());
                         return true;
                     }
                 }
@@ -488,7 +490,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         final void handleRequest(HttpRequestWrapper s) throws SuspendExecution, InterruptedException {
-            closeGate();
+            blockSessionRequests();
 
             ctx = s.ctx;
             req = s.req;
@@ -595,37 +597,26 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                     }
                 }
             } finally {
-                openGate();
+                unblockSessionRequests();
             }
         }
 
         @Suspendable
         final void handleDie(Throwable cause) {
+            possiblyReplyDeadAndUnblock(cause);
+
+            if (dead)
+                return;
+            dead = true;
+            HttpActorAdapter.super.die(cause);
             try {
-                if (!isGateOpen()) { // Req replied
-                    if (cause != null) {
-                        sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + cause.getMessage()).getBytes())));
-                        die(cause);
-                    } else {
-                        sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor has terminated.").getBytes())));
-                    }
-                }
-
-                if (dead)
-                    return;
-                dead = true;
-                HttpActorAdapter.super.die(cause);
-                try {
-                    context.invalidate();
-                } catch (final Exception ignored) {
-                }
-
-                // Ensure to release references
-                if (userActor != null && watchToken != null)
-                    unwatch(userActor, watchToken);
-            } finally {
-                openGate();
+                context.invalidate();
+            } catch (final Exception ignored) {
             }
+
+            // Ensure to release references
+            if (userActor != null && watchToken != null)
+                unwatch(userActor, watchToken);
 
             userActor = null;
             watchToken = null;
@@ -634,8 +625,22 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             req = null;
         }
 
+        private void possiblyReplyDeadAndUnblock(Throwable cause) {
+            if (isRequestInProgress()) { // Req replied
+                try {
+                    if (cause != null) {
+                        sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor is dead because of " + cause.getMessage()).getBytes())));
+                    } else {
+                        sendHttpError(ctx, req, new DefaultFullHttpResponse(req.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Actor has terminated.").getBytes())));
+                    }
+                } finally {
+                    unblockSessionRequests();
+                }
+            }
+        }
+
         @Suspendable
-        private void closeGate() throws InterruptedException {
+        private void blockSessionRequests() throws InterruptedException {
             while (!gate.compareAndSet(null, new CountDownLatch(1))) {
                 final CountDownLatch l = gate.get();
                 if (l != null)
@@ -646,13 +651,17 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             cancelTask = ts.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    sendHttpError(ctx1, req1, new DefaultFullHttpResponse(req1.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Timeout while waiting for user actor to reply.").getBytes())));
+                    try {
+                        sendHttpError(ctx1, req1, new DefaultFullHttpResponse(req1.getProtocolVersion(), INTERNAL_SERVER_ERROR, Unpooled.wrappedBuffer(("Timeout while waiting for user actor to reply.").getBytes())));
+                    } finally {
+                        unblockSessionRequests();
+                    }
                 }
             }, REPLY_TIMEOUT, TimeUnit.MILLISECONDS);
         }
 
         @Suspendable
-        private void openGate() {
+        private void unblockSessionRequests() {
             if (cancelTask != null)
                 cancelTask.cancel(true);
             final CountDownLatch l = gate.getAndSet(null);
@@ -660,8 +669,8 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                 l.countDown();
         }
 
-        private boolean isGateOpen() {
-            return gate.get() == null;
+        private boolean isRequestInProgress() {
+            return gate.get() != null;
         }
     }
 
