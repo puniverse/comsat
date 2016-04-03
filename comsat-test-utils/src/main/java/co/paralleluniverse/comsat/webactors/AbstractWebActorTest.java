@@ -46,9 +46,10 @@ import static org.junit.Assert.assertTrue;
  * @author circlespainter
  */
 public abstract class AbstractWebActorTest {
-    protected static final int DEFAULT_TIMEOUT = 60_000;
+    private static final int DEFAULT_TIMEOUT = 60_000;
 
-    protected final RequestConfig requestConfig;
+    private final RequestConfig requestConfig;
+
     protected int timeout = DEFAULT_TIMEOUT;
 
     protected AbstractWebActorTest() {
