@@ -30,11 +30,12 @@ import org.apache.catalina.loader.WebappClassLoader;
  */
 public final class QuasarWebAppClassLoader extends WebappClassLoader {
     @Override
-    protected final synchronized boolean filter(String name) {
+    protected final synchronized boolean filter(String name, boolean isClassName) {
         // Don't re-load the instrumentation logic, including the `SuspendableClassifier` interface,
         // else implementations in the webapp classloader will have trouble loading when running in
         // a standalone servlet container
         return
+            isClassName &&
             name.startsWith("co.paralleluniverse.common.") ||
             name.startsWith("co.paralleluniverse.fibers.instrument.") ||
             name.startsWith("jsr166e") ||
@@ -74,9 +75,9 @@ public final class QuasarWebAppClassLoader extends WebappClassLoader {
     }
 
     @Override
-    protected final ResourceEntry findResourceInternal(String name, String path, boolean manifestRequired) {
+    protected final ResourceEntry findResourceInternal(String name, String path) {
         initInstrumentor();
-        final ResourceEntry entry = super.findResourceInternal(name, path, manifestRequired);
+        final ResourceEntry entry = super.findResourceInternal(name, path);
         if (name != null && path != null && path.endsWith(CLASS_SUFFIX) && entry != null && entry.binaryContent != null) {
             final int nameLen = name.length();
             final String className = name.substring(0, name.endsWith(CLASS_SUFFIX) ? nameLen - CLASS_SUFFIX_LENGTH : nameLen);
