@@ -761,33 +761,8 @@ The `comsat-kafka` module provides a [Kafka Producer](https://kafka.apache.org/0
 
 [Apache Shiro](http://shiro.apache.org/) is a security framework that performs authentication, authorization, cryptography, and session management.
 
-The `comsat-shiro` module provides instrumentation definitions of Shiro methods allowing client implementations of [Shiro Realms](http://shiro.apache.org/realm.html) to use fiber-blocking functionality.
+The `comsat-shiro` module adds instrumentation to some Shiro methods (via `suspendables` and `suspendable-supers`) so that developer-provided [Shiro Realms](http://shiro.apache.org/realm.html) can perform fiber-blocking calls when queried by fibers using [SecurityUtils](http://shiro.apache.org/static/1.2.1/apidocs/org/apache/shiro/SecurityUtils.html):
 
-Given a client [AuthorizingRealm](https://shiro.apache.org/static/1.2.1/apidocs/org/apache/shiro/realm/AuthorizingRealm.html) which queries a fiber-suspending API for user details, e.g.:   
-~~~ java
-// (exception handling ignored below)
-public class FiberedRealm extends AuthorizingRealm {
-
-    @Suspendable
-    @Override
-    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-        // Get user roles using a fiber-blocking API
-        final Set<String> roles = ... 
-        return new SimpleAuthorizationInfo(roles);
-    }
-
-    @Suspendable
-    @Override
-    protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token) throws AuthenticationException {
-        // Get principal and credentials using a fiber-blocking API 
-        final Object principal = ... 
-        final Object creds = ... 
-        return new SimpleAuthenticationInfo(principal, creds, "FiberedRealm");
-    }
-}
-~~~
-
-Other fibers can in turn use the static methods of [SecurityUtils](http://shiro.apache.org/static/1.2.1/apidocs/org/apache/shiro/SecurityUtils.html) to query said realm:
 ~~~ java
     SecurityUtils.getSubject().login(...);
     boolean isAuthorized = SecurityUtils.getSubject().isAuthenticated();
