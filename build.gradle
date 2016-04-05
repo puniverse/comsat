@@ -88,6 +88,7 @@ subprojects {
     ext.springVer                       = '4.2.5.RELEASE'
     ext.springBootVer                   = '1.3.3.RELEASE' // TODO Port testsuite diffs
 
+    ext.commonsLoggingVer               = '1.2'
     ext.commonsBeanUtilsVer             = '1.9.2'
     ext.commonsDigesterVer              = '2.1'
     ext.commonsCollectionsVer           = '3.2.2'
