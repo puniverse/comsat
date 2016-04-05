@@ -38,6 +38,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Basic integration tests for demo application.
  *
@@ -86,17 +88,11 @@ public class SampleActuatorUiApplicationTests {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Arrays.asList(MediaType.TEXT_HTML));
         ResponseEntity<String> entity = new TestRestTemplate().exchange(
-                "http://localhost:" + this.port + "/error", HttpMethod.GET,
-                new HttpEntity<Void>(headers), String.class);
-        assertEquals(HttpStatus.OK, entity.getStatusCode());
-        assertTrue("Wrong body:\n" + entity.getBody(), entity.getBody()
-                .contains("<html>"));
-        assertTrue("Wrong body:\n" + entity.getBody(), entity.getBody()
-                .contains("<body>"));
-        assertTrue(
-                "Wrong body:\n" + entity.getBody(),
-                entity.getBody().contains(
-                        "Please contact the operator with the above information"));
+            "http://localhost:" + this.port + "/error", HttpMethod.GET,
+            new HttpEntity<Void>(headers), String.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(entity.getBody()).contains("<html>").contains("<body>")
+            .contains("Please contact the operator with the above information");
     }
 
 }
