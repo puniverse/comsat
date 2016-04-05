@@ -1,6 +1,6 @@
 subprojects {
     dependencies {
-        testCompile 'org.assertj:assertj-core:3.4.0'
+        testCompile 'org.assertj:assertj-core:2.4.0'
 
         testCompile (project(':comsat-test-utils')) {
             exclude group: 'org.eclipse.jetty', module: '*'
