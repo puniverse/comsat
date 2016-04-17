@@ -19,17 +19,19 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
+import java.text.MessageFormat;
+import java.util.Enumeration;
+import java.util.ResourceBundle;
 import java.util.concurrent.ForkJoinPool;
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * Fiber-blocking HttpServlet base class.
@@ -38,6 +40,22 @@ import javax.servlet.http.HttpServletResponse;
  * @author circlespainter
  */
 public class FiberHttpServlet extends HttpServlet {
+    private static final String METHOD_DELETE = "DELETE";
+    private static final String METHOD_HEAD = "HEAD";
+    private static final String METHOD_GET = "GET";
+    private static final String METHOD_OPTIONS = "OPTIONS";
+    private static final String METHOD_POST = "POST";
+    private static final String METHOD_PUT = "PUT";
+    private static final String METHOD_TRACE = "TRACE";
+
+    private static final String HEADER_IFMODSINCE = "If-Modified-Since";
+    private static final String HEADER_LASTMOD = "Last-Modified";
+
+    private static final String LSTRING_FILE =
+        "javax.servlet.http.LocalStrings";
+    private static ResourceBundle lStrings =
+        ResourceBundle.getBundle(LSTRING_FILE);
+
     private static final String PROP_ASYNC_TIMEOUT = FiberHttpServlet.class.getName() + ".asyncTimeout";
     static final Long asyncTimeout;
 
@@ -216,17 +234,22 @@ public class FiberHttpServlet extends HttpServlet {
             } catch (final Throwable t) {
                 servlet.log("Error during pool-based execution", t);
                 ((HttpServletResponse) ac.getResponse()).setStatus(500);
-                ac.complete();
+                try {
+                    ac.complete();
+                } catch (final IllegalStateException ignored) {}
             }
         }
     }
 
+    @Suspendable
     private void exec0(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // TODO: check if ac has expired
         if (!disableSyncForward)
             servlet.currentAsyncContext.set(ac);
         servlet.service(request, response);
-        ac.complete();
+        try {
+            ac.complete();
+        } catch (final IllegalStateException ignored) {}
     }
 
     private static boolean isJetty(ServletConfig config) {
@@ -262,6 +285,348 @@ public class FiberHttpServlet extends HttpServlet {
             return b;
         } else {
             return null;
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // The rest is copied from HttpServlet as we don't instrument by default "java" and "javax" packages
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    @Suspendable
+    protected void service(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+        final String method = req.getMethod();
+
+        //noinspection IfCanBeSwitch
+        if (method.equals(METHOD_GET)) {
+            long lastModified = getLastModified(req);
+            if (lastModified == -1) {
+                // servlet doesn't support if-modified-since, no reason
+                // to go through further expensive logic
+                doGet(req, resp);
+            } else {
+                long ifModifiedSince = req.getDateHeader(HEADER_IFMODSINCE);
+                if (ifModifiedSince < lastModified) {
+                    // If the servlet mod time is later, call doGet()
+                    // Round down to the nearest second for a proper compare
+                    // A ifModifiedSince of -1 will always be less
+                    maybeSetLastModified(resp, lastModified);
+                    doGet(req, resp);
+                } else {
+                    resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+                }
+            }
+
+        } else if (method.equals(METHOD_HEAD)) {
+            final long lastModified = getLastModified(req);
+            maybeSetLastModified(resp, lastModified);
+            doHead(req, resp);
+
+        } else if (method.equals(METHOD_POST)) {
+            doPost(req, resp);
+
+        } else if (method.equals(METHOD_PUT)) {
+            doPut(req, resp);
+
+        } else if (method.equals(METHOD_DELETE)) {
+            doDelete(req, resp);
+
+        } else if (method.equals(METHOD_OPTIONS)) {
+            doOptions(req,resp);
+
+        } else if (method.equals(METHOD_TRACE)) {
+            doTrace(req,resp);
+
+        } else {
+            //
+            // Note that this means NO servlet supports whatever
+            // method was requested, anywhere on this server.
+            //
+
+            String errMsg = lStrings.getString("http.method_not_implemented");
+            final Object[] errArgs = new Object[1];
+            errArgs[0] = method;
+            errMsg = MessageFormat.format(errMsg, errArgs);
+
+            resp.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED, errMsg);
+        }
+    }
+
+    @Override
+    @Suspendable
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+        final String protocol = req.getProtocol();
+        final String msg = lStrings.getString("http.method_get_not_supported");
+        if (protocol.endsWith("1.1")) {
+            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
+        } else {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+        }
+    }
+
+    @Override
+    @Suspendable
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+        final String protocol = req.getProtocol();
+        final String msg = lStrings.getString("http.method_post_not_supported");
+        if (protocol.endsWith("1.1")) {
+            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
+        } else {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+        }
+    }
+
+    @Override
+    @Suspendable
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+        final String protocol = req.getProtocol();
+        final String msg = lStrings.getString("http.method_put_not_supported");
+        if (protocol.endsWith("1.1")) {
+            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
+        } else {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+        }
+    }
+
+    @Override
+    @Suspendable
+    protected void doDelete(HttpServletRequest req,
+                            HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+        final String protocol = req.getProtocol();
+        final String msg = lStrings.getString("http.method_delete_not_supported");
+        if (protocol.endsWith("1.1")) {
+            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
+        } else {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+        }
+    }
+
+    @Override
+    @Suspendable
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+        final Method[] methods = getAllDeclaredMethods(this.getClass());
+
+        boolean ALLOW_GET = false;
+        boolean ALLOW_HEAD = false;
+        boolean ALLOW_POST = false;
+        boolean ALLOW_PUT = false;
+        boolean ALLOW_DELETE = false;
+        final boolean ALLOW_TRACE = true;
+        final boolean ALLOW_OPTIONS = true;
+
+        for (final Method m : methods) {
+            if (m.getName().equals("doGet")) {
+                ALLOW_GET = true;
+                ALLOW_HEAD = true;
+            }
+            if (m.getName().equals("doPost"))
+                ALLOW_POST = true;
+            if (m.getName().equals("doPut"))
+                ALLOW_PUT = true;
+            if (m.getName().equals("doDelete"))
+                ALLOW_DELETE = true;
+
+        }
+
+        String allow = null;
+        if (ALLOW_GET)
+            allow=METHOD_GET;
+        if (ALLOW_HEAD)
+            if (allow==null) allow=METHOD_HEAD;
+            else allow += ", " + METHOD_HEAD;
+        if (ALLOW_POST)
+            if (allow==null) allow=METHOD_POST;
+            else allow += ", " + METHOD_POST;
+        if (ALLOW_PUT)
+            if (allow==null) allow=METHOD_PUT;
+            else allow += ", " + METHOD_PUT;
+        if (ALLOW_DELETE)
+            if (allow==null) allow=METHOD_DELETE;
+            else allow += ", " + METHOD_DELETE;
+        if (ALLOW_TRACE)
+            if (allow==null) allow=METHOD_TRACE;
+            else allow += ", " + METHOD_TRACE;
+        if (ALLOW_OPTIONS)
+            if (allow==null) allow=METHOD_OPTIONS;
+            else allow += ", " + METHOD_OPTIONS;
+
+        resp.setHeader("Allow", allow);
+    }
+
+    private Method[] getAllDeclaredMethods(Class<?> c) {
+
+        if (c.equals(javax.servlet.http.HttpServlet.class)) {
+            return null;
+        }
+
+        final Method[] parentMethods = getAllDeclaredMethods(c.getSuperclass());
+        Method[] thisMethods = c.getDeclaredMethods();
+
+        if ((parentMethods != null) && (parentMethods.length > 0)) {
+            final Method[] allMethods =
+                new Method[parentMethods.length + thisMethods.length];
+            System.arraycopy(parentMethods, 0, allMethods, 0,
+                parentMethods.length);
+            System.arraycopy(thisMethods, 0, allMethods, parentMethods.length,
+                thisMethods.length);
+
+            thisMethods = allMethods;
+        }
+
+        return thisMethods;
+    }
+
+    @Override
+    @Suspendable
+    protected void doTrace(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+
+        int responseLength;
+
+        final String CRLF = "\r\n";
+        final StringBuilder buffer = new StringBuilder("TRACE ").append(req.getRequestURI())
+            .append(" ").append(req.getProtocol());
+
+        final Enumeration<String> reqHeaderEnum = req.getHeaderNames();
+
+        while (reqHeaderEnum.hasMoreElements()) {
+            final String headerName = reqHeaderEnum.nextElement();
+            buffer.append(CRLF).append(headerName).append(": ")
+                .append(req.getHeader(headerName));
+        }
+
+        buffer.append(CRLF);
+
+        responseLength = buffer.length();
+
+        resp.setContentType("message/http");
+        resp.setContentLength(responseLength);
+        final ServletOutputStream out = resp.getOutputStream();
+        out.print(buffer.toString());
+    }
+
+    @Override
+    @Suspendable
+    protected void doHead(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+        final NoBodyResponse response = new NoBodyResponse(resp);
+
+        doGet(req, response);
+        response.setContentLength();
+    }
+
+    private void maybeSetLastModified(HttpServletResponse resp,
+                                      long lastModified) {
+        if (resp.containsHeader(HEADER_LASTMOD))
+            return;
+        if (lastModified >= 0)
+            resp.setDateHeader(HEADER_LASTMOD, lastModified);
+    }
+}
+
+final class NoBodyResponse extends HttpServletResponseWrapper {
+    private static final ResourceBundle lStrings
+        = ResourceBundle.getBundle("javax.servlet.http.LocalStrings");
+
+    private NoBodyOutputStream noBody;
+    private PrintWriter writer;
+    private boolean didSetContentLength;
+    private boolean usingOutputStream;
+
+    NoBodyResponse(HttpServletResponse r) {
+        super(r);
+        noBody = new NoBodyOutputStream();
+    }
+
+    final void setContentLength() {
+        if (!didSetContentLength) {
+            if (writer != null) {
+                writer.flush();
+            }
+            setContentLength(noBody.getContentLength());
+        }
+    }
+
+    @Override
+    public final void setContentLength(int len) {
+        super.setContentLength(len);
+        didSetContentLength = true;
+    }
+
+    @Override
+    public final ServletOutputStream getOutputStream() throws IOException {
+
+        if (writer != null) {
+            throw new IllegalStateException(
+                lStrings.getString("err.ise.getOutputStream"));
+        }
+        usingOutputStream = true;
+
+        return noBody;
+    }
+
+    @Override
+    public final PrintWriter getWriter() throws UnsupportedEncodingException {
+
+        if (usingOutputStream) {
+            throw new IllegalStateException(
+                lStrings.getString("err.ise.getWriter"));
+        }
+
+        if (writer == null) {
+            final OutputStreamWriter w = new OutputStreamWriter(
+                noBody, getCharacterEncoding());
+            writer = new PrintWriter(w);
+        }
+
+        return writer;
+    }
+}
+
+final class NoBodyOutputStream extends ServletOutputStream {
+
+    private static final String LSTRING_FILE =
+        "javax.servlet.http.LocalStrings";
+    private static ResourceBundle lStrings =
+        ResourceBundle.getBundle(LSTRING_FILE);
+
+    private int contentLength = 0;
+
+    NoBodyOutputStream() {}
+
+    final int getContentLength() {
+        return contentLength;
+    }
+
+    @Override
+    public final void write(int b) {
+        contentLength++;
+    }
+
+    @Override
+    public final void write(byte buf[], int offset, int len)
+        throws IOException
+    {
+        if (len >= 0) {
+            contentLength += len;
+        } else {
+            // This should have thrown an IllegalArgumentException, but
+            // changing this would break backwards compatibility
+            throw new IOException(lStrings.getString("err.io.negativelength"));
         }
     }
 }
