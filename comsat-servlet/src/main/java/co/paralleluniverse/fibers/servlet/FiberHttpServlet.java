@@ -182,7 +182,7 @@ public class FiberHttpServlet extends HttpServlet {
         private final HttpServletResponse response;
         private final FiberHttpServlet servlet;
 
-        public ServletSuspendableRunnable(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
+        ServletSuspendableRunnable(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
             this.servlet = servlet;
             this.ac = ac;
             this.request = request;
@@ -201,7 +201,7 @@ public class FiberHttpServlet extends HttpServlet {
         private final HttpServletRequest request;
         private final HttpServletResponse response;
 
-        public ServletRunnable(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
+        ServletRunnable(FiberHttpServlet servlet, AsyncContext ac, HttpServletRequest request, HttpServletResponse response) {
             this.servlet = servlet;
             this.ac = ac;
             this.request = request;
