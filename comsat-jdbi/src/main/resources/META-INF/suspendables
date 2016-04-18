@@ -11,4 +11,5 @@ org.skife.jdbi.v2.sqlobject.UpdateHandler.invoke
 org.skife.jdbi.v2.sqlobject.UpdateHandler$1.value
 org.skife.jdbi.v2.sqlobject.UpdateHandler$2.value
 org.skife.jdbi.v2.sqlobject.ResultReturnThing.map
+org.skife.jdbi.v2.sqlobject.FigureItOutResultSetMapper.map
 org.skife.jdbi.v2.tweak.transactions.LocalTransactionHandler.restoreAutoCommitState
