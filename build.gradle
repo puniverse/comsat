@@ -22,7 +22,7 @@ subprojects {
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
     group               = "co.paralleluniverse"
-    version             = "0.7.0-SNAPSHOT"
+    version             = "0.7.1-SNAPSHOT"
     status              = "integration"
     description         = "Fibers services for web"
 
@@ -47,12 +47,12 @@ subprojects {
     ext.quasarVer       = '0.7.4'
 
     ext.jettyVer        = '9.2.14.v20151106' // '9.3.x' requires JDK8
-    ext.tomcatVer       = '8.0.28' // TODO Upgrade, later versions seem to break some stuff because they're more restrictive about `getOutputstream` and `getWriter` from the response
-    ext.undertowVer     = '1.3.15.Final'
-    ext.nettyVer        = '4.0.34.Final'
+    ext.tomcatVer       = '8.0.33'
+    ext.undertowVer     = '1.3.19.Final'
+    ext.nettyVer        = '4.0.36.Final'
 
     ext.osgiVer         = '6.0.0'
-    ext.jerseyVer       = '2.22.1'
+    ext.jerseyVer       = '2.22.2'
     ext.hk2apiVer       = '2.4.0'
     ext.jerseyJettyVer  = '9.1.1.v20140108'
 
@@ -61,19 +61,19 @@ subprojects {
     ext.websocketApiVer = '1.0'
 
     ext.dropwizardVer   = '0.9.2'
-    ext.jdbiVer         = '2.71'
+    ext.jdbiVer         = '2.72'
 
     ext.retrofitVer     = '1.9.0'
-    ext.jooqVer         = '3.6.4' // 3.7.x support only Java 8+
-    ext.slf4jApiVer     = '1.7.14'
+    ext.jooqVer         = '3.6.4' // 3jooq.7.x support only Java 8+
+    ext.slf4jApiVer     = '1.7.21'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '19.0'
 
-    ext.okhttpVer       = '2.6.0' // TODO Upgrade to 2.7.x or jump to 3.x
+    ext.okhttpVer       = '2.6.0' // TODO Upgrade to 3.2.x
 
     ext.apacheAsyncClientVer   = '4.1.1'
     ext.httpCoreVer            = '4.4.4'
-    ext.httpClientVer          = '4.5.1'
+    ext.httpClientVer          = '4.5.2'
 
     ext.junitVer               = '4.12'
     ext.h2Ver                  = '1.4.191'
@@ -84,10 +84,9 @@ subprojects {
     // ext.bytemanVer = '3.0.1'
 
     // Spring projects
-    ext.springSecurityVer               = '4.0.3.RELEASE'
-    ext.springVer                       = '4.2.3.RELEASE' // TODO Upgrade
-    ext.springBootVer                   = '1.3.0.RELEASE' // TODO Upgrade and check for more tests
-    ext.aspectjVer                      = '1.8.7'
+    ext.springSecurityVer               = '4.0.4.RELEASE'
+    ext.springVer                       = '4.2.5.RELEASE'
+    ext.springBootVer                   = '1.3.3.RELEASE' // TODO Port testsuite diffs
 
     ext.commonsLoggingVer               = '1.2'
     ext.commonsBeanUtilsVer             = '1.9.2'
@@ -95,13 +94,11 @@ subprojects {
     ext.commonsCollectionsVer           = '3.2.2'
     ext.velocityVer                     = '1.7'
     ext.hamcrestVer                     = '1.3'
-    ext.jspVer                          = '2.2.0.v201112011158'
     ext.jqueryVer                       = '2.1.4'
     ext.snakeYamlVer                    = '1.16'
     ext.javaxELVer                      = '3.0.1-b05'
-    ext.thymeleafVer                    = '2.1.4.RELEASE'
     ext.hibernateValidatorVer           = '5.2.2.Final'
-    ext.jbossLoggingVer                 = '3.3.0.Final'
+    ext.jbossLoggingVer                 = '3.2.1.Final'
 
     ext.jstlVer                         = '1.2'
     ext.jolokiaVer                      = '1.3.2'
@@ -110,6 +107,7 @@ subprojects {
     ext.hibernateVer                    = '4.3.11.Final'
 
     ext.kafkaClientsVer                 = '0.9.0.0' // ''0.8.2.2'
+    ext.shiroVer                        = '1.2.4'
 
     configurations.all {
         resolutionStrategy {
@@ -146,19 +144,13 @@ subprojects {
             force "org.springframework:spring-tx:$springVer"
             force "org.springframework.security:spring-security-config:$springSecurityVer"
             force "org.springframework.security:spring-security-web:$springSecurityVer"
-            force "org.aspectj:aspectjrt:$aspectjVer"
-            // force "org.aspectj:aspectjweaver:$aspectjVer"
             force "org.webjars:jquery:$jqueryVer"
-            force "commons-logging:commons-logging:$commonsLoggingVer"
             force "commons-beanutils:commons-beanutils:$commonsBeanUtilsVer"
             force "commons-digester:commons-digester:$commonsDigesterVer"
             force "commons-collections:commons-collections:$commonsCollectionsVer"
             force "org.jboss.logging:jboss-logging:$jbossLoggingVer"
             force "org.apache.velocity:velocity:$velocityVer"
             force "org.hamcrest:hamcrest-core:$hamcrestVer"
-            force "org.eclipse.jetty.orbit:javax.servlet.jsp:$jspVer"
-            force "org.yaml:snakeyaml:$snakeYamlVer"
-            force "org.thymeleaf:thymeleaf:$thymeleafVer"
 
             force "org.glassfish:javax.el:$javaxELVer"
             force "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVer"
@@ -441,6 +433,14 @@ project (':comsat-kafka') {
     }
 }
 
+project (':comsat-shiro') {
+    dependencies {
+        compile "org.apache.shiro:shiro-core:$shiroVer"
+        testCompile "co.paralleluniverse:quasar-core:$quasarVer"
+        testCompile "commons-logging:commons-logging:$commonsLoggingVer"
+    }
+}
+
 project (':comsat-retrofit') {
     dependencies {
         compile "com.squareup.retrofit:retrofit:$retrofitVer"
@@ -527,19 +527,19 @@ ext.javadocLinks =  [
                 "http://hc.apache.org/httpcomponents-client-4.5.x/httpclient/apidocs/",
                 "http://hc.apache.org/httpcomponents-asyncclient-4.1.x/httpasyncclient/apidocs/",
                 "http://hc.apache.org/httpcomponents-core-4.4.x/httpcore/apidocs/",
-                "http://square.github.io/retrofit/javadoc/",
+                "http://square.github.io/retrofit/1.x/retrofit/",
                 "http://jdbi.org/apidocs/",
                 "http://www.jooq.org/javadoc/3.6.x/",
                 "http://docs.oracle.com/javase/7/docs/api/",
                 "http://puniverse.github.io/quasar/javadoc/",
-                "http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc/",
+                "http://google.github.io/guava/releases/19.0/api/docs/",
                 "http://jersey.java.net/apidocs/latest/jersey/",
                 "http://www.allanbank.com/mongodb-async-driver/apidocs/",
                 "http://docs.spring.io/spring/docs/current/javadoc-api/",
                 "http://docs.spring.io/spring-boot/docs/current/api/",
                 "http://docs.spring.io/autorepo/docs/spring-security/current/apidocs/",
-                "http://square.github.io/okhttp/javadoc/",
-                "http://undertow.io/javadoc/1.2.x/",
+                "http://square.github.io/okhttp/2.x/okhttp/",
+                "http://undertow.io/javadoc/1.3.x/",
                 "http://netty.io/4.0/api/"
 ]
 

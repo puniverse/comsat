@@ -16,11 +16,15 @@ Comsat does provide one new API that you may choose to use: Web Actors. Web acto
 
 ## News
 
-### 10 February, 2016
+### April 6, 2016
+
+COMSAT [0.7.0](https://github.com/puniverse/comsat/releases/tag/v0.7.0) has been released.
+
+### February 10, 2016
 
 COMSAT [0.6.0](https://github.com/puniverse/comsat/releases/tag/v0.6.0) has been released.
 
-### 28 August, 2015
+### August 28, 2015
 
 COMSAT [0.5.0](https://github.com/puniverse/comsat/releases/tag/v0.5.0) has been released.
 
@@ -75,30 +79,31 @@ Then add the following Maven/Gradle dependencies:
 
 | Feature                                                                                                                   | Artifact
 |---------------------------------------------------------------------------------------------------------------------------|--------------------------
-| Servlet integration for defining fiber-per-request servlets.                                                              | `co.paralleluniverse:comsat-servlet:0.6.0`
-| A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.3.                         | `co.paralleluniverse:comsat-ring-jetty9:0.6.0`
-| [HTTP Kit](http://www.http-kit.org/client.html)-based fiber-blocking HTTP client.                                         | `co.paralleluniverse:comsat-httpkit:0.6.0`
-| [Jersey server](https://jersey.java.net/) integration for defining REST services.                                         | `co.paralleluniverse:comsat-jersey-server:0.6.0`
-| [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.                              | `co.paralleluniverse:comsat-dropwizard:0.6.0`
-| [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.    | `co.paralleluniverse:comsat-spring-webmvc:0.6.0`
-| [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.                 | `co.paralleluniverse:comsat-spring-boot:0.6.0`
-| [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.                           | `co.paralleluniverse:comsat-spring-security:0.6.0`
-| [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for HTTP calls with fibers.         | `co.paralleluniverse:comsat-jax-rs-client:0.6.0`
-| [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for HTTP calls with fibers.                | `co.paralleluniverse:comsat-httpclient:0.6.0`
-| [Retrofit](http://square.github.io/retrofit/) integration with fibers.                                                    | `co.paralleluniverse:comsat-retrofit:0.6.0`
-| [JDBI](http://jdbi.org/) integration with fibers.                                                                         | `co.paralleluniverse:comsat-jdbi:0.6.0`
-| JDBC integration with fibers.                                                                                             | `co.paralleluniverse:comsat-jdbc:0.6.0`
-| [jOOQ](http://www.jooq.org/) integration with fibers.                                                                     | `co.paralleluniverse:comsat-jooq:0.6.0`
-| MongoDB fiber-blocking integration for the [Allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).     | `co.paralleluniverse:comsat-mongodb-allanbank:0.6.0`
-| [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.                                                  | `co.paralleluniverse:comsat-okhttp:0.6.0`
-| The Web Actors API.                                                                                                       | `co.paralleluniverse:comsat-actors-api:0.6.0`
-| Deploy HTTP, SSE and WebSocket Web Actors as [Undertow](http://undertow.io/) handlers.                                    | `co.paralleluniverse:comsat-actors-undertow:0.6.0`
-| Deploy HTTP, SSE and WebSocket Web Actors as [Netty](http://netty.io/) handlers.                                          | `co.paralleluniverse:comsat-actors-netty:0.6.0`
-| Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers.   | `co.paralleluniverse:comsat-actors-servlet:0.6.0`
-| Use Comsat in the Tomcat servlet container without java agent.                                                            | `co.paralleluniverse:comsat-tomcat-loader:0.6.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
-| Use Comsat in the Jetty servlet container without the java agent.                                                         | `co.paralleluniverse:comsat-jetty-loader:0.6.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
-| [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.6.0`
-| [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.6.0`
+| Servlet integration for defining fiber-per-request servlets.                                                              | `co.paralleluniverse:comsat-servlet:0.7.0`
+| A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.3.                         | `co.paralleluniverse:comsat-ring-jetty9:0.7.0`
+| [HTTP Kit](http://www.http-kit.org/client.html)-based fiber-blocking HTTP client.                                         | `co.paralleluniverse:comsat-httpkit:0.7.0`
+| [Jersey server](https://jersey.java.net/) integration for defining REST services.                                         | `co.paralleluniverse:comsat-jersey-server:0.7.0`
+| [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.                              | `co.paralleluniverse:comsat-dropwizard:0.7.0`
+| [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.    | `co.paralleluniverse:comsat-spring-webmvc:0.7.0`
+| [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.                 | `co.paralleluniverse:comsat-spring-boot:0.7.0`
+| [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.                           | `co.paralleluniverse:comsat-spring-security:0.7.0`
+| [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for HTTP calls with fibers.         | `co.paralleluniverse:comsat-jax-rs-client:0.7.0`
+| [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for HTTP calls with fibers.                | `co.paralleluniverse:comsat-httpclient:0.7.0`
+| [Retrofit](http://square.github.io/retrofit/) integration with fibers.                                                    | `co.paralleluniverse:comsat-retrofit:0.7.0`
+| [JDBI](http://jdbi.org/) integration with fibers.                                                                         | `co.paralleluniverse:comsat-jdbi:0.7.0`
+| JDBC integration with fibers.                                                                                             | `co.paralleluniverse:comsat-jdbc:0.7.0`
+| [jOOQ](http://www.jooq.org/) integration with fibers.                                                                     | `co.paralleluniverse:comsat-jooq:0.7.0`
+| MongoDB fiber-blocking integration for the [Allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).     | `co.paralleluniverse:comsat-mongodb-allanbank:0.7.0`
+| [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.                                                  | `co.paralleluniverse:comsat-okhttp:0.7.0`
+| The Web Actors API.                                                                                                       | `co.paralleluniverse:comsat-actors-api:0.7.0`
+| Deploy HTTP, SSE and WebSocket Web Actors as [Undertow](http://undertow.io/) handlers.                                    | `co.paralleluniverse:comsat-actors-undertow:0.7.0`
+| Deploy HTTP, SSE and WebSocket Web Actors as [Netty](http://netty.io/) handlers.                                          | `co.paralleluniverse:comsat-actors-netty:0.7.0`
+| Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers.   | `co.paralleluniverse:comsat-actors-servlet:0.7.0`
+| Use Comsat in the Tomcat servlet container without java agent.                                                            | `co.paralleluniverse:comsat-tomcat-loader:0.7.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
+| Use Comsat in the Jetty servlet container without the java agent.                                                         | `co.paralleluniverse:comsat-jetty-loader:0.7.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
+| [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.7.0`
+| [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.7.0`
+| [Apache Shiro](http://shiro.apache.org/) integration module.                                                              | `co.paralleluniverse:comsat-shiro:0.7.0`
 
 ## Examples
 
@@ -184,7 +189,7 @@ Example:
 {% include_snippet FiberHttpServlet example ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
 ~~~
 
-Then you can simply add it as a regular servlet to you favorite servlet containter, e.g. for embedded Jetty:
+Then you can simply add it as a regular servlet to you favorite servlet container, e.g. for embedded Jetty:
 
 ~~~ java
 {% include_snippet servlet registration ./comsat-servlet/src/test/java/co/paralleluniverse/fibers/servlet/FiberHttpServletTest.java %}
@@ -591,7 +596,7 @@ Web Actors are deployed on a web server. Currently they can be deployed as a [Ne
 
 Deploying web actors on top of Netty is as easy as inserting one of two Netty handlers in your pipeline: either `AutoWebActorHandler` or `WebActorHandler`.
 
-`AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and  will then instantiate and start the appropriate actor class (among detected ones) once per client session (or connection if there's no session, see below). Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be passed in.
+`AutoWebActorHandler` will automatically scan the classpath for classes with the `@WebActor` annotation upon first use and  will then instantiate and start the appropriate actor class (among detected ones) once per client session. Its constructor requires no arguments but optionally a user-specified classloader and/or a map containing per-class actor constructor parameters can be provided.
 
 The only other requirement is that your channel pipeline contains separate `HttpRequestDecoder` and `HttpResponseEncoder` instances rather than a single `HttpServerCodec` because the `HttpResponseEncoder` needs to be dynamically removed when an SSE exchange starts. If you prefer, as an alternative you can pass to `AutoWebActorHandler`'s constructor the name of the installed `HttpResponseEncoder`.
 
@@ -619,60 +624,11 @@ b.group(bossGroup, workerGroup)
 final ChannelFuture ch = b.bind(INET_PORT).sync();
 ~~~
 
-The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides the web actor reference and URL matching logic.
-
-`WebActorHandler` delegates context lookup (or creation) to a developer-supplied `ContextProvider` which is is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-netty`'s' tests for further insight):
-
-~~~ java
-final MyWebActor actor = new MyWebActor();
-final MActorRef<? extends WebMessage> actorRef = actor.spawn();
-// ...
-final NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
-final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
-final ServerBootstrap b = new ServerBootstrap();
-b.group(bossGroup, workerGroup)
-    .channel(NioServerSocketChannel.class)
-    .handler(new LoggingHandler(LogLevel.INFO))
-    .childHandler(new ChannelInitializer<SocketChannel>() {
-        @Override
-        public void initChannel(SocketChannel ch) throws Exception {
-            ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast(new HttpRequestDecoder());
-            pipeline.addLast(new HttpResponseEncoder());
-            pipeline.addLast(new HttpObjectAggregator(65536));
-
-            pipeline.addLast(new WebActorHandler(new WebActorHandler.ActorContextProvider() {
-                @Override
-                public WebActorHandler.ActorContext get(ChannelHandlerContext ctx, FullHttpRequest req) {
-                    return new WebActorHandler.DefaultActorContextImpl() {
-                        @Override
-                        public ActorRef<? extends WebMessage> getRef() {
-                            return actorRef;
-                        }
-                    
-                        @Override
-                        public final boolean handlesWithWebSocket(String uri) {
-                            return uri.startsWith("/ws");
-                        }
-
-                        @Override
-                        public final boolean handlesWithHttp(String uri) {
-                            return !handlesWithWebSocket(uri);
-                        }
-                    };
-                }
-            }));
-        }
-    });
-
-final ChannelFuture ch = b.bind(8080).sync();
-~~~
-
 `WebActorHandler` needs (and enables by default) cookie-based client session tracking only for SSE exchanges but it can enabled for all requests through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.trackSession` system property (legal values are `sse` and `always`). The cookie name will be `JSESSIONID` as in most server-side HTTP Java APIs with session support (e.g. servlets).
 
 The Netty WebActor backend will always include the `Date` header by default but this behaviour can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.HttpChannelAdapter.omitDateHeader` system property
 
-Session duration for the default implementation is 10 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.DefaultContextImpl.durationMillis` system property.
+The session duration for the default implementation is 60 seconds but it can be configured through the `co.paralleluniverse.comsat.webactors.netty.WebActorHandler.DefaultContextImpl.durationMillis` system property.
 
 ### Undertow deployment
 
@@ -697,44 +653,9 @@ server.start();
 
 Notice that the session handler is installed as well: `AutoWebActorHandler` will use Undertow sessions if available, else it will create a new actor instance for every exchange.
 
-The way individual web actor references are assigned to individual HTTP exchanges is represented by the `WebActorHandler.Context` interface, which provides the web actor reference and URL matching logic.
-
-`WebActorHandler` delegates session lookup (or creation) to a developer-supplied `ContextProvider` which is the only required constructor argument; here's an example server setup using `WebActorHandler` and delegating all exchanges to a single actor (have a look at `comsat-actors-undertow`'s' tests for further insight):
-
-~~~ java
-final Actor actor = new MyWebActor();
-final MActorRef<? extends WebMessage> actorRef = actor.spawn();
-// ...
-server = Undertow.builder()
-    .addHttpListener(8080, "localhost")
-    .setHandler(new WebActorHandler(new WebActorHandler.ContextProvider() {
-        @Override
-        public WebActorHandler.ActorContext get(HttpServerExchange xch) {
-            return new WebActorHandler.DefaultContextImpl() {
-                @Override
-                public ActorRef<? extends WebMessage> getRef() {
-                    return actorRef;
-                }
-
-                @Override
-                public final boolean handlesWithWebSocket(String uri) {
-                   return uri.startsWith("/ws");
-                }
-
-                @Override
-                public final boolean handlesWithHttp(String uri) {
-                    return !handlesWithWebSocket(uri);
-                }
-            };
-        }
-    })).build();
-
-server.start();
-~~~
-
 If not using Undertow sessions please consider that `WebActorHandler` assumes the same actor will manage a whole SSE session.
 
-The actor context validity is 10 seconds by default but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
+The actor context validity is 60 seconds by default but it can be configured through the `co.paralleluniverse.comsat.webactors.undertow.WebActorHandler.DefaultContextImpl.durationMillis` system property.
 
 ### Servlet deployment
 
@@ -822,13 +743,13 @@ To close the stream, you send a `co.paralleluniverse.actors.ShutdownMessage` to 
 co.paralleluniverse.actors.ActorUtil.sendOrInterrupt(sseActor, new ShutdownMessage());
 ~~~
 
-It might be convient (and elegant) to wrap the channel returned by `openStream` with a *mapping channel* (see the Quasar docs) that will transform a message class representing the event into an SSE-encoded `WebDataMessage`.
+It might be convenient (and elegant) to wrap the channel returned by `openStream` with a *mapping channel* (see the Quasar docs) that will transform a message class representing the event into an SSE-encoded `WebDataMessage`.
 
 ### WebSockets
 
 [WebSocket](http://en.wikipedia.org/wiki/WebSocket) is a new web protocol for low(ish)-latency, bi-directional communication between the client and the server. Web sockets are extremely useful for interactive web applications, and they fit beautifully with COMSAT Web Actors.
 
-A web actor may register itself to handle web socket connections by declaring which WebSocket URIs it is interesten in, in the `@WebActor` annotations `webSocketUrlPatterns` property. Such a web actor will handle all web socket sessions at those URIs associated with the actor instance's HTTP session (a web socket is also associated with an HTTP session).
+A web actor may register itself to handle web socket connections by declaring which WebSocket URIs it is interested in, in the `@WebActor` annotations `webSocketUrlPatterns` property. Such a web actor will handle all web socket sessions at those URIs associated with the actor instance's HTTP session (a web socket is also associated with an HTTP session).
 
 When the client connects to a web socket, the web actor will receive a [`WebSocketOpened`]({{javadoc}}/comsat/webactors/WebSocketOpened.html) message, and each following message will be received as a [`WebDataMessage`]({{javadoc}}comsat/webactors/WebDataMessage.html). The actor can send messages to the client by replying to the sender with `WebDataMessage`s of its own.
 
@@ -839,3 +760,18 @@ The virtual actor that's the *sender* of the messages received from the client r
 [Apache Kafka](http://kafka.apache.org/) is a fast publish-subscribe messaging solution rethought as a distributed commit log.
 
 The `comsat-kafka` module provides a [Kafka Producer](https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html) with an asynchronous [`send`](https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html#send(org.apache.kafka.clients.producer.ProducerRecord,%20org.apache.kafka.clients.producer.Callback)) method that will return a Quasar [`SettableFuture`](http://docs.paralleluniverse.co/quasar/javadoc/index.html). A Quasar `SettableFuture` can block fibers in addition to threads.
+
+### Apache Shiro
+
+[Apache Shiro](http://shiro.apache.org/) is a security framework that performs authentication, authorization, cryptography, and session management.
+
+The `comsat-shiro` module adds instrumentation to some Shiro methods (via `suspendables` and `suspendable-supers`) so that developer-provided [Shiro Realms](http://shiro.apache.org/realm.html) can perform fiber-blocking calls when queried by fibers using [SecurityUtils](http://shiro.apache.org/static/1.2.1/apidocs/org/apache/shiro/SecurityUtils.html):
+
+~~~ java
+    SecurityUtils.getSubject().login(...);
+    boolean isAuthorized = SecurityUtils.getSubject().isAuthenticated();
+    if (isAuthorized) {
+        isAuthorized = SecurityUtils.getSubject().hasRole("someRole")
+            && SecurityUtils.getSubject().isPermitted("some:permission");
+    }
+~~~

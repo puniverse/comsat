@@ -1,3 +1,10 @@
+configurations.testRuntime {
+    resolutionStrategy { // Forcing earlier Tomcat version as later ones fail with "`getWriter` already called on response"
+        force 'org.apache.tomcat.embed:tomcat-embed-core:8.0.28'
+        force 'org.apache.tomcat.embed:tomcat-embed-el:8.0.28'
+    }
+}
+
 dependencies {
     compile "org.springframework:spring-orm:$springVer"
     compile "org.springframework.boot:spring-boot-starter-freemarker:$springBootVer"

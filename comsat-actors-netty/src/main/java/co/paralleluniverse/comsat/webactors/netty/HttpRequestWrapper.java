@@ -27,6 +27,8 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -44,12 +46,16 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 final class HttpRequestWrapper extends HttpRequest {
     public static final String CHARSET_MARKER_STRING = "charset=";
 
-    private final ByteBuf reqContent;
-
     final ActorRef<? super HttpResponse> actorRef;
     final FullHttpRequest req;
     final ChannelHandlerContext ctx;
+    final String sessionId;
 
+    private static final Set<io.netty.handler.codec.http.cookie.Cookie> EMPTY_SET = new HashSet<>();
+
+    private final ByteBuf reqContent;
+
+    private InetSocketAddress sourceAddress;
     private ImmutableMultimap<String, String> params;
     private URI uri;
     private Collection<Cookie> cookies;
@@ -59,15 +65,36 @@ final class HttpRequestWrapper extends HttpRequest {
     private Charset encoding;
     private String contentType;
 
-    public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req) {
+    public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req, String sessionId) {
         this.actorRef = actorRef;
         this.ctx = ctx;
         this.req = req;
-        this.reqContent = Unpooled.copiedBuffer(req.content());
+        this.sessionId = sessionId;
+
+        reqContent = Unpooled.copiedBuffer(req.content());
     }
 
     @Override
-    public Multimap<String, String> getParameters() {
+    public final String getSourceHost() {
+        fillSourceAddress();
+        return sourceAddress != null ? sourceAddress.getHostString() : null;
+    }
+
+    @Override
+    public final int getSourcePort() {
+        fillSourceAddress();
+        return sourceAddress != null ? sourceAddress.getPort() : -1;
+    }
+
+    private void fillSourceAddress() {
+        final SocketAddress remoteAddress = ctx.channel().remoteAddress();
+        if (sourceAddress == null && remoteAddress instanceof InetSocketAddress) {
+            sourceAddress = (InetSocketAddress) remoteAddress;
+        }
+    }
+
+    @Override
+    public final Multimap<String, String> getParameters() {
         QueryStringDecoder queryStringDecoder;
         if (params == null) {
             queryStringDecoder = new QueryStringDecoder(req.getUri());
@@ -81,12 +108,12 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public Map<String, Object> getAttributes() {
+    public final Map<String, Object> getAttributes() {
         return ImmutableMap.of(); // No attributes in Netty; Guava's impl. will return a pre-built instance
     }
 
     @Override
-    public String getScheme() {
+    public final String getScheme() {
         initUri();
         return uri.getScheme();
     }
@@ -102,52 +129,52 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public String getMethod() {
+    public final String getMethod() {
         return req.getMethod().name();
     }
 
     @Override
-    public String getPathInfo() {
+    public final String getPathInfo() {
         initUri();
         return uri.getPath();
     }
 
     @Override
-    public String getContextPath() {
+    public final String getContextPath() {
         return "/"; // Context path makes sense only for servlets
     }
 
     @Override
-    public String getQueryString() {
+    public final String getQueryString() {
         initUri();
         return uri.getQuery();
     }
 
     @Override
-    public String getRequestURI() {
+    public final String getRequestURI() {
         return req.getUri();
     }
 
     @Override
-    public String getServerName() {
+    public final String getServerName() {
         initUri();
         return uri.getHost();
     }
 
     @Override
-    public int getServerPort() {
+    public final int getServerPort() {
         initUri();
         return uri.getPort();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public ActorRef<WebMessage> getFrom() {
+    public final ActorRef<WebMessage> getFrom() {
         return (ActorRef<WebMessage>) actorRef;
     }
 
     @Override
-    public ListMultimap<String, String> getHeaders() {
+    public final ListMultimap<String, String> getHeaders() {
         if (heads == null) {
             heads = extractHeaders(req.headers());
         }
@@ -155,10 +182,10 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public Collection<Cookie> getCookies() {
+    public final Collection<Cookie> getCookies() {
         if (cookies == null) {
             final ImmutableList.Builder<Cookie> builder = ImmutableList.builder();
-            for (io.netty.handler.codec.http.cookie.Cookie c : ServerCookieDecoder.LAX.decode(req.headers().get("Cookies"))) {
+            for (io.netty.handler.codec.http.cookie.Cookie c : getNettyCookies(req)) {
                 builder.add(
                     Cookie.cookie(c.name(), c.value())
                         .setDomain(c.domain())
@@ -174,8 +201,17 @@ final class HttpRequestWrapper extends HttpRequest {
         return cookies;
     }
 
+    static Set<io.netty.handler.codec.http.cookie.Cookie> getNettyCookies(FullHttpRequest req) {
+        final HttpHeaders heads = req.headers();
+        final String head = heads != null ? heads.get(HttpHeaders.Names.COOKIE) : null;
+        if (head != null)
+            return ServerCookieDecoder.LAX.decode(head);
+        else
+            return EMPTY_SET;
+    }
+
     @Override
-    public int getContentLength() {
+    public final int getContentLength() {
         final String stringBody = getStringBody();
         if (stringBody != null)
             return stringBody.length();
@@ -186,14 +222,14 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public Charset getCharacterEncoding() {
+    public final Charset getCharacterEncoding() {
         if (encoding == null)
             encoding = extractCharacterEncoding(getHeaders());
         return encoding;
     }
 
     @Override
-    public String getContentType() {
+    public final String getContentType() {
         if (contentType == null) {
             getHeaders();
             if (heads != null) {
@@ -206,7 +242,7 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public String getStringBody() {
+    public final String getStringBody() {
         if (stringBody == null) {
             if (byteBufferBody != null)
                 return null;
@@ -216,7 +252,7 @@ final class HttpRequestWrapper extends HttpRequest {
     }
 
     @Override
-    public ByteBuffer getByteBufferBody() {
+    public final ByteBuffer getByteBufferBody() {
         if (byteBufferBody == null) {
             if (stringBody != null)
                 return null;
@@ -224,6 +260,10 @@ final class HttpRequestWrapper extends HttpRequest {
                 byteBufferBody = reqContent.nioBuffer();
         }
         return byteBufferBody;
+    }
+
+    public final String getSessionId() {
+        return sessionId;
     }
 
     private String decodeStringBody() {

@@ -66,7 +66,17 @@ final class ServletHttpRequest extends HttpRequest {
         this.response = response;
     }
 
-//    @Override
+    @Override
+    public final String getSourceHost() {
+        return request.getRemoteHost();
+    }
+
+    @Override
+    public final int getSourcePort() {
+        return request.getRemotePort();
+    }
+
+    //    @Override
 //    public String getRequestURL() {
 //        return request.getRequestURL().toString();
 //    }

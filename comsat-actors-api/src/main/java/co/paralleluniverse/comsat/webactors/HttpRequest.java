@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (c) 2013-2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (c) 2013-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -35,6 +35,16 @@ import java.util.TimeZone;
  * An HTTP request message.
  */
 public abstract class HttpRequest extends HttpMessage {
+    /**
+     * The Internet Protocol (IP) host that sent the request or {@code null} if not available.
+     */
+    public abstract String getSourceHost();
+
+    /**
+     * The Internet Protocol (IP) port from which the request was sent or {@code -1} if not available.
+     */
+    public abstract int getSourcePort();
+
     /**
      * A multimap of the parameters contained in this message and (all) their values.
      * If the request has no parameters, returns an empty multimap.
@@ -250,6 +260,7 @@ public abstract class HttpRequest extends HttpMessage {
     protected String contentString() {
         StringBuilder sb = new StringBuilder();
         sb.append(" ").append(getMethod());
+        sb.append(" sourceHost: ").append(getSourceHost());
         sb.append(" uri: ").append(getRequestURI());
         sb.append(" query: ").append(getQueryString());
         sb.append(" params: ").append(getParameters());
@@ -265,6 +276,8 @@ public abstract class HttpRequest extends HttpMessage {
         private final ActorRef<WebMessage> sender;
         private final String strBody;
         private final ByteBuffer binBody;
+        private String sourceHost;
+        private int sourcePort;
         private String contentType;
         private Charset charset;
         private List<Cookie> cookies;
@@ -290,6 +303,16 @@ public abstract class HttpRequest extends HttpMessage {
 
         public Builder(ActorRef<? super WebMessage> from) {
             this(from, (String) null);
+        }
+
+        public Builder setSourceHost(String sourceAddress) {
+            this.sourceHost = sourceAddress;
+            return this;
+        }
+
+        public Builder setSourcePort(int sourcePort) {
+            this.sourcePort = sourcePort;
+            return this;
         }
 
         /**
@@ -397,9 +420,20 @@ public abstract class HttpRequest extends HttpMessage {
             params.put(name, value);
             return this;
         }
+
+        /**
+         * Instantiates a new immutable {@link HttpRequest} based on the values set in this builder.
+         *
+         * @return a new {@link HttpRequest}
+         */
+        public HttpRequest build() {
+            return new SimpleHttpRequest(sender, this);
+        }
     }
 
     private static class SimpleHttpRequest extends HttpRequest {
+        private final String sourceHost;
+        private final int sourcePort;
         private final ActorRef<WebMessage> sender;
         private final String contentType;
         private final Charset charset;
@@ -421,6 +455,8 @@ public abstract class HttpRequest extends HttpMessage {
          * @param httpRequest
          */
         public SimpleHttpRequest(ActorRef<? super WebMessage> from, HttpRequest httpRequest) {
+            this.sourceHost = httpRequest.getSourceHost();
+            this.sourcePort = httpRequest.getSourcePort();
             this.sender = (ActorRef<WebMessage>) from;
             this.contentType = httpRequest.getContentType();
             this.charset = httpRequest.getCharacterEncoding();
@@ -437,6 +473,8 @@ public abstract class HttpRequest extends HttpMessage {
         }
 
         public SimpleHttpRequest(ActorRef<? super WebMessage> from, HttpRequest.Builder builder) {
+            this.sourceHost = builder.sourceHost;
+            this.sourcePort = builder.sourcePort;
             this.sender = (ActorRef<WebMessage>) from;
             this.contentType = builder.contentType;
             this.charset = builder.charset;
@@ -450,6 +488,16 @@ public abstract class HttpRequest extends HttpMessage {
             this.server = builder.server;
             this.port = builder.port;
             this.uri = builder.path;
+        }
+
+        @Override
+        public String getSourceHost() {
+            return sourceHost;
+        }
+
+        @Override
+        public int getSourcePort() {
+            return sourcePort;
         }
 
         @Override

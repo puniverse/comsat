@@ -58,4 +58,5 @@ include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-static'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-ui'
 include 'comsat-spring:comsat-spring-boot:comsat-spring-boot-sample-web-velocity'
 include 'comsat-kafka'
+include 'comsat-shiro'
 

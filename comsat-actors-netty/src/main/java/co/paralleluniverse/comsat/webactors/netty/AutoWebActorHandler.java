@@ -22,13 +22,9 @@ import co.paralleluniverse.common.reflection.ClassLoaderUtil;
 import co.paralleluniverse.common.util.Pair;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
-import io.netty.channel.ChannelHandlerContext;
+import co.paralleluniverse.fibers.Suspendable;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -36,19 +32,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author circlespainter
  */
-public final class AutoWebActorHandler extends WebActorHandler {
-    private static final AttributeKey<Context> SESSION_KEY = AttributeKey.newInstance(AutoWebActorHandler.class.getName() + ".session");
-
+public class AutoWebActorHandler extends WebActorHandler {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(AutoWebActorHandler.class);
-    private static final List<Class<?>> actorClasses = new ArrayList<>(4);
+    private static final List<Class<?>> actorClasses = new ArrayList<>(32);
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     public AutoWebActorHandler() {
@@ -68,54 +59,61 @@ public final class AutoWebActorHandler extends WebActorHandler {
     }
 
     public AutoWebActorHandler(final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-        super(new AutoContextProvider(userClassLoader, actorParams), httpResponseEncoderName);
+        super(null, httpResponseEncoderName);
+        super.contextProvider = newContextProvider(userClassLoader, actorParams);
     }
 
-    private static Context newActorContext(final FullHttpRequest req, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
-        return new AutoContext(req, actorParams, userClassLoader);
+    public AutoWebActorHandler(String httpResponseEncoderName, AutoContextProvider prov) {
+        super(prov, httpResponseEncoderName);
     }
 
-    private static class AutoContextProvider implements WebActorContextProvider {
+    protected AutoContextProvider newContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
+        return new AutoContextProvider(userClassLoader, actorParams);
+    }
+
+    public static class AutoContextProvider implements WebActorContextProvider {
         private final ClassLoader userClassLoader;
         private final Map<Class<?>, Object[]> actorParams;
+        private final Long defaultContextValidityMS;
 
         public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
+            this(userClassLoader, actorParams, null);
+        }
+
+        public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams, Long defaultContextValidityMS) {
             this.userClassLoader = userClassLoader;
             this.actorParams = actorParams;
+            this.defaultContextValidityMS = defaultContextValidityMS;
         }
 
         @Override
-        public final Context get(ChannelHandlerContext ctx, final FullHttpRequest req) {
-            final Attribute<Context> s = ctx.attr(SESSION_KEY);
-            if (s.get() == null) {
-                final String sessionId = getSessionId(req);
-                if (sessionId != null && sessionsEnabled()) {
-                    final Context actorContext = sessions.get(sessionId);
-                    if (actorContext != null) {
-                        if (actorContext.isValid()) {
-                            s.set(actorContext);
-                            return actorContext;
-                        } else
-                            sessions.remove(sessionId); // Evict session
-                    }
+        public final Context get(final FullHttpRequest req) {
+            final String sessionId = getSessionId(req);
+            if (sessionId != null && sessionsEnabled()) {
+                final Context actorContext = sessions.get(sessionId);
+                if (actorContext != null) {
+                    if (actorContext.renew())
+                        return actorContext;
+                    else
+                        sessions.remove(sessionId); // Evict session
                 }
-
-                final Context actorContext = newActorContext(req, userClassLoader, actorParams);
-                s.set(actorContext);
-                return actorContext;
             }
-            return s.get();
+            return newActorContext(req);
+        }
+
+        protected AutoContext newActorContext(FullHttpRequest req) {
+            final AutoContext c = new AutoContext(req, actorParams, userClassLoader);
+            if (defaultContextValidityMS !=  null)
+                c.setValidityMS(defaultContextValidityMS);
+            return c;
         }
 
         private String getSessionId(FullHttpRequest req) {
-            final String cookiesString = req.headers().get(HttpHeaders.Names.COOKIE);
-            if (cookiesString != null) {
-                final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookiesString);
-                if (cookies != null) {
-                    for (final Cookie c : cookies) {
-                        if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
-                            return c.value();
-                    }
+            final Set<Cookie> cookies = HttpRequestWrapper.getNettyCookies(req);
+            if (cookies != null) {
+                for (final Cookie c : cookies) {
+                    if (c != null && SESSION_COOKIE_KEY.equals(c.name()))
+                        return c.value();
                 }
             }
             return null;
@@ -123,6 +121,8 @@ public final class AutoWebActorHandler extends WebActorHandler {
     }
 
     private static class AutoContext extends DefaultContextImpl {
+        private String id;
+
         private final Map<Class<?>, Object[]> actorParams;
         private final ClassLoader userClassLoader;
         private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
@@ -131,6 +131,10 @@ public final class AutoWebActorHandler extends WebActorHandler {
         public AutoContext(FullHttpRequest req, Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
             this.actorParams = actorParams;
             this.userClassLoader = userClassLoader;
+            fillActor(req);
+        }
+
+        private void fillActor(FullHttpRequest req) {
             final Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> p = autoCreateActor(req);
             if (p != null) {
                 actorRef = p.getFirst();
@@ -139,7 +143,18 @@ public final class AutoWebActorHandler extends WebActorHandler {
         }
 
         @Override
-        public final ActorRef<? extends WebMessage> getRef() {
+        public final String getId() {
+            return id != null ? id : (id = UUID.randomUUID().toString());
+        }
+
+        @Override
+        public final void restart(FullHttpRequest req) {
+            renewed = new Date().getTime();
+            fillActor(req);
+        }
+
+        @Override
+        public final ActorRef<? extends WebMessage> getWebActor() {
             return actorRef;
         }
 
@@ -153,6 +168,11 @@ public final class AutoWebActorHandler extends WebActorHandler {
             return WebActorHandler.handlesWithWebSocket(uri, actorClass);
         }
 
+        @Override
+        public WatchPolicy watch() {
+            return WatchPolicy.DIE_IF_EXCEPTION_ELSE_RESTART;
+        }
+
         @SuppressWarnings("unchecked")
         private Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> autoCreateActor(FullHttpRequest req) {
             registerActorClasses();
@@ -160,7 +180,7 @@ public final class AutoWebActorHandler extends WebActorHandler {
             for (final Class<?> c : actorClasses) {
                 if (WebActorHandler.handlesWithHttp(uri, c) || WebActorHandler.handlesWithWebSocket(uri, c))
                     return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>>(
-                        Actor.newActor(
+                        Actor.newActor (
                             new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY)
                         ).spawn(),
                         (Class<? extends ActorImpl<? extends WebMessage>>) c

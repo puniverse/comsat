@@ -14,7 +14,6 @@
 package co.paralleluniverse.comsat.webactors.netty;
 
 import co.paralleluniverse.actors.Actor;
-import co.paralleluniverse.actors.ActorImpl;
 import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
@@ -28,7 +27,6 @@ import java.util.concurrent.ExecutionException;
 import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -56,15 +54,30 @@ public class WebActorTest extends AbstractWebActorTest {
     private static final ActorRef<? extends WebMessage> actorRef = actor.spawn();
 
     private static final WebActorHandler.DefaultContextImpl context = new WebActorHandler.DefaultContextImpl() {
+        @Override
+        public String getId() {
+            return "CONSTANT";
+        }
+
         @SuppressWarnings("unchecked")
         @Override
-        public ActorRef<? extends WebMessage> getRef() {
+        public ActorRef<? extends WebMessage> getWebActor() {
             return actorRef;
+        }
+
+        @Override
+        public void restart(FullHttpRequest r) {
+            // Nothing to do
         }
 
         @Override
         public final boolean handlesWithWebSocket(String uri) {
             return uri.startsWith("/ws");
+        }
+
+        @Override
+        public WatchPolicy watch() {
+            return WatchPolicy.DIE;
         }
 
         @Override
@@ -78,7 +91,7 @@ public class WebActorTest extends AbstractWebActorTest {
         public WebActorHandler call() throws Exception {
             return new WebActorHandler(new WebActorHandler.WebActorContextProvider() {
                 @Override
-                public WebActorHandler.Context get(ChannelHandlerContext ctx, FullHttpRequest req) {
+                public WebActorHandler.Context get(FullHttpRequest req) {
                     return context;
                 }
             });
