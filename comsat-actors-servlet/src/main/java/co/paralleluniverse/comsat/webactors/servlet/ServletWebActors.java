@@ -39,14 +39,19 @@ public final class ServletWebActors {
      * @param actor   the web actor
      * @return {@code actor}
      */
-    public static <T> ActorRef<T> attachWebActor(HttpSession session, final ActorRef<T> actor) {
+    public static <T> ActorRef<T> attachWebActor(final HttpSession session, final ActorRef<T> actor) {
         //noinspection unchecked,ConstantConditions
-        return WebActorServlet.getOrAttachSessionActor(session, new Callable<ActorRef>() {
+        return WebActorServlet.getOrAttachSessionActor(session, new Callable<WebActorServlet.HttpActorAdapter>() {
             @Override
-            public ActorRef call() throws Exception {
-                return actor;
+            public WebActorServlet.HttpActorAdapter call() throws Exception {
+                return new WebActorServlet.HttpActorAdapter(new Callable<ActorRef>() {
+                    @Override
+                    public ActorRef call() throws Exception {
+                        return actor;
+                    }
+                }, session);
             }
-        }).httpSessionActor.userWebActor;
+        }).userWebActorRef;
     }
 
     /**

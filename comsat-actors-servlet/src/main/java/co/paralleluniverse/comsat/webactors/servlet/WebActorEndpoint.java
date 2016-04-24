@@ -61,9 +61,15 @@ public final class WebActorEndpoint extends Endpoint {
         }
     }
 
+//    private ActorRef getUserWebActor(EndpointConfig config) {
+//        final WebActorServlet.SessionData psd = WebActorServlet.sessionToWebActor.get(getHttpSession(config).getId());
+//        return psd != null ? psd.httpSessionActor.userWebActorRef : null;
+//    }
+
     private ActorRef getUserWebActor(EndpointConfig config) {
-        final WebActorServlet.SessionData psd = WebActorServlet.sessionToWebActor.get(getHttpSession(config).getId());
-        return psd != null ? psd.httpSessionActor.userWebActor : null;
+        final WebActorServlet.HttpActorAdapter a =
+            (WebActorServlet.HttpActorAdapter) getHttpSession(config).getAttribute(WebActorServlet.SESSION_KEY_ACTOR);
+        return a != null ? a.userWebActorRef : null;
     }
 
     static WebSocketActor attachWebActor(Session session, EndpointConfig config, ActorRef<? super WebMessage> actor) {
