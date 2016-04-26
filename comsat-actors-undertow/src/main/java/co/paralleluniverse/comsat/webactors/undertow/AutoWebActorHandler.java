@@ -38,41 +38,47 @@ public final class AutoWebActorHandler extends WebActorHandler {
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     public AutoWebActorHandler() {
-        this(null, null);
+        this(null, null, null);
     }
 
-    public AutoWebActorHandler(ClassLoader userClassLoader) {
-        this(userClassLoader, null);
+    public AutoWebActorHandler(List<String> packagePrefixes) {
+        this(null, packagePrefixes, null);
     }
 
-    public AutoWebActorHandler(Map<Class<?>, Object[]> actorParams) {
-        this(null, actorParams);
+    public AutoWebActorHandler(ClassLoader userClassLoader, List<String> packagePrefixes) {
+        this(userClassLoader, packagePrefixes, null);
     }
 
-    public AutoWebActorHandler(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
+    public AutoWebActorHandler(List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
+        this(null, packagePrefixes, actorParams);
+    }
+
+    public AutoWebActorHandler(ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
         super(null);
-        super.contextProvider = newContextProvider(ClassLoader.getSystemClassLoader(), actorParams);
+        super.contextProvider = newContextProvider(userClassLoader != null ? userClassLoader : ClassLoader.getSystemClassLoader(), packagePrefixes, actorParams);
     }
 
     public AutoWebActorHandler(AutoContextProvider prov) {
         super(prov);
     }
 
-    protected AutoContextProvider newContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
-        return new AutoContextProvider(userClassLoader, actorParams);
+    protected AutoContextProvider newContextProvider(ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
+        return new AutoContextProvider(userClassLoader, packagePrefixes, actorParams);
     }
 
     private static class AutoContextProvider implements ContextProvider {
         private final ClassLoader userClassLoader;
         private final Map<Class<?>, Object[]> actorParams;
         private final Long defaultContextValidityMS;
+        private final List<String> packagePrefixes;
 
-        public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
-            this(userClassLoader, actorParams, null);
+        public AutoContextProvider(ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
+            this(userClassLoader, packagePrefixes, actorParams, null);
         }
 
-        public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams, Long defaultContextValidityMS) {
+        public AutoContextProvider(ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams, Long defaultContextValidityMS) {
             this.userClassLoader = userClassLoader;
+            this.packagePrefixes = packagePrefixes;
             this.actorParams = actorParams;
             this.defaultContextValidityMS = defaultContextValidityMS;
         }
@@ -98,7 +104,7 @@ public final class AutoWebActorHandler extends WebActorHandler {
         }
 
         private Context newContext(final HttpServerExchange xch) {
-            final AutoActorContext c = new AutoActorContext(xch, actorParams, userClassLoader);
+            final AutoActorContext c = new AutoActorContext(xch, packagePrefixes, actorParams, userClassLoader);
             if (defaultContextValidityMS !=  null)
                 c.setValidityMS(defaultContextValidityMS);
             return c;
@@ -108,12 +114,14 @@ public final class AutoWebActorHandler extends WebActorHandler {
     private static final class AutoActorContext extends DefaultContextImpl {
         private String id;
 
+        private final List<String> packagePrefixes;
         private final Map<Class<?>, Object[]> actorParams;
         private final ClassLoader userClassLoader;
         private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
         private ActorRef<? extends WebMessage> actorRef;
 
-        public AutoActorContext(HttpServerExchange xch, Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
+        public AutoActorContext(HttpServerExchange xch, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
+            this.packagePrefixes = packagePrefixes;
             this.actorParams = actorParams;
             this.userClassLoader = userClassLoader;
             fillActor(xch);
@@ -182,6 +190,17 @@ public final class AutoWebActorHandler extends WebActorHandler {
                     ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
                         @Override
                         public final void visit(String resource, URL url, ClassLoader cl) {
+                            if (packagePrefixes != null) {
+                                boolean found = false;
+                                for (final String packagePrefix : packagePrefixes) {
+                                    if (packagePrefix != null && resource.startsWith(packagePrefix.replace('.', '/'))) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found)
+                                    return;
+                            }
                             if (!ClassLoaderUtil.isClassFile(resource))
                                 return;
                             final String className = ClassLoaderUtil.resourceToClass(resource);
