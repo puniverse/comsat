@@ -20,8 +20,6 @@ import co.paralleluniverse.actors.LifecycleMessage;
 import co.paralleluniverse.comsat.webactors.WebDataMessage;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.comsat.webactors.WebSocketOpened;
-import static co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.ACTOR_KEY;
-import co.paralleluniverse.comsat.webactors.servlet.WebActorServlet.HttpActor;
 import co.paralleluniverse.fibers.FiberUtil;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.SuspendableRunnable;
@@ -42,13 +40,14 @@ import javax.websocket.Session;
  * A WebSocket endpoint that forwards requests to a web actor.
  */
 public final class WebActorEndpoint extends Endpoint {
+    private static final String ACTOR_SESSION_KEY = WebActorEndpoint.class.getName() + ".session.actor";
     private volatile EndpointConfig config;
 
     @Override
     public final void onOpen(Session session, EndpointConfig config) {
         if (this.config == null)
             this.config = config;
-        final ActorRef webActor = getHttpSessionActor(config).getUserActor();
+        final ActorRef webActor = getUserWebActor(config);
         if (webActor != null) {
             //noinspection unchecked
             final WebSocketActor wsa = attachWebActor(session, config, webActor);
@@ -62,15 +61,26 @@ public final class WebActorEndpoint extends Endpoint {
         }
     }
 
+//    private ActorRef getUserWebActor(EndpointConfig config) {
+//        final WebActorServlet.SessionData psd = WebActorServlet.sessionToWebActor.get(getHttpSession(config).getId());
+//        return psd != null ? psd.httpSessionActor.userWebActorRef : null;
+//    }
+
+    private ActorRef getUserWebActor(EndpointConfig config) {
+        final WebActorServlet.HttpActorAdapter a =
+            (WebActorServlet.HttpActorAdapter) getHttpSession(config).getAttribute(WebActorServlet.SESSION_KEY_ACTOR);
+        return a != null ? a.userWebActorRef : null;
+    }
+
     static WebSocketActor attachWebActor(Session session, EndpointConfig config, ActorRef<? super WebMessage> actor) {
         return attachWebActor(session, getHttpSession(config), actor);
     }
 
     static WebSocketActor attachWebActor(Session session, HttpSession httpSession, ActorRef<? super WebMessage> actor) {
-        if (session.getUserProperties().containsKey(ACTOR_KEY))
+        if (session.getUserProperties().containsKey(ACTOR_SESSION_KEY))
             throw new RuntimeException("Session is already attached to an actor.");
         final WebSocketActor wsa = new WebSocketActor(session, httpSession, actor);
-        session.getUserProperties().put(ACTOR_KEY, wsa);
+        session.getUserProperties().put(ACTOR_SESSION_KEY, wsa);
         return wsa;
     }
 
@@ -85,14 +95,7 @@ public final class WebActorEndpoint extends Endpoint {
     }
 
     private static WebSocketActor getSessionActor(Session session) {
-        return (WebSocketActor) session.getUserProperties().get(ACTOR_KEY);
-    }
-
-    private static HttpActor getHttpSessionActor(EndpointConfig config) {
-        final HttpSession httpSession = getHttpSession(config);
-        if (httpSession == null)
-            throw new RuntimeException("HttpSession hasn't been embedded by the EndPoint Configurator.");
-        return (HttpActor) httpSession.getAttribute(ACTOR_KEY);
+        return (WebSocketActor) session.getUserProperties().get(ACTOR_SESSION_KEY);
     }
 
     private static HttpSession getHttpSession(EndpointConfig config) {
