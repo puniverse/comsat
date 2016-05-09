@@ -146,15 +146,18 @@ public class WebActorHandler implements HttpHandler {
     static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
 
     protected ContextProvider contextProvider;
+    private HttpHandler fallbackHttpHandler = null;
 
     public WebActorHandler(ContextProvider contextProvider) {
         this.contextProvider = contextProvider;
-        // this.continueHandler = Handlers.httpContinueRead(null);
+    }
+
+    public final void setFallbackHttpHandler(HttpHandler httpHandler) {
+        this.fallbackHttpHandler = httpHandler;
     }
 
     @Override
     public final void handleRequest(final HttpServerExchange xch) throws Exception {
-        // continueHandler.handleRequest(xch);
 
         final Context context = contextProvider.get(xch);
         assert context != null;
@@ -268,7 +271,11 @@ public class WebActorHandler implements HttpHandler {
                 }
             }
 
-            sendHttpResponse(xch, StatusCodes.NOT_FOUND);
+            if (fallbackHttpHandler != null) {
+                fallbackHttpHandler.handleRequest(xch);
+            } else {
+                sendHttpResponse(xch, StatusCodes.NOT_FOUND);
+            }
         } finally {
             if (lock.isHeldByCurrentStrand() && lock.isLocked())
                 lock.unlock();
