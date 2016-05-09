@@ -160,7 +160,10 @@ public class WebActorHandler implements HttpHandler {
     public final void handleRequest(final HttpServerExchange xch) throws Exception {
 
         final Context context = contextProvider.get(xch);
-        assert context != null;
+        if (context == null) {
+            handlingComplete(xch);
+            return;
+        }
 
         final ReentrantLock lock = context.getLock();
         assert lock != null;
@@ -271,14 +274,19 @@ public class WebActorHandler implements HttpHandler {
                 }
             }
 
-            if (fallbackHttpHandler != null) {
-                fallbackHttpHandler.handleRequest(xch);
-            } else {
-                sendHttpResponse(xch, StatusCodes.NOT_FOUND);
-            }
+            handlingComplete(xch);
+
         } finally {
             if (lock.isHeldByCurrentStrand() && lock.isLocked())
                 lock.unlock();
+        }
+    }
+
+    private void handlingComplete(HttpServerExchange xch) throws Exception {
+        if (fallbackHttpHandler != null) {
+            fallbackHttpHandler.handleRequest(xch);
+        } else {
+            sendHttpResponse(xch, StatusCodes.NOT_FOUND);
         }
     }
 
