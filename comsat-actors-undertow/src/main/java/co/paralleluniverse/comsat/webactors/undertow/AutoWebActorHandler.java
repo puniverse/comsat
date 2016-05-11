@@ -96,11 +96,10 @@ public final class AutoWebActorHandler extends WebActorHandler {
 
                 if (session != null) {
                     Context sessionContext = (Context) session.getAttribute(ACTOR_KEY);
-                    if (sessionContext == null || !sessionContext.renew()) {
+                    if (sessionContext == null || !sessionContext.renew())
                         session.setAttribute(ACTOR_KEY, actorContext);
-                    } else {
+                    else
                         actorContext = sessionContext;
-                    }
                 }
             }
 
@@ -110,9 +109,8 @@ public final class AutoWebActorHandler extends WebActorHandler {
         private Context newContext(final HttpServerExchange xch) {
             final AutoActorContext c = new AutoActorContext(packagePrefixes, actorParams, userClassLoader);
             boolean valid = c.fillActor(xch);
-            if (!valid) {
+            if (!valid)
                 return null;
-            }
 
             if (defaultContextValidityMS != null)
                 c.setValidityMS(defaultContextValidityMS);
@@ -187,8 +185,8 @@ public final class AutoWebActorHandler extends WebActorHandler {
             final String uri = xch.getRequestURI();
             for (final Class<?> c : actorClasses) {
                 if (WebActorHandler.handlesWithHttp(uri, c) || WebActorHandler.handlesWithWebSocket(uri, c))
-                    return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>>(
-                        Actor.newActor(
+                    return new Pair<ActorRef<? extends WebMessage>, Class<? extends ActorImpl<? extends WebMessage>>> (
+                        Actor.newActor (
                             new ActorSpec(c, actorParams != null ? actorParams.get(c) : EMPTY_OBJECT_ARRAY)
                         ).spawn(),
                         (Class<? extends ActorImpl<? extends WebMessage>>) c

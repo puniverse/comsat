@@ -283,11 +283,10 @@ public class WebActorHandler implements HttpHandler {
     }
 
     private void handlingComplete(HttpServerExchange xch) throws Exception {
-        if (fallbackHttpHandler != null) {
+        if (fallbackHttpHandler != null)
             fallbackHttpHandler.handleRequest(xch);
-        } else {
+        else
             sendHttpResponse(xch, StatusCodes.NOT_FOUND);
-        }
     }
 
     static void addActorToContextAndUnlock(Context context, ActorImpl actor, ReentrantLock lock) {
