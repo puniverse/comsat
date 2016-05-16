@@ -445,6 +445,7 @@ project (':comsat-retrofit') {
     dependencies {
         compile "com.squareup.retrofit:retrofit:$retrofitVer"
         compile project (':comsat-httpclient')
+        compile project (':comsat-okhttp')
         testCompile (project (':comsat-dropwizard')) {
             exclude group: 'org.jboss.logging', module: 'jboss-logging'
             exclude group: 'org.apache.httpcomponents', module: 'httpclient' 
