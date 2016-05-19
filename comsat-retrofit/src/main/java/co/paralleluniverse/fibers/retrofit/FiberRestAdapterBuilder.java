@@ -23,27 +23,27 @@ import retrofit.client.ApacheClient;
 import retrofit.client.Client;
 import retrofit.client.OkClient;
 
-public class FiberRestAdapterBuilder extends RestAdapter.Builder {
+public final class FiberRestAdapterBuilder extends RestAdapter.Builder {
     private HttpClient httpClient;
     private OkHttpClient okHttpClient;
 
     @Override
-    public RestAdapter.Builder setClient(Client.Provider clientProvider) {
-        throw new UnsupportedOperationException("Only Fiber Apache Http or OkHttp clients are allowed here. Use setClient(FiberHttpClient) instead.");
+    public final RestAdapter.Builder setClient(Client.Provider clientProvider) {
+        throw new UnsupportedOperationException("Only Fiber Apache Http or OkHttp clients are allowed here. Use setClient(FiberHttpClient) or setClient(FiberOkHttpClient) instead.");
     }
 
     @Override
-    public RestAdapter.Builder setClient(Client client) {
-        throw new UnsupportedOperationException("Only Fiber Apache Http or OkHttp clients are allowed here. Use setClient(FiberHttpClient) instead.");
+    public final RestAdapter.Builder setClient(Client client) {
+        throw new UnsupportedOperationException("Only Fiber Apache Http or OkHttp clients are allowed here. Use setClient(FiberHttpClient) or setClient(FiberOkHttpClient) instead.");
 
     }
 
-    public RestAdapter.Builder setClient(FiberHttpClient client) {
+    public final RestAdapter.Builder setClient(FiberHttpClient client) {
         this.httpClient = client;
         return this;
     }
 
-    public RestAdapter.Builder setClient(FiberOkHttpClient client) {
+    public final RestAdapter.Builder setClient(FiberOkHttpClient client) {
         this.okHttpClient = client;
         return this;
     }
