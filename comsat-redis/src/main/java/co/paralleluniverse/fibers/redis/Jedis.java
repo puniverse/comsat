@@ -22,11 +22,22 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
-import redis.clients.jedis.*;
+import redis.clients.util.Pool;
+import redis.clients.jedis.Tuple;
+import redis.clients.jedis.ScanResult;
+import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.SortingParams;
+import redis.clients.jedis.ZParams;
+import redis.clients.jedis.BinaryClient;
+import redis.clients.jedis.GeoRadiusResponse;
+import redis.clients.jedis.GeoCoordinate;
+import redis.clients.jedis.GeoUnit;
+import redis.clients.jedis.BitOP;
+import redis.clients.jedis.BitPosParams;
 import redis.clients.jedis.params.geo.GeoRadiusParam;
 import redis.clients.jedis.params.sortedset.ZAddParams;
 import redis.clients.jedis.params.sortedset.ZIncrByParams;
-import redis.clients.util.Pool;
 import redis.clients.util.Slowlog;
 
 import java.net.URI;
@@ -34,10 +45,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntBinaryOperator;
-import java.util.function.LongBinaryOperator;
-import java.util.function.ToIntFunction;
-import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.EMPTY_MAP;
@@ -45,7 +52,7 @@ import static java.util.Collections.EMPTY_MAP;
 /**
  * @author circlespainter
  */
-public final class FiberJedis extends Jedis {
+public final class Jedis extends redis.clients.jedis.Jedis {
     private final RedisClient redisClient;
     private final StatefulRedisPubSubConnection<String, String> pubSubConn;
     private final StatefulRedisConnection<String, String> commandsConn;
@@ -53,7 +60,7 @@ public final class FiberJedis extends Jedis {
     final RedisPubSubAsyncCommands<String, String> pubSub;
     final RedisAsyncCommands<String, String> commands;
 
-    public FiberJedis(RedisClient client) {
+    public Jedis(RedisClient client) {
         redisClient = client;
         pubSubConn = redisClient.connectPubSub();
         commandsConn = redisClient.connect();
@@ -61,27 +68,27 @@ public final class FiberJedis extends Jedis {
         pubSub = pubSubConn.async();
     }
 
-    public FiberJedis() {
+    public Jedis() {
         this(RedisClient.create());
     }
 
-    public FiberJedis(String host) {
+    public Jedis(String host) {
         this(RedisClient.create(RedisURI.create("redis://" + host)));
     }
 
-    public FiberJedis(String host, int port) {
+    public Jedis(String host, int port) {
         this(RedisClient.create(RedisURI.create(host, port)));
     }
 
-    public FiberJedis(String host, int port, int timeout) {
+    public Jedis(String host, int port, int timeout) {
         this(RedisClient.create(RedisURI.Builder.redis(host, port).withTimeout(timeout, TimeUnit.MILLISECONDS).build()));
     }
 
-    public FiberJedis(URI uri) {
+    public Jedis(URI uri) {
         this(RedisClient.create(RedisURI.Builder.redis(uri.getHost(), uri.getPort()).build()));
     }
 
-    public FiberJedis(URI uri, int timeout) {
+    public Jedis(URI uri, int timeout) {
         this(RedisClient.create(RedisURI.Builder.redis(uri.getHost(), uri.getPort()).withTimeout(timeout, TimeUnit.MILLISECONDS).build()));
     }
 
@@ -1266,7 +1273,7 @@ public final class FiberJedis extends Jedis {
     @Override
     @Suspendable
     public final List<GeoCoordinate> geopos(String key, String... members) {
-        return e(() -> AsyncCompletionStage.get(commands.geopos(key, members)).stream().map(FiberJedis::toGeoCoordinate).collect(Collectors.toList()));
+        return e(() -> AsyncCompletionStage.get(commands.geopos(key, members)).stream().map(Jedis::toGeoCoordinate).collect(Collectors.toList()));
     }
 
     private static GeoArgs.Unit toUnit(GeoUnit unit) {
@@ -1280,7 +1287,7 @@ public final class FiberJedis extends Jedis {
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadius(String key, double longitude, double latitude, double radius, GeoUnit unit) {
-        return e(() -> AsyncCompletionStage.get(commands.georadius(key, longitude, latitude, radius, toUnit(unit))).stream().map(FiberJedis::toGeoRadius).collect(Collectors.toList()));
+        return e(() -> AsyncCompletionStage.get(commands.georadius(key, longitude, latitude, radius, toUnit(unit))).stream().map(Jedis::toGeoRadius).collect(Collectors.toList()));
     }
 
     private static GeoRadiusResponse toGeoRadius(GeoWithin<String> s) {
@@ -1293,7 +1300,7 @@ public final class FiberJedis extends Jedis {
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadius(String key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
-        return e(() -> AsyncCompletionStage.get(commands.georadius(key, longitude, latitude, radius, toUnit(unit), toGeoArgs(param))).stream().map(FiberJedis::toGeoRadius).collect(Collectors.toList()));
+        return e(() -> AsyncCompletionStage.get(commands.georadius(key, longitude, latitude, radius, toUnit(unit), toGeoArgs(param))).stream().map(Jedis::toGeoRadius).collect(Collectors.toList()));
     }
 
     private static GeoArgs toGeoArgs(GeoRadiusParam param) {
@@ -1303,13 +1310,13 @@ public final class FiberJedis extends Jedis {
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadiusByMember(String key, String member, double radius, GeoUnit unit) {
-        return e(() -> AsyncCompletionStage.get(commands.georadiusbymember(key, member, radius, toUnit(unit))).stream().map(FiberJedis::toGeoRadius).collect(Collectors.toList()));
+        return e(() -> AsyncCompletionStage.get(commands.georadiusbymember(key, member, radius, toUnit(unit))).stream().map(Jedis::toGeoRadius).collect(Collectors.toList()));
     }
 
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadiusByMember(String key, String member, double radius, GeoUnit unit, GeoRadiusParam param) {
-        return e(() -> AsyncCompletionStage.get(commands.georadiusbymember(key, member, radius, toUnit(unit), toGeoArgs(param))).stream().map(FiberJedis::toGeoRadius).collect(Collectors.toList()));
+        return e(() -> AsyncCompletionStage.get(commands.georadiusbymember(key, member, radius, toUnit(unit), toGeoArgs(param))).stream().map(Jedis::toGeoRadius).collect(Collectors.toList()));
     }
 
 
@@ -1401,105 +1408,17 @@ public final class FiberJedis extends Jedis {
         toBeRemoved.forEach(m::remove);
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public class PubSub extends JedisPubSub {
-        private ConcurrentHashMap<Set<String>, Optional<RedisPubSubListener<String, String>>> channelListeners = new ConcurrentHashMap<>();
-
-        private ConcurrentHashMap<Set<String>, Optional<RedisPubSubListener<String, String>>> patternListeners = new ConcurrentHashMap<>();
-
-        @Override
-        public final void unsubscribe() {
-            channelListeners.replaceAll((k, v) -> {
-                if (v.isPresent())
-                    FiberJedis.this.pubSub.removeListener(v.get());
-                return Optional.empty();
-            });
-            channelListeners.clear();
-        }
-
-        @Override
-        public final void unsubscribe(String... channels) {
-            channelListeners.computeIfPresent(new HashSet<>(Arrays.asList(channels)), (k, v) -> {
-                if (v.isPresent())
-                    FiberJedis.this.pubSub.removeListener(v.get());
-                return Optional.empty();
-            });
-            clearEmpties(channelListeners);
-        }
-
-        @Override
-        public final void punsubscribe() {
-            patternListeners.replaceAll((k, v) -> {
-                if (v.isPresent())
-                    FiberJedis.this.pubSub.removeListener(v.get());
-                return Optional.empty();
-            });
-            patternListeners.clear();
-        }
-
-        @Override
-        public final void punsubscribe(String... patterns) {
-            patternListeners.computeIfPresent(new HashSet<>(Arrays.asList(patterns)), (k, v) -> {
-                if (v.isPresent())
-                    FiberJedis.this.pubSub.removeListener(v.get());
-                return Optional.empty();
-            });
-            clearEmpties(patternListeners);
-        }
-
-        @Override
-        public final void subscribe(String... channels) {
-            FiberJedis.this.subscribe(this, channels);
-        }
-
-        @Override
-        public final void psubscribe(String... patterns) {
-            FiberJedis.this.psubscribe(this, patterns);
-        }
-
-        @Override
-        public final boolean isSubscribed() {
-            final ToLongFunction<Map.Entry<Set<String>, Optional<RedisPubSubListener<String, String>>>> tlf =
-                e -> e.getValue().map(v -> 1L).orElse(0L);
-            final LongBinaryOperator lbo = (l1, l2) -> l1 + l2;
-            return
-                channelListeners.reduceEntriesToLong(Runtime.getRuntime().availableProcessors(), tlf, 0, lbo) > 0 ||
-                patternListeners.reduceEntriesToLong(Runtime.getRuntime().availableProcessors(), tlf, 0, lbo) > 0;
-        }
-
-        @Override
-        public final int getSubscribedChannels() {
-            final ToIntFunction<Map.Entry<Set<String>, Optional<RedisPubSubListener<String, String>>>> tlf =
-                e -> e.getValue().map(v -> FiberJedis.this.pubsubNumSub(e.getKey().toArray(new String[e.getKey().size()])).size()).orElse(0);
-            final IntBinaryOperator lbo = (l1, l2) -> l1 + l2;
-            return
-                channelListeners.reduceEntriesToInt(Runtime.getRuntime().availableProcessors(), tlf, 0, lbo) +
-                patternListeners.reduceEntriesToInt(Runtime.getRuntime().availableProcessors(), tlf, 0, lbo);
-        }
-
-        /////////////////////////// MEANINGLESS
-        @Override
-        public final void proceedWithPatterns(Client client, String... patterns) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public final void proceed(Client client, String... channels) {
-            throw new UnsupportedOperationException();
-        }
-    }
-
     private static final class FiberRedisPubSubListener implements RedisPubSubListener<String, String> {
-        private final PubSub pubSub;
+        private final JedisPubSub pubSub;
 
-        FiberRedisPubSubListener(PubSub pubSub, boolean pattern, String... args) {
+        FiberRedisPubSubListener(JedisPubSub pubSub, boolean pattern, String... args) {
             this.pubSub = pubSub;
             final HashSet<String> k = new HashSet<>(Arrays.asList(args));
             final Optional<RedisPubSubListener<String, String>> v = Optional.of(this);
             if (pattern)
                 pubSub.patternListeners.put(k, v);
             else
-                pubSub.patternListeners.put(k, v);
+                pubSub.channelListeners.put(k, v);
         }
 
         @Override
@@ -1537,10 +1456,16 @@ public final class FiberJedis extends Jedis {
         }
     }
 
+    private static void validateFiberPubSub(redis.clients.jedis.JedisPubSub jedisPubSub) {
+        if (!(jedisPubSub instanceof JedisPubSub))
+            throw new IllegalArgumentException("Only subclasses of '" + JedisPubSub.class.getName() + "' can be used with '" + Jedis.class.getName() + "'");
+    }
+
     @Override
     @Suspendable
-    public final void subscribe(JedisPubSub jedisPubSub, String... channels) {
-        pubSub.addListener(new FiberRedisPubSubListener((PubSub) jedisPubSub, false, channels));
+    public final void subscribe(redis.clients.jedis.JedisPubSub jedisPubSub, String... channels) {
+        validateFiberPubSub(jedisPubSub);
+        pubSub.addListener(new FiberRedisPubSubListener((JedisPubSub) jedisPubSub, false, channels));
     }
 
     @Override
@@ -1551,8 +1476,9 @@ public final class FiberJedis extends Jedis {
 
     @Override
     @Suspendable
-    public final void psubscribe(JedisPubSub jedisPubSub, String... patterns) {
-        pubSubConn.addListener(new FiberRedisPubSubListener((PubSub) jedisPubSub, true, patterns));
+    public final void psubscribe(redis.clients.jedis.JedisPubSub jedisPubSub, String... patterns) {
+        validateFiberPubSub(jedisPubSub);
+        pubSubConn.addListener(new FiberRedisPubSubListener((JedisPubSub) jedisPubSub, true, patterns));
     }
 
     @Override
@@ -1904,7 +1830,7 @@ public final class FiberJedis extends Jedis {
 
     /////////////////////////// MEANINGLESS
     @Override
-    public void setDataSource(Pool<Jedis> jedisPool) {
+    public void setDataSource(Pool<redis.clients.jedis.Jedis> jedisPool) {
         throw new UnsupportedOperationException();
     }
 }

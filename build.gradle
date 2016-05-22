@@ -523,7 +523,7 @@ project (':comsat-httpclient') {
     }
 }
 
-/* project (':comsat-mongodb') {    
+/* project (':comsat-mongodb') {
 dependencies {
 srcFiles "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVer:sources"
 }
