@@ -1,0 +1,19 @@
+compileJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
+dependencies {
+    compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
+    compile "biz.paluch.redis:lettuce:$lettuceVer"
+    compile "redis.clients:jedis:$jedisVer"
+}
+
+jar {
+    classifier = 'jdk8'
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}

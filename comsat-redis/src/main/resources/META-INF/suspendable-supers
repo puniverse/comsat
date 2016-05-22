@@ -1,0 +1,9 @@
+redis.clients.jedis.JedisCommands.*
+redis.clients.jedis.MultiKeyCommands.*
+redis.clients.jedis.AdvancedJedisCommands.*
+redis.clients.jedis.ScriptingCommands.*
+redis.clients.jedis.BasicCommands.*
+redis.clients.jedis.ClusterCommands.*
+redis.clients.jedis.SentinelCommands.*
+redis.clients.jedis.BinaryJedis.*
+redis.clients.jedis.Jedis.*

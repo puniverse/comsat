@@ -109,6 +109,9 @@ subprojects {
     ext.kafkaClientsVer                 = '0.9.0.0' // ''0.8.2.2'
     ext.shiroVer                        = '1.2.4'
 
+    ext.lettuceVer                      = '4.1.2.Final'
+    ext.jedisVer                        = '2.8.1'
+
     configurations.all {
         resolutionStrategy {
             failOnVersionConflict()
@@ -158,6 +161,10 @@ subprojects {
             force "org.hibernate:hibernate-validator:$hibernateValidatorVer"
 
             force "org.slf4j:jcl-over-slf4j:$slf4jApiVer"
+
+            // TODO factor version
+            force "org.apache.commons:commons-pool2:2.4.2"
+            force "org.latencyutils:LatencyUtils:2.0.3"
 
             force "junit:junit:$junitVer"
         }
