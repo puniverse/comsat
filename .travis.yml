@@ -1,6 +1,11 @@
 language: java
 install: gradle -q assemble
-script: set -o pipefail; gradle check | sed 's/\e\[?.*?[\@-~]//g'
+script:
+  - set -o pipefail; gradle check | sed 's/\e\[?.*?[\@-~]//g'
+  - chmod a+x travis/build2.sh
+  - ./travis/build2.sh
+  - chmod a+x travis/post_build.sh
+  - ./travis/post_build.sh
 jdk:
   - oraclejdk7
   - oraclejdk8
@@ -20,11 +25,5 @@ before_install:
   - export PATH="$HOME/.linuxbrew/bin:$PATH"
   - brew install redis
 
-after_success:
-  - chmod a+x travis/build_clj.sh
-  - ./travis/build_clj.sh
-  - chmod a+x travis/post_build.sh
-  - ./travis/post_build.sh
-  
 notifications:
   slack: puniverse:OsnbakHrYeTcLyalVgtUeI4F
