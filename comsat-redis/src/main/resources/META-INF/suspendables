@@ -1,0 +1,5 @@
+redis.clients.jedis.JedisPool.getResource
+redis.clients.util.Pool.getResource
+org.apache.commons.pool2.impl.GenericObjectPool.borrowObject
+org.apache.commons.pool2.impl.GenericObjectPool.borrowObject
+org.apache.commons.pool2.impl.GenericObjectPool.create

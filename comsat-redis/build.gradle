@@ -3,6 +3,11 @@ compileJava {
     targetCompatibility = '1.8'
 }
 
+compileTestJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
 dependencies {
     compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
     compile "biz.paluch.redis:lettuce:$lettuceVer"
@@ -17,3 +22,10 @@ artifacts {
     archives sourcesJar
     archives javadocJar
 }
+
+test.enabled = false
+
+task redisTest(type: Test) {}
+
+if (!ext.java8)
+    redisTest.enabled = false

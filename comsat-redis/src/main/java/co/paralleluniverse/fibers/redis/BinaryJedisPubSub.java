@@ -16,39 +16,41 @@ package co.paralleluniverse.fibers.redis;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import redis.clients.jedis.Client;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static co.paralleluniverse.fibers.redis.Jedis.contains;
 
 /**
  * @author circlespainter
  */
 @SuppressWarnings("WeakerAccess")
-public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
+public class BinaryJedisPubSub extends redis.clients.jedis.BinaryJedisPubSub {
     Jedis jedis;
 
-    ConcurrentHashMap<String, List<RedisPubSubListener<String, String>>> channelListeners = new ConcurrentHashMap<>();
-    ConcurrentHashMap<String, List<RedisPubSubListener<String, String>>> patternListeners = new ConcurrentHashMap<>();
+    ConcurrentHashMap<byte[], List<RedisPubSubListener<byte[], byte[]>>> channelListeners = new ConcurrentHashMap<>();
+    ConcurrentHashMap<byte[], List<RedisPubSubListener<byte[], byte[]>>> patternListeners = new ConcurrentHashMap<>();
 
     AtomicLong subscribedChannels = new AtomicLong();
 
     @Override
     public final void unsubscribe() {
         channelListeners.replaceAll((k, v) -> {
-            for(final RedisPubSubListener<String, String> l : v)
-                jedis.stringPubSub.removeListener(l);
+            for (final RedisPubSubListener<byte[], byte[]> l : v)
+                jedis.binaryPubSub.removeListener(l);
             return Collections.EMPTY_LIST;
         });
         channelListeners.clear();
     }
 
     @Override
-    public final void unsubscribe(String... channels) {
-        final List<String> chL = Arrays.asList(channels);
+    public final void unsubscribe(byte[]... channels) {
         channelListeners.replaceAll((k, v) -> {
-            if (chL.contains(k)) {
-                for (final RedisPubSubListener<String, String> l : v)
-                    jedis.stringPubSub.removeListener(l);
+            if (contains(channels, k)) {
+                for (final RedisPubSubListener<byte[], byte[]> l : v)
+                    jedis.binaryPubSub.removeListener(l);
                 return Collections.EMPTY_LIST;
             } else {
                 return v;
@@ -60,20 +62,19 @@ public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
     @Override
     public final void punsubscribe() {
         patternListeners.replaceAll((k, v) -> {
-            for(final RedisPubSubListener<String, String> l : v)
-                jedis.stringPubSub.removeListener(l);
+            for(final RedisPubSubListener<byte[], byte[]> l : v)
+                jedis.binaryPubSub.removeListener(l);
             return Collections.EMPTY_LIST;
         });
         patternListeners.clear();
     }
 
     @Override
-    public final void punsubscribe(String... patterns) {
-        final List<String> chL = Arrays.asList(patterns);
+    public final void punsubscribe(byte[]... patterns) {
         patternListeners.replaceAll((k, v) -> {
-            if (chL.contains(k)) {
-                for (final RedisPubSubListener<String, String> l : v)
-                    jedis.stringPubSub.removeListener(l);
+            if (contains(patterns, k)) {
+                for (final RedisPubSubListener<byte[], byte[]> l : v)
+                    jedis.binaryPubSub.removeListener(l);
                 return Collections.EMPTY_LIST;
             } else {
                 return v;
@@ -83,12 +84,12 @@ public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
     }
 
     @Override
-    public final void subscribe(String... channels) {
+    public final void subscribe(byte[]... channels) {
         jedis.subscribe(this, channels);
     }
 
     @Override
-    public final void psubscribe(String... patterns) {
+    public final void psubscribe(byte[]... patterns) {
         jedis.psubscribe(this, patterns);
     }
 
@@ -103,12 +104,12 @@ public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
     }
 
     @Override
-    public final void proceedWithPatterns(Client client, String... patterns) {
+    public final void proceedWithPatterns(Client client, byte[]... patterns) {
         // Nothing to do
     }
 
     @Override
-    public final void proceed(Client client, String... channels) {
+    public final void proceed(Client client, byte[]... channels) {
         // Nothing to do
     }
 }

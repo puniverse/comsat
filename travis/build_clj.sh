@@ -20,6 +20,11 @@ cd comsat-httpkit
 lein test || error_exit "Error building 'comsat-clj-http'"
 cd ..
 
+echo -e "Building 'comsat-redis'..."
+cd comsat-redis
+make test || error_exit "Error building 'comsat-redis'"
+cd ..
+
 end=$(date +%s)
 elapsed=$(( $end - $start ))
 minutes=$(( $elapsed / 60 ))

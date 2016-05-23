@@ -13,6 +13,12 @@ env:
     - DOCS_BRANCH="release"
     - GEN_APIDOCS="gradle javadoc"
 
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y ruby
+  - ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install)"
+  - brew install redis
+
 after_success:
   - chmod a+x travis/build_clj.sh
   - ./travis/build_clj.sh
