@@ -15,8 +15,9 @@ env:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y ruby
-  - ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install)"
+  - sudo apt-get install build-essential curl git python-setuptools ruby
+  - git clone https://github.com/Linuxbrew/linuxbrew.git ~/.linuxbrew
+  - export PATH="$HOME/.linuxbrew/bin:$PATH"
   - brew install redis
 
 after_success:
