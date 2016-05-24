@@ -1942,7 +1942,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Long zcount(byte[] key, byte[] min, byte[] max) {
-        return await(binaryCommands.zcount(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8)));
+        return await(binaryCommands.zcount(key, toString(min), toString(max)));
     }
 
     @Override
@@ -1954,7 +1954,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<byte[]> zrangeByScore(byte[] key, byte[] min, byte[] max) {
-        return new HashSet<>(await(binaryCommands.zrangebyscore(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8))));
+        return new HashSet<>(await(binaryCommands.zrangebyscore(key, toString(min), toString(max))));
     }
 
     @Override
@@ -1966,7 +1966,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<byte[]> zrangeByScore(byte[] key, byte[] min, byte[] max, int offset, int count) {
-        return new HashSet<>(await(binaryCommands.zrangebyscore(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8), offset, count)));
+        return new HashSet<>(await(binaryCommands.zrangebyscore(key, toString(min), toString(max), offset, count)));
     }
 
     @Override
@@ -1978,7 +1978,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(byte[] key, byte[] min, byte[] max) {
-        return toTupleSet((List) await(binaryCommands.zrangebyscoreWithScores(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8))));
+        return toTupleSet((List) await(binaryCommands.zrangebyscoreWithScores(key, toString(min), toString(max))));
     }
 
     @Override
@@ -1990,7 +1990,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(byte[] key, byte[] min, byte[] max, int offset, int count) {
-        return toTupleSet((List) await(binaryCommands.zrangebyscoreWithScores(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8), offset, count)));
+        return toTupleSet((List) await(binaryCommands.zrangebyscoreWithScores(key, toString(min), toString(max), offset, count)));
     }
 
     @Override
@@ -2002,7 +2002,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<byte[]> zrevrangeByScore(byte[] key, byte[] max, byte[] min) {
-        return new HashSet<>(await(binaryCommands.zrevrangebyscore(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8))));
+        return new HashSet<>(await(binaryCommands.zrevrangebyscore(key, toString(min), toString(max))));
     }
 
     @Override
@@ -2014,7 +2014,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<byte[]> zrevrangeByScore(byte[] key, byte[] max, byte[] min, int offset, int count) {
-        return new HashSet<>(await(binaryCommands.zrevrangebyscore(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8), offset, count)));
+        return new HashSet<>(await(binaryCommands.zrevrangebyscore(key, toString(min), toString(max), offset, count)));
     }
 
     @Override
@@ -2032,13 +2032,13 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(byte[] key, byte[] max, byte[] min) {
-        return toTupleSet((List) await(binaryCommands.zrevrangebyscoreWithScores(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8))));
+        return toTupleSet((List) await(binaryCommands.zrevrangebyscoreWithScores(key, toString(min), toString(max))));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(byte[] key, byte[] max, byte[] min, int offset, int count) {
-        return toTupleSet((List) await(binaryCommands.zrevrangebyscoreWithScores(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8), offset, count)));
+        return toTupleSet((List) await(binaryCommands.zrevrangebyscoreWithScores(key, toString(min), toString(max), offset, count)));
     }
 
     @Override
@@ -2056,7 +2056,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Long zremrangeByScore(byte[] key, byte[] start, byte[] end) {
-        return await(binaryCommands.zremrangebyscore(key, new String(start, Charsets.UTF_8), new String(end, Charsets.UTF_8)));
+        return await(binaryCommands.zremrangebyscore(key, toString(start), toString(end)));
     }
 
     @Override
@@ -2086,25 +2086,25 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Long zlexcount(byte[] key, byte[] min, byte[] max) {
-        return await(binaryCommands.zlexcount(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8)));
+        return await(binaryCommands.zlexcount(key, toString(min), toString(max)));
     }
 
     @Override
     @Suspendable
     public final Set<byte[]> zrangeByLex(byte[] key, byte[] min, byte[] max) {
-        return new HashSet<>(await(binaryCommands.zrangebylex(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8))));
+        return new HashSet<>(await(binaryCommands.zrangebylex(key, toString(min), toString(max))));
     }
 
     @Override
     @Suspendable
     public final Set<byte[]> zrangeByLex(byte[] key, byte[] min, byte[] max, int offset, int count) {
-        return new HashSet<>(await(binaryCommands.zrangebylex(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8), offset, count)));
+        return new HashSet<>(await(binaryCommands.zrangebylex(key, toString(min), toString(max), offset, count)));
     }
 
     @Override
     @Suspendable
     public final Long zremrangeByLex(byte[] key, byte[] min, byte[] max) {
-        return await(binaryCommands.zremrangebylex(key, new String(min, Charsets.UTF_8), new String(max, Charsets.UTF_8)));
+        return await(binaryCommands.zremrangebylex(key, toString(min), toString(max)));
     }
 
     @Override
@@ -2122,7 +2122,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final List<byte[]> configGet(byte[] pattern) {
-        return await(binaryCommands.configGet(new String(pattern, Charsets.UTF_8))).stream().map(s -> s.getBytes(Charsets.UTF_8)).collect(Collectors.toList());
+        return await(binaryCommands.configGet(toString(pattern))).stream().map(s -> s.getBytes(Charsets.UTF_8)).collect(Collectors.toList());
     }
 
     @Override
@@ -2134,7 +2134,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final byte[] configSet(byte[] parameter, byte[] value) {
-        return await(binaryCommands.configSet(new String(parameter, Charsets.UTF_8), new String(value, Charsets.UTF_8))).getBytes(Charsets.UTF_8);
+        return await(binaryCommands.configSet(toString(parameter), toString(value))).getBytes(Charsets.UTF_8);
     }
 
     @Override
@@ -2189,7 +2189,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Boolean setbit(byte[] key, long offset, byte[] value) {
-        return await(binaryCommands.setbit(key, offset, Integer.parseInt(new String(value, Charsets.UTF_8)))) > 0;
+        return await(binaryCommands.setbit(key, offset, Integer.parseInt(toString(value)))) > 0;
     }
 
     @Override
@@ -2344,180 +2344,174 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final String set(byte[] key, byte[] value, byte[] nxxx) {
-        return await(binaryCommands.set(key, value, toSetArgs(new String(nxxx, Charsets.UTF_8))));
+        return await(binaryCommands.set(key, value, toSetArgs(toString(nxxx))));
     }
 
     @Override
     @Suspendable
     public final String set(byte[] key, byte[] value, byte[] nxxx, byte[] expx, int time) {
-        return await(binaryCommands.set(key, value, toSetArgs(new String(nxxx, Charsets.UTF_8), new String(expx, Charsets.UTF_8), time)));
+        return await(binaryCommands.set(key, value, toSetArgs(toString(nxxx), toString(expx), time)));
     }
 
     @Override
     @Suspendable
     public final String clientKill(byte[] client) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.clientKill(toString(client)));
     }
 
     @Override
     @Suspendable
     public final String clientGetname() {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(stringCommands.clientGetname());
     }
 
     @Override
     @Suspendable
     public final String clientList() {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(stringCommands.clientList());
     }
 
     @Override
     @Suspendable
     public final String clientSetname(byte[] name) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(stringCommands.clientSetname(toString(name)));
     }
 
     @Override
     @Suspendable
     public final List<String> time() {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(stringCommands.time());
     }
 
     @Override
     @Suspendable
     public final String migrate(byte[] host, int port, byte[] key, int destinationDb, int timeout) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.migrate(toString(host), port, key, destinationDb, timeout));
     }
 
     @Override
     @Suspendable
     public final Long pfadd(byte[] key, byte[]... elements) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.pfadd(key, elements));
     }
 
     @Override
     @Suspendable
     public final long pfcount(byte[] key) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.pfcount(new byte[][] { key }));
     }
 
     @Override
     @Suspendable
-    public final String pfmerge(byte[] destkey, byte[]... sourcekeys) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+    public final String pfmerge(byte[] destKey, byte[]... sourceKeys) {
+        return await(binaryCommands.pfmerge(destKey, sourceKeys));
     }
 
     @Override
     @Suspendable
     public final Long pfcount(byte[]... keys) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.pfcount(keys));
     }
 
     @Override
     @Suspendable
     public final ScanResult<byte[]> scan(byte[] cursor) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return toScanResult(await(binaryCommands.scan(ScanCursor.of(toString(cursor)))));
     }
 
     @Override
     @Suspendable
-    public final ScanResult<byte[]> scan(byte[] cursor, ScanParams params) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+    public final ScanResult<byte[]> scan(byte[] cursor, ScanParams ps) {
+        return toScanResult(await(binaryCommands.scan(ScanCursor.of(toString(cursor)), toScanArgs(ps))));
     }
 
     @Override
     @Suspendable
     public final ScanResult<Map.Entry<byte[], byte[]>> hscan(byte[] key, byte[] cursor) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return toScanResult(await(binaryCommands.hscan(key, ScanCursor.of(toString(cursor)))));
     }
 
     @Override
     @Suspendable
-    public final ScanResult<Map.Entry<byte[], byte[]>> hscan(byte[] key, byte[] cursor, ScanParams params) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+    public final ScanResult<Map.Entry<byte[], byte[]>> hscan(byte[] key, byte[] cursor, ScanParams ps) {
+        return toScanResult(await(binaryCommands.hscan(key, ScanCursor.of(toString(cursor)), toScanArgs(ps))));
     }
 
     @Override
     @Suspendable
     public final ScanResult<byte[]> sscan(byte[] key, byte[] cursor) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return toScanResult(await(binaryCommands.sscan(key, ScanCursor.of(toString(cursor)))));
     }
 
     @Override
-    public ScanResult<byte[]> sscan(byte[] key, byte[] cursor, ScanParams params) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+    public ScanResult<byte[]> sscan(byte[] key, byte[] cursor, ScanParams ps) {
+        return toScanResult(await(binaryCommands.sscan(key, ScanCursor.of(toString(cursor)), toScanArgs(ps))));
     }
 
     @Override
     @Suspendable
     public final ScanResult<Tuple> zscan(byte[] key, byte[] cursor) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return toScanResultBinary(await(binaryCommands.zscan(key, ScanCursor.of(toString(cursor)))));
     }
 
     @Override
     @Suspendable
-    public final ScanResult<Tuple> zscan(byte[] key, byte[] cursor, ScanParams params) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+    public final ScanResult<Tuple> zscan(byte[] key, byte[] cursor, ScanParams ps) {
+        return toScanResultBinary(await(binaryCommands.zscan(key, ScanCursor.of(toString(cursor)), toScanArgs(ps))));
     }
 
     @Override
     @Suspendable
     public final Long geoadd(byte[] key, double longitude, double latitude, byte[] member) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.geoadd(key, longitude, latitude, member));
     }
 
     @Override
     @Suspendable
     public final Long geoadd(byte[] key, Map<byte[], GeoCoordinate> memberCoordinateMap) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.geoadd(key, toTripletArray(memberCoordinateMap)));
     }
 
     @Override
     @Suspendable
     public final Double geodist(byte[] key, byte[] member1, byte[] member2) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.geodist(key, member1, member2, null));
     }
 
     @Override
     @Suspendable
     public final Double geodist(byte[] key, byte[] member1, byte[] member2, GeoUnit unit) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
-    }
-
-    @Override
-    @Suspendable
-    public final List<byte[]> geohash(byte[] key, byte[]... members) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.geodist(key, member1, member2, toGeoArgsUnit(unit)));
     }
 
     @Override
     @Suspendable
     public final List<GeoCoordinate> geopos(byte[] key, byte[]... members) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.geopos(key, members)).stream().map(Jedis::toGeoCoordinate).collect(Collectors.toList());
     }
 
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadius(byte[] key, double longitude, double latitude, double radius, GeoUnit unit) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.georadius(key, longitude, latitude, radius, toGeoArgsUnit(unit))).stream().map(Jedis::toGeoRadiusBinary).collect(Collectors.toList());
     }
 
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadius(byte[] key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.georadius(key, longitude, latitude, radius, toGeoArgsUnit(unit), toGeoArgs(param))).stream().map(Jedis::toGeoRadiusBinary).collect(Collectors.toList());
     }
 
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadiusByMember(byte[] key, byte[] member, double radius, GeoUnit unit) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.georadiusbymember(key, member, radius, toGeoArgsUnit(unit))).stream().map(Jedis::toGeoRadiusBinary).collect(Collectors.toList());
     }
 
     @Override
     @Suspendable
     public final List<GeoRadiusResponse> georadiusByMember(byte[] key, byte[] member, double radius, GeoUnit unit, GeoRadiusParam param) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.georadiusbymember(key, member, radius, toGeoArgsUnit(unit), toGeoArgs(param))).stream().map(Jedis::toGeoRadiusBinary).collect(Collectors.toList());
     }
 
     /////////////////////////// PUBSUB
@@ -3164,6 +3158,12 @@ public final class Jedis extends redis.clients.jedis.Jedis {
 
     @Override
     @Suspendable
+    public final List<byte[]> geohash(byte[] key, byte[]... members) {
+        throw new UnsupportedOperationException("Not (yet) supported");
+    }
+
+    @Override
+    @Suspendable
     public final Set<byte[]> zrevrangeByLex(byte[] key, byte[] max, byte[] min) {
         throw new UnsupportedOperationException("Not (yet) supported");
     }
@@ -3287,7 +3287,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     }
 
     private static SetArgs toSetArgs(byte[] nxxx, byte[] expx, long time) {
-        return toSetArgs(new String(nxxx, Charsets.UTF_8), new String(expx, Charsets.UTF_8), time);
+        return toSetArgs(toString(nxxx), toString(expx), time);
     }
 
     private static <T> Map<T, T> kvArrayToMap(T... keysValues) {
@@ -3378,13 +3378,13 @@ public final class Jedis extends redis.clients.jedis.Jedis {
         throw new UnsupportedOperationException("Unimplemented"); // TODO
     }
 
-    private static Object[] toTripletArray(Map<String, GeoCoordinate> memberCoordinateMap) {
+    private static <T> Object[] toTripletArray(Map<T, GeoCoordinate> memberCoordinateMap) {
         if (memberCoordinateMap == null)
             return null;
 
         final Object[] ret = new Object[memberCoordinateMap.size() * 3];
         int i = 0;
-        for (final Map.Entry<String, GeoCoordinate> e : memberCoordinateMap.entrySet()) {
+        for (final Map.Entry<T, GeoCoordinate> e : memberCoordinateMap.entrySet()) {
             final GeoCoordinate v = e.getValue();
             ret[i++] = v.getLongitude();
             ret[i++] = v.getLatitude();
@@ -3415,11 +3415,28 @@ public final class Jedis extends redis.clients.jedis.Jedis {
         return new GeoRadiusResponse(s.getBytes());
     }
 
+    private static GeoRadiusResponse toGeoRadiusBinary(byte[] s) {
+        if (s == null)
+            return null;
+
+        return new GeoRadiusResponse(s);
+    }
+
     private static GeoRadiusResponse toGeoRadius(GeoWithin<String> s) {
         if (s == null)
             return null;
 
         final GeoRadiusResponse r = new GeoRadiusResponse(s.member.getBytes());
+        r.setDistance(s.distance);
+        r.setCoordinate(toGeoCoordinate(s.coordinates));
+        return r;
+    }
+
+    private static GeoRadiusResponse toGeoRadiusBinary(GeoWithin<byte[]> s) {
+        if (s == null)
+            return null;
+
+        final GeoRadiusResponse r = new GeoRadiusResponse(s.member);
         r.setDistance(s.distance);
         r.setCoordinate(toGeoCoordinate(s.coordinates));
         return r;
@@ -3455,6 +3472,12 @@ public final class Jedis extends redis.clients.jedis.Jedis {
         return new ScanResult<>(c.getCursor(), c.getValues().stream().map((sv) -> new Tuple(sv.value, sv.score)).collect(Collectors.toList()));
     }
 
+    private static ScanResult<Tuple> toScanResultBinary(ScoredValueScanCursor<byte[]> c) {
+        if (c == null)
+            return null;
+
+        return new ScanResult<>(c.getCursor(), c.getValues().stream().map((sv) -> new Tuple(sv.value, sv.score)).collect(Collectors.toList()));
+    }
     private static void validateFiberPubSub(redis.clients.jedis.JedisPubSub jedisPubSub) {
         if (!(jedisPubSub instanceof JedisPubSub))
             throw new IllegalArgumentException("Only subclasses of '" + JedisPubSub.class.getName() + "' can be used with '" + Jedis.class.getName() + "'");
@@ -3477,5 +3500,9 @@ public final class Jedis extends redis.clients.jedis.Jedis {
 
     private static List<byte[]> toByteArrayList(List<Object> l) {
         return (List<byte[]>) ((List) l);
+    }
+
+    private static String toString(byte[] bs) {
+        return new String(bs, Charsets.UTF_8);
     }
 }
