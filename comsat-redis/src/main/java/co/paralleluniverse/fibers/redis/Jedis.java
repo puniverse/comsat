@@ -1382,22 +1382,10 @@ public final class Jedis extends redis.clients.jedis.Jedis {
         return await(binaryCommands.set(key, value));
     }
 
-    /**
-     * Set the string value as value of the key. The string can't be longer than 1073741824 bytes (1
-     * GB).
-     *
-     * @param key
-     * @param value
-     * @param nxxx  NX|XX, NX -- Only set the key if it does not already exist. XX -- Only set the key
-     *              if it already exist.
-     * @param expx  EX|PX, expire time units: EX = seconds; PX = milliseconds
-     * @param time  expire time in the units of <code>expx</code>
-     * @return Status code reply
-     */
     @Override
     @Suspendable
     public final String set(byte[] key, byte[] value, byte[] nxxx, byte[] expx, long time) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.set(key, value, toSetArgs(nxxx, expx, time)));
     }
 
     @Override
@@ -2162,6 +2150,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     }
 
     @Override
+    @Suspendable
     public byte[] echo(byte[] string) {
         return await(binaryCommands.echo(string));
     }
@@ -2175,195 +2164,193 @@ public final class Jedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final String debug(DebugParams params) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        if ("SEGFAULT".equalsIgnoreCase(params.getCommand()[0]))
+            binaryCommands.debugSegfault();
+        else if ("RELOAD".equalsIgnoreCase(params.getCommand()[0]))
+            return await(binaryCommands.debugReload());
+        else if ("OBJECT".equalsIgnoreCase(params.getCommand()[0]))
+            return await(binaryCommands.debugObject(params.getCommand()[1].getBytes(Charsets.UTF_8)));
+        return null;
     }
 
-    /**
-     * Pop a value from a list, push it to another list and return it; or block until one is available
-     *
-     * @param source
-     * @param destination
-     * @param timeout
-     * @return the element
-     */
+
     @Override
     @Suspendable
     public final byte[] brpoplpush(byte[] source, byte[] destination, int timeout) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.brpoplpush(timeout, source, destination));
     }
 
-    /**
-     * Sets or clears the bit at offset in the string value stored at key
-     *
-     * @param key
-     * @param offset
-     * @param value
-     * @return
-     */
     @Override
     @Suspendable
     public final Boolean setbit(byte[] key, long offset, boolean value) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.setbit(key, offset, value ? 1 : 0)) > 0;
     }
 
     @Override
     @Suspendable
     public final Boolean setbit(byte[] key, long offset, byte[] value) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.setbit(key, offset, Integer.parseInt(new String(value, Charsets.UTF_8)))) > 0;
     }
 
-    /**
-     * Returns the bit value at offset in the string value stored at key
-     *
-     * @param key
-     * @param offset
-     * @return
-     */
     @Override
     @Suspendable
     public final Boolean getbit(byte[] key, long offset) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.getbit(key, offset)) > 0;
     }
 
     @Override
     @Suspendable
     public final Long bitpos(byte[] key, boolean value) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.bitpos(key, value));
     }
 
     @Override
     @Suspendable
     public final Long bitpos(byte[] key, boolean value, BitPosParams params) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.bitpos(key, value, getStart(params), getEnd(params)));
     }
 
     @Override
     @Suspendable
     public final Long setrange(byte[] key, long offset, byte[] value) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.setrange(key, offset, value));
     }
 
     @Override
     @Suspendable
     public final byte[] getrange(byte[] key, long startOffset, long endOffset) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.getrange(key, startOffset, endOffset));
     }
 
     @Override
     @Suspendable
     public final List<byte[]> slowlogGetBinary() {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return toByteArrayList(await(binaryCommands.slowlogGet()));
     }
 
     @Override
     @Suspendable
     public final List<byte[]> slowlogGetBinary(long entries) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return toByteArrayList(await(binaryCommands.slowlogGet(validateInt(entries))));
     }
 
     @Override
     @Suspendable
     public final Long objectRefcount(byte[] key) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.objectRefcount(key));
     }
 
     @Override
     @Suspendable
     public final byte[] objectEncoding(byte[] key) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.objectEncoding(key)).getBytes(Charsets.UTF_8);
     }
 
     @Override
     @Suspendable
     public final Long objectIdletime(byte[] key) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.objectIdletime(key));
     }
 
     @Override
     @Suspendable
     public final Long bitcount(byte[] key) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.bitcount(key));
     }
 
     @Override
     @Suspendable
     public final Long bitcount(byte[] key, long start, long end) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.bitcount(key, start, end));
     }
 
     @Override
     @Suspendable
     public final Long bitop(BitOP op, byte[] destKey, byte[]... srcKeys) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        final Long res;
+        switch (op) {
+            case AND:
+                res = await(binaryCommands.bitopAnd(destKey, srcKeys));
+                break;
+            case OR:
+                res = await(binaryCommands.bitopOr(destKey, srcKeys));
+                break;
+            case XOR:
+                res = await(binaryCommands.bitopXor(destKey, srcKeys));
+                break;
+            case NOT:
+                if (srcKeys == null || srcKeys.length != 1)
+                    throw new IllegalArgumentException("'not' requires exactly one argument");
+                res = await(binaryCommands.bitopNot(destKey, srcKeys[0]));
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported operation: " + op);
+        }
+        return res;
     }
 
     @Override
     @Suspendable
     public final byte[] dump(byte[] key) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.dump(key));
     }
 
     @Override
     @Suspendable
     public final String restore(byte[] key, int ttl, byte[] serializedValue) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.restore(key, ttl, serializedValue));
     }
 
     @Override
+    @Deprecated
     @Suspendable
+    @SuppressWarnings("deprecation")
     public final Long pexpire(byte[] key, int milliseconds) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return pexpire(key, (long) milliseconds);
     }
 
     @Override
     @Suspendable
     public final Long pexpire(byte[] key, long milliseconds) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.pexpire(key, milliseconds)) ? 1L : 0L;
     }
 
     @Override
     @Suspendable
     public final Long pexpireAt(byte[] key, long millisecondsTimestamp) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.pexpireat(key, millisecondsTimestamp)) ? 1L : 0L;
     }
 
     @Override
     @Suspendable
     public final Long pttl(byte[] key) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.pttl(key));
     }
 
     @Override
+    @Deprecated
     @Suspendable
+    @SuppressWarnings("deprecation")
     public final String psetex(byte[] key, int milliseconds, byte[] value) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return psetex(key, milliseconds, value);
     }
 
-    /**
-     * PSETEX works exactly like {@link #setex(byte[], int, byte[])} with the sole difference that the
-     * expire time is specified in milliseconds instead of seconds. Time complexity: O(1)
-     *
-     * @param key
-     * @param milliseconds
-     * @param value
-     * @return Status code reply
-     */
     @Override
     @Suspendable
     public final String psetex(byte[] key, long milliseconds, byte[] value) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.psetex(key, milliseconds, value));
     }
 
     @Override
     @Suspendable
     public final String set(byte[] key, byte[] value, byte[] nxxx) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.set(key, value, toSetArgs(new String(nxxx, Charsets.UTF_8))));
     }
 
     @Override
     @Suspendable
     public final String set(byte[] key, byte[] value, byte[] nxxx, byte[] expx, int time) {
-        throw new UnsupportedOperationException("Unimplemented"); // TODO
+        return await(binaryCommands.set(key, value, toSetArgs(new String(nxxx, Charsets.UTF_8), new String(expx, Charsets.UTF_8), time)));
     }
 
     @Override
@@ -3253,7 +3240,7 @@ public final class Jedis extends redis.clients.jedis.Jedis {
 
     static boolean contains(byte[][] channels, byte[] c) {
         if (channels != null && c != null)
-            for (byte[] ba : channels) {
+            for (final byte[] ba : channels) {
                 if (Arrays.equals(c, ba))
                     return true;
             }
@@ -3265,9 +3252,9 @@ public final class Jedis extends redis.clients.jedis.Jedis {
         // TODO Convert exceptions
         try {
             return AsyncCompletionStage.get(f);
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (final ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
-        } catch (SuspendExecution e) {
+        } catch (final SuspendExecution e) {
             throw new AssertionError(e);
         }
     }
@@ -3297,6 +3284,10 @@ public final class Jedis extends redis.clients.jedis.Jedis {
             b.px(time);
 
         return b;
+    }
+
+    private static SetArgs toSetArgs(byte[] nxxx, byte[] expx, long time) {
+        return toSetArgs(new String(nxxx, Charsets.UTF_8), new String(expx, Charsets.UTF_8), time);
     }
 
     private static <T> Map<T, T> kvArrayToMap(T... keysValues) {
@@ -3482,5 +3473,9 @@ public final class Jedis extends redis.clients.jedis.Jedis {
         for (final Map.Entry<K, V> e : m.entrySet())
             ret.put(e.getKey().toString(), e.getValue().toString());
         return ret;
+    }
+
+    private static List<byte[]> toByteArrayList(List<Object> l) {
+        return (List<byte[]>) ((List) l);
     }
 }
