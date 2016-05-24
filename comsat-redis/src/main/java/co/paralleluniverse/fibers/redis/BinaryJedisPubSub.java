@@ -21,14 +21,14 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static co.paralleluniverse.fibers.redis.Jedis.contains;
+import static co.paralleluniverse.fibers.redis.Utils.contains;
 
 /**
  * @author circlespainter
  */
 @SuppressWarnings("WeakerAccess")
 public class BinaryJedisPubSub extends redis.clients.jedis.BinaryJedisPubSub {
-    Jedis jedis;
+    BinaryJedis jedis;
 
     ConcurrentHashMap<byte[], List<RedisPubSubListener<byte[], byte[]>>> channelListeners = new ConcurrentHashMap<>();
     ConcurrentHashMap<byte[], List<RedisPubSubListener<byte[], byte[]>>> patternListeners = new ConcurrentHashMap<>();
@@ -56,7 +56,7 @@ public class BinaryJedisPubSub extends redis.clients.jedis.BinaryJedisPubSub {
                 return v;
             }
         });
-        Jedis.clearEmpties(channelListeners);
+        Utils.clearEmpties(channelListeners);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class BinaryJedisPubSub extends redis.clients.jedis.BinaryJedisPubSub {
                 return v;
             }
         });
-        Jedis.clearEmpties(patternListeners);
+        Utils.clearEmpties(patternListeners);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class BinaryJedisPubSub extends redis.clients.jedis.BinaryJedisPubSub {
 
     @Override
     public final int getSubscribedChannels() {
-        return Jedis.validateInt(subscribedChannels.get());
+        return Utils.validateInt(subscribedChannels.get());
     }
 
     @Override

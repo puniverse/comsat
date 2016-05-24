@@ -63,7 +63,7 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
     @Override
     @Suspendable
     public final void activateObject(PooledObject<redis.clients.jedis.Jedis> pooledJedis) throws Exception {
-        final BinaryJedis jedis = pooledJedis.getObject();
+        final Jedis jedis = (Jedis) pooledJedis.getObject();
         if (jedis.getDB() != database) {
             jedis.select(database);
         }
@@ -73,16 +73,15 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
     @Override
     @Suspendable
     public final void destroyObject(PooledObject<redis.clients.jedis.Jedis> pooledJedis) throws Exception {
-        final BinaryJedis jedis = pooledJedis.getObject();
+        final Jedis jedis = (Jedis) pooledJedis.getObject();
         if (jedis.isConnected()) {
             try {
                 try {
                     jedis.quit();
-                } catch (Exception e) {
+                } catch (final Exception ignored) {
                 }
                 jedis.disconnect();
-            } catch (Exception e) {
-
+            } catch (final Exception ignored) {
             }
         }
 
@@ -121,7 +120,7 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
     @Override
     @Suspendable
     public final boolean validateObject(PooledObject<redis.clients.jedis.Jedis> pooledJedis) {
-        final BinaryJedis jedis = pooledJedis.getObject();
+        final Jedis jedis = (Jedis) pooledJedis.getObject();
         try {
             HostAndPort hostAndPort = this.hostAndPort.get();
 

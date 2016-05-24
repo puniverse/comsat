@@ -54,7 +54,7 @@ public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
                 return v;
             }
         });
-        Jedis.clearEmpties(channelListeners);
+        Utils.clearEmpties(channelListeners);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
                 return v;
             }
         });
-        Jedis.clearEmpties(patternListeners);
+        Utils.clearEmpties(patternListeners);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
 
     @Override
     public final int getSubscribedChannels() {
-        return Jedis.validateInt(subscribedChannels.get());
+        return Utils.validateInt(subscribedChannels.get());
     }
 
     @Override

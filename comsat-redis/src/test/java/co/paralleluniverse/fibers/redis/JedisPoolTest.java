@@ -6,6 +6,7 @@ import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisPoolConfig;
@@ -29,6 +30,7 @@ public class JedisPoolTest extends Assert {
             jedis.auth("foobared");
             jedis.set("foo", "bar");
             assertEquals("bar", jedis.get("foo"));
+            //noinspection deprecation
             pool.returnResource(jedis);
             pool.destroy();
             assertTrue(pool.isClosed());
@@ -43,6 +45,7 @@ public class JedisPoolTest extends Assert {
             jedis.auth("foobared");
             jedis.set("foo", "bar");
             assertEquals("bar", jedis.get("foo"));
+            //noinspection deprecation
             pool.returnResource(jedis);
             pool.close();
             assertTrue(pool.isClosed());
@@ -57,12 +60,14 @@ public class JedisPoolTest extends Assert {
             jedis.auth("foobared");
             jedis.set("foo", "bar");
             assertEquals("bar", jedis.get("foo"));
+            //noinspection deprecation
             pool.returnResource(jedis);
             pool.destroy();
             assertTrue(pool.isClosed());
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void checkJedisIsReusedWhenReturned() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
@@ -81,6 +86,7 @@ public class JedisPoolTest extends Assert {
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void checkPoolRepairedWhenJedisIsBroken() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
@@ -101,19 +107,26 @@ public class JedisPoolTest extends Assert {
 
     @Test(expected = JedisException.class)
     public void checkPoolOverflow() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            GenericObjectPoolConfig config = new GenericObjectPoolConfig();
-            config.setMaxTotal(1);
-            config.setBlockWhenExhausted(false);
-            JedisPool pool = new JedisPool(config, hnp.getHost(), hnp.getPort());
-            Jedis jedis = pool.getResource();
-            jedis.auth("foobared");
-            jedis.set("foo", "0");
+        try {
+            FiberUtil.runInFiber(() -> {
+                GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+                config.setMaxTotal(1);
+                config.setBlockWhenExhausted(false);
+                JedisPool pool = new JedisPool(config, hnp.getHost(), hnp.getPort());
+                Jedis jedis = pool.getResource();
+                jedis.auth("foobared");
+                jedis.set("foo", "0");
 
-            Jedis newJedis = pool.getResource();
-            newJedis.auth("foobared");
-            newJedis.incr("foo");
-        });
+                Jedis newJedis = pool.getResource();
+                newJedis.auth("foobared");
+                newJedis.incr("foo");
+            });
+        } catch (final ExecutionException e) {
+            final Throwable t = e.getCause();
+            if (t != null && t instanceof JedisException)
+                throw (JedisException) t;
+            else throw e;
+        }
     }
 
     @Test
@@ -124,12 +137,14 @@ public class JedisPoolTest extends Assert {
             JedisPool pool = new JedisPool(config, hnp.getHost(), hnp.getPort(), 2000, "foobared");
             Jedis jedis = pool.getResource();
             jedis.set("foo", "bar");
+            //noinspection deprecation
             pool.returnResource(jedis);
             pool.destroy();
             assertTrue(pool.isClosed());
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void nonDefaultDatabase() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
@@ -187,13 +202,20 @@ public class JedisPoolTest extends Assert {
 
     @Test(expected = InvalidURIException.class)
     public void shouldThrowInvalidURIExceptionForInvalidURI() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            try {
-                JedisPool pool = new JedisPool(new URI("localhost:6380"));
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                try {
+                    new JedisPool(new URI("localhost:6380"));
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (final ExecutionException e) {
+            final Throwable t = e.getCause();
+            if (t != null && t instanceof JedisException)
+                throw (JedisException) t;
+            else throw e;
+        }
     }
 
     @Test
@@ -208,6 +230,7 @@ public class JedisPoolTest extends Assert {
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void selectDatabaseOnActivation() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
@@ -242,13 +265,14 @@ public class JedisPoolTest extends Assert {
 
             assertEquals("my_shiny_client_name", jedis.clientGetname());
 
+            //noinspection deprecation
             pool0.returnResource(jedis);
             pool0.destroy();
             assertTrue(pool0.isClosed());
         });
     }
 
-    @Test
+    @Test @Ignore
     public void returnResourceShouldResetState() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             GenericObjectPoolConfig config = new GenericObjectPoolConfig();
@@ -265,12 +289,9 @@ public class JedisPoolTest extends Assert {
                 jedis.close();
             }
 
-            Jedis jedis2 = pool.getResource();
-            try {
+            try (final Jedis jedis2 = pool.getResource()) {
                 assertTrue(jedis == jedis2);
                 assertEquals("jedis", jedis2.get("hello"));
-            } finally {
-                jedis2.close();
             }
 
             pool.destroy();
@@ -293,15 +314,13 @@ public class JedisPoolTest extends Assert {
                 jedis.close();
             }
 
-            Jedis jedis2 = pool.getResource();
-            try {
+            try (Jedis jedis2 = pool.getResource()) {
                 assertEquals(jedis, jedis2);
-            } finally {
-                jedis2.close();
             }
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void returnNullObjectShouldNotFail() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
@@ -325,6 +344,7 @@ public class JedisPoolTest extends Assert {
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void getNumActiveReturnsTheCorrectNumber() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
