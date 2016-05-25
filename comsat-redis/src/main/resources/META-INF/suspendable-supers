@@ -17,3 +17,6 @@ redis.clients.jedis.SentinelCommands.*
 
 redis.clients.jedis.BinaryJedis.*
 redis.clients.jedis.Jedis.*
+
+redis.clients.jedis.JedisPubSub.*
+redis.clients.jedis.BinaryJedisPubSub.*

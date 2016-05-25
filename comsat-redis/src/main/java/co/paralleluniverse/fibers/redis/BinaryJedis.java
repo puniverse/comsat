@@ -5,13 +5,12 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.futures.AsyncCompletionStage;
 import co.paralleluniverse.strands.SuspendableCallable;
+import co.paralleluniverse.strands.concurrent.ReentrantLock;
 import com.google.common.base.Charsets;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
-import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
@@ -26,20 +25,22 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static co.paralleluniverse.fibers.redis.Utils.validateFiberPubSub;
+
 public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     private final Callable<RedisClient> redisClientProvider;
 
-    private RedisClient redisClient;
+    protected String password;
+    protected RedisClient redisClient;
 
     private StatefulRedisConnection<String, String> stringCommandsConn;
     protected RedisAsyncCommands<String, String> stringCommands;
     private StatefulRedisConnection<byte[], byte[]> binaryCommandsConn;
     protected RedisAsyncCommands<byte[], byte[]> binaryCommands;
 
-    protected StatefulRedisPubSubConnection<String, String> stringPubSubConn;
-    RedisPubSubAsyncCommands<String, String> stringPubSub;
-    protected StatefulRedisPubSubConnection<byte[], byte[]> binaryPubSubConn;
-    RedisPubSubAsyncCommands<byte[], byte[]> binaryPubSub;
+    protected final List<Utils.FiberRedisStringPubSubListener> stringPubSubListeners = new ArrayList<>();
+    protected final List<Utils.FiberRedisBinaryPubSubListener> binaryPubSubListeners = new ArrayList<>();
+    protected final ReentrantLock pubSubListenersLock = new ReentrantLock();
 
     public BinaryJedis(Callable<RedisClient> cp) {
         redisClientProvider = cp;
@@ -80,22 +81,28 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
         stringCommands = stringCommandsConn.async();
         binaryCommandsConn = redisClient.connect(new ByteArrayCodec());
         binaryCommands = binaryCommandsConn.async();
-        stringPubSubConn = redisClient.connectPubSub();
-        stringPubSub = stringPubSubConn.async();
-        binaryPubSubConn = redisClient.connectPubSub(new ByteArrayCodec());
-        binaryPubSub = binaryPubSubConn.async();
     }
 
     @Override
     public final String auth(String password) {
         if (!isConnected())
             connect();
+        this.password = password;
         final String a1 = stringCommands.auth(password);
         final String a2 = binaryCommands.auth(password);
-        final String a3 = stringPubSub.auth(password);
-        final String a4 = binaryPubSub.auth(password);
-        if (a1.equals(a2) && a2.equals(a3) && a3.equals(a4) && a4.equals(a1))
+        if (a1.equals(a2)) {
+            // TODO Check same results
+            pubSubListenersLock.lock();
+            try {
+                for (final Utils.FiberRedisStringPubSubListener l : stringPubSubListeners)
+                    l.pubSub.commands.auth(password);
+                for (final Utils.FiberRedisBinaryPubSubListener l : binaryPubSubListeners)
+                    l.pubSub.commands.auth(password);
+            } finally {
+                pubSubListenersLock.unlock();
+            }
             return a1;
+        }
         throw new IllegalStateException("Authentications returned different result codes");
     }
 
@@ -110,24 +117,30 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     public final void disconnect() {
         if (!isConnected())
             return;
-        binaryPubSub.close();
-        binaryPubSub = null;
-        stringPubSub = null;
-        binaryPubSubConn = null;
-        stringPubSubConn = null;
         binaryCommands = null;
         stringCommands = null;
         binaryCommandsConn = null;
         stringCommandsConn = null;
+        pubSubListenersLock.lock();
+        try {
+            for (final Utils.FiberRedisStringPubSubListener l : stringPubSubListeners) {
+                l.pubSub.conn.removeListener(l);
+                l.pubSub.close();
+            }
+            for (final Utils.FiberRedisBinaryPubSubListener l : binaryPubSubListeners) {
+                l.pubSub.conn.removeListener(l);
+                l.pubSub.close();
+            }
+        } finally {
+            pubSubListenersLock.unlock();
+        }
     }
 
     @Override
     public final boolean isConnected() {
         return
             stringCommands != null && stringCommands.isOpen() &&
-            binaryCommands != null && binaryCommands.isOpen() &&
-            stringPubSub != null && stringPubSub.isOpen() &&
-            binaryPubSub != null && binaryPubSub.isOpen();
+            binaryCommands != null && binaryCommands.isOpen();
     }
 
     @Override
@@ -349,12 +362,14 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
 
     @Override
     public final String select(int index) {
-        stringPubSub.select(index);
-        binaryPubSub.select(index);
+        // TODO Check same results
+        for (final Utils.FiberRedisStringPubSubListener l : stringPubSubListeners)
+            l.pubSub.commands.select(index);
+        for (final Utils.FiberRedisBinaryPubSubListener l : binaryPubSubListeners)
+            l.pubSub.commands.select(index);
         stringCommands.select(index);
         return binaryCommands.select(index);
     }
-
 
     @Override
     @Suspendable
@@ -1382,20 +1397,42 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final void subscribe(redis.clients.jedis.BinaryJedisPubSub jedisPubSub, byte[]... channels) {
-        Utils.validateFiberPubSub(jedisPubSub);
-        binaryPubSub.addListener(new Utils.FiberRedisBinaryPubSubListener(this, (BinaryJedisPubSub) jedisPubSub, false, channels));
+        final BinaryJedisPubSub ps = validateFiberPubSub(jedisPubSub);
+        ps.jedis = this;
+        ps.conn = redisClient.connectPubSub(new ByteArrayCodec());
+        ps.conn.addListener(registerPubSubListener(new Utils.FiberRedisBinaryPubSubListener(ps)));
+        ps.commands = ps.conn.async();
+        if (password != null)
+            ps.commands.auth(password);
+        await(() -> ps.commands.subscribe(channels));
+    }
+
+    private Utils.FiberRedisBinaryPubSubListener registerPubSubListener(Utils.FiberRedisBinaryPubSubListener l) {
+        pubSubListenersLock.lock();
+        try {
+            binaryPubSubListeners.add(l);
+        } finally {
+            pubSubListenersLock.unlock();
+        }
+        return l;
     }
 
     @Override
     @Suspendable
     public final void psubscribe(redis.clients.jedis.BinaryJedisPubSub jedisPubSub, byte[]... patterns) {
-        Utils.validateFiberPubSub(jedisPubSub);
-        binaryPubSub.addListener(new Utils.FiberRedisBinaryPubSubListener(this, (BinaryJedisPubSub) jedisPubSub, true, patterns));
+        final BinaryJedisPubSub ps = validateFiberPubSub(jedisPubSub);
+        ps.jedis = this;
+        ps.conn = redisClient.connectPubSub(new ByteArrayCodec());
+        ps.conn.addListener(registerPubSubListener(new Utils.FiberRedisBinaryPubSubListener(ps)));
+        ps.commands = ps.conn.async();
+        if (password != null)
+            ps.commands.auth(password);
+        await(() -> ps.commands.psubscribe(patterns));
     }
 
     /////////////////////////// UTILS
     @Suspendable
-    protected <T> T await(SuspendableCallable<RedisFuture<T>> f) {
+    <T> T await(SuspendableCallable<RedisFuture<T>> f) {
         try {
             if (!isConnected())
                 connect();
@@ -1415,8 +1452,6 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
                     throw (JedisException) t;
                 }
             }
-            throw new RuntimeException(e);
-        } catch (final InterruptedException e) {
             throw new RuntimeException(e);
         } catch (final Exception e) {
             throw new RuntimeException(e);

@@ -13,83 +13,67 @@
  */
 package co.paralleluniverse.fibers.redis;
 
-import com.lambdaworks.redis.pubsub.RedisPubSubListener;
+import co.paralleluniverse.fibers.Suspendable;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.netty.util.internal.EmptyArrays;
 import redis.clients.jedis.Client;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static co.paralleluniverse.fibers.redis.Utils.checkPubSubConnected;
 
 /**
  * @author circlespainter
  */
 @SuppressWarnings("WeakerAccess")
-public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
+public abstract class JedisPubSub extends redis.clients.jedis.JedisPubSub {
     Jedis jedis;
-
-    ConcurrentHashMap<String, List<RedisPubSubListener<String, String>>> channelListeners = new ConcurrentHashMap<>();
-    ConcurrentHashMap<String, List<RedisPubSubListener<String, String>>> patternListeners = new ConcurrentHashMap<>();
+    StatefulRedisPubSubConnection<String, String> conn;
+    RedisPubSubAsyncCommands<String, String> commands;
 
     AtomicLong subscribedChannels = new AtomicLong();
 
     @Override
+    @Suspendable
     public final void unsubscribe() {
-        channelListeners.replaceAll((k, v) -> {
-            for(final RedisPubSubListener<String, String> l : v)
-                jedis.stringPubSub.removeListener(l);
-            return Collections.EMPTY_LIST;
-        });
-        channelListeners.clear();
+        checkPubSubConnected(jedis, conn, commands);
+        jedis.await(() -> commands.unsubscribe());
     }
 
     @Override
-    public final void unsubscribe(String... channels) {
-        final List<String> chL = Arrays.asList(channels);
-        channelListeners.replaceAll((k, v) -> {
-            if (chL.contains(k)) {
-                for (final RedisPubSubListener<String, String> l : v)
-                    jedis.stringPubSub.removeListener(l);
-                return Collections.EMPTY_LIST;
-            } else {
-                return v;
-            }
-        });
-        Utils.clearEmpties(channelListeners);
-    }
-
-    @Override
+    @Suspendable
     public final void punsubscribe() {
-        patternListeners.replaceAll((k, v) -> {
-            for(final RedisPubSubListener<String, String> l : v)
-                jedis.stringPubSub.removeListener(l);
-            return Collections.EMPTY_LIST;
-        });
-        patternListeners.clear();
+        checkPubSubConnected(jedis, conn, commands);
+        jedis.await(() -> commands.punsubscribe());
     }
 
     @Override
+    @Suspendable
+    public final void unsubscribe(String... channels) {
+        checkPubSubConnected(jedis, conn, commands);
+        jedis.await(() -> commands.unsubscribe(channels));
+    }
+
+    @Override
+    @Suspendable
     public final void punsubscribe(String... patterns) {
-        final List<String> chL = Arrays.asList(patterns);
-        patternListeners.replaceAll((k, v) -> {
-            if (chL.contains(k)) {
-                for (final RedisPubSubListener<String, String> l : v)
-                    jedis.stringPubSub.removeListener(l);
-                return Collections.EMPTY_LIST;
-            } else {
-                return v;
-            }
-        });
-        Utils.clearEmpties(patternListeners);
+        checkPubSubConnected(jedis, conn, commands);
+        jedis.await(() -> commands.punsubscribe(patterns));
     }
 
     @Override
+    @Suspendable
     public final void subscribe(String... channels) {
-        jedis.subscribe(this, channels);
+        checkPubSubConnected(jedis, conn, commands);
+        jedis.await(() -> commands.subscribe(channels));
     }
 
     @Override
+    @Suspendable
     public final void psubscribe(String... patterns) {
-        jedis.psubscribe(this, patterns);
+        checkPubSubConnected(jedis, conn, commands);
+        jedis.await(() -> commands.psubscribe(patterns));
     }
 
     @Override
@@ -110,5 +94,12 @@ public class JedisPubSub extends redis.clients.jedis.JedisPubSub {
     @Override
     public final void proceed(Client client, String... channels) {
         // Nothing to do
+    }
+
+    final void close() {
+        commands = null;
+        conn.close();
+        conn = null;
+        jedis = null;
     }
 }

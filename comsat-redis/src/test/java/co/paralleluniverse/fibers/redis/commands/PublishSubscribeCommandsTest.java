@@ -9,13 +9,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.FiberUtil;
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.redis.BinaryJedisPubSub;
 import co.paralleluniverse.fibers.redis.Jedis;
 import co.paralleluniverse.fibers.redis.JedisPubSub;
 import co.paralleluniverse.strands.Strand;
+import co.paralleluniverse.strands.channels.Channel;
+import co.paralleluniverse.strands.channels.Channels;
 import org.junit.Test;
 
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.util.SafeEncoder;
 
 public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
@@ -32,14 +37,17 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
     }
 
     @Test
-    public void subscribe() throws InterruptedException, ExecutionException {
+    public void subscribe() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
         FiberUtil.runInFiber(() -> jedis.subscribe(new JedisPubSub() {
+            @Suspendable
             public void onMessage(String channel, String message) {
                 assertEquals("foo", channel);
                 assertEquals("exit", message);
                 unsubscribe();
             }
 
+            @Suspendable
             public void onSubscribe(String channel, int subscribedChannels) {
                 assertEquals("foo", channel);
                 assertEquals(1, subscribedChannels);
@@ -48,15 +56,21 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                 publishOne("foo", "exit");
             }
 
+            @Suspendable
             public void onUnsubscribe(String channel, int subscribedChannels) {
                 assertEquals("foo", channel);
                 assertEquals(0, subscribedChannels);
+                ping(resCh);
             }
         }, "foo"));
+
+        resCh.receive(); // Wait for asserts
     }
 
     @Test
-    public void pubSubChannels() throws ExecutionException, InterruptedException {
+    public void pubSubChannels() throws ExecutionException, InterruptedException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> {
             final List<String> expectedActiveChannels = Arrays
                 .asList("testchan1", "testchan2", "testchan3");
@@ -64,6 +78,7 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                 private int count = 0;
 
                 @Override
+                @Suspendable
                 public void onSubscribe(String channel, int subscribedChannels) {
                     count++;
                     // All channels are subscribed
@@ -71,19 +86,24 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                         Jedis otherJedis = createJedis();
                         List<String> activeChannels = otherJedis.pubsubChannels("test*");
                         assertTrue(expectedActiveChannels.containsAll(activeChannels));
-                        unsubscribe();
+                        ping(resCh);
                     }
                 }
             }, "testchan1", "testchan2", "testchan3");
         });
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void pubSubNumPat() throws ExecutionException, InterruptedException {
+    public void pubSubNumPat() throws ExecutionException, InterruptedException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> jedis.psubscribe(new JedisPubSub() {
             private int count = 0;
 
             @Override
+            @Suspendable
             public void onPSubscribe(String pattern, int subscribedChannels) {
                 count++;
                 if (count == 3) {
@@ -91,14 +111,19 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                     Long numPatterns = otherJedis.pubsubNumPat();
                     assertEquals(new Long(2L), numPatterns);
                     punsubscribe();
+                    ping(resCh);
                 }
             }
 
         }, "test*", "test*", "chan*"));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void pubSubNumSub() throws ExecutionException, InterruptedException {
+    public void pubSubNumSub() throws ExecutionException, InterruptedException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> {
             final Map<String, String> expectedNumSub = new HashMap<>();
             expectedNumSub.put("testchannel2", "1");
@@ -107,6 +132,7 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                 private int count = 0;
 
                 @Override
+                @Suspendable
                 public void onSubscribe(String channel, int subscribedChannels) {
                     count++;
                     if (count == 2) {
@@ -114,70 +140,94 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                         Map<String, String> numSub = otherJedis.pubsubNumSub("testchannel1", "testchannel2");
                         assertEquals(expectedNumSub, numSub);
                         unsubscribe();
+                        ping(resCh);
                     }
                 }
             }, "testchannel1", "testchannel2");
         });
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void subscribeMany() throws InterruptedException, ExecutionException {
+    public void subscribeMany() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> jedis.subscribe(new JedisPubSub() {
+            @Suspendable
             public void onMessage(String channel, String message) {
                 unsubscribe(channel);
+                ping(resCh);
             }
 
+            @Suspendable
             public void onSubscribe(String channel, int subscribedChannels) {
                 publishOne(channel, "exit");
             }
 
         }, "foo", "bar"));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void psubscribe() throws InterruptedException, ExecutionException {
+    public void psubscribe() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> jedis.psubscribe(new JedisPubSub() {
+            @Suspendable
             public void onPSubscribe(String pattern, int subscribedChannels) {
                 assertEquals("foo.*", pattern);
                 assertEquals(1, subscribedChannels);
                 publishOne("foo.bar", "exit");
             }
 
-            public void onPUnsubscribe(String pattern, int subscribedChannels) {
-                assertEquals("foo.*", pattern);
-                assertEquals(0, subscribedChannels);
-            }
-
+            @Suspendable
             public void onPMessage(String pattern, String channel, String message) {
                 assertEquals("foo.*", pattern);
                 assertEquals("foo.bar", channel);
                 assertEquals("exit", message);
                 punsubscribe();
             }
+
+            @Suspendable
+            public void onPUnsubscribe(String pattern, int subscribedChannels) {
+                assertEquals("foo.*", pattern);
+                assertEquals(0, subscribedChannels);
+                ping(resCh);
+            }
         }, "foo.*"));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void psubscribeMany() throws InterruptedException, ExecutionException {
+    public void psubscribeMany() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> jedis.psubscribe(new JedisPubSub() {
+            @Suspendable
             public void onPSubscribe(String pattern, int subscribedChannels) {
                 publishOne(pattern.replace("*", "123"), "exit");
             }
 
+            @Suspendable
             public void onPMessage(String pattern, String channel, String message) {
                 punsubscribe(pattern);
+                ping(resCh);
             }
         }, "foo.*", "bar.*"));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void subscribeLazily() throws InterruptedException, ExecutionException {
+    public void subscribeLazily() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> {
             final JedisPubSub pubsub = new JedisPubSub() {
-                public void onMessage(String channel, String message) {
-                    unsubscribe(channel);
-                }
-
+                @Suspendable
                 public void onSubscribe(String channel, int subscribedChannels) {
                     publishOne(channel, "exit");
                     if (!channel.equals("bar")) {
@@ -186,98 +236,139 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                     }
                 }
 
+                @Suspendable
                 public void onPSubscribe(String pattern, int subscribedChannels) {
                     publishOne(pattern.replace("*", "123"), "exit");
                 }
 
+                @Suspendable
+                public void onMessage(String channel, String message) {
+                    unsubscribe(channel);
+                    ping(resCh);
+                }
+
+                @Suspendable
                 public void onPMessage(String pattern, String channel, String message) {
                     punsubscribe(pattern);
+                    ping(resCh);
                 }
             };
 
             jedis.subscribe(pubsub, "foo");
         });
+
+        resCh.receive(); // Wait for all asserts
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void binarySubscribe() throws InterruptedException, ExecutionException {
+    public void binarySubscribe() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> jedis.subscribe(new BinaryJedisPubSub() {
+            @Suspendable
+            public void onSubscribe(byte[] channel, int subscribedChannels) {
+                assertTrue(Arrays.equals(SafeEncoder.encode("foo"), channel));
+                assertEquals(1, subscribedChannels);
+                publishOne(SafeEncoder.encode(channel), "exit");
+            }
+
+            @Suspendable
             public void onMessage(byte[] channel, byte[] message) {
                 assertTrue(Arrays.equals(SafeEncoder.encode("foo"), channel));
                 assertTrue(Arrays.equals(SafeEncoder.encode("exit"), message));
                 unsubscribe();
             }
 
-            public void onSubscribe(byte[] channel, int subscribedChannels) {
-                assertTrue(Arrays.equals(SafeEncoder.encode("foo"), channel));
-                assertEquals(1, subscribedChannels);
-                publishOne(SafeEncoder.encode(channel), "exit");
-            }
-
+            @Suspendable
             public void onUnsubscribe(byte[] channel, int subscribedChannels) {
                 assertTrue(Arrays.equals(SafeEncoder.encode("foo"), channel));
                 assertEquals(0, subscribedChannels);
+                ping(resCh);
             }
         }, SafeEncoder.encode("foo")));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void binarySubscribeMany() throws InterruptedException, ExecutionException {
-        FiberUtil.runInFiber(() -> jedis.subscribe(new BinaryJedisPubSub() {
-            public void onMessage(byte[] channel, byte[] message) {
-                unsubscribe(channel);
-            }
+    public void binarySubscribeMany() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
 
+        FiberUtil.runInFiber(() -> jedis.subscribe(new BinaryJedisPubSub() {
+            @Suspendable
             public void onSubscribe(byte[] channel, int subscribedChannels) {
                 publishOne(SafeEncoder.encode(channel), "exit");
             }
+
+            @Suspendable
+            public void onMessage(byte[] channel, byte[] message) {
+                unsubscribe(channel);
+                ping(resCh);
+            }
         }, SafeEncoder.encode("foo"), SafeEncoder.encode("bar")));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void binaryPsubscribe() throws InterruptedException, ExecutionException {
+    public void binaryPsubscribe() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> jedis.psubscribe(new BinaryJedisPubSub() {
+            @Suspendable
             public void onPSubscribe(byte[] pattern, int subscribedChannels) {
                 assertTrue(Arrays.equals(SafeEncoder.encode("foo.*"), pattern));
                 assertEquals(1, subscribedChannels);
                 publishOne(SafeEncoder.encode(pattern).replace("*", "bar"), "exit");
             }
 
-            public void onPUnsubscribe(byte[] pattern, int subscribedChannels) {
-                assertTrue(Arrays.equals(SafeEncoder.encode("foo.*"), pattern));
-                assertEquals(0, subscribedChannels);
-            }
-
+            @Suspendable
             public void onPMessage(byte[] pattern, byte[] channel, byte[] message) {
                 assertTrue(Arrays.equals(SafeEncoder.encode("foo.*"), pattern));
                 assertTrue(Arrays.equals(SafeEncoder.encode("foo.bar"), channel));
                 assertTrue(Arrays.equals(SafeEncoder.encode("exit"), message));
                 punsubscribe();
             }
+
+            @Suspendable
+            public void onPUnsubscribe(byte[] pattern, int subscribedChannels) {
+                assertTrue(Arrays.equals(SafeEncoder.encode("foo.*"), pattern));
+                assertEquals(0, subscribedChannels);
+                ping(resCh);
+            }
         }, SafeEncoder.encode("foo.*")));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void binaryPsubscribeMany() throws InterruptedException, ExecutionException {
+    public void binaryPsubscribeMany() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> jedis.psubscribe(new BinaryJedisPubSub() {
+            @Suspendable
             public void onPSubscribe(byte[] pattern, int subscribedChannels) {
                 publishOne(SafeEncoder.encode(pattern).replace("*", "123"), "exit");
             }
 
+            @Suspendable
             public void onPMessage(byte[] pattern, byte[] channel, byte[] message) {
                 punsubscribe(pattern);
+                ping(resCh);
             }
         }, SafeEncoder.encode("foo.*"), SafeEncoder.encode("bar.*")));
+
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test
-    public void binarySubscribeLazily() throws InterruptedException, ExecutionException {
+    public void binarySubscribeLazily() throws InterruptedException, ExecutionException, SuspendExecution {
+        final Channel<Object> resCh = Channels.newChannel(1);
+
         FiberUtil.runInFiber(() -> {
             final BinaryJedisPubSub pubsub = new BinaryJedisPubSub() {
-                public void onMessage(byte[] channel, byte[] message) {
-                    unsubscribe(channel);
-                }
-
+                @Suspendable
                 public void onSubscribe(byte[] channel, int subscribedChannels) {
                     publishOne(SafeEncoder.encode(channel), "exit");
 
@@ -287,26 +378,44 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                     }
                 }
 
+                @Suspendable
                 public void onPSubscribe(byte[] pattern, int subscribedChannels) {
                     publishOne(SafeEncoder.encode(pattern).replace("*", "123"), "exit");
                 }
 
+                @Suspendable
+                public void onMessage(byte[] channel, byte[] message) {
+                    unsubscribe(channel);
+                    ping(resCh);
+                }
+
+                @Suspendable
                 public void onPMessage(byte[] pattern, byte[] channel, byte[] message) {
                     punsubscribe(pattern);
+                    ping(resCh);
                 }
             };
 
             jedis.subscribe(pubsub, SafeEncoder.encode("foo"));
         });
+
+        resCh.receive(); // Wait for all asserts
+        resCh.receive(); // Wait for all asserts
     }
 
     @Test(expected = JedisConnectionException.class)
-    public void unsubscribeWhenNotSusbscribed() throws InterruptedException, ExecutionException {
-        FiberUtil.runInFiber(() -> {
-            JedisPubSub pubsub = new JedisPubSub() {
-            };
-            pubsub.unsubscribe();
-        });
+    public void unsubscribeWhenNotSubscribed() throws InterruptedException, ExecutionException {
+        try {
+            FiberUtil.runInFiber(() -> {
+                JedisPubSub pubsub = new JedisPubSub() {
+                };
+                pubsub.unsubscribe();
+            });
+        } catch (final ExecutionException e) {
+            final Throwable t = e.getCause();
+            if (t != null && t instanceof JedisException)
+                throw (JedisException) t;
+        }
     }
 
     @Test(expected = JedisConnectionException.class)
@@ -334,12 +443,13 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                     }
 
                     j.disconnect();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             });
-            t.start();
             try {
                 jedis.subscribe(new JedisPubSub() {
+                    @Suspendable
                     public void onMessage(String channel, String message) {
                         try {
                             // wait 0.5 secs to slow down subscribe and
@@ -359,19 +469,13 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                         }
                     }
                 }, "foo");
+                t.start();
             } finally {
                 // exit the publisher thread. if exception is thrown, thread might
                 // still keep publishing things.
                 exit.set(true);
-                if (t.isAlive()) {
-                    try {
-                        //noinspection ThrowFromFinallyBlock
-                        t.join();
-                    } catch (ExecutionException e) {
-                        //noinspection ThrowFromFinallyBlock
-                        throw new RuntimeException(e);
-                    }
-                }
+                if (t.isAlive())
+                    t.interrupt();
             }
         });
     }
@@ -382,5 +486,16 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
             sb.append((char) ('a' + i % 26));
 
         return sb.toString();
+    }
+
+    @Suspendable
+    private static void ping(Channel<Object> resCh) {
+        try {
+            resCh.send(new Object());
+        } catch (final SuspendExecution e) {
+            throw new AssertionError(e);
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

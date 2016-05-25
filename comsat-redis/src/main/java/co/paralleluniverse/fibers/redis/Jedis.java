@@ -27,6 +27,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import static co.paralleluniverse.fibers.redis.Utils.validateFiberPubSub;
+
 /**
  * @author circlespainter
  */
@@ -1183,11 +1185,27 @@ public final class Jedis extends BinaryJedis {
 
     /////////////////////////// PUBSUB
 
+    private Utils.FiberRedisStringPubSubListener registerPubSubListener(Utils.FiberRedisStringPubSubListener l) {
+        pubSubListenersLock.lock();
+        try {
+            stringPubSubListeners.add(l);
+        } finally {
+            pubSubListenersLock.unlock();
+        }
+        return l;
+    }
+
     @Override
     @Suspendable
     public final void subscribe(redis.clients.jedis.JedisPubSub jedisPubSub, String... channels) {
-        Utils.validateFiberPubSub(jedisPubSub);
-        stringPubSub.addListener(new Utils.FiberRedisStringPubSubListener(this, (JedisPubSub) jedisPubSub, false, channels));
+        final JedisPubSub ps = validateFiberPubSub(jedisPubSub);
+        ps.jedis = this;
+        ps.conn = redisClient.connectPubSub();
+        ps.conn.addListener(registerPubSubListener(new Utils.FiberRedisStringPubSubListener(ps)));
+        ps.commands = ps.conn.async();
+        if (password != null)
+            ps.commands.auth(password);
+        await(() -> ps.commands.subscribe(channels));
     }
 
     @Override
@@ -1199,8 +1217,14 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final void psubscribe(redis.clients.jedis.JedisPubSub jedisPubSub, String... patterns) {
-        Utils.validateFiberPubSub(jedisPubSub);
-        stringPubSubConn.addListener(new Utils.FiberRedisStringPubSubListener(this, (JedisPubSub) jedisPubSub, true, patterns));
+        final JedisPubSub ps = validateFiberPubSub(jedisPubSub);
+        ps.jedis = this;
+        ps.conn = redisClient.connectPubSub();
+        ps.conn.addListener(registerPubSubListener(new Utils.FiberRedisStringPubSubListener(ps)));
+        ps.commands = ps.conn.async();
+        if (password != null)
+            ps.commands.auth(password);
+        await(() -> ps.commands.psubscribe(patterns));
     }
 
     @Override

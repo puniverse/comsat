@@ -13,11 +13,14 @@
  */
 package co.paralleluniverse.fibers.redis;
 
-import co.paralleluniverse.strands.concurrent.ReentrantLock;
+import co.paralleluniverse.fibers.Fiber;
 import com.google.common.base.Charsets;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import redis.clients.jedis.*;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.params.geo.GeoRadiusParam;
 import redis.clients.jedis.params.sortedset.ZAddParams;
 
@@ -274,14 +277,16 @@ public final class Utils {
         return new ScanResult<>(c.getCursor(), c.getValues().stream().map((sv) -> new Tuple(sv.value, sv.score)).collect(Collectors.toList()));
     }
 
-    static void validateFiberPubSub(redis.clients.jedis.JedisPubSub jedisPubSub) {
+    static JedisPubSub validateFiberPubSub(redis.clients.jedis.JedisPubSub jedisPubSub) {
         if (!(jedisPubSub instanceof JedisPubSub))
             throw new IllegalArgumentException("Only subclasses of '" + JedisPubSub.class.getName() + "' can be used with '" + Jedis.class.getName() + "'");
+        return (JedisPubSub) jedisPubSub;
     }
 
-    static void validateFiberPubSub(redis.clients.jedis.BinaryJedisPubSub jedisPubSub) {
+    static BinaryJedisPubSub validateFiberPubSub(redis.clients.jedis.BinaryJedisPubSub jedisPubSub) {
         if (!(jedisPubSub instanceof BinaryJedisPubSub))
             throw new IllegalArgumentException("Only subclasses of '" + BinaryJedisPubSub.class.getName() + "' can be used with '" + Jedis.class.getName() + "'");
+        return (BinaryJedisPubSub) jedisPubSub;
     }
 
     static <K, V> Map<String, String> toStringMap(Map<K, V> m) {
@@ -302,127 +307,116 @@ public final class Utils {
         return new String(bs, Charsets.UTF_8);
     }
 
-    static final class FiberRedisStringPubSubListener implements RedisPubSubListener<String, String> {
-        private final JedisPubSub pubSub;
+    static <T> void checkPubSubConnected(BinaryJedis jedis, StatefulRedisPubSubConnection<T, T> conn, RedisAsyncCommands<T, T> commands) {
+        if (jedis == null || !jedis.isConnected() || conn == null || !conn.isOpen() || commands == null)
+            throw new JedisConnectionException("Not connected");
+    }
 
-        FiberRedisStringPubSubListener(Jedis jedis, JedisPubSub pubSub, boolean pattern, String... args) {
+    static final class FiberRedisStringPubSubListener implements RedisPubSubListener<String, String> {
+        final JedisPubSub pubSub;
+
+        FiberRedisStringPubSubListener(JedisPubSub pubSub) {
             this.pubSub = pubSub;
-            pubSub.jedis = jedis;
-            Map<String, List<RedisPubSubListener<String, String>>> m =
-                pattern ? pubSub.patternListeners : pubSub.channelListeners;
-            final ReentrantLock l = new ReentrantLock();
-            l.lock();
-            try {
-                for (final String a : args)
-                    m.compute(a, (k, v) -> {
-                        if (v == null)
-                            v = new ArrayList<>(1);
-                        v.add(this);
-                        return v;
-                    });
-            } finally {
-                l.unlock();
-            }
         }
 
         @Override
         public final void message(String channel, String message) {
-            pubSub.onMessage(channel, message);
+            new Fiber(() -> pubSub.onMessage(channel, message)).start();
         }
 
         @Override
         public final void message(String pattern, String channel, String message) {
-            pubSub.onPMessage(pattern, channel, message);
+            new Fiber(() -> pubSub.onPMessage(pattern, channel, message)).start();
         }
 
         @Override
         public final void subscribed(String channel, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(c);
-            pubSub.onSubscribe(channel, c);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(c);
+                pubSub.onSubscribe(channel, c);
+            }).start();
         }
 
         @Override
         public final void psubscribed(String pattern, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(c);
-            pubSub.onPSubscribe(pattern, c);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(c);
+                pubSub.onPSubscribe(pattern, c);
+            }).start();
         }
 
         @Override
         public final void unsubscribed(String channel, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(-c);
-            pubSub.onUnsubscribe(channel, c);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(-c);
+                pubSub.onUnsubscribe(channel, c);
+            }).start();
         }
 
         @Override
         public final void punsubscribed(String pattern, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(-c);
-            pubSub.onPUnsubscribe(pattern, (int) count);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(-c);
+                pubSub.onPUnsubscribe(pattern, (int) count);
+            }).start();
         }
     }
 
     static final class FiberRedisBinaryPubSubListener implements RedisPubSubListener<byte[], byte[]> {
-        private final BinaryJedisPubSub pubSub;
+        final BinaryJedisPubSub pubSub;
 
-        FiberRedisBinaryPubSubListener(BinaryJedis jedis, BinaryJedisPubSub pubSub, boolean pattern, byte[]... args) {
+        FiberRedisBinaryPubSubListener(BinaryJedisPubSub pubSub) {
             this.pubSub = pubSub;
-            pubSub.jedis = jedis;
-            final Map<byte[], List<RedisPubSubListener<byte[], byte[]>>> m =
-                pattern ? pubSub.patternListeners : pubSub.channelListeners;
-            final ReentrantLock l = new ReentrantLock();
-            l.lock();
-            try {
-                for (final byte[] a : args)
-                    m.compute(a, (k, v) -> {
-                        if (v == null)
-                            v = new ArrayList<>(1);
-                        v.add(this);
-                        return v;
-                    });
-            } finally {
-                l.unlock();
-            }
         }
 
         @Override
         public final void message(byte[] channel, byte[] message) {
-            pubSub.onMessage(channel, message);
+            new Fiber(() -> pubSub.onMessage(channel, message)).start();
         }
 
         @Override
         public final void message(byte[] pattern, byte[] channel, byte[] message) {
-            pubSub.onPMessage(pattern, channel, message);
+            new Fiber(() -> pubSub.onPMessage(pattern, channel, message)).start();
         }
 
         @Override
         public final void subscribed(byte[] channel, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(c);
-            pubSub.onSubscribe(channel, c);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(c);
+                pubSub.onSubscribe(channel, c);
+            }).start();
         }
 
         @Override
         public final void psubscribed(byte[] pattern, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(c);
-            pubSub.onPSubscribe(pattern, c);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(c);
+                pubSub.onPSubscribe(pattern, c);
+            }).start();
         }
 
         @Override
         public final void unsubscribed(byte[] channel, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(-c);
-            pubSub.onUnsubscribe(channel, c);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(-c);
+                pubSub.onUnsubscribe(channel, c);
+            }).start();
         }
 
         @Override
         public final void punsubscribed(byte[] pattern, long count) {
-            int c = validateInt(count);
-            pubSub.subscribedChannels.addAndGet(-c);
-            pubSub.onPUnsubscribe(pattern, (int) count);
+            new Fiber(() -> {
+                int c = validateInt(count);
+                pubSub.subscribedChannels.addAndGet(-c);
+                pubSub.onPUnsubscribe(pattern, (int) count);
+            }).start();
         }
     }
 }
