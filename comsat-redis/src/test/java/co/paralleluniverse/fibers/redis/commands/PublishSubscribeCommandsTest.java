@@ -17,6 +17,7 @@ import co.paralleluniverse.fibers.redis.JedisPubSub;
 import co.paralleluniverse.strands.Strand;
 import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.Channels;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import redis.clients.jedis.exceptions.JedisConnectionException;
@@ -418,7 +419,7 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
         }
     }
 
-    @Test(expected = JedisConnectionException.class)
+    @Test(expected = JedisConnectionException.class) @Ignore // Requires replication
     public void handleClientOutputBufferLimitForSubscribeTooSlow() throws InterruptedException, ExecutionException {
         FiberUtil.runInFiber(() -> {
             final Jedis j = createJedis();
@@ -470,6 +471,7 @@ public class PublishSubscribeCommandsTest extends JedisCommandTestBase {
                     }
                 }, "foo");
                 t.start();
+                Strand.sleep(100000);
             } finally {
                 // exit the publisher thread. if exception is thrown, thread might
                 // still keep publishing things.
