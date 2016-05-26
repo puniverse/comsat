@@ -251,7 +251,7 @@ To learn about writing REST services with JAX-RS, please refer to the [Jersey Us
 
 ### Clojure Ring
 
-The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9: it will make your Ring handler run in a fiber rather than in a thread, boosting efficiency without requiring handler logic changes.
+The Comsat Ring adapter is a fiber-blocking adapter based on Jetty 9.3 so it requires JDK8 or later: it will run Ring handler in a fiber rather than in a thread, boosting efficiency without requiring handler logic changes.
 
 Comsat Ring is based on Pulsar, so it is necessary that the handler's fiber-blocking logic and all functions calling it are declared suspendable through either the `sfn` / `defsfn` macros or the `suspendable!` call (please refer to [Pulsar docs](http://docs.paralleluniverse.co/pulsar/#fibers) for details). This often means declaring suspendable the handler itself and middlewares applied to it. You can avoid making suspendable the resulting handler passed to the adapter though, as latter will do it for you.
 
