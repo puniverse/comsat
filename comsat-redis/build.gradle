@@ -15,10 +15,6 @@ dependencies {
     compile "redis.clients:jedis:$jedisVer"
 }
 
-jar {
-    classifier = 'jdk8'
-}
-
 artifacts {
     archives sourcesJar
     archives javadocJar
