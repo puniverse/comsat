@@ -9,7 +9,6 @@ compileTestJava {
 }
 
 dependencies {
-    compile "co.paralleluniverse:quasar-core:$quasarVer:jdk8"
     compile "biz.paluch.redis:lettuce:$lettuceVer"
     compile "redis.clients:jedis:$jedisVer"
 }
