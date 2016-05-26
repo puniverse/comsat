@@ -407,7 +407,7 @@ public class AllKindOfValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test @Ignore // TODO prio 1
+    @Test
     public void getDB() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             assertEquals(0, jedis.getDB().longValue());

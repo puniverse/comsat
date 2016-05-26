@@ -13,6 +13,7 @@
  */
 package co.paralleluniverse.fibers.redis;
 
+import co.paralleluniverse.common.util.VisibleForTesting;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.futures.AsyncCompletionStage;
@@ -29,6 +30,7 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.params.geo.GeoRadiusParam;
 import redis.clients.jedis.params.sortedset.ZAddParams;
+import redis.clients.util.JedisURIHelper;
 
 import java.net.URI;
 import java.util.*;
@@ -41,6 +43,8 @@ import static co.paralleluniverse.fibers.redis.Utils.*;
 
 public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     private final Callable<RedisClient> redisClientProvider;
+
+    private RedisURI uri;
 
     String password;
     RedisClient redisClient;
@@ -55,6 +59,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     final ReentrantLock pubSubListenersLock = new ReentrantLock();
 
     private volatile boolean firstConnection = true;
+    private volatile long db = 0L;
 
     public BinaryJedis(Callable<RedisClient> cp) {
         redisClientProvider = cp;
@@ -69,16 +74,16 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
         if (uri.getScheme() != null && uri.getScheme().equals("redis")) {
             redisClientProvider = () -> newClient(uri);
         } else {
-            redisClientProvider = () -> setDefaultOptions(RedisClient.create(RedisURI.create("redis://" + host)));
+            redisClientProvider = () -> setDefaultOptions(RedisClient.create(this.uri = RedisURI.create("redis://" + host)));
         }
     }
 
     public BinaryJedis(String host, int port) {
-        this(() -> setDefaultOptions(RedisClient.create(RedisURI.create(host, port))));
+        redisClientProvider = () -> setDefaultOptions(RedisClient.create(uri = RedisURI.create(host, port)));
     }
 
     public BinaryJedis(String host, int port, int timeout) {
-        redisClientProvider = () -> setDefaultOptions(RedisClient.create(RedisURI.Builder.redis(host, port).withTimeout(timeout, TimeUnit.MILLISECONDS).build()));
+        redisClientProvider = () -> setDefaultOptions(RedisClient.create(uri = RedisURI.Builder.redis(host, port).withTimeout(timeout, TimeUnit.MILLISECONDS).build()));
     }
 
     public BinaryJedis(URI uri) {
@@ -89,6 +94,29 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     public BinaryJedis(URI uri, int timeout) {
         validateRedisURI(uri);
         redisClientProvider = () -> newClient(uri, (long) timeout);
+    }
+
+    private RedisClient newClient(URI uri) {
+        return newClient(uri, null);
+    }
+
+    private RedisClient newClient(URI uri, Long timeout) {
+        validateRedisURI(uri);
+
+        RedisURI.Builder b = RedisURI.Builder.redis(uri.getHost(), uri.getPort());
+
+        String password = JedisURIHelper.getPassword(uri);
+        if (password != null)
+            b = b.withPassword(password);
+
+        int dbIndex = JedisURIHelper.getDBIndex(uri);
+        if (dbIndex > 0)
+            b = b.withDatabase(dbIndex);
+
+        if (timeout != null)
+            b = b.withTimeout(timeout, TimeUnit.MILLISECONDS);
+
+        return setDefaultOptions(RedisClient.create(this.uri = b.build()));
     }
 
     @Override
@@ -400,8 +428,15 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
             for (final Utils.FiberRedisBinaryPubSubListener l : binaryPubSubListeners)
                 l.pubSub.commands.select(index);
             stringCommands.select(index);
-            return binaryCommands.select(index);
+            final String ret = binaryCommands.select(index);
+            db = index;
+            return ret;
         });
+    }
+
+    @Override
+    public final Long getDB() {
+        return db;
     }
 
     @Override
@@ -1500,6 +1535,16 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
             connect();
             firstConnection = false;
         }
+    }
+
+    @VisibleForTesting
+    String getHost() {
+        return uri.getHost();
+    }
+
+    @VisibleForTesting
+    int getPort() {
+        return uri.getPort();
     }
 
     @Suspendable

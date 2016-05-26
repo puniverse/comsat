@@ -1447,11 +1447,6 @@ public final class Jedis extends BinaryJedis {
 
     /////////////////////////// CLUSTER / SHARDING / REPLICA
     @Override
-    public final Long getDB() {
-        return 0L; // TODO Support shards
-    }
-
-    @Override
     @Suspendable
     public final String clusterNodes() {
         throw new UnsupportedOperationException("Not (yet) supported");

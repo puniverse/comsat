@@ -186,19 +186,19 @@ public class JedisTest extends JedisCommandTestBase {
         });
     }
 
-    @Test @Ignore
+    @Test
     public void allowUrlWithNoDBAndNoPassword() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             Jedis jedis = new Jedis("redis://localhost:6380");
             jedis.auth("foobared");
-            assertEquals(jedis.getClient().getHost(), "localhost");
-            assertEquals(jedis.getClient().getPort(), 6380);
+            assertEquals(jedis.getHost(), "localhost");
+            assertEquals(jedis.getPort(), 6380);
             assertEquals(jedis.getDB(), (Long) 0L);
 
             jedis = new Jedis("redis://localhost:6380/");
             jedis.auth("foobared");
-            assertEquals(jedis.getClient().getHost(), "localhost");
-            assertEquals(jedis.getClient().getPort(), 6380);
+            assertEquals(jedis.getHost(), "localhost");
+            assertEquals(jedis.getPort(), 6380);
             assertEquals(jedis.getDB(), (Long) 0L);
         });
     }

@@ -329,30 +329,6 @@ public final class Utils {
         }
     }
 
-
-    static RedisClient newClient(URI uri) {
-        return newClient(uri, null);
-    }
-
-    static RedisClient newClient(URI uri, Long timeout) {
-        validateRedisURI(uri);
-
-        RedisURI.Builder b = RedisURI.Builder.redis(uri.getHost(), uri.getPort());
-
-        String password = JedisURIHelper.getPassword(uri);
-        if (password != null)
-            b = b.withPassword(password);
-
-        int dbIndex = JedisURIHelper.getDBIndex(uri);
-        if (dbIndex > 0)
-            b = b.withDatabase(dbIndex);
-
-        if (timeout != null)
-            b = b.withTimeout(timeout, TimeUnit.MILLISECONDS);
-
-        return setDefaultOptions(RedisClient.create(b.build()));
-    }
-
     static RedisClient setDefaultOptions(RedisClient redisClient) {
         redisClient.setOptions(DEFAULT_OPTS);
         return redisClient;
