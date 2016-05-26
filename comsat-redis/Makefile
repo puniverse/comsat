@@ -276,7 +276,7 @@ stop:
 test:
 	make start
 	sleep 2
-	gradle -i redisTest # --debug-jvm
+	gradle -i :comsat-redis:redisTest # --tests co.paralleluniverse.fibers.redis.commands.PublishSubscribeCommandsTest.handleClientOutputBufferLimitForSubscribeTooSlow --debug-jvm # .handleClientOutputBufferLimitForSubscribeTooSlow --debug-jvm
 	make stop
 
 .PHONY: test
