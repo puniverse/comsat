@@ -109,6 +109,9 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
         } catch (JedisException je) {
             jedis.close();
             throw je;
+        } catch (Throwable t) {
+            jedis.close();
+            throw t;
         }
 
         return new DefaultPooledObject<>(jedis);
@@ -126,8 +129,8 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
         try {
             HostAndPort hostAndPort = this.hostAndPort.get();
 
-            String connectionHost = jedis.getClient().getHost();
-            int connectionPort = jedis.getClient().getPort();
+            String connectionHost = jedis.getHost();
+            int connectionPort = jedis.getPort();
 
             return hostAndPort.getHost().equals(connectionHost)
                 && hostAndPort.getPort() == connectionPort && jedis.isConnected()

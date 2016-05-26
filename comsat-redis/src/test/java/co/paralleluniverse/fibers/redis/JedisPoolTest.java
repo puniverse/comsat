@@ -144,7 +144,7 @@ public class JedisPoolTest extends Assert {
         }
     }
 
-    @Test @Ignore // TODO prio 2
+    @Test
     public void securePool() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             JedisPoolConfig config = new JedisPoolConfig();
@@ -246,7 +246,7 @@ public class JedisPoolTest extends Assert {
     }
 
     @SuppressWarnings("deprecation")
-    @Test @Ignore // TODO prio 2
+    @Test
     public void selectDatabaseOnActivation() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             JedisPool pool = new JedisPool(new JedisPoolConfig(), hnp.getHost(), hnp.getPort(), 2000,
@@ -398,7 +398,7 @@ public class JedisPoolTest extends Assert {
         });
     }
 
-    @Test @Ignore // TODO prio 2
+    @Test
     public void testCloseConnectionOnMakeObject() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             JedisPoolConfig config = new JedisPoolConfig();
