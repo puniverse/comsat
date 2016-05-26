@@ -45,52 +45,71 @@ public class JedisTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisConnectionException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisConnectionException.class)
     public void timeoutConnection() throws Exception {
-        FiberUtil.runInFiber(() -> {
-            jedis = new Jedis("localhost", 6379, 15000);
-            jedis.auth("foobared");
-            jedis.configSet("timeout", "1");
-            Strand.sleep(2000);
-            jedis.hmget("foobar", "foo");
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis = new Jedis("localhost", 6380, 15000);
+                jedis.auth("foobared");
+                jedis.configSet("timeout", "1");
+                Strand.sleep(2000);
+                jedis.hmget("foobar", "foo");
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
-    @Test(expected = JedisConnectionException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisConnectionException.class)
     public void timeoutConnectionWithURI() throws Exception {
-        FiberUtil.runInFiber(() -> {
-            try {
-                jedis = new Jedis(new URI("redis://:foobared@localhost:6380/2"), 15000);
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-            jedis.configSet("timeout", "1");
-            Strand.sleep(2000);
-            jedis.hmget("foobar", "foo");
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                try {
+                    jedis = new Jedis(new URI("redis://:foobared@localhost:6380/2"), 15000);
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+                jedis.configSet("timeout", "1");
+                Strand.sleep(2000);
+                jedis.hmget("foobar", "foo");
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test(expected = JedisDataException.class)
-    @Ignore // TODO prio 1
     public void failWhenSendingNullValues() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> jedis.set("foo", null));
+        try {
+            FiberUtil.runInFiber(() -> jedis.set("foo", null));
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
-    @Test(expected = InvalidURIException.class) @Ignore // TODO prio 1
+    @Test(expected = InvalidURIException.class)
     public void shouldThrowInvalidURIExceptionForInvalidURI() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            Jedis j = null;
-            try {
-                j = new Jedis(new URI("localhost:6380"));
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-            j.ping();
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                Jedis j = null;
+                try {
+                    j = new Jedis(new URI("localhost:6380"));
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+                j.ping();
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
-    @Ignore // TODO prio 1
+    @Ignore
     public void shouldReconnectToSameDB() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             jedis.select(1);
@@ -105,7 +124,7 @@ public class JedisTest extends JedisCommandTestBase {
         });
     }
 
-    @Test @Ignore // TODO prio 1
+    @Test
     public void startWithUrlString() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             Jedis j = new Jedis("localhost", 6380);
@@ -118,7 +137,7 @@ public class JedisTest extends JedisCommandTestBase {
         });
     }
 
-    @Test @Ignore // TODO prio 1
+    @Test
     public void startWithUrl() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             Jedis j = new Jedis("localhost", 6380);
@@ -137,7 +156,6 @@ public class JedisTest extends JedisCommandTestBase {
     }
 
     @Test
-    @Ignore // TODO prio 1
     public void shouldNotUpdateDbIndexIfSelectFails() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             long currentDb = jedis.getDB();
@@ -152,7 +170,7 @@ public class JedisTest extends JedisCommandTestBase {
         });
     }
 
-    @Test @Ignore // TODO prio 1
+    @Test @Ignore
     public void allowUrlWithNoDBAndNoPassword() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             Jedis jedis = new Jedis("redis://localhost:6380");

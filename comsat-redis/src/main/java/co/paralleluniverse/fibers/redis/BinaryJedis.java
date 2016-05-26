@@ -24,49 +24,58 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static co.paralleluniverse.fibers.redis.Utils.validateFiberPubSub;
+import static co.paralleluniverse.fibers.redis.Utils.*;
 
 public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     private final Callable<RedisClient> redisClientProvider;
 
-    protected String password;
-    protected RedisClient redisClient;
+    String password;
+    RedisClient redisClient;
 
     private StatefulRedisConnection<String, String> stringCommandsConn;
-    protected RedisAsyncCommands<String, String> stringCommands;
+    RedisAsyncCommands<String, String> stringCommands;
     private StatefulRedisConnection<byte[], byte[]> binaryCommandsConn;
-    protected RedisAsyncCommands<byte[], byte[]> binaryCommands;
+    private RedisAsyncCommands<byte[], byte[]> binaryCommands;
 
-    protected final List<Utils.FiberRedisStringPubSubListener> stringPubSubListeners = new ArrayList<>();
-    protected final List<Utils.FiberRedisBinaryPubSubListener> binaryPubSubListeners = new ArrayList<>();
-    protected final ReentrantLock pubSubListenersLock = new ReentrantLock();
+    final List<Utils.FiberRedisStringPubSubListener> stringPubSubListeners = new ArrayList<>();
+    private final List<Utils.FiberRedisBinaryPubSubListener> binaryPubSubListeners = new ArrayList<>();
+    final ReentrantLock pubSubListenersLock = new ReentrantLock();
+
+    private volatile boolean firstConnection = true;
 
     public BinaryJedis(Callable<RedisClient> cp) {
         redisClientProvider = cp;
     }
 
     public BinaryJedis() {
-        this(RedisClient::create);
+        this(() -> setDefaultOptions(RedisClient.create()));
     }
 
     public BinaryJedis(String host) {
-        this(() -> RedisClient.create(RedisURI.create("redis://" + host)));
+        URI uri = URI.create(host);
+        if (uri.getScheme() != null && uri.getScheme().equals("redis")) {
+            redisClientProvider = () -> newClient(uri);
+        } else {
+            redisClientProvider = () -> setDefaultOptions(RedisClient.create(RedisURI.create("redis://" + host)));
+        }
     }
 
     public BinaryJedis(String host, int port) {
-        this(() -> RedisClient.create(RedisURI.create(host, port)));
+        this(() -> setDefaultOptions(RedisClient.create(RedisURI.create(host, port))));
     }
 
     public BinaryJedis(String host, int port, int timeout) {
-        redisClientProvider = () -> RedisClient.create(RedisURI.Builder.redis(host, port).withTimeout(timeout, TimeUnit.MILLISECONDS).build());
+        redisClientProvider = () -> setDefaultOptions(RedisClient.create(RedisURI.Builder.redis(host, port).withTimeout(timeout, TimeUnit.MILLISECONDS).build()));
     }
 
     public BinaryJedis(URI uri) {
-        this(() -> RedisClient.create(RedisURI.Builder.redis(uri.getHost(), uri.getPort()).build()));
+        validateRedisURI(uri);
+        redisClientProvider = () -> newClient(uri);
     }
 
     public BinaryJedis(URI uri, int timeout) {
-        this(() -> RedisClient.create(RedisURI.Builder.redis(uri.getHost(), uri.getPort()).withTimeout(timeout, TimeUnit.MILLISECONDS).build()));
+        validateRedisURI(uri);
+        redisClientProvider = () -> newClient(uri, (long) timeout);
     }
 
     @Override
@@ -84,8 +93,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
 
     @Override
     public final String auth(String password) {
-        if (!isConnected())
-            connect();
+        firstTimeConnect();
         this.password = password;
         final String a1 = stringCommands.auth(password);
         final String a2 = binaryCommands.auth(password);
@@ -372,13 +380,15 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
 
     @Override
     public final String select(int index) {
-        // TODO Check same results
-        for (final Utils.FiberRedisStringPubSubListener l : stringPubSubListeners)
-            l.pubSub.commands.select(index);
-        for (final Utils.FiberRedisBinaryPubSubListener l : binaryPubSubListeners)
-            l.pubSub.commands.select(index);
-        stringCommands.select(index);
-        return binaryCommands.select(index);
+        return exc(() -> {
+            // TODO Check same results
+            for (final Utils.FiberRedisStringPubSubListener l : stringPubSubListeners)
+                l.pubSub.commands.select(index);
+            for (final Utils.FiberRedisBinaryPubSubListener l : binaryPubSubListeners)
+                l.pubSub.commands.select(index);
+            stringCommands.select(index);
+            return binaryCommands.select(index);
+        });
     }
 
     @Override
@@ -390,6 +400,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final byte[] getSet(byte[] key, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.getset(key, value));
     }
 
@@ -402,24 +413,28 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Long setnx(byte[] key, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.setnx(key, value)) ? 1L : 0L;
     }
 
     @Override
     @Suspendable
     public final String setex(byte[] key, int seconds, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.setex(key, seconds, value));
     }
 
     @Override
     @Suspendable
     public final String mset(byte[]... keysValues) {
+        validateNotNull(keysValues);
         return await(() -> binaryCommands.mset(Utils.kvArrayToMap(keysValues)));
     }
 
     @Override
     @Suspendable
     public final Long msetnx(byte[]... keysValues) {
+        validateNotNull(keysValues);
         return await(() -> binaryCommands.msetnx(Utils.kvArrayToMap(keysValues))) ? 1L : 0L;
     }
 
@@ -468,6 +483,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Long hset(byte[] key, byte[] field, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.hset(key, field, value)) ? 1L : 0L;
     }
 
@@ -480,12 +496,14 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Long hsetnx(byte[] key, byte[] field, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.hsetnx(key, field, value)) ? 1L : 0L;
     }
 
     @Override
     @Suspendable
     public final String hmset(byte[] key, Map<byte[], byte[]> hash) {
+        validateNotNull(key);
         return await(() -> binaryCommands.hmset(key, hash));
     }
 
@@ -581,6 +599,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final String lset(byte[] key, long index, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.lset(key, index, value));
     }
 
@@ -1065,12 +1084,14 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Boolean setbit(byte[] key, long offset, boolean value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.setbit(key, offset, value ? 1 : 0)) > 0;
     }
 
     @Override
     @Suspendable
     public final Boolean setbit(byte[] key, long offset, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.setbit(key, offset, Integer.parseInt(Utils.toString(value)))) > 0;
     }
 
@@ -1095,6 +1116,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Long setrange(byte[] key, long offset, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.setrange(key, offset, value));
     }
 
@@ -1214,24 +1236,28 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Suspendable
     @SuppressWarnings("deprecation")
     public final String psetex(byte[] key, int milliseconds, byte[] value) {
+        validateNotNull(key, value);
         return psetex(key, milliseconds, value);
     }
 
     @Override
     @Suspendable
     public final String psetex(byte[] key, long milliseconds, byte[] value) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.psetex(key, milliseconds, value));
     }
 
     @Override
     @Suspendable
     public final String set(byte[] key, byte[] value, byte[] nxxx) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.set(key, value, Utils.toSetArgs(Utils.toString(nxxx))));
     }
 
     @Override
     @Suspendable
     public final String set(byte[] key, byte[] value, byte[] nxxx, byte[] expx, int time) {
+        validateNotNull(key, value);
         return await(() -> binaryCommands.set(key, value, Utils.toSetArgs(Utils.toString(nxxx), Utils.toString(expx), time)));
     }
 
@@ -1443,28 +1469,58 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     /////////////////////////// UTILS
     @Suspendable
     <T> T await(SuspendableCallable<RedisFuture<T>> f) {
+        firstTimeConnect();
+        return exc(() -> {
+            try {
+                return AsyncCompletionStage.get(f.run());
+            } catch (final ExecutionException e) {
+                if (e.getCause() != null)
+                    throw new RuntimeException(e.getCause());
+                else
+                    throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void firstTimeConnect() {
+        if (firstConnection && !isConnected()) {
+            connect();
+            firstConnection = false;
+        }
+    }
+
+    @Suspendable
+    private <T> T exc(SuspendableCallable<T> c) {
         try {
-            if (!isConnected())
-                connect();
-            return AsyncCompletionStage.get(f.run());
+            return c.run();
         } catch (final SuspendExecution e) {
             throw new AssertionError(e);
-        } catch (final ExecutionException e) {
+        } catch (final RedisException e) {
+            translateRedisExc(e);
+            throw new RuntimeException(e);
+        } catch (final RuntimeException e) {
             if (e.getCause() != null) {
                 final Throwable t = e.getCause();
-                if (t instanceof RedisConnectionException) {
-                    final RedisConnectionException rce = (RedisConnectionException) t;
-                    throw new JedisConnectionException(t.getMessage(), rce.getCause());
-                } else if (t instanceof RedisCommandExecutionException) {
-                    final RedisCommandExecutionException rcce = (RedisCommandExecutionException) t;
-                    throw new JedisDataException(rcce.getMessage(), rcce.getCause());
-                } else if (t instanceof JedisException) {
-                    throw (JedisException) t;
-                }
+                translateRedisExc(t);
             }
             throw new RuntimeException(e);
         } catch (final Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void translateRedisExc(Throwable t) {
+        if (t instanceof RedisConnectionException) {
+            final RedisConnectionException rce = (RedisConnectionException) t;
+            throw new JedisConnectionException(t.getMessage(), rce.getCause());
+        } else if (t instanceof RedisCommandExecutionException) {
+            final RedisCommandExecutionException rcce = (RedisCommandExecutionException) t;
+            throw new JedisDataException(rcce.getMessage(), rcce.getCause());
+        } else if (t instanceof RedisException) {
+            final RedisException re = (RedisException) t;
+            throw new JedisConnectionException(t.getMessage(), re.getCause());
+        } else if (t instanceof JedisException) {
+            throw (JedisException) t;
         }
     }
 }

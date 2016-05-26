@@ -20,18 +20,28 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import redis.clients.jedis.*;
+import redis.clients.jedis.exceptions.InvalidURIException;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.geo.GeoRadiusParam;
 import redis.clients.jedis.params.sortedset.ZAddParams;
+import redis.clients.util.JedisURIHelper;
 
+import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
  * @autho circlespainter
  */
 public final class Utils {
+    private static final ClientOptions DEFAULT_OPTS =
+        new ClientOptions.Builder()
+            .autoReconnect(false)
+            .build();
+
     @SuppressWarnings("WeakerAccess")
     static int validateInt(long v) {
         if (v > Integer.MAX_VALUE)
@@ -310,6 +320,47 @@ public final class Utils {
     static <T> void checkPubSubConnected(BinaryJedis jedis, StatefulRedisPubSubConnection<T, T> conn, RedisAsyncCommands<T, T> commands) {
         if (jedis == null || !jedis.isConnected() || conn == null || !conn.isOpen() || commands == null)
             throw new JedisConnectionException("Not connected");
+    }
+
+    static <T> void  validateNotNull(T... os) {
+        for (final T o : os) {
+            if (o == null)
+                throw new JedisDataException("Value is null");
+        }
+    }
+
+
+    static RedisClient newClient(URI uri) {
+        return newClient(uri, null);
+    }
+
+    static RedisClient newClient(URI uri, Long timeout) {
+        validateRedisURI(uri);
+
+        RedisURI.Builder b = RedisURI.Builder.redis(uri.getHost(), uri.getPort());
+
+        String password = JedisURIHelper.getPassword(uri);
+        if (password != null)
+            b = b.withPassword(password);
+
+        int dbIndex = JedisURIHelper.getDBIndex(uri);
+        if (dbIndex > 0)
+            b = b.withDatabase(dbIndex);
+
+        if (timeout != null)
+            b = b.withTimeout(timeout, TimeUnit.MILLISECONDS);
+
+        return setDefaultOptions(RedisClient.create(b.build()));
+    }
+
+    static RedisClient setDefaultOptions(RedisClient redisClient) {
+        redisClient.setOptions(DEFAULT_OPTS);
+        return redisClient;
+    }
+
+    static void validateRedisURI(URI uri) {
+        if (!JedisURIHelper.isValid(uri))
+            throw new InvalidURIException(String.format("Cannot open Redis connection due invalid URI. %s", uri.toString()));
     }
 
     static final class FiberRedisStringPubSubListener implements RedisPubSubListener<String, String> {

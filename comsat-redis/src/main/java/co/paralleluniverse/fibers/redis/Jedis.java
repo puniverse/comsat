@@ -16,6 +16,7 @@ package co.paralleluniverse.fibers.redis;
 import co.paralleluniverse.fibers.Suspendable;
 import com.lambdaworks.redis.*;
 import redis.clients.jedis.*;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.util.Pool;
 import redis.clients.jedis.params.geo.GeoRadiusParam;
 import redis.clients.jedis.params.sortedset.ZAddParams;
@@ -28,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import static co.paralleluniverse.fibers.redis.Utils.validateFiberPubSub;
+import static co.paralleluniverse.fibers.redis.Utils.validateNotNull;
 
 /**
  * @author circlespainter
@@ -64,12 +66,14 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final String set(String key, String value) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.set(key, value));
     }
 
     @Override
     @Suspendable
     public final String set(String key, String value, String nxxx, String expx, long time) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.set(key, value, Utils.toSetArgs(nxxx, expx, time)));
     }
 
@@ -162,6 +166,7 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final String getSet(String key, String value) {
+        validateNotNull(value);
         return await(() -> stringCommands.getset(key, value));
     }
 
@@ -174,24 +179,28 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Long setnx(String key, String value) {
+        validateNotNull(value);
         return await(() -> stringCommands.setnx(key, value)) ? 1L : 0L;
     }
 
     @Override
     @Suspendable
     public final String setex(String key, int seconds, String value) {
+        validateNotNull(value);
         return await(() -> stringCommands.setex(key, seconds, value));
     }
 
     @Override
     @Suspendable
     public final String mset(String... keysValues) {
+        validateNotNull(keysValues);
         return await(() -> stringCommands.mset(Utils.kvArrayToMap(keysValues)));
     }
 
     @Override
     @Suspendable
     public final Long msetnx(String... keysValues) {
+        validateNotNull(keysValues);
         return await(() -> stringCommands.msetnx(Utils.kvArrayToMap(keysValues))) ? 1L : 0L;
     }
 
@@ -240,6 +249,7 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Long hset(String key, String field, String value) {
+        validateNotNull(key, field, value);
         return await(() -> stringCommands.hset(key, field, value)) ? 1L : 0L;
     }
 
@@ -252,12 +262,14 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Long hsetnx(String key, String field, String value) {
+        validateNotNull(key, field, value);
         return await(() -> stringCommands.hsetnx(key, field, value)) ? 1L : 0L;
     }
 
     @Override
     @Suspendable
     public final String hmset(String key, Map<String, String> hash) {
+        validateNotNull(key);
         return await(() -> stringCommands.hmset(key, hash));
     }
 
@@ -354,6 +366,7 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final String lset(String key, long index, String value) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.lset(key, index, value));
     }
 
@@ -828,12 +841,14 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Boolean setbit(String key, long offset, boolean value) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.setbit(key, offset, value ? 1 : 0)) > 0;
     }
 
     @Override
     @Suspendable
     public final Boolean setbit(String key, long offset, String value) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.setbit(key, offset, Boolean.parseBoolean(value) ? 1 : 0)) > 0;
     }
 
@@ -846,6 +861,7 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Long setrange(String key, long offset, String value) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.setrange(key, offset, value));
     }
 
@@ -989,24 +1005,28 @@ public final class Jedis extends BinaryJedis {
     @Suspendable
     @SuppressWarnings("deprecation")
     public final String psetex(String key, int milliseconds, String value) {
+        validateNotNull(key, value);
         return psetex(key, (long) milliseconds, value);
     }
 
     @Override
     @Suspendable
     public final String psetex(String key, long milliseconds, String value) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.psetex(key, milliseconds, value));
     }
 
     @Override
     @Suspendable
     public final String set(String key, String value, String nxxx) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.set(key, value, Utils.toSetArgs(nxxx)));
     }
 
     @Override
     @Suspendable
     public final String set(String key, String value, String nxxx, String expx, int time) {
+        validateNotNull(key, value);
         return await(() -> stringCommands.set(key, value, Utils.toSetArgs(nxxx, expx, time)));
     }
 
