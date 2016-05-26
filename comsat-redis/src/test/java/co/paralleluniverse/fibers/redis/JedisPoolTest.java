@@ -17,8 +17,10 @@ import redis.clients.jedis.exceptions.JedisException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author circlespainter
+ */
 public class JedisPoolTest extends Assert {
     private static HostAndPort hnp = HostAndPortUtil.getRedisServers().get(0);
 

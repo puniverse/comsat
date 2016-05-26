@@ -1,3 +1,19 @@
+/*
+ * COMSAT
+ * Copyright (c) 2016, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
+ */
+/*
+ * Ported from the corresponding Jedis test, Copyright (c) 2011 Jonathan Leibiusky
+ */
 package co.paralleluniverse.fibers.redis.commands;
 
 import co.paralleluniverse.fibers.FiberUtil;
@@ -14,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * @author circlespainter
+ */
 public class GeoCommandsTest extends JedisCommandTestBase {
     final byte[] bfoo = {0x01, 0x02, 0x03, 0x04};
     final byte[] bA = {0x0A};

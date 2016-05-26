@@ -1,3 +1,5 @@
+## Copyright (c) 2011 Jonathan Leibiusky
+
 PATH := ./redis-git/src:${PATH}
 
 define REDIS1_CONF

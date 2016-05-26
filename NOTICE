@@ -46,6 +46,12 @@ This product contains modified source code from Undertow:
     * LICENSE: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
     * HOMEPAGE: http://undertow.io/
 
+This product contains modified source code from Jedis:
+
+    Copyright (C) 2011 Jonathan Leibiusky
+    * LICENSE: https://github.com/xetorthio/jedis/#license
+    * HOMEPAGE: https://github.com/xetorthio/jedis/
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE

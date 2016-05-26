@@ -1,3 +1,19 @@
+/*
+ * COMSAT
+ * Copyright (c) 2016, Parallel Universe Software Co. All rights reserved.
+ *
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
+ *
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 3.0
+ * as published by the Free Software Foundation.
+ */
+/*
+ * Ported from the corresponding Jedis benchmark, Copyright (c) 2011 Jonathan Leibiusky
+ */
 package co.paralleluniverse.fibers.redis.benchmark;
 
 import co.paralleluniverse.fibers.FiberUtil;
@@ -11,6 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author circlespainter
+ */
 public class PoolBenchmark {
     private static HostAndPort hnp = HostAndPortUtil.getRedisServers().get(0);
     private static final int TOTAL_OPERATIONS = 100000;
