@@ -16,6 +16,10 @@ Comsat does provide one new API that you may choose to use: Web Actors. Web acto
 
 ## News
 
+### TBD
+
+COMSAT [0.7.1](https://github.com/puniverse/comsat/releases/tag/v0.7.1) has been released.
+
 ### April 6, 2016
 
 COMSAT [0.7.0](https://github.com/puniverse/comsat/releases/tag/v0.7.0) has been released.
@@ -58,7 +62,7 @@ First, you need the `quasar-core` dependency. With Maven:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>0.7.2</version>
+    <version>0.7.6</version>
 </dependency>
 ~~~
 
@@ -68,42 +72,43 @@ or, for JDK8:
 <dependency>
     <groupId>co.paralleluniverse</groupId>
     <artifactId>quasar-core</artifactId>
-    <version>0.7.2</version>
+    <version>0.7.6</version>
     <classifier>jdk8</classifier>
 </dependency>
 ~~~
 
-The corresponding Gradle dependencies are respectively `co.paralleluniverse:quasar-core:0.7.2` or, for JDK8, `co.paralleluniverse:quasar-core:0.7.2@jdk8`.
+The corresponding Gradle dependencies are respectively `co.paralleluniverse:quasar-core:0.7.6` or, for JDK8, `co.paralleluniverse:quasar-core:0.7.6@jdk8`.
 
 Then add the following Maven/Gradle dependencies:
 
 | Feature                                                                                                                   | Artifact
 |---------------------------------------------------------------------------------------------------------------------------|--------------------------
-| Servlet integration for defining fiber-per-request servlets.                                                              | `co.paralleluniverse:comsat-servlet:0.7.0`
-| A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.3.                         | `co.paralleluniverse:comsat-ring-jetty9:0.7.0`
-| [HTTP Kit](http://www.http-kit.org/client.html)-based fiber-blocking HTTP client.                                         | `co.paralleluniverse:comsat-httpkit:0.7.0`
-| [Jersey server](https://jersey.java.net/) integration for defining REST services.                                         | `co.paralleluniverse:comsat-jersey-server:0.7.0`
-| [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.                              | `co.paralleluniverse:comsat-dropwizard:0.7.0`
-| [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.    | `co.paralleluniverse:comsat-spring-webmvc:0.7.0`
-| [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.                 | `co.paralleluniverse:comsat-spring-boot:0.7.0`
-| [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.                           | `co.paralleluniverse:comsat-spring-security:0.7.0`
-| [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for HTTP calls with fibers.         | `co.paralleluniverse:comsat-jax-rs-client:0.7.0`
-| [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for HTTP calls with fibers.                | `co.paralleluniverse:comsat-httpclient:0.7.0`
-| [Retrofit](http://square.github.io/retrofit/) integration with fibers.                                                    | `co.paralleluniverse:comsat-retrofit:0.7.0`
-| [JDBI](http://jdbi.org/) integration with fibers.                                                                         | `co.paralleluniverse:comsat-jdbi:0.7.0`
-| JDBC integration with fibers.                                                                                             | `co.paralleluniverse:comsat-jdbc:0.7.0`
-| [jOOQ](http://www.jooq.org/) integration with fibers.                                                                     | `co.paralleluniverse:comsat-jooq:0.7.0`
-| MongoDB fiber-blocking integration for the [Allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).     | `co.paralleluniverse:comsat-mongodb-allanbank:0.7.0`
-| [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.                                                  | `co.paralleluniverse:comsat-okhttp:0.7.0`
-| The Web Actors API.                                                                                                       | `co.paralleluniverse:comsat-actors-api:0.7.0`
-| Deploy HTTP, SSE and WebSocket Web Actors as [Undertow](http://undertow.io/) handlers.                                    | `co.paralleluniverse:comsat-actors-undertow:0.7.0`
-| Deploy HTTP, SSE and WebSocket Web Actors as [Netty](http://netty.io/) handlers.                                          | `co.paralleluniverse:comsat-actors-netty:0.7.0`
-| Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers.   | `co.paralleluniverse:comsat-actors-servlet:0.7.0`
-| Use Comsat in the Tomcat servlet container without java agent.                                                            | `co.paralleluniverse:comsat-tomcat-loader:0.7.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
-| Use Comsat in the Jetty servlet container without the java agent.                                                         | `co.paralleluniverse:comsat-jetty-loader:0.7.0[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
-| [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.7.0`
-| [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.7.0`
-| [Apache Shiro](http://shiro.apache.org/) integration module.                                                              | `co.paralleluniverse:comsat-shiro:0.7.0`
+| Servlet integration for defining fiber-per-request servlets.                                                              | `co.paralleluniverse:comsat-servlet:0.7.1`
+| A fiber-blocking Clojure [Ring](https://github.com/ring-clojure/ring) adapter based on Jetty 9.3.                         | `co.paralleluniverse:comsat-ring-jetty9:0.7.1`
+| [HTTP Kit](http://www.http-kit.org/client.html)-based fiber-blocking HTTP client.                                         | `co.paralleluniverse:comsat-httpkit:0.7.1`
+| [Jersey server](https://jersey.java.net/) integration for defining REST services.                                         | `co.paralleluniverse:comsat-jersey-server:0.7.1`
+| [Dropwizard](http://dropwizard.io/) integration including Jersey, ApacheHttpClient and JDBI.                              | `co.paralleluniverse:comsat-dropwizard:0.7.1`
+| [Spring Framework](http://projects.spring.io/spring-framework/) Web MVC fiber-blocking controller methods integration.    | `co.paralleluniverse:comsat-spring-webmvc:0.7.1`
+| [Spring Boot](http://projects.spring.io/spring-boot/) auto-configuration support for Web MVC controllers.                 | `co.paralleluniverse:comsat-spring-boot:0.7.1`
+| [Spring Security](http://projects.spring.io/spring-security/) configuration support for fibers.                           | `co.paralleluniverse:comsat-spring-security:0.7.1`
+| [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for HTTP calls with fibers.         | `co.paralleluniverse:comsat-jax-rs-client:0.7.1`
+| [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for HTTP calls with fibers.                | `co.paralleluniverse:comsat-httpclient:0.7.1`
+| [Retrofit](http://square.github.io/retrofit/) integration with fibers.                                                    | `co.paralleluniverse:comsat-retrofit:0.7.1`
+| [JDBI](http://jdbi.org/) integration with fibers.                                                                         | `co.paralleluniverse:comsat-jdbi:0.7.1`
+| JDBC integration with fibers.                                                                                             | `co.paralleluniverse:comsat-jdbc:0.7.1`
+| [jOOQ](http://www.jooq.org/) integration with fibers.                                                                     | `co.paralleluniverse:comsat-jooq:0.7.1`
+| MongoDB fiber-blocking integration for the [Allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).     | `co.paralleluniverse:comsat-mongodb-allanbank:0.7.1`
+| [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.                                                  | `co.paralleluniverse:comsat-okhttp:0.7.1`
+| The Web Actors API.                                                                                                       | `co.paralleluniverse:comsat-actors-api:0.7.1`
+| Deploy HTTP, SSE and WebSocket Web Actors as [Undertow](http://undertow.io/) handlers.                                    | `co.paralleluniverse:comsat-actors-undertow:0.7.1`
+| Deploy HTTP, SSE and WebSocket Web Actors as [Netty](http://netty.io/) handlers.                                          | `co.paralleluniverse:comsat-actors-netty:0.7.1`
+| Deploy HTTP, SSE and WebSocket Web Actors in J2EE 7 Servlet and WebSocket (JSR-356) embedded and standalone containers.   | `co.paralleluniverse:comsat-actors-servlet:0.7.1`
+| Use Comsat in the Tomcat servlet container without java agent.                                                            | `co.paralleluniverse:comsat-tomcat-loader:0.7.1[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
+| Use Comsat in the Jetty servlet container without the java agent.                                                         | `co.paralleluniverse:comsat-jetty-loader:0.7.1[:jdk8]` (for JDK 8 optionally add the `jdk8` classifier)
+| [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.7.1`
+| [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.7.1`
+| [Apache Shiro](http://shiro.apache.org/) integration module.                                                              | `co.paralleluniverse:comsat-shiro:0.7.1`
+| [Redis](http://redis.io/) integration module.                                                                             | `co.paralleluniverse:comsat-redis:0.7.1:jdk8`
 
 ## Examples
 
@@ -775,3 +780,24 @@ The `comsat-shiro` module adds instrumentation to some Shiro methods (via `suspe
             && SecurityUtils.getSubject().isPermitted("some:permission");
     }
 ~~~
+
+### Redis
+
+[Redis](http://redis.io) is an in-memory data structure store, used as a database, cache and message broker.
+
+The `comsat-redis` module is can be used with JDK 8 and higher; it uses [Lettuce's async API](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29), which is based on [JDK8's CompletableStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html), to offer a fiber-blocking [Jedis](https://github.com/xetorthio/jedis/wiki/Getting-started) API. At present it supports most basic commands and Redis pub-sub.
+
+The `co.paralleluniverse.fibers.redis.BinaryJedis`, `Jedis`, `BinaryJedisPubSub` and `JedisPubSub` classes extend the corresponding Jedis' ones so in most cases using the integration is as simple as, including the module as a compile-time dependency, [enabling Quasar instrumentation](http://docs.paralleluniverse.co/quasar/#instrumentation) and replacing references to the `redis.clients.jedis` package with `co.paralleluniverse.fibers.redis`.
+
+There are some difference between `comsat-redis` and Jedis:
+
+- When invoked from fibers `comsat-redis` will block fibers while from threads it will be block threads; this means it's generally better to use it inside fibers in order to get maximum concurrency capacity and efficiency but it can also be used as a traditional Jedis driver from Java threads.
+- When using pub-sub, the callback handlers have to extend Comsat's `BinaryJedisPubSub` or `JedisPubSub` rather than Jedis' (usually it's just a matter of switching package). Also, each callback method will run in a fiber and will have to be annotated as `@Suspendable` if it calls fiber-blocking methods.
+- Lettuce's driver is thread-safe for basic commands so there's no need for a driver pool: a single `Jedis` instance will suffice in most cases.
+
+Here's a complete list of features that are currently supported:
+
+- Pub-sub
+- All basic commands and operations except geo commands, `getClient`, `zrevrangeByLex`, `geohash`, `rpushx`, `lpushx`, `spop` with count, `zincrby` with count, scan commands with parameters, bit operations with parameters, zstore operations with parameters and Jedis-deprecated calls.
+
+Clustering, sharding, replication, transaction/multi, pipelining, scripting, monitoring, driver pooling and all other features not explicitly listed above are not yet supported.
