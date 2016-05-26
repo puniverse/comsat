@@ -108,7 +108,7 @@ Then add the following Maven/Gradle dependencies:
 | [Spring Framework](http://projects.spring.io/spring-framework/) Web integration allows using fiber-blocking controllers.  | `co.paralleluniverse:comsat-spring-web:0.7.1`
 | [Apache Kafka](http://kafka.apache.org/) producer integration module.                                                     | `co.paralleluniverse:comsat-kafka:0.7.1`
 | [Apache Shiro](http://shiro.apache.org/) integration module.                                                              | `co.paralleluniverse:comsat-shiro:0.7.1`
-| [Redis](http://redis.io/) integration module.                                                                             | `co.paralleluniverse:comsat-redis:0.7.1:jdk8`
+| [Redis](http://redis.io/) integration module.                                                                             | `co.paralleluniverse:comsat-redis:0.7.1`
 
 ## Examples
 
@@ -785,7 +785,7 @@ The `comsat-shiro` module adds instrumentation to some Shiro methods (via `suspe
 
 [Redis](http://redis.io) is an in-memory data structure store, used as a database, cache and message broker.
 
-The `comsat-redis` module is can be used with JDK 8 and higher; it uses [Lettuce's async API](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29), which is based on [JDK8's CompletableStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html), to offer a fiber-blocking [Jedis](https://github.com/xetorthio/jedis/wiki/Getting-started) API. At present it supports most basic commands and Redis pub-sub.
+The `comsat-redis` module is compatible with JDK 8 and higher; it uses [Lettuce's async API](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29), which is based on [JDK8's CompletableStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html), to offer a fiber-blocking [Jedis](https://github.com/xetorthio/jedis/wiki/Getting-started) API. At present it supports most basic commands and Redis pub-sub.
 
 The `co.paralleluniverse.fibers.redis.BinaryJedis`, `Jedis`, `BinaryJedisPubSub` and `JedisPubSub` classes extend the corresponding Jedis' ones so in most cases using the integration is as simple as, including the module as a compile-time dependency, [enabling Quasar instrumentation](http://docs.paralleluniverse.co/quasar/#instrumentation) and replacing references to the `redis.clients.jedis` package with `co.paralleluniverse.fibers.redis`.
 
