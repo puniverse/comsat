@@ -21,7 +21,7 @@ fi
 if [[ "$_java" ]]; then
     version=$("$_java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
     echo version "$version"
-    if [[ "$version" >= "1.8" ]]; then
+    if [[ "$version" -ge "1.8" ]]; then
         echo "Java 1.8 found"
         _java18parts=true
     else
