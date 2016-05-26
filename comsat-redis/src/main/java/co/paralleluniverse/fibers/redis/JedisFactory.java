@@ -11,6 +11,9 @@
  * under the terms of the GNU Lesser General Public License version 3.0
  * as published by the Free Software Foundation.
  */
+/*
+ * Adapted from the corresponding Jedis class, Copyright (c) 2011 Jonathan Leibiusky
+ */
 package co.paralleluniverse.fibers.redis;
 
 import co.paralleluniverse.fibers.Suspendable;
@@ -67,7 +70,6 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
         if (jedis.getDB() != database) {
             jedis.select(database);
         }
-
     }
 
     @Override
