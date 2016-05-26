@@ -313,7 +313,7 @@ public class HashesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 1
     public void hgetAll() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             Map<String, String> h = new HashMap<>();
@@ -378,7 +378,7 @@ public class HashesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void hscanMatch() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             ScanParams params = new ScanParams();
@@ -409,7 +409,7 @@ public class HashesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void hscanCount() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             ScanParams params = new ScanParams();

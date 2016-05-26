@@ -1,6 +1,5 @@
 package co.paralleluniverse.fibers.redis;
 
-
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.futures.AsyncCompletionStage;
@@ -108,9 +107,20 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
 
     @Override
     public final void close() {
+        if (dataSource != null) {
+            if (client.isBroken()) {
+                //noinspection deprecation
+                dataSource.returnBrokenResource(this);
+            } else {
+                //noinspection deprecation
+                dataSource.returnResource(this);
+            }
+        }
         disconnect();
-        redisClient.shutdown();
-        redisClient = null;
+        if (redisClient != null) {
+            redisClient.shutdown();
+            redisClient = null;
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package co.paralleluniverse.fibers.redis.commands;
 
 import co.paralleluniverse.fibers.FiberUtil;
+import org.junit.Ignore;
 import org.junit.Test;
 import redis.clients.jedis.GeoCoordinate;
 import redis.clients.jedis.GeoRadiusResponse;
@@ -53,7 +54,7 @@ public class GeoCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void geodist() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             try {
@@ -89,7 +90,7 @@ public class GeoCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void geohash() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             try {
@@ -113,7 +114,7 @@ public class GeoCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void geopos() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             try {
@@ -140,7 +141,7 @@ public class GeoCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void georadius() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             // prepare datas
@@ -175,7 +176,7 @@ public class GeoCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void georadiusBinary() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             // prepare datas
@@ -210,7 +211,7 @@ public class GeoCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void georadiusByMember() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             jedis.geoadd("Sicily", 13.583333, 37.316667, "Agrigento");
@@ -239,7 +240,7 @@ public class GeoCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test
+    @Test @Ignore // TODO prio 2
     public void georadiusByMemberBinary() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             jedis.geoadd(bfoo, 13.583333, 37.316667, bA);

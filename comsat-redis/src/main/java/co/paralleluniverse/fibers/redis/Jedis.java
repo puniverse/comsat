@@ -62,11 +62,6 @@ public final class Jedis extends BinaryJedis {
     }
 
     @Override
-    public final void setDataSource(Pool<redis.clients.jedis.Jedis> jedisPool) {
-        // Nothing to do
-    }
-
-    @Override
     @Suspendable
     public final String set(String key, String value) {
         return await(() -> stringCommands.set(key, value));
