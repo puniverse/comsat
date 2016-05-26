@@ -9,6 +9,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.exceptions.JedisException;
 
 public class StringValuesCommandsTest extends JedisCommandTestBase {
     @Test
@@ -112,12 +113,17 @@ public class StringValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 2
+    @Test(expected = JedisDataException.class)
     public void incrWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set("foo", "bar");
-            jedis.incr("foo");
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set("foo", "bar");
+                jedis.incr("foo");
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
@@ -130,12 +136,17 @@ public class StringValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void incrByWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set("foo", "bar");
-            jedis.incrBy("foo", 2);
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set("foo", "bar");
+                jedis.incrBy("foo", 2);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
@@ -148,20 +159,30 @@ public class StringValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void incrByFloatWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set("foo", "bar");
-            jedis.incrByFloat("foo", 2d);
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set("foo", "bar");
+                jedis.incrByFloat("foo", 2d);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void decrWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set("foo", "bar");
-            jedis.decr("foo");
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set("foo", "bar");
+                jedis.decr("foo");
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
@@ -175,9 +196,16 @@ public class StringValuesCommandsTest extends JedisCommandTestBase {
     }
 
     @Test(expected = JedisDataException.class)
-    public void decrByWrongValue() {
-        jedis.set("foo", "bar");
-        jedis.decrBy("foo", 2);
+    public void decrByWrongValue() throws InterruptedException {
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set("foo", "bar");
+                jedis.decrBy("foo", 2);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
@@ -230,13 +258,18 @@ public class StringValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void incrReallyLargeNumbers() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set("foo", Long.toString(Long.MAX_VALUE));
-            long value = jedis.incr("foo");
-            assertEquals(Long.MIN_VALUE, value);
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set("foo", Long.toString(Long.MAX_VALUE));
+                long value = jedis.incr("foo");
+                assertEquals(Long.MIN_VALUE, value);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test

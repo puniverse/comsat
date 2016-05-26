@@ -7,11 +7,11 @@ import java.util.concurrent.ExecutionException;
 
 import co.paralleluniverse.fibers.FiberUtil;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import redis.clients.jedis.Protocol.Keyword;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.exceptions.JedisException;
 
 public class BinaryValuesCommandsTest extends JedisCommandTestBase {
     byte[] bfoo = {0x01, 0x02, 0x03, 0x04};
@@ -135,7 +135,7 @@ public class BinaryValuesCommandsTest extends JedisCommandTestBase {
     public void mget() throws ExecutionException, InterruptedException {
         FiberUtil.runInFiber(() -> {
             List<byte[]> values = jedis.mget(bfoo, bbar);
-            List<byte[]> expected = new ArrayList<byte[]>();
+            List<byte[]> expected = new ArrayList<>();
             expected.add(null);
             expected.add(null);
 
@@ -143,7 +143,7 @@ public class BinaryValuesCommandsTest extends JedisCommandTestBase {
 
             jedis.set(bfoo, binaryValue);
 
-            expected = new ArrayList<byte[]>();
+            expected = new ArrayList<>();
             expected.add(binaryValue);
             expected.add(null);
             values = jedis.mget(bfoo, bbar);
@@ -152,7 +152,7 @@ public class BinaryValuesCommandsTest extends JedisCommandTestBase {
 
             jedis.set(bbar, bfoo);
 
-            expected = new ArrayList<byte[]>();
+            expected = new ArrayList<>();
             expected.add(binaryValue);
             expected.add(bfoo);
             values = jedis.mget(bfoo, bbar);
@@ -209,12 +209,17 @@ public class BinaryValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void incrWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set(bfoo, binaryValue);
-            jedis.incr(bfoo);
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set(bfoo, binaryValue);
+                jedis.incr(bfoo);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
@@ -227,12 +232,17 @@ public class BinaryValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void incrByWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set(bfoo, binaryValue);
-            jedis.incrBy(bfoo, 2);
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set(bfoo, binaryValue);
+                jedis.incrBy(bfoo, 2);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
@@ -245,12 +255,17 @@ public class BinaryValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void decrWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set(bfoo, binaryValue);
-            jedis.decr(bfoo);
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set(bfoo, binaryValue);
+                jedis.decr(bfoo);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
@@ -263,12 +278,17 @@ public class BinaryValuesCommandsTest extends JedisCommandTestBase {
         });
     }
 
-    @Test(expected = JedisDataException.class) @Ignore // TODO prio 1
+    @Test(expected = JedisDataException.class)
     public void decrByWrongValue() throws ExecutionException, InterruptedException {
-        FiberUtil.runInFiber(() -> {
-            jedis.set(bfoo, binaryValue);
-            jedis.decrBy(bfoo, 2);
-        });
+        try {
+            FiberUtil.runInFiber(() -> {
+                jedis.set(bfoo, binaryValue);
+                jedis.decrBy(bfoo, 2);
+            });
+        } catch (final ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof JedisException)
+                throw (JedisException) e.getCause();
+        }
     }
 
     @Test
