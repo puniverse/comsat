@@ -1295,7 +1295,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @SuppressWarnings("deprecation")
     public final String psetex(byte[] key, int milliseconds, byte[] value) {
         validateNotNull(key, value);
-        return psetex(key, milliseconds, value);
+        return psetex(key, (long) milliseconds, value);
     }
 
     @Override
