@@ -16,7 +16,6 @@ package co.paralleluniverse.fibers.redis;
 import co.paralleluniverse.fibers.Suspendable;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
-import io.netty.util.internal.EmptyArrays;
 import redis.clients.jedis.Client;
 
 import java.util.concurrent.atomic.AtomicLong;

@@ -827,12 +827,14 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrangeWithScores(byte[] key, long start, long end) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrangeWithScores(key, start, end)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeWithScores(byte[] key, long start, long end) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrevrangeWithScores(key, start, end)));
     }
 
@@ -940,24 +942,28 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(byte[] key, double min, double max) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrangebyscoreWithScores(key, min, max)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(byte[] key, byte[] min, byte[] max) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrangebyscoreWithScores(key, Utils.toString(min), Utils.toString(max))));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(byte[] key, double min, double max, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrangebyscoreWithScores(key, min, max, offset, count)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(byte[] key, byte[] min, byte[] max, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrangebyscoreWithScores(key, Utils.toString(min), Utils.toString(max), offset, count)));
     }
 
@@ -988,24 +994,28 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(byte[] key, double max, double min) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrevrangebyscoreWithScores(key, min, max)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(byte[] key, double max, double min, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrevrangebyscoreWithScores(key, min, max, offset, count)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(byte[] key, byte[] max, byte[] min) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrevrangebyscoreWithScores(key, Utils.toString(min), Utils.toString(max))));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(byte[] key, byte[] max, byte[] min, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> binaryCommands.zrevrangebyscoreWithScores(key, Utils.toString(min), Utils.toString(max), offset, count)));
     }
 
@@ -1518,6 +1528,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     @Suspendable
     <T> T await(SuspendableCallable<RedisFuture<T>> f) {
         firstTimeConnect();
+        //noinspection unchecked
         return exc(() -> {
             try {
                 return AsyncCompletionStage.get(f.run());

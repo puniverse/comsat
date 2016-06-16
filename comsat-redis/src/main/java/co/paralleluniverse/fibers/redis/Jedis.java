@@ -16,8 +16,6 @@ package co.paralleluniverse.fibers.redis;
 import co.paralleluniverse.fibers.Suspendable;
 import com.lambdaworks.redis.*;
 import redis.clients.jedis.*;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.util.Pool;
 import redis.clients.jedis.params.geo.GeoRadiusParam;
 import redis.clients.jedis.params.sortedset.ZAddParams;
 import redis.clients.jedis.params.sortedset.ZIncrByParams;
@@ -547,12 +545,14 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrangeWithScores(String key, long start, long end) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrangeWithScores(key, start, end)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeWithScores(String key, long start, long end) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrevrangeWithScores(key, start, end)));
     }
 
@@ -661,24 +661,28 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(String key, double min, double max) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrangebyscoreWithScores(key, min, max)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(String key, String min, String max) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrangebyscoreWithScores(key, min, max)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(String key, double min, double max, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrangebyscoreWithScores(key, min, max, offset, count)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrangeByScoreWithScores(String key, String min, String max, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrangebyscoreWithScores(key, min, max, offset, count)));
     }
 
@@ -703,18 +707,21 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(String key, double max, double min) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrevrangebyscoreWithScores(key, min, max)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(String key, double max, double min, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrevrangebyscoreWithScores(key, min, max, offset, count)));
     }
 
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(String key, String max, String min, int offset, int count) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrevrangebyscoreWithScores(key, min, max, offset, count)));
     }
 
@@ -727,6 +734,7 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Set<Tuple> zrevrangeByScoreWithScores(String key, String max, String min) {
+        //noinspection unchecked
         return Utils.toTupleSet((List) await(() -> stringCommands.zrevrangebyscoreWithScores(key, min, max)));
     }
 
@@ -1315,15 +1323,6 @@ public final class Jedis extends BinaryJedis {
         throw new UnsupportedOperationException("Not (yet) supported");
     }
 
-    /**
-     * Evaluates scripts using the Lua interpreter built into Redis starting from version 2.6.0.
-     * <p>
-     *
-     * @param script
-     * @param keys
-     * @param args
-     * @return Script result
-     */
     @Override
     @Suspendable
     public final Object eval(byte[] script, List<byte[]> keys, List<byte[]> args) {
@@ -1761,6 +1760,8 @@ public final class Jedis extends BinaryJedis {
 
     @Override
     @Suspendable
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public final List<Object> pipelined(PipelineBlock jedisPipeline) {
         throw new UnsupportedOperationException("Not (yet) supported");
     }
@@ -1775,6 +1776,6 @@ public final class Jedis extends BinaryJedis {
     @Override
     @Suspendable
     public final Client getClient() {
-        throw new UnsupportedOperationException("Not supported"); // TODO
+        throw new UnsupportedOperationException("Not supported");
     }
 }

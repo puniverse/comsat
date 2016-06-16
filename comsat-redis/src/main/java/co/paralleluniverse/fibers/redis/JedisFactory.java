@@ -22,7 +22,6 @@ import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.InvalidURIException;
-import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.util.JedisURIHelper;
 
 import java.net.URI;
@@ -59,6 +58,7 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
         this.clientName = clientName;
     }
 
+    @SuppressWarnings("unused")
     public final void setHostAndPort(final HostAndPort hostAndPort) {
         this.hostAndPort.set(hostAndPort);
     }
@@ -106,10 +106,7 @@ final class JedisFactory implements PooledObjectFactory<redis.clients.jedis.Jedi
             if (clientName != null) {
                 jedis.clientSetname(clientName);
             }
-        } catch (JedisException je) {
-            jedis.close();
-            throw je;
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             jedis.close();
             throw t;
         }

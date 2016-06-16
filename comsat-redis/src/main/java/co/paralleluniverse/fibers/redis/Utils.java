@@ -29,12 +29,10 @@ import redis.clients.util.JedisURIHelper;
 
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * @autho circlespainter
+ * @author circlespainter
  */
 public final class Utils {
     private static final ClientOptions DEFAULT_OPTS =
@@ -47,24 +45,6 @@ public final class Utils {
         if (v > Integer.MAX_VALUE)
             throw new ArithmeticException("exceeds int");
         return (int) v;
-    }
-
-    static <T> void clearEmpties(ConcurrentHashMap<T, List<RedisPubSubListener<T, T>>> m) {
-        if (m == null)
-            return;
-
-        final List<T> toBeRemoved = new ArrayList<>(4);
-        toBeRemoved.addAll(m.entrySet().stream().filter(e -> e.getValue() == null || e.getValue().size() > 0).map(Map.Entry::getKey).collect(Collectors.toList()));
-        toBeRemoved.forEach(m::remove);
-    }
-
-    static boolean contains(byte[][] channels, byte[] c) {
-        if (channels != null && c != null)
-            for (final byte[] ba : channels) {
-                if (Arrays.equals(c, ba))
-                    return true;
-            }
-        return false;
     }
 
     static SetArgs toSetArgs(String nxxx) {
@@ -98,6 +78,7 @@ public final class Utils {
         return toSetArgs(toString(nxxx), toString(expx), time);
     }
 
+    @SafeVarargs
     static <T> Map<T, T> kvArrayToMap(T... keysValues) {
         if (keysValues == null)
             return null;
@@ -310,6 +291,7 @@ public final class Utils {
     }
 
     static List<byte[]> toByteArrayList(List<Object> l) {
+        //noinspection unchecked
         return (List<byte[]>) ((List) l);
     }
 
@@ -322,6 +304,7 @@ public final class Utils {
             throw new JedisConnectionException("Not connected");
     }
 
+    @SafeVarargs
     static <T> void  validateNotNull(T... os) {
         for (final T o : os) {
             if (o == null)
