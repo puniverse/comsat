@@ -155,6 +155,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     }
 
     @Override
+    @Suspendable
     public final void close() {
         if (dataSource != null) {
             if (client.isBroken()) {
@@ -173,6 +174,7 @@ public abstract class BinaryJedis extends redis.clients.jedis.Jedis {
     }
 
     @Override
+    @Suspendable
     public final void disconnect() {
         if (!isConnected())
             return;
