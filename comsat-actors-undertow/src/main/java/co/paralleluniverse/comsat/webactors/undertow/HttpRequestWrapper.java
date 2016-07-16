@@ -32,10 +32,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author circlespainter
@@ -64,7 +61,8 @@ final class HttpRequestWrapper extends HttpRequest {
         if (headers != null) {
             final ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
             for (final HttpString n : headers.getHeaderNames())
-                builder.putAll(n.toString(), headers.get(n));
+                // Normalize header names by their conversion to lower case
+                builder.putAll(n.toString().toLowerCase(Locale.ENGLISH), headers.get(n));
             return builder.build();
         }
         return null;

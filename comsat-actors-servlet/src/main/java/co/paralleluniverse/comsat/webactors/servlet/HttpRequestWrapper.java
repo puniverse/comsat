@@ -33,6 +33,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Map;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -130,7 +131,8 @@ final class HttpRequestWrapper extends HttpRequest {
             for (final Enumeration<String> hs = request.getHeaderNames(); hs.hasMoreElements();) {
                 final String h = hs.nextElement();
                 for (final Enumeration<String> hv = request.getHeaders(h); hv.hasMoreElements();)
-                    mm.put(h, hv.nextElement());
+                    // Normalize header names by their conversion to lower case
+                    mm.put(h.toLowerCase(Locale.ENGLISH), hv.nextElement());
             }
             this.headers = mm.build();
         }
