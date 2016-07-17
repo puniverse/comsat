@@ -16,6 +16,7 @@ package co.paralleluniverse.comsat.webactors;
 import com.google.common.collect.ListMultimap;
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.Locale;
 
 /**
  * A message sent over an HTTP connection. Can be either a request or a response.
@@ -24,6 +25,9 @@ public abstract class HttpMessage extends WebMessage {
     /**
      * A multimap of the headers contained in this message and (all) their values.
      * If the request has no headers, returns an empty multimap.
+     *
+     * Note that header names' case is not preserved necessarily due to normalization for
+     * concordance with the HTTP specification.
      */
     public abstract ListMultimap<String, String> getHeaders();
 
@@ -66,11 +70,13 @@ public abstract class HttpMessage extends WebMessage {
      * If the header is not found in the message, this method returns {@code null}.
      * If the header has more than one value, this method returns the first value.
      *
+     * In concordance with the HTTP specification, this method treats HTTP header names as case-insensitive.
+     *
      * @param name the header name
      * @return the (first) value of the given header name; {@code null} if the header is not found
      */
     public String getHeader(String name) {
-        return first(getHeaders().get(name));
+        return first(getHeaders().get(name.toLowerCase(Locale.ENGLISH)));
     }
 
     static <V> V first(Collection<V> c) {
