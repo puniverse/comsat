@@ -146,18 +146,24 @@ public class WebActorHandler implements HttpHandler {
     static final WeakHashMap<Class<?>, List<Pair<String, String>>> classToUrlPatterns = new WeakHashMap<>();
 
     protected ContextProvider contextProvider;
+    private HttpHandler fallbackHttpHandler = null;
 
     public WebActorHandler(ContextProvider contextProvider) {
         this.contextProvider = contextProvider;
-        // this.continueHandler = Handlers.httpContinueRead(null);
+    }
+
+    public final void setFallbackHttpHandler(HttpHandler httpHandler) {
+        this.fallbackHttpHandler = httpHandler;
     }
 
     @Override
     public final void handleRequest(final HttpServerExchange xch) throws Exception {
-        // continueHandler.handleRequest(xch);
 
         final Context context = contextProvider.get(xch);
-        assert context != null;
+        if (context == null) {
+            handlingComplete(xch);
+            return;
+        }
 
         final ReentrantLock lock = context.getLock();
         assert lock != null;
@@ -268,11 +274,19 @@ public class WebActorHandler implements HttpHandler {
                 }
             }
 
-            sendHttpResponse(xch, StatusCodes.NOT_FOUND);
+            handlingComplete(xch);
+
         } finally {
             if (lock.isHeldByCurrentStrand() && lock.isLocked())
                 lock.unlock();
         }
+    }
+
+    private void handlingComplete(HttpServerExchange xch) throws Exception {
+        if (fallbackHttpHandler != null)
+            fallbackHttpHandler.handleRequest(xch);
+        else
+            sendHttpResponse(xch, StatusCodes.NOT_FOUND);
     }
 
     static void addActorToContextAndUnlock(Context context, ActorImpl actor, ReentrantLock lock) {

@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -16,6 +16,7 @@ package co.paralleluniverse.fibers.retrofit;
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
+import co.paralleluniverse.fibers.okhttp.FiberOkHttpClient;
 import co.paralleluniverse.fibers.retrofit.HelloWorldApplication.Contributor;
 import co.paralleluniverse.strands.SuspendableRunnable;
 import java.io.IOException;
@@ -53,17 +54,16 @@ public class FiberRestAdapterBuilderTest {
         // snippet registration
         final MyGitHub github = new FiberRestAdapterBuilder().setEndpoint("http://localhost:8080").build().create(MyGitHub.class);
         // end of snippet
-        new Fiber<Void>(new SuspendableRunnable() {
-            @Override
-            public void run() throws SuspendExecution, InterruptedException {
-                // snippet usage
-                List<Contributor> contributors = github.contributors("puniverse", "comsat");
-                String result = contributors.get(1).login;
-                // end of snippet
-            assertEquals("puniverse", result);
-                assertEquals(4, contributors.size());
-            }
-        }).start().join();
+        new Fiber<Void>(new MyGitHubRunner(github)).start().join();
+    }
+
+    @Test
+    public void testGetWithOkHttp() throws IOException, InterruptedException, Exception {
+        // snippet registration
+        final FiberOkHttpClient client = new FiberOkHttpClient();
+        final MyGitHub github = new FiberRestAdapterBuilder().setClient(client).setEndpoint("http://localhost:8080").build().create(MyGitHub.class);
+        // end of snippet
+        new Fiber<Void>(new MyGitHubRunner(github)).start().join();
     }
     
     // snippet interface
@@ -87,4 +87,22 @@ public class FiberRestAdapterBuilderTest {
 
     @Rule
     public Timeout globalTimeout = new Timeout(10000); // 10 seconds max per method tested
+
+    static class MyGitHubRunner implements SuspendableRunnable {
+        private final MyGitHub github;
+
+        MyGitHubRunner(MyGitHub github) {
+            this.github = github;
+        }
+
+        @Override
+        public void run() throws SuspendExecution, InterruptedException {
+            // snippet usage
+            List<Contributor> contributors = github.contributors("puniverse", "comsat");
+            String result = contributors.get(1).login;
+            // end of snippet
+            assertEquals("puniverse", result);
+            assertEquals(4, contributors.size());
+        }
+    }
 }
