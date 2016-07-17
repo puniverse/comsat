@@ -159,6 +159,10 @@ public class WebActorHandler implements HttpHandler {
     @Override
     public final void handleRequest(final HttpServerExchange xch) throws Exception {
 
+        if (contextProvider == null) {
+            initContextProvider();
+        }
+
         final Context context = contextProvider.get(xch);
         if (context == null) {
             handlingComplete(xch);
@@ -280,6 +284,9 @@ public class WebActorHandler implements HttpHandler {
             if (lock.isHeldByCurrentStrand() && lock.isLocked())
                 lock.unlock();
         }
+    }
+
+    protected void initContextProvider() {
     }
 
     private void handlingComplete(HttpServerExchange xch) throws Exception {

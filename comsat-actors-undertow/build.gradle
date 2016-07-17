@@ -1,0 +1,6 @@
+dependencies {
+    compile "javax.inject:javax.inject:$javaxInjectVer"
+    testCompile "com.google.inject:guice:$guiceVer"
+    testCompile "org.springframework:spring-core:$springVer"
+    testCompile "org.springframework:spring-context:$springVer"
+}
