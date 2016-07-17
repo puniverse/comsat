@@ -364,7 +364,8 @@ public abstract class HttpRequest extends HttpMessage {
         public Builder addHeader(final String name, final String value) {
             if (headers == null)
                 headers = LinkedListMultimap.create();
-            headers.put(name, value);
+            // Normalize header names by their conversion to lower case
+            headers.put(name.toLowerCase(Locale.ENGLISH), value);
             return this;
         }
 
