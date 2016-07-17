@@ -310,7 +310,8 @@ final class HttpRequestWrapper extends HttpRequest {
         if (headers != null) {
             final ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
             for (final String n : headers.names())
-                builder.putAll(n, headers.getAll(n));
+                // Normalize header names by their conversion to lower case
+                builder.putAll(n.toLowerCase(Locale.ENGLISH), headers.getAll(n));
             return builder.build();
         }
         return null;
