@@ -44,7 +44,7 @@ subprojects {
     ext.metricsVer      = '3.1.2'
     ext.asmVer          = '5.0.4'
 
-    ext.quasarVer       = '0.7.4'
+    ext.quasarVer       = '0.7.6'
 
     ext.jettyVer        = '9.2.14.v20151106' // '9.3.x' requires JDK8
     ext.tomcatVer       = '8.0.33'
@@ -191,7 +191,7 @@ subprojects {
 
     dependencies {
         compile "com.google.guava:guava:$guavaVer"
-        quasar "co.paralleluniverse:quasar-core:$quasarVer@jar" 
+        quasar "co.paralleluniverse:quasar-core:$quasarVer@jar"
         // byteman "org.jboss.byteman:byteman:$bytemanVer@jar"
         testCompile "junit:junit:$junitVer"
         provided "co.paralleluniverse:quasar-core:$quasarVer"
@@ -210,7 +210,7 @@ subprojects {
         doFirst{
             println "Executing scanSuspendables..."
             ant.taskdef(
-                name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner', 
+                name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
                 classpath: "build/classes/main:build/resources/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
             ant.scanSuspendables(
                 auto:false,
@@ -220,8 +220,8 @@ subprojects {
                 fileset(dir: sourceSets.main.output.classesDir)
             }
 
-            //            ant.taskdef(name:'scanSuspendables', 
-            //                classname:'co.paralleluniverse.fibers.instrument.OldSuspendablesScanner', 
+            //            ant.taskdef(name:'scanSuspendables',
+            //                classname:'co.paralleluniverse.fibers.instrument.OldSuspendablesScanner',
             //                classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
             //            ant.scanSuspendables(outputFile:"$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
             //                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables"
@@ -245,7 +245,7 @@ subprojects {
             logger.quiet("Running test: " + desc)
         }
 
-        afterTest { desc, result -> 
+        afterTest { desc, result ->
             if(result.resultType == TestResult.ResultType.FAILURE) {
                 logger.quiet("Failed test ${desc.name} [${desc.className}] with exception: ${result.exception}")
                 if(result.exception != null) {
@@ -330,7 +330,7 @@ project (':comsat-dropwizard') {
         compile "io.dropwizard:dropwizard-jdbi:$dropwizardVer"
         compile project(":comsat-servlet")
         compile (project(":comsat-httpclient")) {
-            exclude group: 'org.apache.httpcomponents', module: 'httpclient' 
+            exclude group: 'org.apache.httpcomponents', module: 'httpclient'
         }
         compile project(":comsat-jdbi")
         provided "co.paralleluniverse:quasar-core:$quasarVer"
@@ -341,7 +341,7 @@ project (':comsat-httpclient') {
     dependencies {
         compile "org.apache.httpcomponents:httpclient:$httpClientVer"
         compile ("org.apache.httpcomponents:httpasyncclient:$apacheAsyncClientVer") {
-            exclude group: 'org.apache.httpcomponents', module: 'httpclient' 
+            exclude group: 'org.apache.httpcomponents', module: 'httpclient'
         }
         testCompile project(':comsat-test-utils')
     }
@@ -353,7 +353,7 @@ project (':comsat-jax-rs-client') {
         compile "org.glassfish.jersey.core:jersey-client:$jerseyVer"
         compile "org.glassfish.jersey.connectors:jersey-jetty-connector:$jerseyVer"
         testCompile (project(':comsat-test-utils')) {
-            exclude group: 'org.eclipse.jetty', module: '*' 
+            exclude group: 'org.eclipse.jetty', module: '*'
         }
         testRuntime "org.eclipse.jetty:jetty-server:$jerseyJettyVer"
         testRuntime "org.eclipse.jetty:jetty-servlet:$jerseyJettyVer"
@@ -369,14 +369,14 @@ project (':comsat-jdbc') {
     compileJava {
         doLast {
             println("Instrumenting classes...")
-            ant.taskdef(name:'instrumentation', 
-                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', 
+            ant.taskdef(name:'instrumentation',
+                classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask',
                 classpath: "build/classes/main:${configurations.provided.asPath}:${configurations.compile.asPath}")
             ant.instrumentation(verbose:'true', check:'true', debug:'true') {
                 fileset(dir: sourceSets.main.output.classesDir) {
                     exclude(name: 'co/paralleluniverse/fibers/instrument/*.class')
                 }
-            }       
+            }
         }
     }
 }
@@ -394,7 +394,7 @@ project (':comsat-jersey-server') {
         compile project(':comsat-servlet')
         compile 'org.sonatype.sisu.inject:cglib:3.1.1' // instead of old cglib in jersey
         compile ("org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVer") {
-            exclude group: 'org.glassfish.hk2.external', module: 'cglib' 
+            exclude group: 'org.glassfish.hk2.external', module: 'cglib'
         }
         provided "org.osgi:org.osgi.core:$osgiVer"
         testCompile project(':comsat-test-utils')
@@ -448,10 +448,10 @@ project (':comsat-retrofit') {
         compile project (':comsat-okhttp')
         testCompile (project (':comsat-dropwizard')) {
             exclude group: 'org.jboss.logging', module: 'jboss-logging'
-            exclude group: 'org.apache.httpcomponents', module: 'httpclient' 
+            exclude group: 'org.apache.httpcomponents', module: 'httpclient'
         }
         testCompile (project(':comsat-test-utils')) {
-            exclude group: 'org.eclipse.jetty', module: '*' 
+            exclude group: 'org.eclipse.jetty', module: '*'
             exclude group: 'org.apache.httpcomponents', module: 'httpclient'
             exclude group: 'org.apache.tomcat', module: 'tomcat-juli'
             //            exclude group: 'org.apache.tomcat', module: 'tomcat-dbcp'
@@ -500,13 +500,13 @@ project (':comsat-test-utils') {
 }
 
 // Can't be done in separate files since srcFiles configuration is resolved by the root javadoc task
-project (':comsat-servlet') {    
+project (':comsat-servlet') {
     dependencies {
         srcFiles "javax.servlet:javax.servlet-api:$servletVer:sources"
     }
 }
 
-project (':comsat-httpclient') {    
+project (':comsat-httpclient') {
     dependencies {
         srcFiles ("org.apache.httpcomponents:httpasyncclient:$apacheAsyncClientVer:sources") {
             exclude group: 'org.apache.httpcomponents', module: 'httpclient'
@@ -516,7 +516,7 @@ project (':comsat-httpclient') {
     }
 }
 
-/* project (':comsat-mongodb') {    
+/* project (':comsat-mongodb') {
 dependencies {
 srcFiles "com.allanbank:mongodb-async-driver:$mongodbJavaAsyncDriverVer:sources"
 }
@@ -555,7 +555,7 @@ ext.javadocExcludes = [
         "co/paralleluniverse/comsat/webactors/undertow/AutoActorHandler.java",
 ]
 
-// Rest of the subprojects common definitions 
+// Rest of the subprojects common definitions
 subprojects {
     javadoc {
         source = files(subprojects.collect { project -> project.sourceSets.main.allJava })
@@ -572,9 +572,9 @@ subprojects {
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
         from javadoc.destinationDir
-    } 
+    }
 
-    ///////// Publish Artifacts 
+    ///////// Publish Artifacts
     apply plugin: 'maven'
     apply plugin: 'signing'
 
@@ -600,7 +600,7 @@ subprojects {
                             "https://oss.sonatype.org/content/repositories/snapshots")) {
                     // User and Password are taken from ~/.gradle/gradle.properties
                     authentication(userName: sonatypeUsername, password: sonatypePassword)
-                } 
+                }
                 pom.project {
                     name project.name
                     packaging 'jar'
@@ -610,7 +610,7 @@ subprojects {
                         url project.scmUrl
                         connection project.scmConnection
                         developerConnection project.scmConnection
-                    } 
+                    }
                     licenses {
                         license {
                             name project.licenseName1
@@ -666,6 +666,6 @@ buildscript {
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.6'
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.0'
     }
-} 
+}
 
 defaultTasks 'install'

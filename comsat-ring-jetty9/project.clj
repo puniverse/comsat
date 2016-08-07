@@ -1,6 +1,6 @@
-(def quasar-pulsar-version "0.7.4")
+(def quasar-pulsar-version "0.7.6")
 
-(defproject co.paralleluniverse/comsat-ring-jetty9 "0.7.0"
+(defproject co.paralleluniverse/comsat-ring-jetty9 "0.7.1-SNAPSHOT"
   :description "Comsat integration for the Ring Clojure web framework: Jetty 9 fiber-blocking adapter."
   :url "https://github.com/puniverse/comsat"
   :scm {:name "git" :url "https://github.com/puniverse/comsat"}
