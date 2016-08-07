@@ -51,7 +51,7 @@ public final class QuasarWebAppClassLoader extends WebappClassLoader {
     }
 
     private QuasarInstrumentor newInstrumentor() {
-        final QuasarInstrumentor inst = new QuasarInstrumentor(this); // must be called *after* construction has completed
+        final QuasarInstrumentor inst = new QuasarInstrumentor(); // must be called *after* construction has completed
         inst.setLog(new Log() {
             @Override
             public final void log(LogLevel level, String msg, Object... args) {
@@ -82,7 +82,7 @@ public final class QuasarWebAppClassLoader extends WebappClassLoader {
             final int nameLen = name.length();
             final String className = name.substring(0, name.endsWith(CLASS_SUFFIX) ? nameLen - CLASS_SUFFIX_LENGTH : nameLen);
             try {
-                final byte[] res = instrumentor.instrumentClass(className, entry.binaryContent);
+                final byte[] res = instrumentor.instrumentClass(this, className, entry.binaryContent);
                 if (res != null)
                     entry.binaryContent = res;
             } catch (final Exception ex) {
