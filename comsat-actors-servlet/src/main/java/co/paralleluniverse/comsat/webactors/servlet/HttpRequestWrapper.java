@@ -33,6 +33,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Map;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Wraps a {@link HttpServletRequest} as a {@link HttpRequest}
  */
-final class ServletHttpRequest extends HttpRequest {
+final class HttpRequestWrapper extends HttpRequest {
     final HttpServletRequest request;
     final HttpServletResponse response;
 
@@ -54,13 +55,13 @@ final class ServletHttpRequest extends HttpRequest {
     private Collection<Cookie> cookies;
 
     /**
-     * Constructs a {@code ServletHttpRequest} message
+     * Constructs a {@code HttpRequestWrapper} message
      *
      * @param sender this message's sender
      * @param request the {@link HttpServletRequest}
      * @param response the {@link HttpServletResponse}
      */
-    public ServletHttpRequest(ActorRef<? super HttpResponse> sender, HttpServletRequest request, HttpServletResponse response) {
+    public HttpRequestWrapper(ActorRef<? super HttpResponse> sender, HttpServletRequest request, HttpServletResponse response) {
         this.sender = sender;
         this.request = request;
         this.response = response;
@@ -130,7 +131,8 @@ final class ServletHttpRequest extends HttpRequest {
             for (final Enumeration<String> hs = request.getHeaderNames(); hs.hasMoreElements();) {
                 final String h = hs.nextElement();
                 for (final Enumeration<String> hv = request.getHeaders(h); hv.hasMoreElements();)
-                    mm.put(h, hv.nextElement());
+                    // Normalize header names by their conversion to lower case
+                    mm.put(h.toLowerCase(Locale.ENGLISH), hv.nextElement());
             }
             this.headers = mm.build();
         }

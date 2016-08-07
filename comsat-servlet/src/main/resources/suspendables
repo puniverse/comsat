@@ -1,8 +1,0 @@
-javax.servlet.http.HttpServlet.service
-javax.servlet.http.HttpServlet.doGet
-javax.servlet.http.HttpServlet.doPost
-javax.servlet.http.HttpServlet.doHead
-javax.servlet.http.HttpServlet.doPut
-javax.servlet.http.HttpServlet.doDelete
-javax.servlet.http.HttpServlet.doOptions
-javax.servlet.http.HttpServlet.doTrace

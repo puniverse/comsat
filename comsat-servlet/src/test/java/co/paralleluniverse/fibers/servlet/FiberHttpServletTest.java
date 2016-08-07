@@ -1,6 +1,6 @@
 /*
  * COMSAT
- * Copyright (C) 2014, Parallel Universe Software Co. All rights reserved.
+ * Copyright (C) 2014-2016, Parallel Universe Software Co. All rights reserved.
  *
  * This program and the accompanying materials are dual-licensed under
  * either the terms of the Eclipse Public License v1.0 as published by
@@ -28,9 +28,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.*;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -38,6 +36,7 @@ import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import static org.junit.Assume.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,12 +97,12 @@ public class FiberHttpServletTest {
         }
     }
 
-    //    @Test
-    // Fails on jetty after 5-10 iterations
-    // Fails on tomcat after 1000-2000 iterations
+    @Test
     // Passes on undertow
     public void testForward() throws IOException, InterruptedException, Exception {
-        for (int i = 0; i < 5000; i++)
+        assumeTrue(UndertowServer.class.equals(server.getClass()));
+
+        for (int i = 0; i < 10; i++)
             assertEquals("Faild on iteration " + i, "testGet", client.execute(new HttpGet("http://localhost:8080/forward"), BASIC_RESPONSE_HANDLER));
     }
 
@@ -120,7 +119,47 @@ public class FiberHttpServletTest {
             assertEquals("testPost", client.execute(new HttpPost("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
     }
 
-    // snippet FiberHttpServlet example 
+    @Test
+    public void testPut() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 10; i++)
+            assertEquals("testPut", client.execute(new HttpPut("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
+    }
+
+/*
+    @Test
+    public void testPatch() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 10; i++)
+            assertEquals("testPatch", client.execute(new HttpPatch("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
+    }
+*/
+
+    @Test
+    public void testDelete() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 10; i++)
+            assertEquals("testDelete", client.execute(new HttpDelete("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
+    }
+
+    @Test
+    public void testTrace() throws IOException, InterruptedException, Exception {
+        assumeFalse(TomcatServer.class.equals(server.getClass()));
+
+        for (int i = 0; i < 10; i++)
+            assertEquals("testTrace", client.execute(new HttpTrace("http://localhost:8080"), BASIC_RESPONSE_HANDLER));
+    }
+
+    @Test
+    public void testHead() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 10; i++)
+            assertEquals("testHead", client.execute(new HttpHead("http://localhost:8080")).getFirstHeader("X-Head").getValue());
+    }
+
+    @Test
+    public void testOptions() throws IOException, InterruptedException, Exception {
+        for (int i = 0; i < 10; i++)
+            assertEquals("testOptions", client.execute(new HttpOptions("http://localhost:8080")).getFirstHeader("X-Head").getValue());
+    }
+
+    // snippet FiberHttpServlet example
     public static class FiberTestServlet extends FiberHttpServlet {
         // snippet_exclude_begin
         @Override
@@ -129,6 +168,62 @@ public class FiberHttpServletTest {
             try (PrintWriter out = resp.getWriter()) {
                 Fiber.sleep(100); // <== Some blocking code
                 out.print("testPost");
+            } catch (InterruptedException | SuspendExecution e) {
+            }
+        }
+        @Override
+        @Suspendable
+        protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            try {
+                Fiber.sleep(100); // <== Some blocking code
+                resp.setHeader("x-Head", "testHead");
+            } catch (InterruptedException | SuspendExecution e) {
+            }
+        }
+        @Override
+        @Suspendable
+        protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            try {
+                Fiber.sleep(100); // <== Some blocking code
+                resp.setHeader("x-Head", "testOptions");
+            } catch (InterruptedException | SuspendExecution e) {
+            }
+        }
+        @Override
+        @Suspendable
+        protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            try (PrintWriter out = resp.getWriter()) {
+                Fiber.sleep(100); // <== Some blocking code
+                out.print("testPut");
+            } catch (InterruptedException | SuspendExecution e) {
+            }
+        }
+/*
+        @Override
+        @Suspendable
+        protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            try (PrintWriter out = resp.getWriter()) {
+                Fiber.sleep(100); // <== Some blocking code
+                out.print("testPatch");
+            } catch (InterruptedException | SuspendExecution e) {
+            }
+        }
+*/
+        @Override
+        @Suspendable
+        protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            try (PrintWriter out = resp.getWriter()) {
+                Fiber.sleep(100); // <== Some blocking code
+                out.print("testDelete");
+            } catch (InterruptedException | SuspendExecution e) {
+            }
+        }
+        @Override
+        @Suspendable
+        protected void doTrace(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            try (PrintWriter out = resp.getWriter()) {
+                Fiber.sleep(100); // <== Some blocking code
+                out.print("testTrace");
             } catch (InterruptedException | SuspendExecution e) {
             }
         }

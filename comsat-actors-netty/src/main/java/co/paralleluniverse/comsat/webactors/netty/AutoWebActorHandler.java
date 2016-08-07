@@ -22,7 +22,6 @@ import co.paralleluniverse.common.reflection.ClassLoaderUtil;
 import co.paralleluniverse.common.util.Pair;
 import co.paralleluniverse.comsat.webactors.WebActor;
 import co.paralleluniverse.comsat.webactors.WebMessage;
-import co.paralleluniverse.fibers.Suspendable;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.util.internal.logging.InternalLogger;
@@ -43,45 +42,63 @@ public class AutoWebActorHandler extends WebActorHandler {
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     public AutoWebActorHandler() {
-        this(null, null, null);
+        this(null, null, null, null);
+    }
+
+    public AutoWebActorHandler(List<String> packagePrefixes) {
+        this(null, null, packagePrefixes, null);
+    }
+
+    public AutoWebActorHandler(String httpResponseEncoderName, List<String> packagePrefixes) {
+        this(httpResponseEncoderName, null, packagePrefixes, null);
     }
 
     public AutoWebActorHandler(String httpResponseEncoderName) {
-        this(httpResponseEncoderName, null, null);
+        this(httpResponseEncoderName, null, null, null);
     }
 
     public AutoWebActorHandler(String httpResponseEncoderName, ClassLoader userClassLoader) {
-        this(httpResponseEncoderName, userClassLoader, null);
+        this(httpResponseEncoderName, userClassLoader, null, null);
+    }
+
+    public AutoWebActorHandler(String httpResponseEncoderName, ClassLoader userClassLoader, List<String> packagePrefixes) {
+        this(httpResponseEncoderName, userClassLoader, packagePrefixes, null);
     }
 
     public AutoWebActorHandler(String httpResponseEncoderName, Map<Class<?>, Object[]> actorParams) {
-        this(httpResponseEncoderName, null, actorParams);
+        this(httpResponseEncoderName, null, null, actorParams);
     }
 
-    public AutoWebActorHandler(final String httpResponseEncoderName, final ClassLoader userClassLoader, final Map<Class<?>, Object[]> actorParams) {
+    public AutoWebActorHandler(String httpResponseEncoderName, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
+        this(httpResponseEncoderName, null, packagePrefixes, actorParams);
+    }
+
+    public AutoWebActorHandler(String httpResponseEncoderName, ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
         super(null, httpResponseEncoderName);
-        super.contextProvider = newContextProvider(userClassLoader, actorParams);
+        super.contextProvider = newContextProvider(userClassLoader != null ? userClassLoader : ClassLoader.getSystemClassLoader(), packagePrefixes, actorParams);
     }
 
     public AutoWebActorHandler(String httpResponseEncoderName, AutoContextProvider prov) {
         super(prov, httpResponseEncoderName);
     }
 
-    protected AutoContextProvider newContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
-        return new AutoContextProvider(userClassLoader, actorParams);
+    protected AutoContextProvider newContextProvider(ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
+        return new AutoContextProvider(userClassLoader, packagePrefixes, actorParams);
     }
 
     public static class AutoContextProvider implements WebActorContextProvider {
         private final ClassLoader userClassLoader;
+        private final List<String> packagePrefixes;
         private final Map<Class<?>, Object[]> actorParams;
         private final Long defaultContextValidityMS;
 
-        public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams) {
-            this(userClassLoader, actorParams, null);
+        public AutoContextProvider(ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams) {
+            this(userClassLoader, packagePrefixes, actorParams, null);
         }
 
-        public AutoContextProvider(ClassLoader userClassLoader, Map<Class<?>, Object[]> actorParams, Long defaultContextValidityMS) {
+        public AutoContextProvider(ClassLoader userClassLoader, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams, Long defaultContextValidityMS) {
             this.userClassLoader = userClassLoader;
+            this.packagePrefixes = packagePrefixes;
             this.actorParams = actorParams;
             this.defaultContextValidityMS = defaultContextValidityMS;
         }
@@ -102,7 +119,7 @@ public class AutoWebActorHandler extends WebActorHandler {
         }
 
         protected AutoContext newActorContext(FullHttpRequest req) {
-            final AutoContext c = new AutoContext(req, actorParams, userClassLoader);
+            final AutoContext c = new AutoContext(req, packagePrefixes, actorParams, userClassLoader);
             if (defaultContextValidityMS !=  null)
                 c.setValidityMS(defaultContextValidityMS);
             return c;
@@ -123,12 +140,14 @@ public class AutoWebActorHandler extends WebActorHandler {
     private static class AutoContext extends DefaultContextImpl {
         private String id;
 
+        private final List<String> packagePrefixes;
         private final Map<Class<?>, Object[]> actorParams;
         private final ClassLoader userClassLoader;
         private Class<? extends ActorImpl<? extends WebMessage>> actorClass;
         private ActorRef<? extends WebMessage> actorRef;
 
-        public AutoContext(FullHttpRequest req, Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
+        public AutoContext(FullHttpRequest req, List<String> packagePrefixes, Map<Class<?>, Object[]> actorParams, ClassLoader userClassLoader) {
+            this.packagePrefixes = packagePrefixes;
             this.actorParams = actorParams;
             this.userClassLoader = userClassLoader;
             fillActor(req);
@@ -196,6 +215,17 @@ public class AutoWebActorHandler extends WebActorHandler {
                     ClassLoaderUtil.accept((URLClassLoader) classLoader, new ClassLoaderUtil.Visitor() {
                         @Override
                         public final void visit(String resource, URL url, ClassLoader cl) {
+                            if (packagePrefixes != null) {
+                                boolean found = false;
+                                for (final String packagePrefix : packagePrefixes) {
+                                    if (packagePrefix != null && resource.startsWith(packagePrefix.replace('.', '/'))) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found)
+                                    return;
+                            }
                             if (!ClassLoaderUtil.isClassFile(resource))
                                 return;
                             final String className = ClassLoaderUtil.resourceToClass(resource);

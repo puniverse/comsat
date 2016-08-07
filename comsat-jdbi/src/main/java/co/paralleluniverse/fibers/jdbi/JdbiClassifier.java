@@ -44,6 +44,7 @@ public class JdbiClassifier implements SuspendableClassifier {
         {"org/skife/jdbi/v2/tweak/StatementCustomizer", "beforeExecution", "afterExecution", "cleanup"},
         {"org/skife/jdbi/v2/tweak/RewrittenStatement", "bind"},
         {"org/skife/jdbi/v2/tweak/ResultSetMapper", "map"},
+        {"org/skife/jdbi/v2/tweak/ResultColumnMapper", "mapColumn"},
         {"org/skife/jdbi/v2/tweak/Argument", "apply"},
         {"org/skife/jdbi/v2/tweak/StatementBuilder", "create", "beforeExecution", "close"},
         {"org/skife/jdbi/v2/tweak/ConnectionFactory", "openConnection"},

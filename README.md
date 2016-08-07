@@ -58,6 +58,10 @@ Finally there are several regularly updated third-party bootstrap projects: [Com
 
 Questions and suggestions are welcome at this [forum/mailing list](https://groups.google.com/forum/#!forum/comsat-user).
 
+## Contributions (including Pull Requests)
+
+Please have a look at some brief [information for contributors](https://github.com/puniverse/comsat/blob/master/CONTRIBUTING.md).
+
 ## License
 
 COMSAT is free software published under the following license:
