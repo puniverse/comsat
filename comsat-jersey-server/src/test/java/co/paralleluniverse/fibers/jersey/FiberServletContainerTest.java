@@ -13,20 +13,19 @@
  */
 package co.paralleluniverse.fibers.jersey;
 
-import co.paralleluniverse.common.util.Debug;
-import co.paralleluniverse.embedded.containers.EmbeddedServer;
-import co.paralleluniverse.embedded.containers.JettyServer;
-import co.paralleluniverse.embedded.containers.TomcatServer;
-import co.paralleluniverse.embedded.containers.UndertowServer;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.AbstractResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
@@ -38,6 +37,12 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import co.paralleluniverse.common.util.Debug;
+import co.paralleluniverse.embedded.containers.EmbeddedServer;
+import co.paralleluniverse.embedded.containers.JettyServer;
+import co.paralleluniverse.embedded.containers.TomcatServer;
+import co.paralleluniverse.embedded.containers.UndertowServer;
 
 @RunWith(Parameterized.class)
 public class FiberServletContainerTest {
@@ -82,14 +87,22 @@ public class FiberServletContainerTest {
     @Test
     public void testGet() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertEquals("sleep was 10", client.execute(new HttpGet("http://localhost:8080/service?sleep=10"), BASIC_RESPONSE_HANDLER));
+            client.execute(new HttpGet("http://localhost:8080/service?sleep=10"), TEST_RESPONSE_HANDLER);
     }
 
     @Test
     public void testPost() throws IOException, InterruptedException, Exception {
         for (int i = 0; i < 10; i++)
-            assertEquals("sleep was 10", client.execute(new HttpPost("http://localhost:8080/service?sleep=10"), BASIC_RESPONSE_HANDLER));
+            client.execute(new HttpPost("http://localhost:8080/service?sleep=10"), TEST_RESPONSE_HANDLER);
     }
+
+    private static final ResponseHandler<Void> TEST_RESPONSE_HANDLER = new AbstractResponseHandler<Void>() {
+        @Override
+        public Void handleEntity(HttpEntity entity) throws IOException {
+            assertEquals("sleep was 10", EntityUtils.toString(entity));
+            return null;
+        }
+    };
 
     @Rule
     public TestName name = new TestName();
@@ -118,6 +131,5 @@ public class FiberServletContainerTest {
             Debug.record(0, "DONE TEST " + desc.getMethodName());
         }
     };
-    private static final BasicResponseHandler BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
 
 }
