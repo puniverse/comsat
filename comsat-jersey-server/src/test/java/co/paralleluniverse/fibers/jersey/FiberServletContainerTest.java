@@ -13,11 +13,17 @@
  */
 package co.paralleluniverse.fibers.jersey;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
@@ -27,7 +33,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,6 +68,14 @@ public class FiberServletContainerTest {
         this.cls = cls;
     }
     private static final String PACKAGE_NAME_PREFIX = FiberServletContainerTest.class.getPackage().getName() + ".";
+
+    public static final String REQUEST_FILTER_HEADER = "test.filter.request.header";
+
+    public static final String REQUEST_FILTER_HEADER_VALUE = "ok";
+
+    public static final String RESPONSE_FILTER_HEADER = "test.filter.request.header";
+
+    public static final String RESPONSE_FILTER_HEADER_VALUE = "ok";
 
     @Before
     public void setUp() throws Exception {
@@ -101,6 +114,14 @@ public class FiberServletContainerTest {
         public Void handleEntity(HttpEntity entity) throws IOException {
             assertEquals("sleep was 10", EntityUtils.toString(entity));
             return null;
+        }
+
+        @Override
+        public Void handleResponse(HttpResponse response) throws HttpResponseException, IOException {
+            Header h = response.getFirstHeader(RESPONSE_FILTER_HEADER);
+            assertNotNull(h);
+            assertEquals(RESPONSE_FILTER_HEADER_VALUE, h.getValue());
+            return super.handleResponse(response);
         }
     };
 
