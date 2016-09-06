@@ -1,3 +1,5 @@
+com.allanbank.mongodb.client.MongoClientImpl.listDatabaseNames
+com.allanbank.mongodb.client.MongoClientImpl.listDatabases
 com.allanbank.mongodb.client.MongoDatabaseImpl.drop
 com.allanbank.mongodb.client.MongoDatabaseImpl.exists
 com.allanbank.mongodb.client.MongoDatabaseImpl.createCappedCollection
