@@ -1,0 +1,3 @@
+javax.ws.rs.container.ContainerRequestFilter.filter
+javax.ws.rs.container.ContainerResponseFilter.filter
+org.glassfish.jersey.process.internal.Stage.apply

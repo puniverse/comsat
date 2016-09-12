@@ -13,16 +13,17 @@
  */
 package co.paralleluniverse.fibers.jersey;
 
-import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-import java.io.IOException;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+
+import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 
 // snippet REST resource example
 @Singleton
@@ -31,16 +32,26 @@ public class TestResource {
     @GET
     @Produces("text/plain")
     @Suspendable  // <------------- FIBER
-    public String get(@QueryParam("sleep") int sleep) throws IOException, SuspendExecution, InterruptedException {
+    public String get(@QueryParam("sleep") int sleep,
+            @HeaderParam(FiberServletContainerTest.REQUEST_FILTER_HEADER) String h)
+            throws SuspendExecution, InterruptedException {
         Fiber.sleep(sleep); // <--- you may use fiber blocking calls here
-        return "sleep was "+sleep;
+        // ensure the request filter was called
+        if (FiberServletContainerTest.REQUEST_FILTER_HEADER_VALUE.equals(h)) {
+            return "sleep was " + sleep;
+        } else {
+            return "missing header!";
+        }
+
     }
     // snippet_exclude_begin
     @POST
     @Produces("text/plain")
     @Suspendable  // <------------- FIBER
-    public String post(@QueryParam("sleep") int sleep) throws IOException, SuspendExecution, InterruptedException {
-        return get(sleep);
+    public String post(@QueryParam("sleep") int sleep,
+            @HeaderParam(FiberServletContainerTest.REQUEST_FILTER_HEADER) String h)
+            throws SuspendExecution, InterruptedException {
+        return get(sleep, h);
     }
     // snippet_exclude_end
 }
