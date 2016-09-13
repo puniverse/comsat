@@ -20,4 +20,4 @@ import co.paralleluniverse.comsat.webactors.WebActor;
  * @author circlespainter
  */
 @WebActor(httpUrlPatterns = {"/*"}, webSocketUrlPatterns = {"/ws"})
-public class UndertowWebActor extends MyWebActor {}
+public final class UndertowWebActor extends MyWebActor {}

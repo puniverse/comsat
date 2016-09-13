@@ -18,8 +18,6 @@ import co.paralleluniverse.actors.ActorRef;
 import co.paralleluniverse.comsat.webactors.AbstractWebActorTest;
 import co.paralleluniverse.comsat.webactors.WebMessage;
 import co.paralleluniverse.embedded.containers.AbstractEmbeddedServer;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.undertow.Undertow;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.RequestDumpingHandler;
@@ -33,8 +31,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -109,29 +105,11 @@ public class WebActorTest extends AbstractWebActorTest {
         }
     };
 
-    private static final Callable<WebActorHandler> autoGuiceInjectedWebActorHandlerCreator = new Callable<WebActorHandler>() {
-        @Override
-        public WebActorHandler call() throws Exception {
-            Injector injector = Guice.createInjector(new GuiceInjectedAutoWebActorHandlerModule());
-            return injector.getInstance(WebActorHandler.class);
-        }
-    };
-
-    private static final Callable<WebActorHandler> autoSpringInjectedWebActorHandlerCreator = new Callable<WebActorHandler>() {
-        @Override
-        public WebActorHandler call() throws Exception {
-            ApplicationContext context = new AnnotationConfigApplicationContext(SpringInjectedAutoWebActorHandlerConfig.class);
-            return context.getBean(WebActorHandler.class);
-        }
-    };
-
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
             {basicWebActorHandlerCreator},
-            {autoWebActorHandlerCreator},
-            {autoGuiceInjectedWebActorHandlerCreator},
-            {autoSpringInjectedWebActorHandlerCreator}
+            {autoWebActorHandlerCreator}
         });
     }
 

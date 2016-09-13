@@ -68,7 +68,6 @@ subprojects {
     ext.slf4jApiVer     = '1.7.21'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '19.0'
-    ext.guiceVer        = '4.1.0'
 
     ext.okhttpVer       = '2.6.0' // TODO Upgrade to 3.2.x
 
@@ -109,7 +108,6 @@ subprojects {
 
     ext.kafkaClientsVer                 = '0.9.0.0' // ''0.8.2.2'
     ext.shiroVer                        = '1.2.4'
-    ext.javaxInjectVer                  = '1'
 
     configurations.all {
         resolutionStrategy {
