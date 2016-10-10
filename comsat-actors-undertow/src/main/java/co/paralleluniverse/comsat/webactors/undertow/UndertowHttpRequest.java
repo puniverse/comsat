@@ -37,7 +37,7 @@ import java.util.*;
 /**
  * @author circlespainter
  */
-final class HttpRequestWrapper extends HttpRequest {
+public final class UndertowHttpRequest extends HttpRequest {
     final ActorRef<? super HttpResponse> actorRef;
     final HttpServerExchange xch;
     private final ByteBuffer reqContent;
@@ -51,10 +51,14 @@ final class HttpRequestWrapper extends HttpRequest {
     private String contentType;
     private Charset encoding;
 
-    public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, HttpServerExchange xch, ByteBuffer reqContent) {
+    public UndertowHttpRequest(ActorRef<? super HttpResponse> actorRef, HttpServerExchange xch, ByteBuffer reqContent) {
         this.actorRef = actorRef;
         this.xch = xch;
         this.reqContent = reqContent;
+    }
+
+    public HttpServerExchange getServerExchange() {
+        return xch;
     }
 
     static ImmutableListMultimap<String, String> extractHeaders(HeaderMap headers) {

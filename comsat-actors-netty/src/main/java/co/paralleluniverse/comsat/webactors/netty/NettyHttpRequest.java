@@ -43,7 +43,7 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 /**
  * @author circlespainter
  */
-final class HttpRequestWrapper extends HttpRequest {
+public final class NettyHttpRequest extends HttpRequest {
     public static final String CHARSET_MARKER_STRING = "charset=";
 
     final ActorRef<? super HttpResponse> actorRef;
@@ -65,7 +65,7 @@ final class HttpRequestWrapper extends HttpRequest {
     private Charset encoding;
     private String contentType;
 
-    public HttpRequestWrapper(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req, String sessionId) {
+    public NettyHttpRequest(ActorRef<? super HttpResponse> actorRef, ChannelHandlerContext ctx, FullHttpRequest req, String sessionId) {
         this.actorRef = actorRef;
         this.ctx = ctx;
         this.req = req;
@@ -264,6 +264,14 @@ final class HttpRequestWrapper extends HttpRequest {
 
     public final String getSessionId() {
         return sessionId;
+    }
+
+    public ChannelHandlerContext getContext() {
+        return ctx;
+    }
+
+    public FullHttpRequest getRequest() {
+        return req;
     }
 
     private String decodeStringBody() {

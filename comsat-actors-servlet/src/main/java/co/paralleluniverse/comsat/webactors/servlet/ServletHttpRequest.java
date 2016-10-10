@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Wraps a {@link HttpServletRequest} as a {@link HttpRequest}
  */
-final class HttpRequestWrapper extends HttpRequest {
+public final class ServletHttpRequest extends HttpRequest {
     final HttpServletRequest request;
     final HttpServletResponse response;
 
@@ -61,10 +61,18 @@ final class HttpRequestWrapper extends HttpRequest {
      * @param request the {@link HttpServletRequest}
      * @param response the {@link HttpServletResponse}
      */
-    public HttpRequestWrapper(ActorRef<? super HttpResponse> sender, HttpServletRequest request, HttpServletResponse response) {
+    public ServletHttpRequest(ActorRef<? super HttpResponse> sender, HttpServletRequest request, HttpServletResponse response) {
         this.sender = sender;
         this.request = request;
         this.response = response;
+    }
+
+    public HttpServletRequest getServletRequest() {
+        return request;
+    }
+
+    public HttpServletResponse getServletResponse() {
+        return response;
     }
 
     @Override

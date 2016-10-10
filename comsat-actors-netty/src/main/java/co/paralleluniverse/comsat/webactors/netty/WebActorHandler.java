@@ -271,7 +271,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
                         addActorToContextAndUnlock(actorCtx, internalActor, lock);
                     }
                     //noinspection unchecked
-                    ((HttpActorAdapter) internalActor).handleRequest(new HttpRequestWrapper(internalActor.ref(), ctx, req, sessionId));
+                    ((HttpActorAdapter) internalActor).handleRequest(new NettyHttpRequest(internalActor.ref(), ctx, req, sessionId));
                     return;
                 }
             }
@@ -489,7 +489,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
             return false;
         }
 
-        final void handleRequest(HttpRequestWrapper s) throws SuspendExecution, InterruptedException {
+        final void handleRequest(NettyHttpRequest s) throws SuspendExecution, InterruptedException {
             blockSessionRequests();
 
             ctx = s.ctx;
@@ -506,7 +506,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
         @Suspendable
         final void handleReply(HttpResponse message) throws SuspendExecution, InterruptedException {
             try {
-                final HttpRequestWrapper nettyRequest = (HttpRequestWrapper) message.getRequest();
+                final NettyHttpRequest nettyRequest = (NettyHttpRequest) message.getRequest();
                 final FullHttpRequest req = nettyRequest.req;
                 final ChannelHandlerContext ctx = nettyRequest.ctx;
                 final String sessionId = nettyRequest.getSessionId();
@@ -788,7 +788,7 @@ public class WebActorHandler extends SimpleChannelInboundHandler<Object> {
 
         public HttpStreamChannelAdapter(ChannelHandlerContext ctx, FullHttpRequest req) {
             this.ctx = ctx;
-            this.encoding = HttpRequestWrapper.extractCharacterEncodingOrDefault(req.headers());
+            this.encoding = NettyHttpRequest.extractCharacterEncodingOrDefault(req.headers());
         }
 
         @Override

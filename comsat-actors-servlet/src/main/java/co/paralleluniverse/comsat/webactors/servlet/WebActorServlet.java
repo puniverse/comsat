@@ -286,7 +286,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
             this.res = resp;
 
             //noinspection unchecked
-            userWebActorRef.send(new HttpRequestWrapper(ref(), req, resp));
+            userWebActorRef.send(new ServletHttpRequest(ref(), req, resp));
         }
 
         @Suspendable
@@ -415,7 +415,7 @@ public final class WebActorServlet extends HttpServlet implements HttpSessionLis
         final void handleReply(final HttpResponse msg) throws SuspendExecution {
             HttpServletRequest request;
             try {
-                request = ((HttpRequestWrapper) msg.getRequest()).request;
+                request = ((ServletHttpRequest) msg.getRequest()).request;
 
                 final AsyncContext ctx = request.getAsyncContext();
                 final HttpServletResponse response = (HttpServletResponse) ctx.getResponse();

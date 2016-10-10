@@ -15,7 +15,7 @@ public class HttpRequestWrapperTest {
         MockHttpServletRequest mockRequest = new MockHttpServletRequest();
         String headerValue = "application/json";
         mockRequest.addHeader("Authorization", headerValue);
-        HttpRequestWrapper requestWrapper = new HttpRequestWrapper(null, mockRequest, null);
+        ServletHttpRequest requestWrapper = new ServletHttpRequest(null, mockRequest, null);
         assertEquals(headerValue, requestWrapper.getHeader("authorization"));
     }
 }
