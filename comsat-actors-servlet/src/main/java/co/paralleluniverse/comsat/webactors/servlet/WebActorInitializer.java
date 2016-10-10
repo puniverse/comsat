@@ -93,13 +93,17 @@ public class WebActorInitializer implements ServletContextListener {
         d.addMapping(waAnn.value());
 
         // web socket
-        final ServerContainer scon = (ServerContainer) sc.getAttribute("javax.websocket.server.ServerContainer");
-        assert scon!=null : "Container does not support websockets !!!";
-        for (final String wsPath : waAnn.webSocketUrlPatterns()) {
-            try {
-                scon.addEndpoint(ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath).configurator(new EmbedHttpSessionWsConfigurator()).build());
-            } catch (final DeploymentException ex) {
-                sc.log("Unable to deploy endpoint", ex);
+        if (waAnn.webSocketUrlPatterns().length > 0) {
+            // we wouldn't want to fail the assert if we don't listen to any websocket
+            final ServerContainer scon = (ServerContainer) sc.getAttribute("javax.websocket.server.ServerContainer");
+            assert scon != null : "Container does not support websockets !!!";
+            for (final String wsPath : waAnn.webSocketUrlPatterns()) {
+                try {
+                    scon.addEndpoint(ServerEndpointConfig.Builder.create(WebActorEndpoint.class, wsPath)
+                            .configurator(new EmbedHttpSessionWsConfigurator()).build());
+                } catch (final DeploymentException ex) {
+                    sc.log("Unable to deploy endpoint", ex);
+                }
             }
         }
     }
