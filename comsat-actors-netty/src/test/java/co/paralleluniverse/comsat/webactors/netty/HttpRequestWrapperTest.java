@@ -20,7 +20,7 @@ public class HttpRequestWrapperTest {
                 new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "uri", new EmptyByteBuf(UnpooledByteBufAllocator.DEFAULT));
         String headerValue = "application/json";
         httpRequest.headers().add("Content-Type", headerValue);
-        HttpRequestWrapper requestWrapper = new HttpRequestWrapper(null, null, httpRequest, "sessionId");
+        NettyHttpRequest requestWrapper = new NettyHttpRequest(null, null, httpRequest, "sessionId");
         assertEquals(headerValue, requestWrapper.getHeader("content-type"));
     }
 }

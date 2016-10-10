@@ -16,7 +16,7 @@ public class HttpRequestWrapperTest {
         String headerValue = "application/json";
         HttpServerExchange httpServerExchange = new HttpServerExchange(null);
         httpServerExchange.getRequestHeaders().put(new HttpString("Content-Type"), headerValue);
-        HttpRequestWrapper requestWrapper = new HttpRequestWrapper(null, httpServerExchange, null);
+        UndertowHttpRequest requestWrapper = new UndertowHttpRequest(null, httpServerExchange, null);
         assertEquals(headerValue, requestWrapper.getHeader("content-type"));
     }
 }

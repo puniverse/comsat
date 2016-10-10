@@ -126,7 +126,7 @@ public class AutoWebActorHandler extends WebActorHandler {
         }
 
         private String getSessionId(FullHttpRequest req) {
-            final Set<Cookie> cookies = HttpRequestWrapper.getNettyCookies(req);
+            final Set<Cookie> cookies = NettyHttpRequest.getNettyCookies(req);
             if (cookies != null) {
                 for (final Cookie c : cookies) {
                     if (c != null && SESSION_COOKIE_KEY.equals(c.name()))

@@ -252,7 +252,7 @@ public class WebActorHandler implements HttpHandler {
                                         protected final void byteArrayDone(final byte[] ba) {
                                             try {
                                                 // adapter.ch.send(new HttpRequestWrapper(adapter.ref(), xch, ByteBuffer.wrap(ba)));
-                                                adapter.handleRequest(new HttpRequestWrapper(adapter.ref(), xch, ByteBuffer.wrap(ba)));
+                                                adapter.handleRequest(new UndertowHttpRequest(adapter.ref(), xch, ByteBuffer.wrap(ba)));
                                             } catch (final SuspendExecution e) {
                                                 throw new AssertionError(e);
                                             } catch (final InterruptedException e) {
@@ -485,7 +485,7 @@ public class WebActorHandler implements HttpHandler {
         }
 
         @Suspendable
-        final void handleRequest(HttpRequestWrapper s) throws SuspendExecution, InterruptedException {
+        final void handleRequest(UndertowHttpRequest s) throws SuspendExecution, InterruptedException {
             blockSessionRequests();
             xch = s.xch;
             if (needsRestart) {
@@ -499,7 +499,7 @@ public class WebActorHandler implements HttpHandler {
 
         final void handleReply(final HttpResponse message) throws InterruptedException {
             try {
-                final HttpRequestWrapper undertowRequest = (HttpRequestWrapper) message.getRequest();
+                final UndertowHttpRequest undertowRequest = (UndertowHttpRequest) message.getRequest();
                 final HttpServerExchange xch = undertowRequest.xch;
 
                 final int status = message.getStatus();
