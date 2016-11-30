@@ -13,11 +13,27 @@
  */
 package co.paralleluniverse.comsat.webactors.undertow;
 
-import co.paralleluniverse.comsat.webactors.MyWebActor;
 import co.paralleluniverse.comsat.webactors.WebActor;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 /**
- * @author circlespainter
+ * Used to test injection into WebActors.
+ *
+ * @author rodedb
  */
 @WebActor(httpUrlPatterns = {"/*"}, webSocketUrlPatterns = {"/ws"})
-public class UndertowWebActor extends MyWebActor {}
+public final class UndertowWebActorInjected extends UndertowWebActor {
+
+    private Object injectedValue;
+
+    @Inject
+    public void setInjectedValue(@Named("webActorInjectedValue") Object injectedValue) {
+        this.injectedValue = injectedValue;
+    }
+
+    public Object getInjectedValue() {
+        return injectedValue;
+    }
+}
