@@ -64,7 +64,8 @@ subprojects {
     ext.jdbiVer         = '2.72'
 
     ext.retrofitVer     = '1.9.0'
-    ext.jooqVer         = '3.6.4' // 3jooq.7.x support only Java 8+
+    ext.jooqJdk6Ver     = '3.6.4' // jOOQ versions >= 3.7 only support Java 8+
+    ext.jooqJdk8Ver     = '3.9.0'
     ext.slf4jApiVer     = '1.7.21'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '19.0'
@@ -403,7 +404,7 @@ project (':comsat-jersey-server') {
 
 project (':comsat-jooq') {
     dependencies {
-        compile "org.jooq:jooq:$jooqVer"
+        compile "org.jooq:jooq:$jooqJdk6Ver"
         compile project (':comsat-jdbc')
         testCompile project(':comsat-test-utils')
     }
@@ -531,6 +532,7 @@ ext.javadocLinks =  [
                 "http://square.github.io/retrofit/1.x/retrofit/",
                 "http://jdbi.org/apidocs/",
                 "http://www.jooq.org/javadoc/3.6.x/",
+                "http://www.jooq.org/javadoc/latest/",
                 "http://docs.oracle.com/javase/7/docs/api/",
                 "http://puniverse.github.io/quasar/javadoc/",
                 "http://google.github.io/guava/releases/19.0/api/docs/",
