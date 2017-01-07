@@ -48,6 +48,10 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/impl/AbstractDMLQuery", "accept0"},
         {"org/jooq/impl/AbstractResultQuery", "getFields"},
 
+        {"org/jooq/impl/TableRecordImpl", "storeInsert.*",},
+        {"org/jooq/impl/TableRecordImpl$1", "operate"},
+        {"org/jooq/impl/UpdatableRecordImpl", "store.*", "access$000"},
+        {"org/jooq/impl/UpdatableRecordImpl$1", "operate"},
         {"org/jooq/impl/InsertQueryImpl", "toSQLInsert"},
         {"org/jooq/impl/SelectQueryImpl", "toSQLReference0", "toSQLReferenceLimitDefault"},
         {"org/jooq/impl/CursorImpl$CursorIterator", "fetch.*"},
@@ -61,6 +65,7 @@ public class JooqClassifier implements SuspendableClassifier {
         {"org/jooq/DSLContext", "fetch.*", "execute.*"},
 
         {"org/jooq/tools/jdbc/JDBCUtils", "dialect", "safeClose"},
+        {"org/jooq/impl/Tools", "consumeWarnings", "safeClose"},
         {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
         {"org/jooq/impl/MetaDataFieldProvider", "init"},
     };
@@ -72,6 +77,10 @@ public class JooqClassifier implements SuspendableClassifier {
         boolean isInterface, String className, String superClassName, String[] interfaces,
         String methodName, String methodDesc, String methodSignature, String[] methodExceptions
     ) {
+        // skipping ctors to avoid unnecessary instrumentation errors
+        if (methodName.charAt(0) == '<')
+            return null;
+
         // declares given methods as supers
         for (String[] susExtendables : methodsArray) {
             if (className.equals(susExtendables[0]))
