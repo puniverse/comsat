@@ -25,44 +25,59 @@ import co.paralleluniverse.fibers.instrument.SuspendableClassifier;
 public class JooqClassifier implements SuspendableClassifier {
     private static final String PKG_PREFIX = "org/jooq";
     private String[][] methodsArray = {
-        {"java/util/Iterator", "hasNext"},
-        {"java/sql/Statement", ".*"},
+
         {"java/sql/Connection", ".*"},
+        {"java/sql/Statement", ".*"},
 
-        {"org/jooq/Context", "visit", "bindValue"},
-        {"org/jooq/Binding", "register", "get", "set"},
-        {"org/jooq/QueryPartInternal", "accept", "bind"},
+        {"java/util/Iterator", "hasNext"},
+        {"java/util/concurrent/ForkJoinPool", "managedBlock"},
+        {"java/util/concurrent/ForkJoinPool$ManagedBlocker", "block"},
+        {"java/util/function/Supplier", "get"},
+        {"java/util/function/Supplier", "get"},
+
         {"org/jooq/BindContext", "bind", "bindValue", "bindValues"},
-        {"org/jooq/Query", "execute"},
-        {"org/jooq/ResultQuery", "getResult", "fetch.*"},
+        {"org/jooq/Binding", "get.*"},
+        {"org/jooq/Binding", "register", "get", "set"},
+        {"org/jooq/ConnectionProvider", "acquire", "release"},
+        {"org/jooq/Context", "visit", "bindValue"},
         {"org/jooq/Cursor", "fetch.*", "hasNext"},
+        {"org/jooq/DSLContext", "fetch.*", "execute.*", "transaction.*"},
+        {"org/jooq/DeleteResultStep", "fetch.*"},
+        {"org/jooq/ExecuteContext", "connection"},
         {"org/jooq/InsertResultStep", "fetch.*"},
+        {"org/jooq/Query", "execute"},
+        {"org/jooq/QueryPartInternal", "accept", "bind"},
+        {"org/jooq/ResultQuery", "getResult", "fetch.*"},
+        {"org/jooq/TransactionProvider", "begin", "rollback", "commit"},
+        {"org/jooq/TransactionalCallable", "run"},
+        {"org/jooq/TransactionalRunnable", "run"},
+        {"org/jooq/UpdateResultStep", "fetch.*"},
 
-        {"org/jooq/impl/RecordOperation", "operate"},
-
-        {"org/jooq/impl/AbstractField", "accept"},
-        {"org/jooq/impl/AbstractQuery", "prepare"},
-        {"org/jooq/impl/AbstractContext", "visit0"},
         {"org/jooq/impl/AbstractBindContext", "bindValue0", "bindInternal"},
-        {"org/jooq/impl/AbstractStoreQuery", "accept0"},
-        {"org/jooq/impl/AbstractDMLQuery", "accept0"},
+        {"org/jooq/impl/AbstractContext", "visit0"},
+        {"org/jooq/impl/AbstractDMLQuery", "accept0", "selectReturning"},
+        {"org/jooq/impl/AbstractField", "accept"},
+        {"org/jooq/impl/AbstractQuery", "execute"},
+        {"org/jooq/impl/AbstractQuery", "prepare"},
         {"org/jooq/impl/AbstractResultQuery", "getFields"},
-
-        {"org/jooq/impl/InsertQueryImpl", "toSQLInsert"},
-        {"org/jooq/impl/SelectQueryImpl", "toSQLReference0", "toSQLReferenceLimitDefault"},
+        {"org/jooq/impl/AbstractStoreQuery", "accept0"},
+        {"org/jooq/impl/CursorImpl", "close"},
         {"org/jooq/impl/CursorImpl$CursorIterator", "fetch.*"},
         {"org/jooq/impl/CursorImpl$CursorIterator", "hasNext"},
         {"org/jooq/impl/CursorImpl$CursorIterator$CursorRecordInitialiser", "setValue"},
         {"org/jooq/impl/CursorImpl$CursorResultSet", ".*"},
-        {"org/jooq/impl/CursorImpl", "close"},
-        {"org/jooq/impl/RecordDelegate", "operate"},
         {"org/jooq/impl/DSL", "using"},
-
-        {"org/jooq/DSLContext", "fetch.*", "execute.*"},
-
-        {"org/jooq/tools/jdbc/JDBCUtils", "dialect", "safeClose"},
-        {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
+        {"org/jooq/impl/DefaultConnectionProvider", "rollback", "commit", "getAutoCommit", "setAutoCommit", "setSavepoint", "releaseSavepoint"},
+        {"org/jooq/impl/DefaultTransactionProvider", "connection", "brace", "autoCommit", "setSavepoint"},
+        {"org/jooq/impl/InsertQueryImpl", "toSQLInsert"},
         {"org/jooq/impl/MetaDataFieldProvider", "init"},
+        {"org/jooq/impl/RecordDelegate", "operate"},
+        {"org/jooq/impl/RecordOperation", "operate"},
+        {"org/jooq/impl/SelectQueryImpl", "toSQLReference0", "toSQLReferenceLimitDefault"},
+        {"org/jooq/impl/Tools", "consumeWarnings", "safeClose", "fetch.*", },
+        {"org/jooq/impl/Utils", "safeClose", "consumeWarnings", "fetch.*"},
+
+        {"org/jooq/tools/jdbc/JDBCUtils", "dialect", "safeClose", "wasNull"}
     };
 
     @Override
@@ -88,7 +103,7 @@ public class JooqClassifier implements SuspendableClassifier {
                 }
         }
 
-        // declares extending classes in jooq packacages as suspandables
+        // declares extending classes in jooq packages as suspendables
         if (!className.startsWith(PKG_PREFIX))
             return null;
         for (String[] susExtendables : methodsArray) {

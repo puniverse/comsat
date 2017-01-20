@@ -92,7 +92,8 @@ Then add the following Maven/Gradle dependencies:
 | [Retrofit](http://square.github.io/retrofit/) integration with fibers.                                                    | `co.paralleluniverse:comsat-retrofit:0.7.0`
 | [JDBI](http://jdbi.org/) integration with fibers.                                                                         | `co.paralleluniverse:comsat-jdbi:0.7.0`
 | JDBC integration with fibers.                                                                                             | `co.paralleluniverse:comsat-jdbc:0.7.0`
-| [jOOQ](http://www.jooq.org/) integration with fibers.                                                                     | `co.paralleluniverse:comsat-jooq:0.7.0`
+| [jOOQ](http://www.jooq.org) integration with fibers for using jOOQ with Java 7 and below.                                 | `co.paralleluniverse:comsat-jooq:0.7.0`
+| [jOOQ](http://www.jooq.org) integration with fibers for using jOOQ with Java 8.                                           | `co.paralleluniverse:comsat-jooq-java8:0.7.0`
 | MongoDB fiber-blocking integration for the [Allanbank API](http://www.allanbank.com/mongodb-async-driver/index.html).     | `co.paralleluniverse:comsat-mongodb-allanbank:0.7.0`
 | [OkHttp](https://github.com/square/okhttp) HTTP+SPDY client integration.                                                  | `co.paralleluniverse:comsat-okhttp:0.7.0`
 | The Web Actors API.                                                                                                       | `co.paralleluniverse:comsat-actors-api:0.7.0`
@@ -494,6 +495,8 @@ The interface now can be registered and used as usual from fibers:
 // usage in fiber context
 {% include_snippet usage ./comsat-jooq/src/test/java/co/paralleluniverse/fibers/jooq/JooqContextTest.java %}
 ~~~
+
+Starting with versions 3.7 jOOQ requires Java 8 and Comsat provides two separate jOOQ integrations: `comsat-jooq` supports Java 6+ and jOOQ 3.6.x while `comsat-jooq-java8` supports jOOQ 3.8.x with Java 8.      
 
 #### MongoDB
 

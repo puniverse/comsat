@@ -1,0 +1,64 @@
+sourceSets {
+    jdk8 {
+        java {
+            srcDir 'src/main/java'
+        }
+
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+
+compileJdk8Java {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
+if (ext.java8) {
+    compileTestJava {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+}
+else {
+    sourceSets {
+        test {
+            java {
+                exclude 'co/paralleluniverse/fibers/jooq/**'
+            }
+        }
+    }
+}
+
+dependencies {
+    compile "org.jooq:jooq:$jooqJdk8Ver"
+    compile project(':comsat-jdbc')
+    testCompile project(':comsat-test-utils')
+}
+
+// remove default artifact
+configurations.runtime.artifacts.with { archives ->
+    archives.each {
+        archives.remove(it)
+    }
+}
+
+def ssets = []
+if (ext.java8) {
+    ssets += sourceSets.jdk8
+}
+
+ssets.each { set ->
+    def jarTask = task("${set.name}Jar", type: Jar) {
+        from set.output
+        from { project.configurations["${set.name}Runtime"].collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+
+    assemble.dependsOn jarTask
+
+    artifacts {
+        archives jarTask
+        archives sourcesJar
+        archives javadocJar
+    }
+}
