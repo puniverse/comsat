@@ -44,7 +44,7 @@ subprojects {
     ext.metricsVer      = '3.1.2'
     ext.asmVer          = '5.0.4'
 
-    ext.quasarVer       = '0.7.6'
+    ext.quasarVer       = '0.7.7'
 
     ext.jettyVer        = '9.2.14.v20151106' // '9.3.x' requires JDK8
     ext.tomcatVer       = '8.0.33'
@@ -63,13 +63,12 @@ subprojects {
     ext.dropwizardVer   = '0.9.2'
     ext.jdbiVer         = '2.72'
 
-    ext.retrofitVer     = '1.9.0'
     ext.jooqVer         = '3.6.4' // 3jooq.7.x support only Java 8+
     ext.slf4jApiVer     = '1.7.21'
     ext.log4jVer        = '1.2.17'
     ext.guavaVer        = '19.0'
 
-    ext.okhttpVer       = '2.6.0' // TODO Upgrade to 3.2.x
+    ext.okhttpVer       = '3.6.0'
 
     ext.apacheAsyncClientVer   = '4.1.1'
     ext.httpCoreVer            = '4.4.4'
@@ -230,6 +229,33 @@ subprojects {
             //            }
         }
     }
+
+    compileJava.dependsOn processResources
+    compileJava {
+        doLast {
+            ant.taskdef(
+                    name:'instrumentation',
+                    classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask',
+                    classpath: "build/classes/main:build/resources/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
+
+            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+                fileset(dir: sourceSets.main.output.classesDir)
+            }
+        }
+    }
+    compileTestJava.dependsOn processTestResources
+    compileTestJava {
+        doLast {
+            ant.taskdef(
+                    name:'instrumentation',
+                    classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask',
+                    classpath: "build/classes/main:build/resources/main:${configurations.provided.asPath}:${configurations.runtime.asPath}")
+            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+                fileset(dir: sourceSets.test.output.classesDir)
+            }
+        }
+    }
+
 
     tasks.withType(Test) {
         // systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
@@ -418,12 +444,25 @@ project (':comsat-mongodb-allanbank') {
 }
 
 project (':comsat-okhttp') {
+
+    configurations {
+        alpn
+    }
+
     dependencies {
-        compile "com.squareup.okhttp:okhttp:$okhttpVer"
-        compile "com.squareup.okhttp:okhttp-urlconnection:$okhttpVer"
-        compile "com.squareup.okhttp:okhttp-apache:$okhttpVer"
+        compile "com.squareup.okhttp3:okhttp:$okhttpVer"
+        compile "com.squareup.okhttp3:okhttp-urlconnection:$okhttpVer"
+        compile "com.squareup.okhttp3:okhttp-apache:$okhttpVer"
         compile project (':comsat-httpclient')
-        testCompile "com.squareup.okhttp:mockwebserver:$okhttpVer"
+        testCompile "com.squareup.okhttp3:mockwebserver:$okhttpVer"
+        testCompile "com.squareup.okhttp3:okhttp-testing-support:$okhttpVer"
+
+        //http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
+        alpn 'org.mortbay.jetty.alpn:alpn-boot:8.1.9.v20160720'
+    }
+
+    test {
+        jvmArgs = ['-Xbootclasspath/p:' + configurations.alpn.resolve().first()]
     }
 }
 
@@ -438,24 +477,6 @@ project (':comsat-shiro') {
         compile "org.apache.shiro:shiro-core:$shiroVer"
         testCompile "co.paralleluniverse:quasar-core:$quasarVer"
         testCompile "commons-logging:commons-logging:$commonsLoggingVer"
-    }
-}
-
-project (':comsat-retrofit') {
-    dependencies {
-        compile "com.squareup.retrofit:retrofit:$retrofitVer"
-        compile project (':comsat-httpclient')
-        compile project (':comsat-okhttp')
-        testCompile (project (':comsat-dropwizard')) {
-            exclude group: 'org.jboss.logging', module: 'jboss-logging'
-            exclude group: 'org.apache.httpcomponents', module: 'httpclient'
-        }
-        testCompile (project(':comsat-test-utils')) {
-            exclude group: 'org.eclipse.jetty', module: '*'
-            exclude group: 'org.apache.httpcomponents', module: 'httpclient'
-            exclude group: 'org.apache.tomcat', module: 'tomcat-juli'
-            //            exclude group: 'org.apache.tomcat', module: 'tomcat-dbcp'
-        }
     }
 }
 
@@ -528,7 +549,6 @@ ext.javadocLinks =  [
                 "http://hc.apache.org/httpcomponents-client-4.5.x/httpclient/apidocs/",
                 "http://hc.apache.org/httpcomponents-asyncclient-4.1.x/httpasyncclient/apidocs/",
                 "http://hc.apache.org/httpcomponents-core-4.4.x/httpcore/apidocs/",
-                "http://square.github.io/retrofit/1.x/retrofit/",
                 "http://jdbi.org/apidocs/",
                 "http://www.jooq.org/javadoc/3.6.x/",
                 "http://docs.oracle.com/javase/7/docs/api/",

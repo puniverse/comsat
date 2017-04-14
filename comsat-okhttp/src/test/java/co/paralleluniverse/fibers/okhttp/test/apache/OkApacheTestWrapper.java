@@ -1,13 +1,14 @@
 package co.paralleluniverse.fibers.okhttp.test.apache;
 
 import co.paralleluniverse.fibers.okhttp.FiberOkHttpUtil;
-import com.squareup.okhttp.apache.OkApacheClient;
+import okhttp3.apache.OkApacheClient;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public final class OkApacheTestWrapper {
+public class OkApacheTestWrapper
+{
     private OkApacheClient underlying;
 
     public OkApacheTestWrapper(OkApacheClient underlying) {
