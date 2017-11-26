@@ -18,6 +18,7 @@ Add the following Maven/Gradle dependencies:
 | [JAX-RS client](https://jersey.java.net/documentation/latest/client.html) integration for HTTP calls with fibers.         | `co.paralleluniverse:comsat-jax-rs-client:0.7.0`
 | [ApacheHttpClient](http://hc.apache.org/httpcomponents-client-ga/) integration for HTTP calls with fibers.                | `co.paralleluniverse:comsat-httpclient:0.7.0`
 | [Retrofit](http://square.github.io/retrofit/) integration with fibers.                                                    | `co.paralleluniverse:comsat-retrofit:0.7.0`
+| [Jackson](https://github.com/FasterXML/jackson-databind) supports suspendable I/O via Stream/Reader/Writer                | `co.paralleluniverse:comsat-jackson:0.7.1-SNAPSHOT`
 | [JDBI](http://jdbi.org/) integration with fibers.                                                                         | `co.paralleluniverse:comsat-jdbi:0.7.0`
 | JDBC integration with fibers.                                                                                             | `co.paralleluniverse:comsat-jdbc:0.7.0`
 | [jOOQ](http://www.jooq.org/) integration with fibers.                                                                     | `co.paralleluniverse:comsat-jooq:0.7.0`
