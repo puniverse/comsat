@@ -51,6 +51,8 @@ subprojects {
     ext.undertowVer     = '1.3.19.Final'
     ext.nettyVer        = '4.0.36.Final'
 
+    ext.jacksonVer      = '2.9.2'
+
     ext.osgiVer         = '6.0.0'
     ext.jerseyVer       = '2.22.2'
     ext.hk2apiVer       = '2.4.0'
@@ -344,6 +346,13 @@ project (':comsat-httpclient') {
             exclude group: 'org.apache.httpcomponents', module: 'httpclient'
         }
         testCompile project(':comsat-test-utils')
+    }
+}
+
+project (':comsat-jackson') {
+    dependencies {
+        compile "com.fasterxml.jackson.core:jackson-core:$jacksonVer"
+        compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVer"
     }
 }
 
